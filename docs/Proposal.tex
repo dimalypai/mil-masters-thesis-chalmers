@@ -24,16 +24,23 @@ Monads are proved to be a very powerful and generic way to encapsulate and expre
 (such as state, exceptions, non-termination etc.) as described in \cite{MonadsAndEffects, MonadsForFP}.
 The state of the art example is the Haskell programming language.
 Researchers also explored using monads and monad transformers (a way to combine different monads)
-for building modular interpreters and compilers \cite{MTandMI, MDSforCC, MConMT}.
+for building modular interpreters and compilers \cite{MTandMI, MDSforCC, MConMT, TMCforE}.
 Using monads in intermediate representation enables a number of other possibilities.
 There are certain properties of monads (such as monad laws) that allow to perform very interesting program transformations
 that may influence the performance and other important properties of the resulting code significantly \cite{MonadsEffectsAndTrans, OptML}.
 
-The goals of the thesis are the following:
+Incorporating monads in intermediate representation for the compiler allows to describe different kinds of effects
+in a modular way. Different combinations of monads are suitable for programming languages with different semantics and features \cite{BridgTheGulf}. Building generic framework based on monads allows to express several monadic intermediate languages
+suitable for particular compilation stages ranging from high-level representations of source languages, where we would like
+to operate in terms of exceptions, computations with limited side-effects etc.
+to more low-level representations, which are more suitable for code generation, where the effects are mainly stores and jumps.
+
+Therefore, the goals of the thesis are the following:
 \begin{itemize}
   \item Design a monadic intermediate language to be used as a compiler intermediate representation.
   \item Design a small functional programming language.
   \item Design a small object-oriented programming language.
+  	This part may be based on a project work done during the Compiler Construction course (TDA282).
   \item Build a modular and generic compiler for these programming languages using the designed intermediate representation.
   \item Evaluate the intermediate representation in terms of compilation of the designed programming languages.
   \item Evaluate how the design of the compiler allows adding new features to languages, new source and target languages.
