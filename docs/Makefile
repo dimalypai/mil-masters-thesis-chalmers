@@ -1,3 +1,4 @@
+all: planning notes langs
 planning: Planning.md
 	pandoc --variable mainfont=Palatino --variable fontsize=12pt Planning.md --latex-engine=xelatex -o Planning.pdf
 notes: Notes.md
