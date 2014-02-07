@@ -75,10 +75,10 @@ Time plan
 =========
 
 * Design monadic intermediate language - 3 weeks
-* Design object-oriented programming language - 2 weeks
-* Design functional programming language - 2 weeks
+* Design object-oriented programming language - 1 weeks
+* Design functional programming language - 1 weeks
 * Refine MIL
-* Build compiler - 6 weeks
+* Build compiler - 8 weeks
 * Refine MIL
 * Study and implement optimisations - 3 weeks
 * Refine MIL
