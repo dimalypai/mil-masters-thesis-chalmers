@@ -49,7 +49,9 @@ Building a framework for intermediate representations for compiler construction.
 The problem at hand, the assignment.
 ====================================
 
-Design languages, implement compiler, evaluate.
+* Design languages
+* Implement compiler
+* Evaluate
 
 Limitations. What should be left out and why?
 =============================================
@@ -61,7 +63,9 @@ Limitations. What should be left out and why?
 Method of accomplishment. How should the work be carried out?
 =============================================================
 
-Implementation based.
+Experimentation based on implementation.
+Implementation requires to work out all the details and refine the design if
+needed.
 
 Time plan
 =========
