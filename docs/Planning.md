@@ -57,8 +57,12 @@ Limitations. What should be left out and why?
 =============================================
 
 * Features of source languages
+* Modularity aspects (not everything is pluggable and composable)
 * Target languages and platforms
 * Optimisations
+* Dynamicly typed source languages
+* Logic programming paradigm (probably is possible with something like Backtracking monad)
+* Metaprogramming, compiler API (maybe that's too far away)
 
 Method of accomplishment. How should the work be carried out?
 =============================================================
