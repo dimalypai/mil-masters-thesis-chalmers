@@ -1,6 +1,5 @@
 % Functional Programming Language
 % Dmytro Lypai (900620-7113, lypai@student.chalmers.se)
-% date
 
 Pure strict (call-by-value) functional language
 Mostly inspired by Haskell and ML
