@@ -20,6 +20,7 @@ Type system:
         - records may be very beneficial for OO (as in Pierce)
         - records may be ordered in IL but unordered in source languages (because subtyping is too much)
         - problems with records typing and type safety (types introduced on the fly or separately)
+        - probably have only tuples in MIL but records in source languages
     + sums < variants
         - case with pattern matching
         - way more to consider
@@ -36,6 +37,7 @@ Type system:
     + I doubt because we have State monad for this
     + but Gulf and Benton have them, although Tolmach and GRIN don't
     + probably, can be beneficial for OO and other impure languages
+* connection between, for example, generics in the source OO language and System F?
 
 Explicit typing: It can and should be type checked but there is no need in type reconstruction. Type annotations in places
 when we introduce variables (lambdas, lets)
@@ -61,6 +63,8 @@ Combining effects:
 
 * One needs to describe a monad and its transformer somehow to plug it into the language
 * What about typing rules? Provides type checking routine for new monad and its constants (TypeCheck type class in Haskell)?
+* Also what about rewrite rules or transformations?
+* Describing monads and stuff in the MIL itself???
 
 Use de Bruijn representation in MIL implementation
 
