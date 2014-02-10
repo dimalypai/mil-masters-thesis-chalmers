@@ -1,7 +1,6 @@
 % Notes on\
   "Monadic Intermediate Language for Modular and Generic Compilers"
 % Dmytro Lypai (900620-7113, lypai@student.chalmers.se)
-% February 3, 2014
 
 Meeting 2014-02-03
 ==================
@@ -31,4 +30,11 @@ Meeting 2014-02-03
         - <http://www.gamedev.net/blog/355/entry-2256288-real-world-garbage-collection-with-llvm/>
         - <http://lists.cs.uiuc.edu/pipermail/llvmdev/2011-February/038177.html>
         - <https://groups.google.com/forum/#!topic/llvm-dev/x35whlWokpE>
+
+General thoughts. Week 1
+========================
+
+Source languages should have exceptions to show how this plays nicely with
+Error monad (maybe even kinda transactions for one of them to show the
+different ordering of State and Error)
 
