@@ -38,3 +38,13 @@ Source languages should have exceptions to show how this plays nicely with
 Error monad (maybe even kinda transactions for one of them to show the
 different ordering of State and Error)
 
+Meeting 2014-02-10
+==================
+
+* let typing, no need in pure let -> monadic let/bind
+* Effects representation and description
+* My abstract meta questions about self description of MIL (one build-in type class of effects)
+* More concrete view on things, maybe implement something from papers
+* Type specialisation as a separate pass
+* Polymorphic recursion
+
