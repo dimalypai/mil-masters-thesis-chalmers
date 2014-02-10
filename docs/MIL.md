@@ -6,7 +6,7 @@ let:
 * Two types of lets: monadic and pure in Bridging the Gulf
 * One monadic let in Tolmach
 * let as syntactic sugar on top of try-catch in Benton
-* let rec
+* MIL: monadic let/bind and let rec
 
 Type system:
 
@@ -25,7 +25,7 @@ Type system:
         - case with pattern matching
         - way more to consider
         - can define Bool (with if as case) and lists (having recursive types)
-    + lists?
+    + lists
 * base types:
     + Unit (for side-effecting computations)
     + Bool
@@ -65,6 +65,8 @@ Combining effects:
 * What about typing rules? Provides type checking routine for new monad and its constants (TypeCheck type class in Haskell)?
 * Also what about rewrite rules or transformations?
 * Describing monads and stuff in the MIL itself???
+
+MIL as EDSL in Haskell
 
 Use de Bruijn representation in MIL implementation
 
