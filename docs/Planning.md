@@ -63,6 +63,7 @@ Limitations. What should be left out and why?
 * Dynamicly typed source languages
 * Logic programming paradigm (probably is possible with something like Backtracking monad)
 * Metaprogramming, compiler API (maybe that's too far away)
+* Laziness, probably should be not very hard to incorporate following Bridging the gulf
 
 Method of accomplishment. How should the work be carried out?
 =============================================================

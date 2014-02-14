@@ -48,3 +48,11 @@ Meeting 2014-02-10
 * Type specialisation as a separate pass
 * Polymorphic recursion
 
+General thoughts. Week 2
+========================
+
+* Be careful with MIL type system
+* Be minimal with source languages features
+* Where are monad transformers in this picture
+    + It starts to make sense (Bridging the gulf)
+

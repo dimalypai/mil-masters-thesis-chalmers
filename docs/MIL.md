@@ -14,7 +14,7 @@ Type system:
 * monadic stuff
 * constants (constructors)?
     + think about this vs variant types
-* recursive types
+* recursive types (kinda complicated)
 * data types:
     + products < tuples < records
         - records may be very beneficial for OO (as in Pierce)
@@ -37,7 +37,9 @@ Type system:
     + I doubt because we have State monad for this
     + but Gulf and Benton have them, although Tolmach and GRIN don't
     + probably, can be beneficial for OO and other impure languages
+    + challenge with System F
 * connection between, for example, generics in the source OO language and System F?
+* think about value and computation types distinction (as in Bridging the gulf and Benton)
 
 Explicit typing: It can and should be type checked but there is no need in type reconstruction. Type annotations in places
 when we introduce variables (lambdas, lets)
@@ -55,20 +57,20 @@ Again, more easy to do that only once for IR.
 * Reified generics (C#)
 * <http://llvm.1065342.n5.nabble.com/Parametric-polymorphism-td31733.html>
 
-How to express conditionals? (Tolmach: explicit if, Benton: case with pairs, GRIN: if and case)
-
-In general: if the MIL is reach enough it is easier to add source languages, we already have low-level IR (LLVM)
-
 Combining effects:
 
 * One needs to describe a monad and its transformer somehow to plug it into the language
+    + Where are the monad transformers in this picture?
+    + Day and Hutton don't use monad transformers for compilation at all (because they don't compile to MIL)
+    + Bridging the gulf cleared things. They have a predefined StateLift transformer. We need general stuff there
 * What about typing rules? Provides type checking routine for new monad and its constants (TypeCheck type class in Haskell)?
 * Also what about rewrite rules or transformations?
-* Describing monads and stuff in the MIL itself???
+* Describing monads and stuff in the MIL itself - no!
 
-MIL as EDSL in Haskell
+Code generation:
 
-Use de Bruijn representation in MIL implementation
+* Monadic operations describe code generation
+    + What about several backends -> through type class (like different MonadState)
 
 Runtime system:
 
@@ -77,4 +79,14 @@ Runtime system:
 * Better?: Or code generation form MIL will generate calls to the runtime system later (MIL with automatic memory management)?
     + Calls to the runtime system are generated only from MIL (less flexible)
 * Heap abstraction through State monad? Allocations by put?
+
+MIL as EDSL in Haskell
+
+Use de Bruijn representation in MIL implementation
+
+How to express conditionals? (Tolmach: explicit if, Benton: case with pairs, GRIN: if and case)
+
+In general: if the MIL is reach enough it is easier to add source languages, we already have low-level IR (LLVM)
+
+One of the things it needs to represent is A-normal form.
 
