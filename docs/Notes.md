@@ -56,3 +56,36 @@ General thoughts. Week 2
 * Where are monad transformers in this picture
     + It starts to make sense (Bridging the gulf)
 
+Meeting 2014-02-17
+==================
+
+Things to discuss:
+
+* Papers reread
+    + Harrison: when and how do they generate code. And what's up with continuations?
+    + Tolmach exercise (quickly)
+* MLj source code
+* MIL notes (not all)
+* Plans:
+    + writing down some basic syntax and typing
+    + switching to source languages design to refine MIL
+    + it feels like I need to see how I will generate code:
+        - source languages -> MIL
+        - MIL -> LLVM
+
+Notes:
+
+* Data Types a la Carte for effects?
+* Id - part of all stacks or not?
+* Lattices - probably not, too complex.
+* Type level lists, prefixes. Id ::: (State ::: (Exception ::: State))
+* Transformers mainly for combining monads in MIL. Modular code generation is probably not our task.
+  Nice retargeting neither.
+* Code generation stages: SourceM -> IL1 -> IL2 -> IL3 -> LLVMM.
+  MIL framework allows to express ILi nicely, and finally backend part produces LLVM.
+* One AST type but less constructs further down (high level -> SSA/ANF).
+* Effect systems. The same as monads.
+* Computation types. Nice to have value types on syntactic level.
+* References, multiple variables, efficiency. Probably, we need to have them.
+* Type system: tuples, variants, iso-recursive types (maybe later, equi just NO).
+
