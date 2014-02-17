@@ -1,4 +1,4 @@
-% Monadic Intermediate Language
+% Monadic Intermediate Language Notes
 % Dmytro Lypai (900620-7113, lypai@student.chalmers.se)
 
 let:

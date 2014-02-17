@@ -1,4 +1,4 @@
-% Functional Programming Language
+% Functional Programming Language Notes
 % Dmytro Lypai (900620-7113, lypai@student.chalmers.se)
 
 * Pure strict (call-by-value) functional language
