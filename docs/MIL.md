@@ -10,11 +10,12 @@ let:
 
 Type system:
 
-* System F as a base
+* System F (omega?) as a base
 * monadic stuff
 * constants (constructors)?
     + think about this vs variant types
-* recursive types (kinda complicated)
+* recursive types
+    + iso-recursive with fold/unfold hidden in data constructors of variant types
 * data types:
     + products < tuples < records
         - records may be very beneficial for OO (as in Pierce)
