@@ -21,7 +21,7 @@ Type system:
         - records may be very beneficial for OO (as in Pierce)
         - records may be ordered in IL but unordered in source languages (because subtyping is too much)
         - problems with records typing and type safety (types introduced on the fly or separately)
-        - probably have only tuples in MIL but records in source languages
+        - probably have only tuples in MIL but records in source languages, golden middle
     + sums < variants
         - case with pattern matching
         - way more to consider
@@ -33,17 +33,20 @@ Type system:
     + Int
     + Float?
     + Char?
-    + String?
+    + not really essential: String. May be expressed as [Char].
 * references
     + I doubt because we have State monad for this
     + but Gulf and Benton have them, although Tolmach and GRIN don't
     + probably, can be beneficial for OO and other impure languages
     + challenge with System F
 * connection between, for example, generics in the source OO language and System F?
-* think about value and computation types distinction (as in Bridging the gulf and Benton)
+* think about value and computation types distinction (as in Bridging the gulf
+  and Benton). They don't have Id, that can express value types as
+  computations.
 
-Explicit typing: It can and should be type checked but there is no need in type reconstruction. Type annotations in places
-when we introduce variables (lambdas, lets)
+Explicit typing: It can and should be type checked but there is no need in type
+reconstruction. Type annotations in places when we introduce variables
+(lambdas, lets)
 
 Question: why do we need System F?
 Think about source language features (polymorphism).
@@ -64,14 +67,20 @@ Combining effects:
     + Where are the monad transformers in this picture?
     + Day and Hutton don't use monad transformers for compilation at all (because they don't compile to MIL)
     + Bridging the gulf cleared things. They have a predefined StateLift transformer. We need general stuff there
+    + Effects are specified by transformer stack in MIL? But on the other hand
+      we could have a set of them and all combinations in different cases. What
+      about lattice?
 * What about typing rules? Provides type checking routine for new monad and its constants (TypeCheck type class in Haskell)?
 * Also what about rewrite rules or transformations?
+* MIL framework should have its own predefined set of effects/monads (with transformations) and be able to take new ones from the user.
 * Describing monads and stuff in the MIL itself - no!
 
 Code generation:
 
-* Monadic operations describe code generation
+* Transformer and monadic operations describe code generation?
     + What about several backends -> through type class (like different MonadState)
+* Or do we generate code in one place? Less modularity, but monads and their combinations are still general?
+* Do we use monad transformers for code generation or only as a way to combine monads in MIL?
 
 Runtime system:
 
@@ -81,7 +90,7 @@ Runtime system:
     + Calls to the runtime system are generated only from MIL (less flexible)
 * Heap abstraction through State monad? Allocations by put?
 
-MIL as EDSL in Haskell
+MIL as EDSL in Haskell. May be used for MIL code generation.
 
 Use de Bruijn representation in MIL implementation
 
@@ -89,5 +98,7 @@ How to express conditionals? (Tolmach: explicit if, Benton: case with pairs, GRI
 
 In general: if the MIL is reach enough it is easier to add source languages, we already have low-level IR (LLVM)
 
-One of the things it needs to represent is A-normal form.
+One of the things it needs to represent is A-normal form:
+
+* Do we use State at first and then translate to just lets and function calls?
 
