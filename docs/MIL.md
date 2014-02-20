@@ -4,54 +4,80 @@
 Syntax
 ======
 
--------------  -------  -------------------------------------------  -----------------------------
-    *program*   $\to$   *typedefs fundefs*                           top-level definitions
+-------------  -------  --------------------------------------------------  -------------------------------
+    *program*   $\to$   *typedefs fundefs*                                  top-level definitions
 
-   *typedefs*   $\to$   $\varepsilon$                                type definitions
+   *typedefs*   $\to$   $\varepsilon$                                       type definitions
 
                   |     *typedef* `;` *typedefs*
 
-    *fundefs*   $\to$   $\varepsilon$                                function definitions
+    *fundefs*   $\to$   $\varepsilon$                                       function definitions
 
                   |     *fundef* `;` *fundefs*
 
-    *typedef*   $\to$   `type` *typename typebinds* `=` *condefs*    type definition
+    *typedef*   $\to$   `type` *typename typebinds* `=` *condefs*           type definition
 
-     *fundef*   $\to$   *funname* `:` *type* `=` *expr*              function definition
+     *fundef*   $\to$   *funname* `:` *type* `=` *expr*                     function definition
 
-  *typebinds*   $\to$   $\varepsilon$                                type binders
+  *typebinds*   $\to$   $\varepsilon$                                       type binders
 
                   |     *typebind* *typebinds*
 
-   *typebind*   $\to$   `(` *typevar* `::` *kind* `)`                type binder
+   *typebind*   $\to$   `(` *typevar* `::` *kind* `)`                       type binder
 
-    *condefs*   $\to$   $\varepsilon$                                constructor definitions
+    *condefs*   $\to$   $\varepsilon$                                       data constructor definitions
 
                   |     *condef* `;` *condefs*
 
-     *condef*   $\to$   *conname* *confields*                        constructor definition
+     *condef*   $\to$   *conname* *confields*                               data constructor definition
 
   *confields*   $\to$   $\varepsilon$
 
                   |     *confield* *confields*
 
-   *confield*   $\to$   *roughly type*
+   *confield*   $\to$   *roughly type*                                      data constructor field
 
        *expr*   $\to$   *literal*
 
-                  |     *var*                                        variable
+                  |     *var*                                               variable
 
-                  |     `\` *var* `:` *type* `->` *expr*             abstraction
+                  |     `\` *var* `:` *type* `->` *expr*                    abstraction
 
-                  |     *expr expr*                                  application
+                  |     *expr expr*                                         application
 
-                  |     `/\` *typevar* `::` *kind* `.` *expr*        type abstraction
+                  |     `/\` *typevar* `::` *kind* `.` *expr*               type abstraction
 
-                  |     *expr* `[` *type* `]`                        type application
+                  |     *expr* `[` *type* `]`                               type application
 
-                  |     `{` *tupleelems* `}`                         tuple
+                  |     `{` *tupleelems* `}`                                tuple
 
-                  |     *expr* `.` *i*                               projection
+                  |     *expr* `.` *i*                                      projection
+
+                  |     `let` *var* `:` *type* `<-` *expr* `in` *expr*      name binding
+
+                  |     `return` *expr*                                     monadic return
+
+                  |     `let rec` *var* `:` *type* `=` *expr* `in` *expr*   recursive binding
+
+                  |     `case` *expr* `of` `{` *casealts* `}`
+
+   *casealts*   $\to$   *casealt*
+
+                  |     *casealt* `;` *casealts*
+
+    *casealt*   $\to$   *casebind* `->` *expr*
+
+   *casebind*   $\to$   *conname* *varbinds*                                data constructor binder
+
+                  |     *literal*                                           literal case
+
+                  |     `_`                                                 default binder
+
+   *varbinds*   $\to$   $\varepsilon$                                       variable binders
+
+                  |     *varbind* *varbinds*
+
+    *varbind*   $\to$   `(` *var* `:` *type* `)`                            variable binder
 
     *literal*   $\to$   `unit`
 
@@ -65,7 +91,11 @@ Syntax
 
                   |     *expr* `,` *tupleelems*
 
-       *type*   $\to$   `Unit`
+       *type*   $\to$   *Monad* *valuetype*                                 computation type
+
+                  |     *valuetype*
+
+  *valuetype*   $\to$   `Unit`
 
                   |     `Int`
 
@@ -73,36 +103,36 @@ Syntax
 
                   |     `Char`
 
-                  |     *typename*                                   type introduced with `type`
+                  |     *typename*                                          type introduced with `type`
 
-                  |     *typevar*                                    type variable
+                  |     *typevar*                                           type variable
 
-                  |     *type* `->` *type*                           function type
+                  |     *type* `->` *type*                                  function type
 
-                  |     `forall` *typevar* `::` *kind* `.` *type*    universal type
+                  |     `forall` *typevar* `::` *kind* `.` *type*           universal type
 
-                  |     *type type*                                  type operator application
+                  |     *type type*                                         type operator application
 
-                  |     `{` *tupletypes* `}`                         tuple type
+                  |     `{` *tupletypes* `}`                                tuple type
 
  *tupletypes*   $\to$   *type*
 
                   |     *type* `,` *tupletypes*
 
-       *kind*   $\to$   `*`                                          kind of proper type
+       *kind*   $\to$   `*`                                                 kind of proper type
 
-                  |     *kind* `=>` *kind*                           kind of type operator
+                  |     *kind* `=>` *kind*                                  kind of type operator
 
-        *var*   $\to$
+        *var*   $\to$   *lower* *alphanum*
 
-    *typevar*   $\to$
+    *typevar*   $\to$   *lower* *alphanum*
 
-   *typename*   $\to$
+   *typename*   $\to$   *upper* *alphanum*
 
-    *conname*   $\to$
+    *conname*   $\to$   *upper* *alphanum*
 
-    *funname*   $\to$
--------------  -------  -------------------------------------------  -----------------------------
+    *funname*   $\to$   *lower* *alphanum*
+-------------  -------  --------------------------------------------------  -------------------------------
 
 Typing
 ======
