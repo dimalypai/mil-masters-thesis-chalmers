@@ -4,44 +4,116 @@
 Syntax
 ======
 
----------------  ------------------
-        `t ::=`  `x`
+-------------  -------  -------------------------------------------  -----------------------------
+    *program*   $\to$   *typedefs fundefs*                           top-level definitions
 
-                 `\x : T -> t`
+   *typedefs*   $\to$   $\varepsilon$                                type definitions
 
-                 `t t`
+                  |     *typedef* `;` *typedefs*
 
-                 `/\X :: K . t`
+    *fundefs*   $\to$   $\varepsilon$                                function definitions
 
-                 `t [T]`
+                  |     *fundef* `;` *fundefs*
 
-        `v ::=`  `\x : T -> t`
+    *typedef*   $\to$   `type` *typename typebinds* `=` *condefs*    type definition
 
-                 `/\X :: K . t`
+     *fundef*   $\to$   *funname* `:` *type* `=` *expr*              function definition
 
-        `T ::=`  `X`
+  *typebinds*   $\to$   $\varepsilon$                                type binders
 
-                 `T -> T`
+                  |     *typebind* *typebinds*
 
-                 `forall X :: K . T`
+   *typebind*   $\to$   `(` *typevar* `::` *kind* `)`                type binder
 
-                 `/\X :: K . T`
+    *condefs*   $\to$   $\varepsilon$                                constructor definitions
 
-                 `T T`
+                  |     *condef* `;` *condefs*
 
- $\Gamma$ `::=`  $\varnothing$
+     *condef*   $\to$   *conname* *confields*                        constructor definition
 
-                 $\Gamma$`, x : T`
+  *confields*   $\to$   $\varepsilon$
 
-                 $\Gamma$`, X :: K`
+                  |     *confield* *confields*
 
-        `K ::=`  `*`
+   *confield*   $\to$   *roughly type*
 
-                 `K => K`
----------------  ------------------
+       *expr*   $\to$   *literal*
+
+                  |     *var*                                        variable
+
+                  |     `\` *var* `:` *type* `->` *expr*             abstraction
+
+                  |     *expr expr*                                  application
+
+                  |     `/\` *typevar* `::` *kind* `.` *expr*        type abstraction
+
+                  |     *expr* `[` *type* `]`                        type application
+
+                  |     `{` *tupleelems* `}`                         tuple
+
+                  |     *expr* `.` *i*                               projection
+
+    *literal*   $\to$   `unit`
+
+                  |     *intlit*
+
+                  |     *floatlit*
+
+                  |     *charlit*
+
+ *tupleelems*   $\to$   *expr*
+
+                  |     *expr* `,` *tupleelems*
+
+       *type*   $\to$   `Unit`
+
+                  |     `Int`
+
+                  |     `Float`
+
+                  |     `Char`
+
+                  |     *typename*                                   type introduced with `type`
+
+                  |     *typevar*                                    type variable
+
+                  |     *type* `->` *type*                           function type
+
+                  |     `forall` *typevar* `::` *kind* `.` *type*    universal type
+
+                  |     *type type*                                  type operator application
+
+                  |     `{` *tupletypes* `}`                         tuple type
+
+ *tupletypes*   $\to$   *type*
+
+                  |     *type* `,` *tupletypes*
+
+       *kind*   $\to$   `*`                                          kind of proper type
+
+                  |     *kind* `=>` *kind*                           kind of type operator
+
+        *var*   $\to$
+
+    *typevar*   $\to$
+
+   *typename*   $\to$
+
+    *conname*   $\to$
+
+    *funname*   $\to$
+-------------  -------  -------------------------------------------  -----------------------------
 
 Typing
 ======
+
+---------  -------  -----------------------------------  -----------------------
+ $\Gamma$   $\to$   $\varnothing$                        empty context
+
+                    $\Gamma$`,` *var* `:` *type*         variable binding
+
+                    $\Gamma$`,` *typevar* `::` *kind*    type variable binding
+---------  -------  -----------------------------------  -----------------------
 
 \infrule[T-Var]{x : T \in \Gamma}{\Gamma \vdash x : T}
 
