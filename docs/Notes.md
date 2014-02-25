@@ -89,3 +89,11 @@ Notes:
 * References, multiple variables, efficiency. Probably, we need to have them.
 * Type system: tuples, variants, iso-recursive types (maybe later, equi just NO).
 
+Meeting 2014-02-24
+==================
+
+* System F vs F-omega, probably don't need kinds
+* Variant types
+* Source functional language with fixed set of monads
+* OO and variants (super class field). One ADT for each class
+
