@@ -145,20 +145,50 @@ Typing
                     $\Gamma$`,` *typevar* `::` *kind*    type variable binding
 ---------  -------  -----------------------------------  -----------------------
 
+\infax[T-Unit]{\Gamma \vdash unit : Unit}
+
+\infax[T-Int]{\Gamma \vdash intlit : Int}
+
+\infax[T-Float]{\Gamma \vdash floatlit : Float}
+
+\infax[T-Char]{\Gamma \vdash charlit : Char}
+
 \infrule[T-Var]{x : T \in \Gamma}{\Gamma \vdash x : T}
 
-\infrule[T-Abs]{\Gamma \vdash T_1 :: * \andalso \Gamma, x : T_1 \vdash t_2 : T_2}{\Gamma \vdash \lambda x : T_1 \to t_2 : T_1 \to T_2}
+\infrule[T-Abs]{\Gamma \vdash T_1 :: * \andalso \Gamma, x : T_1 \vdash e_2 : T_2}{\Gamma \vdash \lambda x : T_1 \to e_2 : T_1 \to T_2}
 
-\infrule[T-App]{\Gamma \vdash t_1 : T_{11} \to T_{12} \andalso \Gamma \vdash t_2 : T_{11}}{\Gamma \vdash t_1\ t_2 : T_{12}}
+\infrule[T-App]{\Gamma \vdash e_1 : T_{11} \to T_{12} \andalso \Gamma \vdash e_2 : T_{11}}{\Gamma \vdash e_1\ e_2 : T_{12}}
 
-\infrule[T-TAbs]{\Gamma, X :: K_1 \vdash t_2 : T_2}{\Gamma \vdash \Lambda X :: K_1\ .\ t_2 : forall\ X :: K_1\ .\ T_2}
+\infrule[T-TAbs]{\Gamma, X :: K_1 \vdash e_2 : T_2}{\Gamma \vdash \Lambda X :: K_1\ .\ e_2 : forall\ X :: K_1\ .\ T_2}
 
-\infrule[T-TApp]{\Gamma \vdash t_1 : forall\ X :: K_{11}\ .\ T_{12} \andalso \Gamma \vdash T_2 :: K_{11}}{\Gamma \vdash t_1\ [T_2] : [X \mapsto T_2]T_{12}}
+\infrule[T-TApp]{\Gamma \vdash e_1 : forall\ X :: K_{11}\ .\ T_{12} \andalso \Gamma \vdash T_2 :: K_{11}}{\Gamma \vdash e_1\ [T_2] : [X \mapsto T_2]T_{12}}
 
-\infrule[T-Eq]{\Gamma \vdash t : S \andalso S \equiv T \andalso \Gamma \vdash T :: *}{\Gamma \vdash t : T}
+\infrule[T-Eq]{\Gamma \vdash e : S \andalso S \equiv T \andalso \Gamma \vdash T :: *}{\Gamma \vdash e : T}
+
+\infrule[T-TypeDef]{}{}
+
+\infrule[T-Tuple]{for\ each\ i \andalso \Gamma \vdash e_i : T_i}{\Gamma \vdash \{ e_{i = 1..n} \} : \{ T_{i = 1..n} \}}
+
+\infrule[T-Proj]{\Gamma \vdash e : \{ T_{i = 1..n}\}}{\Gamma \vdash e.j : T_j}
+
+\infrule[T-Let]{\Gamma \vdash e_1 : M\ T_1 \andalso \Gamma, x : T_1 \vdash e_2 : M\ T_2}{\Gamma \vdash let\ x : T_1 \gets e_1\ in\ e_2 : M\ T_2}
+
+\infrule[T-Return]{\Gamma \vdash e : T}{\Gamma \vdash return\ e : M\ T}
+
+\infrule[T-LetRec]{\Gamma \vdash e_1 : T_1 \andalso \Gamma, x : T_1 \vdash e_2 : T_2}{\Gamma \vdash let\ rec\ x : T_1 = e_1\ in\ e_2 : T_2}
+
+\infrule[T-Case]{}{\Gamma \vdash case\ e\ of\ ...}
 
 Kinding
 =======
+
+\infax[K-Unit]{\Gamma \vdash Unit :: *}
+
+\infax[K-Int]{\Gamma \vdash Int :: *}
+
+\infax[K-Float]{\Gamma \vdash Float :: *}
+
+\infax[K-Char]{\Gamma \vdash Char :: *}
 
 \infrule[K-TVar]{X :: K \in \Gamma}{\Gamma \vdash X :: K}
 
@@ -169,6 +199,10 @@ Kinding
 \infrule[K-Arrow]{\Gamma \vdash T_1 :: * \andalso \Gamma \vdash T_2 :: *}{\Gamma \vdash T_1 \to T_2 :: *}
 
 \infrule[K-All]{\Gamma, X :: K_1 \vdash T_2 :: *}{\Gamma \vdash forall\ X :: K_1\ .\ T_2 :: *}
+
+\infrule[K-Tuple]{}{}
+
+\infrule[K-TypeOp]{}{}
 
 Type equivalence (parallel reduction)
 =====================================
