@@ -72,9 +72,9 @@ Syntax
 
                   |     `_`
 
-   *typename*   $\to$
+   *typename*   $\to$   *upper* *alphanum*
 
-    *funname*   $\to$
+    *funname*   $\to$   *lower* *alphanum*
 -------------  -------  --------------------------------------------------  -------------------------------
 
 Typing

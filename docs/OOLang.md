@@ -6,18 +6,18 @@ Example program
 
 ```Cs
 fun main : Unit =>
-  mutable x : int <- 1;
   x : Mutable Int <- 1;
   y : Int = 1;
   z : Int = if x = 1 then 2 else 3;
+  x1 : Int = !x; // ! : Mutable/Ref A -> A
+  f (\x -> x) !x
 end
 
-fun f : (n : Int) -> Unit =>
+fun f : (func : Int -> Int) -> (n : Int) -> Unit =>
   h {n, true};
 end
 
 pure fun g : (m : Int) -> (n : Int) -> Maybe Int =>
-  mutable i : int;
   i : Mutable Int;
   i <- 0;
   while (i < n) do
@@ -27,30 +27,22 @@ pure fun g : (m : Int) -> (n : Int) -> Maybe Int =>
 end
 
 fun h : {fst : Int, snd : Bool} -> Unit =>
+//fun h : (p : {Int, Bool}) -> Unit =>
   ...
 end
 
 class Shape =>
-  private field : int;
-  private mutable mutField : int;
-  private refField : ref int;
-
-  field : private Int = 1;
-  mutField : private Mutable Int <- 2;
-  refField : private Ref Int = new 1;
-
   private field : Int = 1;
   private mutField : Mutable Int <- 2;
   private refField : Ref Int = new 1;
 
-  public new => ...
+  public new => end
 
-  public draw : Unit => ...
+  public draw : Unit => unit end
 end
 
 class Circle < Shape =>
   private static fortyTwo : Int = 42;
-  fortyTwo : private static Int = 42;
 
   public setRadius : (r : Int) -> Unit =>
     ...
@@ -101,9 +93,25 @@ Syntax
 
     *argtype*   $\to$   `(` *name* `:` *type* `)`
 
-   *atomtype*   $\to$   `Unit`
+    *funbody*   $\to$   *statements*
 
-                  |     `Int`
+*memberdecls*   $\to$   $\varepsilon$
+
+                  |     *memberdecl* *memberdecls*
+
+ *memberdecl*   $\to$   *fielddecl*
+
+                  |     *methoddecl*
+
+ *statements*   $\to$   $\varepsilon$
+
+                  |     *statement* `;` *statements*
+
+  *statement*   $\to$   *namedecl*
+
+                  |     *expr*
+
+                  |     *assignment*
 
        *type*   $\to$   *atomtype*
 
@@ -113,23 +121,9 @@ Syntax
 
                   |     *type* `->` *type*
 
-    *funbody*   $\to$   *statements*
+   *atomtype*   $\to$   `Unit`
 
-*memberdecls*   $\to$   $\varepsilon$
-
-                  |     *memberdecl* *memberdecls*
-
- *statements*   $\to$   $\varepsilon$
-
-                  |     *statement* `;` *statements*
-
- *memberdecl*   $\to$   *fielddecl*
-
-                  |     *methoddecl*
-
-  *statement*   $\to$   *namedecl*
-
-                  |     *expr*
+                  |     `Int`
 
   *classname*   $\to$   *upper* *alphanum*
 
