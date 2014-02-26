@@ -13,4 +13,5 @@
         - <http://www.haskell.org/haskellwiki/Extensible_datatypes>
     + type classes (too much)
     + maybe have just one handler for exception in general
+* Side-effects: fixed set/hierarchy of monads
 

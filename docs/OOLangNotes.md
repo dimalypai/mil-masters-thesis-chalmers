@@ -1,4 +1,4 @@
-% Object-oriented Programming Language Notes
+% Object-Oriented Programming Language Notes
 % Dmytro Lypai (900620-7113, lypai@student.chalmers.se)
 
 * Python, C#, F# and Haskell inspired syntax: almost no curly braces, indentation based
