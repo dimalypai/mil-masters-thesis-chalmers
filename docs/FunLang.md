@@ -9,6 +9,9 @@ type Bool = True | False
 
 type Pair F S = Pair F S
 
+type Tree A = Empty
+            | Node A (Tree A) (Tree A)
+
 not : Bool -> Bool
 not True = False
 not _    = True
@@ -18,6 +21,10 @@ id = /\T . \x : T -> x
 
 id2 : forall A . A -> A
 id2 t x = x
+
+isZero : Int -> Bool
+isZero 0 = True
+isZero _ = False
 
 main : IO Unit
 main = do

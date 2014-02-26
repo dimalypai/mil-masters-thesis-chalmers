@@ -4,8 +4,8 @@
 * Pure strict (call-by-value) functional language
 * Mostly inspired by F#/ML and Haskell
 * Hindley-Milner type system (polymorphism and inference)
-* Variant types, records, pattern matching
-* Special features: maybe try something like 'terminates' modifier
+* Variant types (iso-recursive), pattern matching
+* Special features: maybe try something like 'terminates' and/or 'total' modifier
 * Think about exceptions:
     + here it is harder to handle different types with ability to add new than in OO because we don't have subtyping
     + extensible variants (expression problem)
