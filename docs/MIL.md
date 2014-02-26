@@ -179,11 +179,17 @@ Typing
 
 \infrule[T-Proj]{\Gamma \vdash e : \{ T_{i = 1..n}\}}{\Gamma \vdash e.j : T_j}
 
-\infrule[T-Let]{\Gamma \vdash e_1 : M\ T_1 \andalso \Gamma, x : T_1 \vdash e_2 : M\ T_2}{\Gamma \vdash let\ x : T_1 \gets e_1\ in\ e_2 : M\ T_2}
+\infrule[T-Ref]{\Gamma \vdash e : T}{\Gamma \vdash new\ e : State\ (Ref\ T)}
+
+\infrule[T-Deref]{\Gamma \vdash e : Ref\ T}{\Gamma \vdash\ !e : State\ T}
+
+\infrule[T-Assign]{\Gamma \vdash e_1 : Ref\ T \andalso \Gamma \vdash e_2 : T}{\Gamma \vdash e_1 := e_2 : State\ Unit}
+
+\infrule[T-Let]{\Gamma \vdash e_1 : M_1\ T_1 \andalso \Gamma, x : T_1 \vdash e_2 : M_2\ T_2}{\Gamma \vdash let\ x : T_1 \gets e_1\ in\ e_2 : M_2\ T_2}
 
 \infrule[T-Return]{\Gamma \vdash e : T}{\Gamma \vdash return\ e : M\ T}
 
-\infrule[T-LetRec]{\Gamma \vdash e_1 : T_1 \andalso \Gamma, x : T_1 \vdash e_2 : T_2}{\Gamma \vdash let\ rec\ x : T_1 = e_1\ in\ e_2 : T_2}
+\infrule[T-LetRec]{\Gamma \vdash e_1 : M_1\ T_1 \andalso \Gamma, x : T_1 \vdash e_2 : M_2\ T_2}{\Gamma \vdash let\ rec\ x : T_1 \gets e_1\ in\ e_2 : M_2\ T_2}
 
 \infrule[T-Case]{}{\Gamma \vdash case\ e\ of\ ...}
 
