@@ -23,17 +23,18 @@ id2 : forall A . A -> A
 id2 t x = x
 
 isZero : Int -> Bool
-isZero 0 = True
-isZero _ = False
+isZero n = case n of
+  | 0 -> True;
+  | _ -> False;
 
 main : IO Unit
 main = do
-  i <- readInt
-  printInt i
+  i <- readInt;
+  printInt i;
 
 stateful : Int -> State Unit
 stateful i = do
-  put i
+  put i;
 
 doinput : Input Int
 doinput = readInt
