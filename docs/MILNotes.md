@@ -39,6 +39,7 @@ Type system:
     + but Gulf and Benton have them, although Tolmach and GRIN don't
     + probably, can be beneficial for OO and other impure languages
     + challenge with System F
+    + how typing rules should look like (containing State effect)
 * connection between, for example, generics in the source OO language and System F?
 * think about value and computation types distinction (as in Bridging the gulf
   and Benton). They don't have Id, that can express value types as

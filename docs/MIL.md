@@ -53,6 +53,12 @@ Syntax
 
                   |     *expr* `.` *i*                                      projection
 
+                  |     `new` *expr*                                        reference creation
+
+                  |     `!`*expr*                                           dereferencing
+
+                  |     *expr* `:=` *expr*                                  assignment
+
                   |     `let` *var* `:` *type* `<-` *expr* `in` *expr*      name binding
 
                   |     `return` *expr*                                     monadic return
@@ -67,7 +73,9 @@ Syntax
 
     *casealt*   $\to$   *casebind* `->` *expr*
 
-   *casebind*   $\to$   *conname* *varbinds*                                data constructor binder
+   *casebind*   $\to$   *varbind*                                           variable binder
+
+                  |     *conname* *varbinds*                                data constructor binder
 
                   |     *literal*                                           literal case
 
@@ -125,7 +133,7 @@ Syntax
 
         *var*   $\to$   *lower* *alphanum*
 
-    *typevar*   $\to$   *lower* *alphanum*
+    *typevar*   $\to$   *upper* *alphanum*
 
    *typename*   $\to$   *upper* *alphanum*
 
