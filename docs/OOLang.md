@@ -4,13 +4,13 @@
 Example program
 ===============
 
-```Cs
+```haskell
 fun main : Unit =>
   x : Mutable Int <- 1;
   y : Int = 1;
   z : Int = if x = 1 then 2 else 3;
   x1 : Int = !x; // ! : Mutable/Ref A -> A
-  f (\x -> x) !x;
+  f (\y -> y) !x;
 end
 
 fun f : (func : Int -> Int) -> (n : Int) -> Unit =>
@@ -22,7 +22,7 @@ pure fun g : (p : {Int, Bool}) -> (m : Maybe Int) -> Maybe Int =>
   x1 : Mutable (Maybe Int);
   x2 : Maybe Int; // nothing, immutable
   x1 <- just 0;
-  n : Int = m ?? 0;
+  n : Int = m ?? 0; // ?? : Maybe A -> A -> A
   while (i < n) do
     i++;
   end;
@@ -33,6 +33,7 @@ fun h : {fst : Int, snd : Bool} -> Unit =>
   obj1 : Mutable Circle <- Circle.new;
   obj2 : Mutable (Maybe Circle) <- nothing;
   a : Int = obj1.area;
+  // ? : [Mutable/Ref] Maybe A -> A.method (: [C ->] B) -> [Mutable/Ref?] Maybe B
   ma : Maybe Int = obj2 ? area;
 end
 
