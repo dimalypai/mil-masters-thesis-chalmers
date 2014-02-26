@@ -10,25 +10,30 @@ fun main : Unit =>
   y : Int = 1;
   z : Int = if x = 1 then 2 else 3;
   x1 : Int = !x; // ! : Mutable/Ref A -> A
-  f (\x -> x) !x
+  f (\x -> x) !x;
 end
 
 fun f : (func : Int -> Int) -> (n : Int) -> Unit =>
   h {n, true};
 end
 
-pure fun g : (m : Int) -> (n : Int) -> Maybe Int =>
-  i : Mutable Int;
-  i <- 0;
+pure fun g : (p : {Int, Bool}) -> (m : Maybe Int) -> Maybe Int =>
+  i : Mutable Int <- 0;
+  x1 : Mutable (Maybe Int);
+  x2 : Maybe Int; // nothing, immutable
+  x1 <- just 0;
+  n : Int = m ?? 0;
   while (i < n) do
     i++;
   end;
-  just m;
+  just !i;
 end
 
 fun h : {fst : Int, snd : Bool} -> Unit =>
-//fun h : (p : {Int, Bool}) -> Unit =>
-  ...
+  obj1 : Mutable Circle <- Circle.new;
+  obj2 : Mutable (Maybe Circle) <- nothing;
+  a : Int = obj1.area;
+  ma : Maybe Int = obj2 ? area;
 end
 
 class Shape =>
@@ -113,13 +118,17 @@ Syntax
 
                   |     *assignment*
 
-       *type*   $\to$   *atomtype*
+       *type*   $\to$   *maybetype*
 
-                  |     `Mutable` *atomtype*
+                  |     `Mutable` *maybetype*
 
-                  |     `Ref` *atomtype*
+                  |     `Ref` *maybetype*
 
                   |     *type* `->` *type*
+
+  *maybetype*   $\to$   *atomtype*
+
+                  |     `Maybe` *atomtype*
 
    *atomtype*   $\to$   `Unit`
 
