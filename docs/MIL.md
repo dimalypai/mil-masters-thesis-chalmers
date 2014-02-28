@@ -25,7 +25,7 @@ Syntax
 
    *typebind*   $\to$   `(` *typevar* `::` *kind* `)`                       type binder
 
-    *condefs*   $\to$   $\varepsilon$                                       data constructor definitions
+    *condefs*   $\to$   *condef* `;`                                        data constructor definitions
 
                   |     *condef* `;` *condefs*
 
