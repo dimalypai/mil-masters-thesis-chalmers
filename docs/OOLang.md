@@ -108,6 +108,34 @@ Syntax
 
                   |     *assignment*
 
+*declaration*   $\to$   *name* `:` *type* *optinit*
+
+    *optinit*   $\to$   `=` *expr*
+
+                  |     `<-` *expr*
+
+       *expr*   $\to$   *literal*
+
+                  |     *name*
+
+                  |     *expr expr*
+
+                  |     *expr*`.`*expr*
+
+                  |     *expr* `?` *expr*
+
+                  |     *classname*`::`*expr*
+
+                  |     *expr* `??` *expr*
+
+                  |     `new` *expr*
+
+                  |     `!`*expr*
+
+ *assignment*   $\to$   *expr* `<-` *expr*
+
+                  |     *expr* `:=` *expr*
+
        *type*   $\to$   *maybetype*
 
                   |     `Mutable` *maybetype*
@@ -123,6 +151,8 @@ Syntax
    *atomtype*   $\to$   `Unit`
 
                   |     `Int`
+
+                  |     *classname*
 
     *funtype*   $\to$   *type*
 
@@ -161,4 +191,12 @@ Syntax
 
 Typing
 ======
+
+---------  -------  -----------------------------------  -----------------------
+ $\Gamma$   $\to$   $\varnothing$                        empty context
+
+                    $\Gamma$`,` *var* `:` *type*         variable binding
+
+                    $\Gamma$`,` *typevar*                type variable binding
+---------  -------  -----------------------------------  -----------------------
 

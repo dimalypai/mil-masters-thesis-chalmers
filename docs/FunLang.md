@@ -58,7 +58,21 @@ Syntax
 
                   |     *fundef*
 
-    *typedef*   $\to$   `type` *typename typebinds* `=` ...
+    *typedef*   $\to$   `type` *typename typebinds* `=` *condefs*
+
+  *typebinds*   $\to$   $\varepsilon$
+
+                  |     *typevar* *typebinds*
+
+    *condefs*   $\to$   *condef*
+
+                  |     *condef* `|` *condefs*
+
+     *condef*   $\to$   *conname* *confields*
+
+  *confields*   $\to$   $\varepsilon$
+
+                  |     *type* *confields*
 
      *fundef*   $\to$   *funtype* *funeqs*
 
@@ -72,19 +86,73 @@ Syntax
 
      *params*   $\to$   $\varepsilon$
 
-                  |     *param* *params*
+                  |     *pattern* *params*
 
-      *param*   $\to$   *var*
+    *pattern*   $\to$   *name*
+
+                  |     *literal*
+
+                  |     *conname* *fieldpats*
+
+                  |     `_`
+
+  *fieldpats*   $\to$   $\varepsilon$
+
+                  |     *fieldpat* *fieldpats*
+
+   *fieldpat*   $\to$   *name*
 
                   |     *literal*
 
                   |     `_`
 
+                  |     `(` *conname* *fieldpats* `)`
+
+       *expr*   $\to$   *literal*
+
+                  |     *name*
+
+                  |     `\` *namebinders* `->` *expr*
+
+                  |     *expr expr*
+
+                  |     `/\` *typevar* `.` *expr*
+
+                  |     *expr* `[` *type* `]`
+
+*namebinders*   $\to$   *namebinder*
+
+                  |     *namebinder* *namebinders*
+
+ *namebinder*   $\to$   `(` *name* `:` *type* `)`
+
+       *type*   $\to$   `Unit`
+
+                  |     `Int`
+
+                  |     *typename*
+
+                  |     *type* *type*
+
    *typename*   $\to$   *upper* *alphanum*
 
+    *typevar*   $\to$   *upper* *alphanum*
+
+    *conname*   $\to$   *upper* *alphanum*
+
     *funname*   $\to$   *lower* *alphanum*
+
+       *name*   $\to$   *lower* *alphanum*
 -------------  -------  --------------------------------------------------  -------------------------------
 
 Typing
 ======
+
+---------  -------  -----------------------------------  -----------------------
+ $\Gamma$   $\to$   $\varnothing$                        empty context
+
+                    $\Gamma$`,` *var* `:` *type*         variable binding
+
+                    $\Gamma$`,` *typevar*                type variable binding
+---------  -------  -----------------------------------  -----------------------
 

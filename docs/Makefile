@@ -8,8 +8,8 @@ langs: MILNotes.md FunLangNotes.md OOLangNotes.md MIL.md FunLang.md OOLang.md
 	pandoc --variable mainfont=Palatino --variable fontsize=12pt --variable geometry:margin=1in FunLangNotes.md --latex-engine=xelatex -o FunLangNotes.pdf
 	pandoc --variable mainfont=Palatino --variable fontsize=12pt --variable geometry:margin=1in OOLangNotes.md --latex-engine=xelatex -o OOLangNotes.pdf
 	pandoc --variable mainfont=Palatino --variable monofont=Monaco --variable mathfont=Monaco --variable fontsize=11pt --variable geometry:margin=1in MIL.md --latex-engine=xelatex --template=template.latex -o MIL.pdf
-	pandoc --variable mainfont=Palatino --variable monofont=Monaco --variable fontsize=11pt --variable geometry:margin=1in FunLang.md --latex-engine=xelatex -o FunLang.pdf
-	pandoc --variable mainfont=Palatino --variable monofont=Monaco --variable fontsize=11pt --variable geometry:margin=1in OOLang.md --latex-engine=xelatex -o OOLang.pdf
+	pandoc --variable mainfont=Palatino --variable monofont=Monaco --variable mathfont=Monaco --variable fontsize=11pt --variable geometry:margin=1in FunLang.md --latex-engine=xelatex --template=template.latex -o FunLang.pdf
+	pandoc --variable mainfont=Palatino --variable monofont=Monaco --variable mathfont=Monaco --variable fontsize=11pt --variable geometry:margin=1in OOLang.md --latex-engine=xelatex --template=template.latex -o OOLang.pdf
 clean:
 	rm -f Planning.aux Planning.pdf Planning.log Planning.synctex.gz
 	rm -f Notes.aux Notes.pdf Notes.log Notes.synctex.gz
