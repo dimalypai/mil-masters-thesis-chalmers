@@ -15,15 +15,13 @@ Syntax
 
                   |     *fundef* `;` *fundefs*
 
-    *typedef*   $\to$   `type` *typename typebinds* `=` *condefs*           type definition
+    *typedef*   $\to$   `type` *typename typevars* `=` *condefs*            type definition
 
      *fundef*   $\to$   *funname* `:` *type* `=` *expr*                     function definition
 
-  *typebinds*   $\to$   $\varepsilon$                                       type binders
+   *typevars*   $\to$   $\varepsilon$                                       type variables
 
-                  |     *typebind* *typebinds*
-
-   *typebind*   $\to$   `(` *typevar* `::` *kind* `)`                       type binder
+                  |     *typevar* *typevars*
 
     *condefs*   $\to$   *condef* `;`                                        data constructor definitions
 
@@ -33,9 +31,7 @@ Syntax
 
   *confields*   $\to$   $\varepsilon$
 
-                  |     *confield* *confields*
-
-   *confield*   $\to$   *roughly type*                                      data constructor field
+                  |     *type* *confields*
 
        *expr*   $\to$   *literal*
 
@@ -45,7 +41,7 @@ Syntax
 
                   |     *expr expr*                                         application
 
-                  |     `/\` *typevar* `::` *kind* `.` *expr*               type abstraction
+                  |     `/\` *typevar* `.` *expr*                           type abstraction
 
                   |     *expr* `[` *type* `]`                               type application
 
@@ -117,7 +113,7 @@ Syntax
 
                   |     *type* `->` *type*                                  function type
 
-                  |     `forall` *typevar* `::` *kind* `.` *type*           universal type
+                  |     `forall` *typevar* `.` *type*                       universal type
 
                   |     *type type*                                         type operator application
 
@@ -126,10 +122,6 @@ Syntax
  *tupletypes*   $\to$   *type*
 
                   |     *type* `,` *tupletypes*
-
-       *kind*   $\to$   `*`                                                 kind of proper type
-
-                  |     *kind* `=>` *kind*                                  kind of type operator
 
         *var*   $\to$   *lower* *alphanum*
 
@@ -150,7 +142,7 @@ Typing
 
                     $\Gamma$`,` *var* `:` *type*         variable binding
 
-                    $\Gamma$`,` *typevar* `::` *kind*    type variable binding
+                    $\Gamma$`,` *typevar*                type variable binding
 ---------  -------  -----------------------------------  -----------------------
 
 \infax[T-Unit]{\Gamma \vdash unit : Unit}
@@ -163,15 +155,13 @@ Typing
 
 \infrule[T-Var]{x : T \in \Gamma}{\Gamma \vdash x : T}
 
-\infrule[T-Abs]{\Gamma \vdash T_1 :: * \andalso \Gamma, x : T_1 \vdash e_2 : T_2}{\Gamma \vdash \lambda x : T_1 \to e_2 : T_1 \to T_2}
+\infrule[T-Abs]{\Gamma, x : T_1 \vdash e_2 : T_2}{\Gamma \vdash \lambda x : T_1 \to e_2 : T_1 \to T_2}
 
 \infrule[T-App]{\Gamma \vdash e_1 : T_{11} \to T_{12} \andalso \Gamma \vdash e_2 : T_{11}}{\Gamma \vdash e_1\ e_2 : T_{12}}
 
-\infrule[T-TAbs]{\Gamma, X :: K_1 \vdash e_2 : T_2}{\Gamma \vdash \Lambda X :: K_1\ .\ e_2 : forall\ X :: K_1\ .\ T_2}
+\infrule[T-TAbs]{\Gamma, X \vdash e_2 : T_2}{\Gamma \vdash \Lambda X\ .\ e_2 : forall\ X\ .\ T_2}
 
-\infrule[T-TApp]{\Gamma \vdash e_1 : forall\ X :: K_{11}\ .\ T_{12} \andalso \Gamma \vdash T_2 :: K_{11}}{\Gamma \vdash e_1\ [T_2] : [X \mapsto T_2]T_{12}}
-
-\infrule[T-Eq]{\Gamma \vdash e : S \andalso S \equiv T \andalso \Gamma \vdash T :: *}{\Gamma \vdash e : T}
+\infrule[T-TApp]{\Gamma \vdash e_1 : forall\ X\ .\ T_{12}}{\Gamma \vdash e_1\ [T_2] : [X \mapsto T_2]T_{12}}
 
 \infrule[T-TypeDef]{}{}
 
@@ -192,44 +182,4 @@ Typing
 \infrule[T-LetRec]{\Gamma \vdash e_1 : M_1\ T_1 \andalso \Gamma, x : T_1 \vdash e_2 : M_2\ T_2}{\Gamma \vdash let\ rec\ x : T_1 \gets e_1\ in\ e_2 : M_2\ T_2}
 
 \infrule[T-Case]{}{\Gamma \vdash case\ e\ of\ ...}
-
-Kinding
-=======
-
-\infax[K-Unit]{\Gamma \vdash Unit :: *}
-
-\infax[K-Int]{\Gamma \vdash Int :: *}
-
-\infax[K-Float]{\Gamma \vdash Float :: *}
-
-\infax[K-Char]{\Gamma \vdash Char :: *}
-
-\infrule[K-TVar]{X :: K \in \Gamma}{\Gamma \vdash X :: K}
-
-\infrule[K-Abs]{\Gamma, X :: K_1 \vdash T_2 :: K_2}{\Gamma \vdash \Lambda X :: K_1\ .\ T_2 :: K_1 \Rightarrow K_2}
-
-\infrule[K-App]{\Gamma \vdash T_1 :: K_{11} \Rightarrow K_{12} \andalso \Gamma \vdash T_2 :: K_{11}}{\Gamma \vdash T_1\ T_2 :: K_{12}}
-
-\infrule[K-Arrow]{\Gamma \vdash T_1 :: * \andalso \Gamma \vdash T_2 :: *}{\Gamma \vdash T_1 \to T_2 :: *}
-
-\infrule[K-All]{\Gamma, X :: K_1 \vdash T_2 :: *}{\Gamma \vdash forall\ X :: K_1\ .\ T_2 :: *}
-
-\infrule[K-Tuple]{}{}
-
-\infrule[K-TypeOp]{}{}
-
-Type equivalence (parallel reduction)
-=====================================
-
-\infax[QR-Refl]{T \Rrightarrow T}
-
-\infrule[QR-Arrow]{S_1 \Rrightarrow T_1 \andalso S_2 \Rrightarrow T_2}{S_1 \to S_2 \Rrightarrow T_1 \to T_2}
-
-\infrule[QR-All]{S_2 \Rrightarrow T_2}{forall\ X :: K_1\ .\ S_2 \Rrightarrow forall\ X :: K_1\ .\ T_2}
-
-\infrule[QR-Abs]{S_2 \Rrightarrow T_2}{\Lambda X :: K_1\ .\ S_2 \Rrightarrow \Lambda X :: K_1\ .\ T_2}
-
-\infrule[QR-App]{S_1 \Rrightarrow T_1 \andalso S_2 \Rrightarrow T_2}{S_1\ S_2 \Rrightarrow T_1\ T_2}
-
-\infrule[QR-AppAbs]{S_{12} \Rrightarrow T_{12} \andalso S_2 \Rrightarrow T_2}{(\Lambda X :: K_{11}\ .\ S_{12})\ S_2 \Rrightarrow [X \mapsto T_2]T_{12}}
 
