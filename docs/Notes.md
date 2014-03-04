@@ -97,3 +97,11 @@ Meeting 2014-02-24
 * Source functional language with fixed set of monads
 * OO and variants (super class field). One ADT for each class
 
+Meeting 2014-03-03
+==================
+
+* Kinding (arrows for type operators, but only * for types and type variables)
+* Typing rules
+* OOLang: Maybe only for Ref
+* References in MIL, no need in pure State
+
