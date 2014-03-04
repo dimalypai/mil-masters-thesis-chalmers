@@ -151,8 +151,30 @@ Typing
 ---------  -------  -----------------------------------  -----------------------
  $\Gamma$   $\to$   $\varnothing$                        empty context
 
-                    $\Gamma$`,` *var* `:` *type*         variable binding
+              |     $\Gamma$`,` *var* `:` *type*         variable binding
 
-                    $\Gamma$`,` *typevar*                type variable binding
+              |     $\Gamma$`,` *typevar*                type variable binding
+
+              |     $\Gamma$`,` *typename* `::` *kind*   type operator binding
+
+              |     $\Gamma$`,` *conname* `:` *type*     constructor binding
 ---------  -------  -----------------------------------  -----------------------
+
+\infax[T-TypeDefsEmpty]{\Gamma \vdash \emph{empty typedefs}\ valid\ |\ \Gamma}
+
+\infrule[T-TypeDefs]{\Gamma \vdash \emph{typedef}\ valid\ |\ \Gamma_1 \andalso \Gamma_1 \vdash \emph{typedefs}\ valid\ |\ \Gamma_2}{\Gamma \vdash \emph{typedef:typedefs}\ valid\ |\ \Gamma_2}
+
+\infrule[T-TypeDefEmpty]{T \notin \Gamma \andalso \Gamma, T :: * \vdash \emph{condefs}\ valid\ |\ \Gamma_1}{\Gamma \vdash type\ T = \emph{condefs}\ valid\ |\ \Gamma_1}
+
+\infrule[T-TypeDef]{T \notin \Gamma \andalso \Gamma, T :: \overbrace{* \Rightarrow ... \Rightarrow *}^{n+1}, X_1, ..., X_n \vdash \emph{condefs}\ valid\ |\ \Gamma_1}{\Gamma \vdash type\ T\ X_1 ... X_n = \emph{condefs}\ valid\ |\ \Gamma_1 \setminus \{ X_1,...,X_n \}}
+
+\infrule[T-ConDefs]{\Gamma \vdash \emph{condef}\ valid\ |\ \Gamma_1 \andalso \Gamma_1 \vdash \emph{condefs}\ valid\ |\ \Gamma_2}{\Gamma \vdash \emph{condef:condefs}\ valid\ |\ \Gamma_2}
+
+\infrule[T-ConDefEmpty]{C \notin \Gamma \andalso C \in T \andalso \Gamma, C : T \vdash \emph{confields}\ valid\ |\ \Gamma_1}{\Gamma \vdash C\ valid\ |\ \Gamma_1}
+
+\infrule[T-ConDef]{C \notin \Gamma \andalso C\ T_1 ... T_n \in T \andalso \Gamma, C : T_1 \to ... \to T_n \to T \vdash \emph{confields}\ valid\ |\ \Gamma_1}{\Gamma \vdash C\ T_1 ... T_n\ valid\ |\ \Gamma_1}
+
+\infax[T-ConFieldsEmpty]{\Gamma \vdash \emph{empty confields}\ valid\ |\ \Gamma}
+
+\infrule[T-ConFields]{\Gamma \vdash \emph{confield}\ \texttt{well-kinded} \andalso \emph{confields}\ valid\ |\ \Gamma}{\Gamma \vdash \emph{confield:confields}\ valid\ |\ \Gamma}
 
