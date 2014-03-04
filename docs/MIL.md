@@ -45,6 +45,8 @@ Syntax
 
                   |     *expr* `[` *type* `]`                               type application
 
+                  |     *conname*                                           data constructor
+
                   |     `{` *tupleelems* `}`                                tuple
 
                   |     *expr* `.` *i*                                      projection
@@ -61,7 +63,7 @@ Syntax
 
                   |     `let rec` *var* `:` *type* `=` *expr* `in` *expr*   recursive binding
 
-                  |     `case` *expr* `of` `{` *casealts* `}`
+                  |     `case` *expr* `of` `{` *casealts* `}`               case expression
 
    *casealts*   $\to$   *casealt*
 
@@ -147,11 +149,11 @@ Typing
 
 \infax[T-Unit]{\Gamma \vdash unit : Unit}
 
-\infax[T-Int]{\Gamma \vdash intlit : Int}
+\infax[T-Int]{\Gamma \vdash \emph{intlit} : Int}
 
-\infax[T-Float]{\Gamma \vdash floatlit : Float}
+\infax[T-Float]{\Gamma \vdash \emph{floatlit} : Float}
 
-\infax[T-Char]{\Gamma \vdash charlit : Char}
+\infax[T-Char]{\Gamma \vdash \emph{charlit} : Char}
 
 \infrule[T-Var]{x : T \in \Gamma}{\Gamma \vdash x : T}
 
@@ -179,7 +181,7 @@ Typing
 
 \infrule[T-Return]{\Gamma \vdash e : T}{\Gamma \vdash return\ e : M\ T}
 
-\infrule[T-LetRec]{\Gamma \vdash e_1 : M_1\ T_1 \andalso \Gamma, x : T_1 \vdash e_2 : M_2\ T_2}{\Gamma \vdash let\ rec\ x : T_1 \gets e_1\ in\ e_2 : M_2\ T_2}
+\infrule[T-LetRec]{\Gamma \vdash e_1 : T_1 \andalso \Gamma, x : T_1 \vdash e_2 : T_2}{\Gamma \vdash let\ rec\ x : T_1 = e_1\ in\ e_2 : T_2}
 
 \infrule[T-Case]{}{\Gamma \vdash case\ e\ of\ ...}
 

@@ -24,8 +24,8 @@ id2 t x = x
 
 isZero : Int -> Bool
 isZero n = case n of
-  | 0 -> True;
-  | _ -> False;
+  | 0 -> True
+  | _ -> False
 
 main : IO Unit
 main = do
@@ -145,8 +145,8 @@ Syntax
        *name*   $\to$   *lower* *alphanum*
 -------------  -------  --------------------------------------------------  -------------------------------
 
-Typing
-======
+Typing and Kinding
+==================
 
 ---------  -------  -----------------------------------  -----------------------
  $\Gamma$   $\to$   $\varnothing$                        empty context
