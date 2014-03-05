@@ -9,6 +9,11 @@ def main : Unit =>
   x : Mutable Int <- 1;
   y : Int = 1;
   z : Int = if x = 1 then 2 else 3;
+  when x = 1 do
+    x++;
+  otherwise
+    x--;
+  end;
   x1 : Int = !x; // ! : Mutable/Ref A -> A
   f (\y -> y) !x;
 end
@@ -108,9 +113,15 @@ Syntax
 
                   |     *assignment*
 
+                  |     *whileloop*
+
+                  |     *when*
+
 *declaration*   $\to$   *name* `:` *type* *optinit*
 
-    *optinit*   $\to$   `=` *expr*
+    *optinit*   $\to$   $\varepsilon$
+
+                  |     `=` *expr*
 
                   |     `<-` *expr*
 
@@ -132,17 +143,43 @@ Syntax
 
                   |     `!`*expr*
 
+                  |     *expr* `+` *expr*
+
+                  |     *expr* `-` *expr*
+
+                  |     *expr* `*` *expr*
+
+                  |     *expr* `/` *expr*
+
+                  |     *expr* `=` *expr*
+
+                  |     *expr* `/=` *expr*
+
+                  |     *expr* `<` *expr*
+
+                  |     *expr* `>` *expr*
+
+                  |     *expr* `<=` *expr*
+
+                  |     *expr* `>=` *expr*
+
+                  |     `if` *expr* `then` *expr* `else` *expr*
+
  *assignment*   $\to$   *expr* `<-` *expr*
 
                   |     *expr* `:=` *expr*
+
+                  |     *expr* `=` *expr*
+
+  *whileloop*   $\to$   `while` *expr* `do` *statements* `end`
+
+       *when*   $\to$   `when` *expr* `do` *statements* `otherwise` *statements* `end`
 
        *type*   $\to$   *maybetype*
 
                   |     `Mutable` *maybetype*
 
                   |     `Ref` *maybetype*
-
-                  |     *type* `->` *type*
 
   *maybetype*   $\to$   *atomtype*
 
@@ -154,6 +191,8 @@ Syntax
 
                   |     *classname*
 
+                  |     *type* `->` *type*
+
     *funtype*   $\to$   *type*
 
                   |     *argtype* `->` *funtype*
@@ -162,11 +201,7 @@ Syntax
 
    *optsuper*   $\to$   $\varepsilon$
 
-                  |     `<` *supers*
-
-     *supers*   $\to$   *classname*
-
-                $\to$   *classname* `,` *supers*
+                  |     `<` *classname*
 
     *optpure*   $\to$   $\varepsilon$
 
