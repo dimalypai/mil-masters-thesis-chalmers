@@ -125,6 +125,10 @@ Syntax
 
                   |     *type* `,` *tupletypes*
 
+       *kind*   $\to$   `*`
+
+                  |     `*` `=>` *kind*
+
         *var*   $\to$   *lower* *alphanum*
 
     *typevar*   $\to$   *upper* *alphanum*
@@ -136,15 +140,19 @@ Syntax
     *funname*   $\to$   *lower* *alphanum*
 -------------  -------  --------------------------------------------------  -------------------------------
 
-Typing
-======
+Typing and Kinding
+==================
 
 ---------  -------  -----------------------------------  -----------------------
  $\Gamma$   $\to$   $\varnothing$                        empty context
 
-                    $\Gamma$`,` *var* `:` *type*         variable binding
+              |     $\Gamma$`,` *var* `:` *type*         variable binding
 
-                    $\Gamma$`,` *typevar*                type variable binding
+              |     $\Gamma$`,` *typevar*                type variable binding
+
+              |     $\Gamma$`,` *typename* `::` *kind*   type operator binding
+
+              |     $\Gamma$`,` *conname* `:` *type*     constructor binding
 ---------  -------  -----------------------------------  -----------------------
 
 \infax[T-Unit]{\Gamma \vdash unit : Unit}
@@ -165,7 +173,9 @@ Typing
 
 \infrule[T-TApp]{\Gamma \vdash e_1 : forall\ X\ .\ T_{12}}{\Gamma \vdash e_1\ [T_2] : [X \mapsto T_2]T_{12}}
 
-\infrule[T-TypeDef]{}{}
+\infrule[T-ConstrNil]{\Gamma \vdash C \in T}{\Gamma \vdash C : T}
+
+\infrule[T-Constr]{\Gamma \vdash C\ T_1 ... T_n \in T}{\Gamma \vdash C : T_1 \to ... \to T_n \to T}
 
 \infrule[T-Tuple]{for\ each\ i \andalso \Gamma \vdash e_i : T_i}{\Gamma \vdash \{ e_{i = 1..n} \} : \{ T_{i = 1..n} \}}
 
@@ -184,4 +194,20 @@ Typing
 \infrule[T-LetRec]{\Gamma \vdash e_1 : T_1 \andalso \Gamma, x : T_1 \vdash e_2 : T_2}{\Gamma \vdash let\ rec\ x : T_1 = e_1\ in\ e_2 : T_2}
 
 \infrule[T-Case]{}{\Gamma \vdash case\ e\ of\ ...}
+
+\infax[K-Unit]{\Gamma \vdash Unit :: *}
+
+\infax[K-Int]{\Gamma \vdash Int :: *}
+
+\infax[K-Float]{\Gamma \vdash Float :: *}
+
+\infax[K-Char]{\Gamma \vdash Char :: *}
+
+\infrule[K-TVar]{X \in \Gamma}{\Gamma \vdash X :: *}
+
+\infrule[K-Typename]{T :: K \in \Gamma}{\Gamma \vdash T :: K}
+
+\infax[K-TypeDefNil]{\Gamma \vdash T :: *}
+
+\infrule[K-TypeDef]{\Gamma \vdash T\ X_1 ... X_n}{\Gamma \vdash T :: * \Rightarrow ... \Rightarrow *}
 
