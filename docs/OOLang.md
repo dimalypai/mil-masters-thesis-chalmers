@@ -195,8 +195,36 @@ Typing
 ---------  -------  -----------------------------------  -----------------------
  $\Gamma$   $\to$   $\varnothing$                        empty context
 
-                    $\Gamma$`,` *var* `:` *type*         variable binding
+              |     $\Gamma$`,` *var* `:` *type*         variable binding
 
-                    $\Gamma$`,` *typevar*                type variable binding
+              |     $\Gamma$`,` *funname* `:` *type*     function binding
+
+              |     $\Gamma$`,` *classname*              class name
 ---------  -------  -----------------------------------  -----------------------
+
+\infax[T-ClassDefsEmpty]{\Gamma \vdash \emph{empty classdefs}\ valid\ |\ \Gamma}
+
+\infrule[T-ClassDefs]{\Gamma \vdash \emph{classdef}\ valid\ |\ \Gamma_1 \andalso \Gamma_1 \vdash \emph{classdefs}\ valid\ |\ \Gamma_2}{\Gamma \vdash \emph{classdef:classdefs}\ valid\ |\ \Gamma_2}
+
+\infrule[T-ClassDef]{C \notin \Gamma \andalso \Gamma, C \vdash \emph{classbody}\ valid\ |\ \Gamma_1}{\Gamma \vdash \texttt{class C => } \emph{classbody}\ end\ valid\ |\ \Gamma_1}
+
+\infrule[T-ClassDefInherit]{C \notin \Gamma \andalso S \in \Gamma \andalso S \not<: C \andalso \Gamma, C \vdash \emph{classbody}\ valid\ |\ \Gamma_1}{\Gamma \vdash \texttt{class C < S => } \emph{classbody}\ end\ valid\ |\ \Gamma_1}
+
+\infax[T-SubRefl]{\texttt{C <: C}}
+
+\infrule[T-Inherit]{\texttt{class C < S => } \emph{classbody}\ end\ valid}{\texttt{C <: S}}
+
+\infrule[T-SubTrans]{\texttt{C <: S} \andalso \texttt{S <: T}}{\texttt{C <: T}}
+
+\infax[T-FunDefsEmpty]{\Gamma \vdash \emph{empty fundefs}\ valid\ |\ \Gamma}
+
+\infrule[T-FunDefs]{\Gamma \vdash \emph{fundef}\ valid\ |\ \Gamma_1 \andalso \Gamma_1 \vdash \emph{fundefs}\ valid\ |\ \Gamma_2}{\Gamma \vdash \emph{fundef:fundefs}\ valid\ |\ \Gamma_2}
+
+\infrule[T-FunDef]{f \notin \Gamma \andalso \Gamma, f : T_1 \to ... \to T_n, x1 : T_1, ... \vdash \emph{funbody}\ valid \andalso \Gamma, f : T_1 \to ... \to T_n, x1 : T_1, ... \vdash e_n : T_n}{\Gamma \vdash \texttt{def f : (x1 : T1) -> ... -> Tn => } \emph{funbody}\ end\ valid\ |\ \Gamma, f : T_1 \to ... \to T_n}
+
+\infrule[T-FunDefPure]{f \notin \Gamma \andalso \Gamma, f : T_1 \to ... \to T_n, x1 : T_1, ... \vdash \emph{funbody}\ purely-valid \andalso \Gamma, f : T_1 \to ... \to T_n, x1 : T_1, ... \vdash e_n : T_n}{\Gamma \vdash \texttt{def pure f : (x1 : T1) -> ... -> Tn => } \emph{funbody}\ end\ valid\ |\ \Gamma, f : T_1 \to ... \to T_n}
+
+\infrule[T-Sub]{\Gamma \vdash e : S \andalso \texttt{S <: T}}{\Gamma \vdash e : T}
+
+In these rules the order of class definitions matters, but in implementation we do an additional pass to collect class names before their checking.
 
