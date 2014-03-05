@@ -22,6 +22,9 @@ id = /\T . \x : T -> x
 id2 : forall A . A -> A
 id2 t x = x
 
+idInt : Int -> Int
+idInt = id [Int]
+
 isZero : Int -> Bool
 isZero n = case n of
   | 0 -> True
@@ -32,7 +35,7 @@ main = do
   i <- readInt;
   printInt i;
 
-stateful : Int -> State Unit
+stateful : Int -> State Int Unit
 stateful i = do
   put i;
 
