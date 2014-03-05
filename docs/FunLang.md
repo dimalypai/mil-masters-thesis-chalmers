@@ -53,7 +53,7 @@ Syntax
 -------------  -------  --------------------------------------------------  -------------------------------
     *program*   $\to$   *topdefs*                                           top-level definitions
 
-    *topdefs*   $\to$   $\varepsilon$
+    *topdefs*   $\to$   *topdef*
 
                   |     *topdef* *topdefs*
 
@@ -61,11 +61,11 @@ Syntax
 
                   |     *fundef*
 
-    *typedef*   $\to$   `type` *typename typebinds* `=` *condefs*
+    *typedef*   $\to$   `type` *typename typevars* `=` *condefs*
 
-  *typebinds*   $\to$   $\varepsilon$
+   *typevars*   $\to$   $\varepsilon$
 
-                  |     *typevar* *typebinds*
+                  |     *typevar* *typevars*
 
     *condefs*   $\to$   *condef*
 
@@ -119,9 +119,19 @@ Syntax
 
                   |     *expr expr*
 
-                  |     `/\` *typevar* `.` *expr*
+                  |     `/\` *typebinders* `.` *expr*
 
                   |     *expr* `[` *type* `]`
+
+                  |     *conname*
+
+                  |     `case` *expr* `of` *casealts*
+
+   *casealts*   $\to$   `|` *casealt*
+
+                  |     `|` *casealt* *casealts*
+
+    *casealt*   $\to$   *pattern* `->` *expr*
 
 *namebinders*   $\to$   *namebinder*
 
@@ -129,11 +139,21 @@ Syntax
 
  *namebinder*   $\to$   `(` *name* `:` *type* `)`
 
+*typebinders*   $\to$   *typevar*
+
+                  |     *typevar* *typebinders*
+
        *type*   $\to$   `Unit`
 
                   |     `Int`
 
                   |     *typename*
+
+                  |     *typevar*
+
+                  |     *type* `->` *type*
+
+                  |     `forall` *typevar* `.` *type*
 
                   |     *type* *type*
 
