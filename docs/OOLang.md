@@ -10,12 +10,12 @@ def main : Unit =>
   y : Int = 1;
   z : Int = if x = 1 then 2 else 3;
   when x = 1 do
-    x++;
+    x <- x + 1;
   otherwise
-    x--;
+    x <- x - 1;
   end;
   x1 : Int = !x; // ! : Mutable/Ref A -> A
-  f (\y -> y) !x;
+  f (\(y : Int) -> y) !x;
 end
 
 def f : (func : Int -> Int) -> (n : Int) -> Unit =>
@@ -29,7 +29,7 @@ def pure g : (p : {Int, Bool}) -> (m : Maybe Int) -> Maybe Int =>
   x1 <- just 0;
   n : Int = m ?? 0; // ?? : Maybe A -> A -> A
   while i < n do
-    i++;
+    i <- i + 1;
   end;
   just !i;
 end
@@ -135,6 +135,8 @@ Syntax
 
                   |     *expr* `?` *expr*
 
+                  |     `\` *namebinders* `->` *expr*
+
                   |     *classname*`::`*expr*
 
                   |     *expr* `??` *expr*
@@ -165,6 +167,16 @@ Syntax
 
                   |     `if` *expr* `then` *expr* `else` *expr*
 
+                  |     `just` *expr*
+
+                  |     `nothing`
+
+*namebinders*   $\to$   *namebinder*
+
+                  |     *namebinder* *namebinders*
+
+ *namebinder*   $\to$   `(` *name* `:` *type* `)`
+
  *assignment*   $\to$   *expr* `<-` *expr*
 
                   |     *expr* `:=` *expr*
@@ -181,9 +193,13 @@ Syntax
 
                   |     `Ref` *maybetype*
 
+                  |     `(` *type* `)`
+
   *maybetype*   $\to$   *atomtype*
 
                   |     `Maybe` *atomtype*
+
+                  |     `(` *maybetype* `)`
 
    *atomtype*   $\to$   `Unit`
 
@@ -195,9 +211,11 @@ Syntax
 
     *funtype*   $\to$   *type*
 
-                  |     *argtype* `->` *funtype*
+                  |     *namebinder* `->` *funtype*
 
-    *argtype*   $\to$   `(` *name* `:` *type* `)`
+    *literal*   $\to$   `unit`
+
+                  |     *intlit*
 
    *optsuper*   $\to$   $\varepsilon$
 
