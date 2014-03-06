@@ -157,6 +157,8 @@ Syntax
 
                   |     *type* *type*
 
+                  |     `(` *type* `)`
+
    *typename*   $\to$   *upper* *alphanum*
 
     *typevar*   $\to$   *upper* *alphanum*
@@ -193,9 +195,13 @@ Typing and Kinding
 
 \infrule[T-ConDefs]{\Gamma \vdash \emph{condef}\ valid\ |\ \Gamma_1 \andalso \Gamma_1 \vdash \emph{condefs}\ valid\ |\ \Gamma_2}{\Gamma \vdash \emph{condef:condefs}\ valid\ |\ \Gamma_2}
 
-\infrule[T-ConDefEmpty]{C \notin \Gamma \andalso C \in T \andalso \Gamma, C : T \vdash \emph{confields}\ valid\ |\ \Gamma_1}{\Gamma \vdash C\ valid\ |\ \Gamma_1}
+\infrule[T-ConDefEmpty]{C \notin \Gamma \andalso C \in T}{\Gamma \vdash C\ valid\ |\ \Gamma, C : T}
 
 \infrule[T-ConDef]{C \notin \Gamma \andalso C\ T_1 ... T_n \in T \andalso \Gamma, C : T_1 \to ... \to T_n \to T \vdash \emph{confields}\ valid\ |\ \Gamma_1}{\Gamma \vdash C\ T_1 ... T_n\ valid\ |\ \Gamma_1}
+
+\infrule[T-ConDefEmptyTypeVars]{C \notin \Gamma \andalso C \in T\ X_1 ... X_n}{\Gamma \vdash C\ valid\ |\ \Gamma, C : T\ X_1 ... X_n}
+
+\infrule[T-ConDefTypeVars]{C \notin \Gamma \andalso C\ T_1 ... T_n \in T\ X_1 ... X_n \andalso \Gamma, C : forall\ X_1 .\ ...\ . forall\ X_n . T_1 \to ... \to T_n \to T\ X_1 ... X_n \vdash \emph{confields}\ valid\ |\ \Gamma_1}{\Gamma \vdash C\ T_1 ... T_n\ valid\ |\ \Gamma_1}
 
 \infax[T-ConFieldsEmpty]{\Gamma \vdash \emph{empty confields}\ valid\ |\ \Gamma}
 
