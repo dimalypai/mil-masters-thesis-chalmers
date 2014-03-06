@@ -48,7 +48,7 @@ class Shape =>
   private mutField : Mutable Int <- 2;
   private refField : Ref Int = new 1;
 
-  public def new => end
+  public def new : Shape => end
 
   public def draw : Unit => unit; end
 end
