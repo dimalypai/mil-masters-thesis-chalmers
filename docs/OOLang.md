@@ -203,6 +203,8 @@ Syntax
 
    *atomtype*   $\to$   `Unit`
 
+                  |     `Bool`
+
                   |     `Int`
 
                   |     *classname*
@@ -214,6 +216,8 @@ Syntax
                   |     *namebinder* `->` *funtype*
 
     *literal*   $\to$   `unit`
+
+                  |     *boollit*
 
                   |     *intlit*
 
