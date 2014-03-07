@@ -102,6 +102,6 @@ Meeting 2014-03-03
 
 * Kinding (arrows for type operators, but only * for types and type variables)
 * Typing rules
-* OOLang: Maybe only for Ref
+* OOLang: Maybe only for Ref. But what about method call with `?`
 * References in MIL, no need in pure State
 
