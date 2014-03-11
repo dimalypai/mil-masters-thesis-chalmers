@@ -155,6 +155,14 @@ Typing and Kinding
               |     $\Gamma$`,` *conname* `:` *type*     constructor binding
 ---------  -------  -----------------------------------  -----------------------
 
+\infax[T-TypeDefsEmpty]{\Gamma \vdash \emph{empty typedefs}\ valid\ |\ \Gamma}
+
+\infrule[T-TypeDefs]{\Gamma \vdash \emph{typedef}\ valid\ |\ \Gamma_1 \andalso \Gamma_1 \vdash \emph{typedefs}\ valid\ |\ \Gamma_2}{\Gamma \vdash \emph{typedef:typedefs}\ valid\ |\ \Gamma_2}
+
+\infax[T-FunDefsEmpty]{\Gamma \vdash \emph{empty fundefs}\ valid\ |\ \Gamma}
+
+\infrule[T-FunDefs]{\Gamma \vdash \emph{fundef}\ valid\ |\ \Gamma_1 \andalso \Gamma_1 \vdash \emph{fundefs}\ valid\ |\ \Gamma_2}{\Gamma \vdash \emph{fundef:fundefs}\ valid\ |\ \Gamma_2}
+
 \infax[T-Unit]{\Gamma \vdash unit : Unit}
 
 \infax[T-Int]{\Gamma \vdash \emph{intlit} : Int}
@@ -214,4 +222,9 @@ Typing and Kinding
 \infax[K-TypeDefNil]{\Gamma \vdash T :: *}
 
 \infrule[K-TypeDef]{\Gamma \vdash T\ X_1 ... X_n}{\Gamma \vdash T :: * \Rightarrow ... \Rightarrow *}
+
+Returning environment:
+
+* When it's the same environment, it should not be modified
+* When there are no environment, we just discard it
 
