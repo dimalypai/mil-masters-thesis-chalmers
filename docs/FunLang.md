@@ -207,3 +207,22 @@ Typing and Kinding
 
 \infrule[T-ConFields]{\Gamma \vdash \emph{confield}\ \texttt{well-kinded} \andalso \emph{confields}\ valid\ |\ \Gamma}{\Gamma \vdash \emph{confield:confields}\ valid\ |\ \Gamma}
 
+\infax[T-FunDefsEmpty]{\Gamma \vdash \emph{empty fundefs}\ valid\ |\ \Gamma}
+
+\infrule[T-FunDefs]{\Gamma \vdash \emph{fundef}\ valid\ |\ \Gamma_1 \andalso \Gamma_1 \vdash \emph{fundefs}\ valid\ |\ \Gamma_2}{\Gamma \vdash \emph{fundef:fundefs}\ valid\ |\ \Gamma_2}
+
+\infrule[T-FunDef]{\Gamma, f : T \vdash \emph{funeqs}\ valid\ |\ \Gamma_1}{\Gamma \vdash f : T\ \emph{funeqs}\ valid\ |\ \Gamma_1}
+
+\infrule[T-FunEqNoParams]{f : T \in \Gamma \andalso \emph{expr} : T}{\Gamma \vdash f\ =\ \emph{expr}\ valid}
+
+\infrule[T-FunEq]{f : T_1 \to ... \to T_n \to T \in \Gamma \andalso for\ each\ i\ \Gamma \vdash \emph{parami} : T_i \andalso \Gamma, \emph{param1} : T_1, ..., \emph{paramn} : T_n \vdash \emph{expr} : T}{\Gamma \vdash f\ \emph{param1 ... paramn}\ =\ \emph{expr}\ valid\ |\ \Gamma}
+
+\infrule[T-FunEqs]{\Gamma \vdash \emph{funeq}\ valid\ |\ \Gamma \andalso \Gamma \vdash \emph{funeqs}\ valid\ |\ \Gamma \andalso consistent}{\Gamma \vdash \emph{funeq:funeqs}\ valid\ |\ \Gamma}
+
+TODO: patterns
+
+Returning environment:
+
+* When it's the same environment, it should not be modified
+* When there are no environment, we just discard it
+
