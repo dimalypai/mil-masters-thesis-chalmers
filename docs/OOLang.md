@@ -267,21 +267,48 @@ Typing
 
 \infrule[T-ClassDefInherit]{C \notin \Gamma \andalso S \in \Gamma \andalso S \not<: C \andalso \Gamma, C \vdash \emph{classbody}\ valid\ |\ \Gamma_1}{\Gamma \vdash \texttt{class C < S => } \emph{classbody}\ end\ valid\ |\ \Gamma_1}
 
-\infax[T-SubRefl]{\texttt{C <: C}}
-
-\infrule[T-Inherit]{\texttt{class C < S => } \emph{classbody}\ end\ valid}{\texttt{C <: S}}
-
-\infrule[T-SubTrans]{\texttt{C <: S} \andalso \texttt{S <: T}}{\texttt{C <: T}}
-
 \infax[T-FunDefsEmpty]{\Gamma \vdash \emph{empty fundefs}\ valid\ |\ \Gamma}
 
 \infrule[T-FunDefs]{\Gamma \vdash \emph{fundef}\ valid\ |\ \Gamma_1 \andalso \Gamma_1 \vdash \emph{fundefs}\ valid\ |\ \Gamma_2}{\Gamma \vdash \emph{fundef:fundefs}\ valid\ |\ \Gamma_2}
 
 \infrule[T-FunDef]{f \notin \Gamma \andalso \Gamma, f : T_1 \to ... \to T_n, x1 : T_1, ... \vdash \emph{funbody}\ valid \andalso \Gamma, f : T_1 \to ... \to T_n, x1 : T_1, ... \vdash e_n : T_n}{\Gamma \vdash \texttt{def f : (x1 : T1) -> ... -> Tn => } \emph{funbody}\ end\ valid\ |\ \Gamma, f : T_1 \to ... \to T_n}
 
-\infrule[T-FunDefPure]{f \notin \Gamma \andalso \Gamma, f : T_1 \to ... \to T_n, x1 : T_1, ... \vdash \emph{funbody}\ purely-valid \andalso \Gamma, f : T_1 \to ... \to T_n, x1 : T_1, ... \vdash e_n : T_n}{\Gamma \vdash \texttt{def pure f : (x1 : T1) -> ... -> Tn => } \emph{funbody}\ end\ valid\ |\ \Gamma, f : T_1 \to ... \to T_n}
+\infrule[T-FunDefPure]{f \notin \Gamma \andalso \Gamma, f : T_1 \to ... \to T_n, x1 : T_1, ... \vdash \emph{funbody}\ pure\ valid \andalso \Gamma, f : T_1 \to ... \to T_n, x1 : T_1, ... \vdash e_n : T_n}{\Gamma \vdash \texttt{def pure f : (x1 : T1) -> ... -> Tn => } \emph{funbody}\ end\ valid\ |\ \Gamma, f : T_1 \to ... \to T_n}
+
+\infax[T-ClassBodyEmpty]{\Gamma \vdash \emph{empty memberdecls}\ valid\ |\ \Gamma}
+
+\infrule[T-ClassBody]{\Gamma \vdash \emph{memberdecl}\ valid\ |\ \Gamma_1 \andalso \Gamma_1 \vdash \emph{memberdecls}\ valid\ |\ \Gamma_2}{\Gamma \vdash \emph{memberdecl:memberdecls}\ valid\ |\ \Gamma_2}
+
+\infrule[T-FieldDecl]{d \notin \Gamma}{\Gamma \vdash}
+
+\infrule[T-MethodDecl]{f \notin \Gamma}{\Gamma \vdash}
+
+\infax[T-FunBodyEmpty]{\Gamma \vdash \emph{empty statements}\ valid\ |\ \Gamma}
+
+\infrule[T-FunBody]{\Gamma \vdash \emph{statement} : T\ |\ \Gamma_1 \andalso \Gamma_1 \vdash \emph{statements}\ valid\ |\ \Gamma_2}{\Gamma \vdash \emph{statement:statements}\ valid\ |\ \Gamma_2}
+
+\infrule[T-DeclStmt]{}{\Gamma \vdash : Unit}
+
+\infax[T-ExprStmt]{\Gamma \vdash \emph{expr} : T}
+
+\infrule[T-AssignStmt]{}{\Gamma \vdash : Unit}
+
+\infrule[T-WhileStmt]{\Gamma \vdash \emph{expr} : Bool \andalso \Gamma \vdash \emph{statements}\ valid}{\Gamma \vdash while\ \emph{expr}\ do\ \emph{statements}\ end : Unit}
+
+\infrule[T-WhenStmt]{\Gamma \vdash \emph{expr} : Bool \andalso \Gamma \vdash \emph{statements1}\ valid \andalso \Gamma \vdash \emph{statements2}\ valid}{\Gamma \vdash when\ \emph{expr}\ do\ \emph{statements1}\ otherwise\ \emph{statements2}\ end : Unit}
+
+\infax[T-SubRefl]{\texttt{C <: C}}
+
+\infrule[T-Inherit]{\texttt{class C < S => } \emph{classbody}\ end\ valid}{\texttt{C <: S}}
+
+\infrule[T-SubTrans]{\texttt{C <: S} \andalso \texttt{S <: T}}{\texttt{C <: T}}
 
 \infrule[T-Sub]{\Gamma \vdash e : S \andalso \texttt{S <: T}}{\Gamma \vdash e : T}
 
-In these rules the order of class definitions matters, but in implementation we do an additional pass to collect class names before their checking.
+In these rules the order of definitions matters, but in implementation we do an additional pass to collect names before the checking.
+
+Returning environment:
+
+* When it's the same environment, it should not be modified
+* When there are no environment, we just discard it
 
