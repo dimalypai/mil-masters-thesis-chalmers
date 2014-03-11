@@ -105,3 +105,12 @@ Meeting 2014-03-03
 * OOLang: Maybe only for Ref. But what about method call with `?`
 * References in MIL, no need in pure State
 
+Meeting 2014-03-10
+==================
+
+* Typing rules fixes (T in scope, remove repeating, typevar-typename unification)
+* when vs if
+* Function syntax
+* return statements
+* purity
+
