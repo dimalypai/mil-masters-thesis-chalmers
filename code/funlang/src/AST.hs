@@ -60,7 +60,7 @@ data BinOp = App
 data Type = TyUnit
           | TyInt
           | TyTypeCon TypeName
-          | TyTypeVar TypeVar
+          | TyVar TypeVar
           | TyArrow Type Type
           | TyForAll TypeVar Type
           | TyApp Type Type

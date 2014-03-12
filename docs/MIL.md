@@ -71,9 +71,9 @@ Syntax
 
                   |     *casealt* `;` *casealts*
 
-    *casealt*   $\to$   *casebind* `->` *expr*
+    *casealt*   $\to$   *pattern* `->` *expr*
 
-   *casebind*   $\to$   *varbind*                                           variable binder
+    *pattern*   $\to$   *varbind*                                           variable binder
 
                   |     *conname* *varbinds*                                data constructor binder
 
