@@ -61,7 +61,7 @@ Syntax
 
                   |     `return` *expr*                                     monadic return
 
-                  |     `lift` *expr*                                       monadic lift
+                  |     `lift [` *Monad* `->` *Monad* `]` *expr*            monadic lift
 
                   |     `let rec` *var* `:` *type* `=` *expr* `in` *expr*   recursive binding
 
