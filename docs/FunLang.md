@@ -125,7 +125,7 @@ Syntax
 
                   |     *conname*
 
-                  |     `case` *expr* `of` *casealts*
+                  |     `case` *expr* `of` *casealts* `end`
 
    *casealts*   $\to$   `|` *casealt*
 
