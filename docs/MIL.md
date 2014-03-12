@@ -23,17 +23,17 @@ Syntax
 
                   |     *typevar* *typevars*
 
-    *condefs*   $\to$   *condef* `;`                                        data constructor definitions
+    *condefs*   $\to$   *condef*                                            data constructor definitions
 
-                  |     *condef* `;` *condefs*
+                  |     *condef* `|` *condefs*
 
      *condef*   $\to$   *conname* *confields*                               data constructor definition
 
-  *confields*   $\to$   $\varepsilon$
+  *confields*   $\to$   $\varepsilon$                                       data constructor fields
 
                   |     *type* *confields*
 
-       *expr*   $\to$   *literal*
+       *expr*   $\to$   *literal*                                           literal
 
                   |     *var*                                               variable
 
@@ -61,11 +61,13 @@ Syntax
 
                   |     `return` *expr*                                     monadic return
 
+                  |     `lift` *expr*                                       monadic lift
+
                   |     `let rec` *var* `:` *type* `=` *expr* `in` *expr*   recursive binding
 
                   |     `case` *expr* `of` `{` *casealts* `}`               case expression
 
-   *casealts*   $\to$   *casealt*
+   *casealts*   $\to$   *casealt* `;`
 
                   |     *casealt* `;` *casealts*
 
