@@ -127,6 +127,26 @@ Syntax
 
                   |     `case` *expr* `of` *casealts* `end`
 
+                  |     *expr* `+` *expr*
+
+                  |     *expr* `-` *expr*
+
+                  |     *expr* `*` *expr*
+
+                  |     *expr* `/` *expr*
+
+                  |     *expr* `=` *expr*
+
+                  |     *expr* `/=` *expr*
+
+                  |     *expr* `<` *expr*
+
+                  |     *expr* `>` *expr*
+
+                  |     *expr* `<=` *expr*
+
+                  |     *expr* `>=` *expr*
+
    *casealts*   $\to$   `|` *casealt*
 
                   |     `|` *casealt* *casealts*
