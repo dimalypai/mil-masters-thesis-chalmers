@@ -11,6 +11,7 @@ def main : Unit =>
   z : Int = if x = 1 then 2 else 3;
   when x = 1 do
     x <- x + 1;
+    return unit;
   otherwise
     x <- x - 1;
   end;
@@ -19,10 +20,10 @@ def main : Unit =>
 end
 
 def f : (func : Int -> Int) -> (n : Int) -> Unit =>
-  h {n, true};
+  h n;
 end
 
-def pure g : (p : {Int, Bool}) -> (m : Maybe Int) -> Maybe Int =>
+def pure g : (p : Int) -> (m : Maybe Int) -> Maybe Int =>
   i : Mutable Int <- 0;
   x1 : Mutable (Maybe Int);
   x2 : Maybe Int; // nothing, immutable
@@ -34,7 +35,7 @@ def pure g : (p : {Int, Bool}) -> (m : Maybe Int) -> Maybe Int =>
   just !i;
 end
 
-def h : {fst : Int, snd : Bool} -> Unit =>
+def h : (fst : Int) -> Unit =>
   obj1 : Mutable Circle <- Circle.new;
   obj2 : Mutable (Maybe Circle) <- nothing;
   ft : Int = Circle::fortyTwo;
@@ -117,7 +118,9 @@ Syntax
 
                   |     *when*
 
-*declaration*   $\to$   *name* `:` *type* *optinit*
+                  |     *return*
+
+*declaration*   $\to$   *var* `:` *type* *optinit*
 
     *optinit*   $\to$   $\varepsilon$
 
@@ -127,7 +130,9 @@ Syntax
 
        *expr*   $\to$   *literal*
 
-                  |     *name*
+                  |     *var*
+
+                  |     *funname*
 
                   |     *expr expr*
 
@@ -135,7 +140,9 @@ Syntax
 
                   |     *expr* `?` *expr*
 
-                  |     `\` *namebinders* `->` *expr*
+                  |     `\` *varbinders* `->` *expr*
+
+                  |     *classname*`.`*expr*
 
                   |     *classname*`::`*expr*
 
@@ -171,11 +178,11 @@ Syntax
 
                   |     `nothing`
 
-*namebinders*   $\to$   *namebinder*
+ *varbinders*   $\to$   *varbinder*
 
-                  |     *namebinder* *namebinders*
+                  |     *varbinder* *varbinders*
 
- *namebinder*   $\to$   `(` *name* `:` *type* `)`
+  *varbinder*   $\to$   `(` *var* `:` *type* `)`
 
  *assignment*   $\to$   *expr* `<-` *expr*
 
@@ -186,6 +193,8 @@ Syntax
   *whileloop*   $\to$   `while` *expr* `do` *statements* `end`
 
        *when*   $\to$   `when` *expr* `do` *statements* `otherwise` *statements* `end`
+
+     *return*   $\to$   `return` *expr*
 
        *type*   $\to$   *maybetype*
 
@@ -213,7 +222,7 @@ Syntax
 
     *funtype*   $\to$   *type*
 
-                  |     *namebinder* `->` *funtype*
+                  |     *varbinder* `->` *funtype*
 
     *literal*   $\to$   `unit`
 
@@ -243,7 +252,7 @@ Syntax
 
     *funname*   $\to$   *lower* *alphanum*
 
-       *name*   $\to$   *lower* *alphanum*
+        *var*   $\to$   *lower* *alphanum*
 -------------  -------  --------------------------------------------------------------  -------------------------------
 
 Typing
