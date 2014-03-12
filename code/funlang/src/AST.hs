@@ -25,7 +25,7 @@ data Expr = LitE Literal
           | VarE Var
           | LambdaE [VarBinder] Expr
           | TypeLambdaE [TypeVar] Expr
-          | AppTypeE Expr Type
+          | TypeAppE Expr Type
           | ConNameE ConName
           | CaseE Expr [CaseAlt]
           | DoE [Stmt]
@@ -59,7 +59,7 @@ data BinOp = App
 
 data Type = TyUnit
           | TyInt
-          | TyType TypeName
+          | TyTypeCon TypeName
           | TyTypeVar TypeVar
           | TyArrow Type Type
           | TyForAll TypeVar Type
