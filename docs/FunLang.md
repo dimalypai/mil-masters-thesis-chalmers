@@ -17,7 +17,7 @@ not True = False
 not _    = True
 
 id : forall A . A -> A
-id = /\T . \x : T -> x
+id = /\T . \(x : T) -> x
 
 id2 : forall A . A -> A
 id2 t x = x
@@ -27,17 +27,20 @@ idInt = id [Int]
 
 isZero : Int -> Bool
 isZero n = case n of
-  | 0 -> True
-  | _ -> False
+             | 0 -> True
+             | _ -> False
+           end
 
 main : IO Unit
-main = do
-  i <- readInt;
-  printInt i;
+main = do i : Int <- readInt;
+          printInt i;
+       end
 
 stateful : Int -> State Int Unit
-stateful i = do
-  put i;
+stateful i =
+  do
+    put i;
+  end
 
 doinput : Input Int
 doinput = readInt
@@ -127,6 +130,8 @@ Syntax
 
                   |     `case` *expr* `of` *casealts* `end`
 
+                  |     `do` *statements* `end`
+
                   |     *expr* `+` *expr*
 
                   |     *expr* `-` *expr*
@@ -152,6 +157,16 @@ Syntax
                   |     `|` *casealt* *casealts*
 
     *casealt*   $\to$   *pattern* `->` *expr*
+
+ *statements*   $\to$   *statement* `;`
+
+                  |     *statement* `;` *statements*
+
+  *statement*   $\to$   *expr*
+
+                  |     *var* `:` *type* `<-` *expr*
+
+                  |     `return` *expr*
 
  *varbinders*   $\to$   *varbinder*
 
