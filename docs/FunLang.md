@@ -91,7 +91,7 @@ Syntax
 
                   |     *pattern* *params*
 
-    *pattern*   $\to$   *name*
+    *pattern*   $\to$   *var*
 
                   |     *literal*
 
@@ -103,7 +103,7 @@ Syntax
 
                   |     *fieldpat* *fieldpats*
 
-   *fieldpat*   $\to$   *name*
+   *fieldpat*   $\to$   *var*
 
                   |     *literal*
 
@@ -113,9 +113,9 @@ Syntax
 
        *expr*   $\to$   *literal*
 
-                  |     *name*
+                  |     *var*
 
-                  |     `\` *namebinders* `->` *expr*
+                  |     `\` *varbinders* `->` *expr*
 
                   |     *expr expr*
 
@@ -133,11 +133,11 @@ Syntax
 
     *casealt*   $\to$   *pattern* `->` *expr*
 
-*namebinders*   $\to$   *namebinder*
+ *varbinders*   $\to$   *varbinder*
 
-                  |     *namebinder* *namebinders*
+                  |     *varbinder* *varbinders*
 
- *namebinder*   $\to$   `(` *name* `:` *type* `)`
+  *varbinder*   $\to$   `(` *var* `:` *type* `)`
 
 *typebinders*   $\to$   *typevar*
 
@@ -167,7 +167,7 @@ Syntax
 
     *funname*   $\to$   *lower* *alphanum*
 
-       *name*   $\to$   *lower* *alphanum*
+        *var*   $\to$   *lower* *alphanum*
 -------------  -------  --------------------------------------------------  -------------------------------
 
 Typing and Kinding
