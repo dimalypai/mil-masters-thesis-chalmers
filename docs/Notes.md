@@ -114,3 +114,38 @@ Meeting 2014-03-10
 * return statements
 * purity
 
+General thoughts. Week 6
+========================
+
+* The general question: is it source language compiler driver who orchestrates everything using MIL data types and functions?
+  (and so there is no stage when we just give all the work to MIL backend)
+* Does the source language compiler generates only one "MIL instance" and then
+  MIL is on its own (ANF/SSA and so on)?
+* MIL could have convinient representations already defined (ANF/SSA) so everybody could benefit.
+* Who and when performs transformations on MIL?
+* Is there only one CodeGen for the whole MIL?
+* Code generation for unknown effects
+* Phases on MIL:
+    + Type checking: can leave it completely to MIL with additional supply of typing for "constants"
+    + Transformations: a set of built-in transformations + new ones, derived by source language compiler
+    + There could be built-in transformation from more high-level MIL to ANF representation and some optimisations expressed on ANF
+    + Code generation: I am not sure we can do it on MIL side
+* Recursion in MIL and FunLang
+    + Restrict let rec in MIL to only functions?
+    + Carefully consider effects and equalities
+
+Meeting 2014-03-17
+==================
+
+* Maybe just fixed set of effects and a way to combine them (the generality is in combining)
+* Different IRs (levels) differ in set of effects, not in constructs
+* Code generation only from the fixed low-level representation (with fixed effects)
+* Inconviniences of monad transformers are fine for us because we don't use them for programming
+* Monadic annotations: lift, return. Can start with few and then add if needed
+
+In general:
+MIL library provides AST data types, set of effects and some built-in transformations.
+Compiler writer generates as many of IRs as she wants and may run some built-in transformations and her own.
+At some point she must generate the most low-level IR (like ANF/SSA) and from there, MIL library can perform some specific fixed
+sequence of transformations and finally generate target code.
+
