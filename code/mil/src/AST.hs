@@ -1,7 +1,3 @@
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE StandaloneDeriving #-}
-
 module MIL.AST where
 
 newtype Program = Program ([TypeDef], [FunDef])
@@ -28,9 +24,9 @@ data Expr = LitE Literal
           | NewRefE Expr
           | DerefE Expr
           | AssignRefE Expr Expr
-          | LetE VarBinder Expr MilMonad Expr MilMonad  -- maybe don't need them here (they are inside Expr types)
-          | ReturnE Expr MilMonad  -- is it present in syntax? Do we need return or can express it with lift like (Id -> State Int)
-          | LiftE Expr MilMonad MilMonad  -- present in syntax
+          | LetE VarBinder Expr Expr
+          | ReturnE Expr MilMonad
+          | LiftE Expr MilMonad MilMonad
           | LetRecE VarBinder Expr Expr
           | CaseE Expr [CaseAlt]
   deriving Show
@@ -57,6 +53,7 @@ data Type = TyMonad MilMonad Type
           | TyForAll TypeVar Type
           | TyApp Type Type
           | TyTuple [Type]
+          | TyMonadCons MilMonad MilMonad
   deriving Show
 
 data Kind = StarK
@@ -81,42 +78,10 @@ newtype ConName = ConName String
 newtype FunName = FunName String
   deriving Show
 
-data MilMonad = Id | State | Error | Lift | IO
+data MilMonad = Id
+              | State Type
+              | Error Type
+              | Lift
+              | IO
   deriving Show
-
-type Effects = [Effect] -- instead of MilMonad in Expr
---type EffectTypes = Map.Map String Type  -- functions, data constructors, type constructors
---type EffectTransformations = Map.Map String [Program -> Program]
---type EffectCodeGen = Map.Map Expr -> Code
-
-data Id = I
-data State = S
-data Error = E
-data Lift = L
-data IO = MkIO
-
-class Effectful a where
-  transform :: a -> a --Program -> Program
-
-instance Effectful Id where
-  transform = id
-
-instance Effectful State where
-  transform = id
-
-data Effect = forall a. (Effectful a) => Effect a
-
---getEffect :: Effectful a => Effect -> a
---getEffect (Effect a) = a
-
-instance Show Effect where
-  show = const ""
-
-example :: [Effect]
-example = [Effect I, Effect S]
-
---type Eff = State ::: (Error ::: (State ::: Id))
---data m1 ::: m2
---example2 :: State ::: (Error ::: Id)
---example2 = undefined
 
