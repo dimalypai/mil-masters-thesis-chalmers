@@ -59,9 +59,9 @@ Syntax
 
                   |     `let` *var* `:` *type* `<-` *expr* `in` *expr*      name binding
 
-                  |     `return` *expr*                                     monadic return
+                  |     `return [` *monad* `]` *expr*                       monadic return
 
-                  |     `lift [` *Monad* `->` *Monad* `]` *expr*            monadic lift
+                  |     `lift [` *monad* `->` *monad* `]` *expr*            monadic lift
 
                   |     `let rec` *var* `:` *type* `=` *expr* `in` *expr*   recursive binding
 
@@ -99,9 +99,11 @@ Syntax
 
                   |     *expr* `,` *tupleelems*
 
-       *type*   $\to$   *Monad* *valuetype*                                 computation type
+       *type*   $\to$   *monad* *valuetype*                                 computation type
 
                   |     *valuetype*
+
+                  |     *monad* `:::` *monad*                               monads combination
 
   *valuetype*   $\to$   `Unit`
 
@@ -122,6 +124,16 @@ Syntax
                   |     *type type*                                         type operator application
 
                   |     `{` *tupletypes* `}`                                tuple type
+
+      *monad*   $\to$   `Id`
+
+                  |     `State` *valuetype*
+
+                  |     `Error` *valuetype*
+
+                  |     `Lift`
+
+                  |     `IO`
 
  *tupletypes*   $\to$   *type*
 
@@ -208,6 +220,8 @@ Typing and Kinding
 \infrule[T-LetRec]{\Gamma \vdash e_1 : T_1 \andalso \Gamma, x : T_1 \vdash e_2 : T_2}{\Gamma \vdash let\ rec\ x : T_1 = e_1\ in\ e_2 : T_2}
 
 \infrule[T-Case]{}{\Gamma \vdash case\ e\ of\ ...}
+
+\infrule[T-Effects]{M_1 : monad \andalso M_2 : monad}{M_1 ::: M_2 : monad}
 
 \infax[K-Unit]{\Gamma \vdash Unit :: *}
 
