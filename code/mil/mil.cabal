@@ -10,16 +10,19 @@ maintainer:          dmytrolypai@gmail.com
 category:            Language
 build-type:          Simple
 extra-source-files:  src/MIL/Lexer.x
+                     src/MIL/Parser.y
 cabal-version:       >= 1.10
 
 library
   exposed-modules:     MIL.Lexer
+                       MIL.Parser
   -- other-extensions:    
   build-depends:       base >= 4.6 && < 4.7
                      , array
                      , pretty
   hs-source-dirs:      src
   build-tools:         alex >= 2.3
+                     , happy
   buildable:           True
   default-language:    Haskell2010
 
@@ -32,6 +35,8 @@ test-suite spec
                    , pretty
                    , hspec
   build-tools:       alex >= 2.3
+                   , happy
   other-modules:     MIL.Lexer
+                   , MIL.Parser
   default-language:  Haskell2010
 
