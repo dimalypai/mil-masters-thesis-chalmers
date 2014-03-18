@@ -32,6 +32,14 @@ def pure g : (p : Int) -> (m : Maybe Int) -> Maybe Int =>
   while i < n do
     i <- i + 1;
   end;
+  y : Mutable Int <- 0;
+  try
+    y <- 1 / 0;
+  catch DivisionByZero
+    y <- 1;
+  finally
+    y <- 2;
+  end;
   just !i;
 end
 
@@ -120,6 +128,8 @@ Syntax
 
                   |     *return*
 
+                  |     *trycatch*
+
 *declaration*   $\to$   *var* `:` *type* *optinit*
 
     *optinit*   $\to$   $\varepsilon$
@@ -195,6 +205,8 @@ Syntax
        *when*   $\to$   `when` *expr* `do` *statements* `otherwise` *statements* `end`
 
      *return*   $\to$   `return` *expr*
+
+   *trycatch*   $\to$   `try` *statements* `catch` *statements* `finally` *statements* `end`
 
        *type*   $\to$   *maybetype*
 
