@@ -55,7 +55,7 @@ end
 class Shape =>
   private field : Int = 1;
   private mutField : Mutable Int <- 2;
-  private refField : Ref Int = new 1;
+  private refField : Ref Int = ref 1;
 
   public def new : Shape => end
 
@@ -158,7 +158,7 @@ Syntax
 
                   |     *expr* `??` *expr*
 
-                  |     `new` *expr*
+                  |     `ref` *expr*
 
                   |     `!`*expr*
 
