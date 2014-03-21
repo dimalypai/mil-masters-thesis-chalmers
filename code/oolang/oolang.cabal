@@ -20,6 +20,7 @@ executable oolc
   -- other-extensions:    
   build-depends:       base >= 4.6 && < 4.7
                      , array
+                     , pretty
   hs-source-dirs:      src
   build-tools:         alex
                      , happy
@@ -33,6 +34,7 @@ test-suite spec
   hs-source-dirs:    src, test
   build-depends:     base >= 4.6 && < 4.7
                    , array
+                   , pretty
                    , hspec
   build-tools:       alex
                    , happy
