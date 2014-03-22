@@ -25,8 +25,8 @@ $lower = [a-z]
 $upper = [A-Z]
 $digit = [0-9]
 
-@lowerName = $lower [$alpha $digit \_]*
-@upperName = $upper [$alpha $digit \_]*
+@lowerName = $lower [$alpha $digit]*
+@upperName = $upper [$alpha $digit]*
 @string = \" ($printable # \")* \"
 
 @lineterm = [\n\r] | \r\n
