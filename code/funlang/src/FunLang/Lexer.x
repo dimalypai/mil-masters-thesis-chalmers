@@ -25,8 +25,8 @@ $lower = [a-z]
 $upper = [A-Z]
 $digit = [0-9]
 
-@lowerName = $lower [$alpha $digit]*
-@upperName = $upper [$alpha $digit]*
+@lowerId = $lower [$alpha $digit]*
+@upperId = $upper [$alpha $digit]*
 @string = \" ($printable # \")* \"
 
 @lineterm = [\n\r] | \r\n
@@ -89,8 +89,8 @@ tokens :-
   ";" { \p s -> TokWSpan SemiColon (posn p s) }
 
   -- Identifiers
-  @lowerName { \p s -> TokWSpan (LowerId s) (posn p s) }
-  @upperName { \p s -> TokWSpan (UpperId s) (posn p s) }
+  @lowerId { \p s -> TokWSpan (LowerId s, posn p s) }
+  @upperId { \p s -> TokWSpan (UpperId s, posn p s) }
 
   -- Literals
   $digit+                                   { \p s -> TokWSpan (IntLit $ read s) (posn p s) }

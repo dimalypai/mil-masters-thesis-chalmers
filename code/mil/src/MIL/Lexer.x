@@ -21,8 +21,8 @@ $lower = [a-z]
 $upper = [A-Z]
 $digit = [0-9]
 
-@lowerName = $lower [$alpha $digit]*
-@upperName = $upper [$alpha $digit]*
+@lowerId = $lower [$alpha $digit]*
+@upperId = $upper [$alpha $digit]*
 
 @lineterm = [\n\r] | \r\n
 @comment = "#" .* @lineterm
@@ -73,8 +73,8 @@ tokens :-
   ";" { const SemiColon }
 
   -- Identifiers
-  @lowerName { LowerId }
-  @upperName { UpperId }
+  @lowerId { LowerId }
+  @upperId { UpperId }
 
   -- Literals
   $digit+                                   { \s -> IntLit $ read s }
