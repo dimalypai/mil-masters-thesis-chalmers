@@ -49,11 +49,11 @@ data BinOp = App
            | Mul
            | Div
            | Equal
-           | NotEqual
+           | NotEq
            | Less
            | Greater
-           | LessEqual
-           | GreaterEqual
+           | LessEq
+           | GreaterEq
   deriving Show
 
 data Type = TyUnit
