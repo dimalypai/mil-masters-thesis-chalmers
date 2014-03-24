@@ -48,6 +48,7 @@ data Expr = LitE Literal
           | TypeAppE Expr Type
           | ConNameE ConName
           | CaseE Expr [CaseAlt]
+          | LetE [(VarBinder, Expr)] Expr
           | DoE [Stmt]
           | BinOpE BinOp Expr Expr
   deriving Show
