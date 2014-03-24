@@ -45,8 +45,6 @@ data Pattern = LitP Literal
   deriving Show
 
 data Type = TyMonad MilMonad Type
-          | TyUnit
-          | TyInt
           | TyTypeCon TypeName Kind
           | TyVar TypeVar
           | TyArrow Type Type
