@@ -149,3 +149,21 @@ Compiler writer generates as many of IRs as she wants and may run some built-in 
 At some point she must generate the most low-level IR (like ANF/SSA) and from there, MIL library can perform some specific fixed
 sequence of transformations and finally generate target code.
 
+General thoughts. Week 7
+========================
+
+* Unit, Int and other built-in types representation and lexing. Special cases or type constructors?
+* Strings in source languages and MIL
+* Operators in MIL
+* Annotating AST: approaches
+* SrcSpan from Happy
+
+Meeting 2014-03-24
+==================
+
+* It is possible to merge TyTypeCon and TyApp (and have list of types which are arguments). Then Type contains only types of kind * (fully applied).
+  Otherwise, it is like currying (binary application vs list of arguments) on the type level.
+* Maybe good to treat all types uniformly (like Unit, Int etc.).
+* MIL must have at least characters.
+* MIL should not have operators. It should have built-in functions instead. Application is always prefix (no infix).
+
