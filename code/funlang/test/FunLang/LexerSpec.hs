@@ -57,8 +57,8 @@ spec =
     it "handles source span correctly" $
       lexer "case \n   var"
         `shouldBe`
-      [ TokWSpan KW_Case (SrcSpan "NONAME" 1 1 1 4)
-      , TokWSpan (LowerId "var") (SrcSpan "NONAME" 2 4 2 6)
+      [ TokWSpan (KW_Case, SrcSpan "NONAME" 1 1 1 4)
+      , TokWSpan (LowerId "var", SrcSpan "NONAME" 2 4 2 6)
       ]
 
     it "shows tokens correctly" $
