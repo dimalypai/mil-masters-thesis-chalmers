@@ -1,16 +1,30 @@
 module FunLang.AST where
 
-newtype Program = Program ([TypeDef], [FunDef])
+import FunLang.SrcSpan
+
+data Program a = Program a [TypeDef a] [FunDef a]
   deriving Show
 
-data TypeDef = TypeDef TypeName [TypeVar] [ConDef]
+type SrcProgram = Program SrcSpan
+type TyProgram  = Program (SrcSpan, Type)
+
+instance Annotated Program where
+  ann (Program a _ _) = a
+
+data TypeDef a = TypeDef a TypeName [TypeVar] [ConDef]
   deriving Show
+
+instance Annotated TypeDef where
+  ann (TypeDef a _ _ _) = a
 
 data ConDef = ConDef ConName [Type]
   deriving Show
 
-data FunDef = FunDef FunName Type [FunEq]
+data FunDef a = FunDef a FunName Type [FunEq]
   deriving Show
+
+instance Annotated FunDef where
+  ann (FunDef a _ _ _) = a
 
 data FunEq = FunEq FunName [Pattern] Expr
   deriving Show
@@ -87,4 +101,24 @@ newtype ConName = ConName String
 
 newtype FunName = FunName String
   deriving Show
+
+-- Parsing helpers
+data TopDef a = TopTypeDef { getTypeDef :: TypeDef a }
+              | TopFunDef  { getFunDef  :: FunDef  a }
+  deriving Show
+
+isTypeDef :: TopDef a -> Bool
+isTypeDef (TopTypeDef _) = True
+isTypeDef              _ = False
+
+isFunDef :: TopDef a -> Bool
+isFunDef (TopFunDef _) = True
+isFunDef             _ = False
+
+instance Annotated TopDef where
+  ann (TopTypeDef td) = ann td
+  ann (TopFunDef fd) = ann fd
+
+class Annotated ast where
+  ann :: ast a -> a
 
