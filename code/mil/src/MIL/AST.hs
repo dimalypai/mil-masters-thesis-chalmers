@@ -27,7 +27,7 @@ data Expr = LitE Literal
           | LetE VarBinder Expr Expr
           | ReturnE Expr MilMonad
           | LiftE Expr MilMonad MilMonad
-          | LetRecE VarBinder Expr Expr
+          | LetRecE [(VarBinder, Expr)] Expr
           | CaseE Expr [CaseAlt]
   deriving Show
 
