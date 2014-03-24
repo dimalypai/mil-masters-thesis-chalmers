@@ -5,8 +5,7 @@ module FunLang.Parser where
 import Control.Monad.Error
 import Control.Monad.Reader
 
-import FunLang.Lexer as Lex hiding (getToken, getSrcSpan)
-import qualified FunLang.Lexer as Lex (getSrcSpan)
+import FunLang.Lexer as Lex
 import FunLang.AST
 import FunLang.SrcSpan
 
@@ -19,54 +18,54 @@ import FunLang.SrcSpan
 
 %token
   -- Keywords
-  case   { TokWSpan $$@(KW_Case,   _) }
-  do     { TokWSpan $$@(KW_Do,     _) }
-  end    { TokWSpan $$@(KW_End,    _) }
-  forall { TokWSpan $$@(KW_Forall, _) }
-  of     { TokWSpan $$@(KW_Of,     _) }
-  return { TokWSpan $$@(KW_Return, _) }
-  type   { TokWSpan $$@(KW_Type,   _) }
-  unit   { TokWSpan $$@(KW_Unit,   _) }
+  case   { $$@(KW_Case,   _) }
+  do     { $$@(KW_Do,     _) }
+  end    { $$@(KW_End,    _) }
+  forall { $$@(KW_Forall, _) }
+  of     { $$@(KW_Of,     _) }
+  return { $$@(KW_Return, _) }
+  type   { $$@(KW_Type,   _) }
+  unit   { $$@(KW_Unit,   _) }
   -- Symbols
-  '=' { TokWSpan $$@(Lex.Equal, _) }
-  ':' { TokWSpan $$@(Colon,     _) }
+  '=' { $$@(Lex.Equal, _) }
+  ':' { $$@(Colon,     _) }
 
-  '+'  { TokWSpan $$@(Plus,          _) }
-  '-'  { TokWSpan $$@(Minus,         _) }
-  '*'  { TokWSpan $$@(Star,          _) }
-  '/'  { TokWSpan $$@(Slash,         _) }
-  '%'  { TokWSpan $$@(Percent,       _) }
-  '<'  { TokWSpan $$@(Lex.Less,      _) }
-  '>'  { TokWSpan $$@(Lex.Greater,   _) }
-  '<=' { TokWSpan $$@(Lex.LessEq,    _) }
-  '>=' { TokWSpan $$@(Lex.GreaterEq, _) }
-  '/=' { TokWSpan $$@(Lex.NotEq,     _) }
+  '+'  { $$@(Plus,          _) }
+  '-'  { $$@(Minus,         _) }
+  '*'  { $$@(Star,          _) }
+  '/'  { $$@(Slash,         _) }
+  '%'  { $$@(Percent,       _) }
+  '<'  { $$@(Lex.Less,      _) }
+  '>'  { $$@(Lex.Greater,   _) }
+  '<=' { $$@(Lex.LessEq,    _) }
+  '>=' { $$@(Lex.GreaterEq, _) }
+  '/=' { $$@(Lex.NotEq,     _) }
 
-  '\\'  { TokWSpan $$@(Lambda,    _) }
-  '->'  { TokWSpan $$@(Arrow,     _) }
-  '/\\' { TokWSpan $$@(BigLambda, _) }
-  '.'   { TokWSpan $$@(Dot,       _) }
-  '<-'  { TokWSpan $$@(LeftArrow, _) }
+  '\\'  { $$@(Lambda,    _) }
+  '->'  { $$@(Arrow,     _) }
+  '/\\' { $$@(BigLambda, _) }
+  '.'   { $$@(Dot,       _) }
+  '<-'  { $$@(LeftArrow, _) }
 
-  '|' { TokWSpan $$@(Bar,        _) }
-  '_' { TokWSpan $$@(Underscore, _) }
+  '|' { $$@(Bar,        _) }
+  '_' { $$@(Underscore, _) }
 
-  '&&' { TokWSpan $$@(And, _) }
-  '||' { TokWSpan $$@(Or,  _) }
+  '&&' { $$@(And, _) }
+  '||' { $$@(Or,  _) }
 
-  '(' { TokWSpan $$@(OpenParen,   _) }
-  ')' { TokWSpan $$@(CloseParen,  _) }
-  '[' { TokWSpan $$@(OpenSquare,  _) }
-  ']' { TokWSpan $$@(CloseSquare, _) }
+  '(' { $$@(OpenParen,   _) }
+  ')' { $$@(CloseParen,  _) }
+  '[' { $$@(OpenSquare,  _) }
+  ']' { $$@(CloseSquare, _) }
 
-  ';' { TokWSpan $$@(SemiColon, _) }
+  ';' { $$@(SemiColon, _) }
   -- Identifiers
-  lowerId { TokWSpan $$@(LowerId _, _) }
-  upperId { TokWSpan $$@(UpperId _, _) }
+  lowerId { $$@(LowerId _, _) }
+  upperId { $$@(UpperId _, _) }
   -- Literals
-  intLit    { TokWSpan $$@(Lex.IntLit _, _) }
-  floatLit  { TokWSpan $$@(FloatLit _ _, _) }
-  stringLit { TokWSpan $$@(StringLit  _, _) }
+  intLit    { $$@(Lex.IntLit _, _) }
+  floatLit  { $$@(FloatLit _ _, _) }
+  stringLit { $$@(StringLit  _, _) }
 %%
 
 program :: { SrcProgram }
@@ -135,13 +134,7 @@ parseError toks = throwError $ "FunLang parsing error at " ++ getFirstTokenPosSt
 
 getFirstTokenPosString :: [TokenWithSpan] -> String
 getFirstTokenPosString []    = "end of file"
-getFirstTokenPosString (t:_) = show $ srcSpanToPos $ Lex.getSrcSpan t
-
-getToken :: (Token, SrcSpan) -> Token
-getToken = fst
-
-getSrcSpan :: (Token, SrcSpan) -> SrcSpan
-getSrcSpan = snd
+getFirstTokenPosString (t:_) = show $ srcSpanToPos $ getSrcSpan t
 
 filterMap :: (a -> Bool) -> (a -> b) -> [a] -> [b]
 filterMap p f = map f . filter p
