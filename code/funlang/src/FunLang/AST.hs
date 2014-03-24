@@ -14,6 +14,9 @@ instance Annotated Program where
 data TypeDef a = TypeDef a TypeName [TypeVar] [ConDef]
   deriving Show
 
+type SrcTypeDef = TypeDef SrcSpan
+type TyTypeDef  = TypeDef (SrcSpan, Type)
+
 instance Annotated TypeDef where
   ann (TypeDef a _ _ _) = a
 
@@ -22,6 +25,9 @@ data ConDef = ConDef ConName [Type]
 
 data FunDef a = FunDef a FunName Type [FunEq]
   deriving Show
+
+type SrcFunDef = FunDef SrcSpan
+type TyFunDef  = FunDef (SrcSpan, Type)
 
 instance Annotated FunDef where
   ann (FunDef a _ _ _) = a
@@ -115,10 +121,16 @@ isFunDef :: TopDef a -> Bool
 isFunDef (TopFunDef _) = True
 isFunDef             _ = False
 
+type SrcTopDef = TopDef SrcSpan
+type TyTopDef  = TopDef (SrcSpan, Type)
+
 instance Annotated TopDef where
   ann (TopTypeDef td) = ann td
   ann (TopFunDef fd) = ann fd
 
 class Annotated ast where
   ann :: ast a -> a
+
+getSrcSpan :: Annotated ast => ast SrcSpan -> SrcSpan
+getSrcSpan = ann
 

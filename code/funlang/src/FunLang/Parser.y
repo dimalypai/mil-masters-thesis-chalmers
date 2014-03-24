@@ -70,21 +70,21 @@ import FunLang.SrcSpan
 
 program :: { SrcProgram }
 program : list1(topdef) {% withFileName $ \fileName ->
-                             Program (combineSrcSpan $ map ann $1)
+                             Program (combineSrcSpan $ map getSrcSpan $1)
                                      (filterMap isTypeDef getTypeDef $1)
                                      (filterMap isFunDef  getFunDef  $1) }
 
-topdef :: { TopDef SrcSpan }
+topdef :: { SrcTopDef }
 topdef : typedef { TopTypeDef $1 }
        | fundef  { TopFunDef $1 }
 
-typedef :: { TypeDef SrcSpan }
+typedef :: { SrcTypeDef }
 typedef : type upperId '=' {% withFileName $ \fileName ->
                                 TypeDef (SrcSpan fileName 1 1 2 2)
                                         (TypeName $ getId (getToken $2)) [] [] }
         | type lowerId '=' {% throwError "Type name must begin with a capital letter" }
 
-fundef :: { FunDef SrcSpan }
+fundef :: { SrcFunDef }
 fundef : lowerId ':' {% withFileName $ \fileName ->
                           FunDef (SrcSpan fileName 3 3 4 4)
                                  (FunName $ getId (getToken $1)) TyUnit [] }
@@ -134,7 +134,7 @@ parseError toks = throwError $ "FunLang parsing error at " ++ getFirstTokenPosSt
 
 getFirstTokenPosString :: [TokenWithSpan] -> String
 getFirstTokenPosString []    = "end of file"
-getFirstTokenPosString (t:_) = show $ srcSpanToPos $ getSrcSpan t
+getFirstTokenPosString (t:_) = show $ srcSpanToPos $ getTokSrcSpan t
 
 filterMap :: (a -> Bool) -> (a -> b) -> [a] -> [b]
 filterMap p f = map f . filter p

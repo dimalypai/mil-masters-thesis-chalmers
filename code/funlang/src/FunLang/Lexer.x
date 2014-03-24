@@ -12,7 +12,7 @@ module FunLang.Lexer
   , Token(..)
   , TokenWithSpan
   , getToken
-  , getSrcSpan
+  , getTokSrcSpan
   , getId
   ) where
 
@@ -225,8 +225,8 @@ type TokenWithSpan = (Token, SrcSpan)
 getToken :: TokenWithSpan -> Token
 getToken = fst
 
-getSrcSpan :: TokenWithSpan -> SrcSpan
-getSrcSpan = snd
+getTokSrcSpan :: TokenWithSpan -> SrcSpan
+getTokSrcSpan = snd
 
 getId :: Token -> String
 getId (LowerId s) = s
