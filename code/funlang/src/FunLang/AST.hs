@@ -78,9 +78,7 @@ data BinOp = App
            | GreaterEq
   deriving Show
 
-data Type = TyUnit
-          | TyInt
-          | TyTypeCon TypeName
+data Type = TyTypeCon TypeName Kind
           | TyVar TypeVar
           | TyArrow Type Type
           | TyForAll TypeVar Type
