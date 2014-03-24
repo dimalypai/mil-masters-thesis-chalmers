@@ -1,6 +1,6 @@
 {
 
-module FunLang.Parser where
+module FunLang.Parser (parseFunLang) where
 
 import Control.Monad.Error
 import Control.Monad.Reader
@@ -121,12 +121,15 @@ seplist1rev(p, s) : p                  { [$1] }
 
 {
 
-newtype ParseM a = ParseM { runParse :: ErrorT String (Reader String) a }
-  deriving (Monad, MonadError String, MonadReader String)
+newtype ParseM a = ParseM { runParse :: ErrorT ParseError (Reader FileName) a }
+  deriving (Monad, MonadError ParseError, MonadReader FileName)
+
+type ParseError = String
+type FileName = String
 
 funLang :: [TokenWithSpan] -> ParseM SrcProgram
 
-parseFunLang :: String -> [TokenWithSpan] -> Either String SrcProgram
+parseFunLang :: String -> [TokenWithSpan] -> Either ParseError SrcProgram
 parseFunLang fileName toks = runReader (runErrorT $ runParse $ funLang toks) fileName
 
 parseError :: [TokenWithSpan] -> ParseM a
