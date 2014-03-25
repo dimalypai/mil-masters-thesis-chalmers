@@ -237,7 +237,7 @@ getId         tok = error $ show tok ++ " is not an Id token"
 -- Takes token string for length calculation.
 -- NONAME is used as a source file name. Should be replaced in the parser.
 posn :: AlexPosn -> String -> SrcSpan
-posn (AlexPn _ l c) tokStr = SrcSpan "NONAME" l c l (c + length tokStr - 1)
+posn (AlexPn _ l c) tokStr = mkSrcSpan "NONAME" l c l (c + length tokStr - 1)
 
 -- | Top-level lexing function.
 lexer :: String -> [TokenWithSpan]

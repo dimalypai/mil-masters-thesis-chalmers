@@ -1,4 +1,11 @@
-module FunLang.SrcSpan where
+module FunLang.SrcSpan
+  ( SrcSpan
+  , mkSrcSpan
+  , SrcPos
+  , mkSrcPos
+  , srcSpanToPos
+  , combineSrcSpans
+  ) where
 
 import Text.Printf
 
@@ -16,6 +23,9 @@ data SrcSpan = SrcSpan
   , ssEndCol    :: Int
   } deriving Eq
 
+mkSrcSpan :: String -> Int -> Int -> Int -> Int -> SrcSpan
+mkSrcSpan = SrcSpan
+
 instance Show SrcSpan where
   show (SrcSpan fileName startLine startCol endLine endCol) =
     printf "%s:%d,%d-%d,%d" fileName startLine startCol endLine endCol
@@ -26,16 +36,19 @@ data SrcPos = SrcPos
   , spCol      :: Int
   }
 
+mkSrcPos :: String -> Int -> Int -> SrcPos
+mkSrcPos = SrcPos
+
 instance Show SrcPos where
   show (SrcPos fileName line col) = printf "%s:%d,%d" fileName line col
 
 srcSpanToPos :: SrcSpan -> SrcPos
-srcSpanToPos (SrcSpan fileName line col _ _) = SrcPos fileName line col
+srcSpanToPos (SrcSpan fileName line col _ _) = mkSrcPos fileName line col
 
 combineSrcSpans :: [SrcSpan] -> String -> SrcSpan
 combineSrcSpans [ss]  fileName = ss { ssFileName = fileName }
 combineSrcSpans spans fileName =
   let (SrcSpan _ startLine startCol _ _) = head spans
-      (SrcSpan _ _ _ endLine endCol) = last spans
-  in SrcSpan fileName startLine startCol endLine endCol
+      (SrcSpan _ _ _ endLine endCol)     = last spans
+  in mkSrcSpan fileName startLine startCol endLine endCol
 
