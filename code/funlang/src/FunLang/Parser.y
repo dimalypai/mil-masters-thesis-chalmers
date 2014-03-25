@@ -70,7 +70,7 @@ import FunLang.SrcSpan
 
 program :: { SrcProgram }
 program : list1(topdef) {% withFileName $ \fileName ->
-                             Program (combineSrcSpans (map getSrcSpan $1) fileName)
+                             Program (combineSrcSpans (map getSrcSpan2 $1) fileName)
                                      (filterMap isTypeDef getTypeDef $1)
                                      (filterMap isFunDef  getFunDef  $1) }
 
@@ -81,13 +81,13 @@ topdef : typedef { TopTypeDef $1 }
 typedef :: { SrcTypeDef }
 typedef : type upperId '=' {% withFileName $ \fileName ->
                                 TypeDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
-                                        (TypeName $ getId (getToken $2)) [] [] }
+                                        (getTokSrcSpan $2, TypeName $ getId (getToken $2)) [] [] }
         | type lowerId '=' {% throwError "Type name must begin with a capital letter" }
 
 fundef :: { SrcFunDef }
 fundef : lowerId ':' {% withFileName $ \fileName ->
                           FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $2] fileName)
-                                 (FunName $ getId (getToken $1)) TyUnit [] }
+                                 (getTokSrcSpan $1, FunName $ getId (getToken $1)) undefined [] }
 
 -- Helper productions
 

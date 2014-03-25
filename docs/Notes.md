@@ -167,3 +167,25 @@ Meeting 2014-03-24
 * MIL must have at least characters.
 * MIL should not have operators. It should have built-in functions instead. Application is always prefix (no infix).
 
+General thoughts. Week 8
+========================
+
+* Source language AST:
+    + Maybe don't need to have so many annotations in-place.
+    + Some annotations don't make sense in some places. Have more stuff in the environment.
+    + We want to have SrcSpan everywhere but where do we want to have types.
+    + What and how goes to the environment.
+    + Maybe, have almost two parallel representations - one for src program and another one - more internal (for type checking etc.).
+      Feels ugly because of the duplication. Hard to figure out what do we need, where and when.
+    + We can and should have global info in the environment:
+        - Information about type constructors.
+        - Information about data constructors.
+        - Information about functions.
+    + What we can't have in the environment:
+        - Local names (variables). We know them at the type checking, maybe need to record their information in-place.
+        - Types of subexpressions (probably don't need them in-place, we can figure them out locally if needed).
+        - So we can abstract over names (like GHC) but have SrcSpan annotations almost everywhere.
+        - Sometimes for internal stuff SrcSpans may get in the way. For example for Type in the environment, they don't really make sense.
+          But for some occurences of types we would like to have SrcSpans. The same goes for constructors. Mostly for stuff in the environment, which
+          is kind of internal.
+

@@ -2,67 +2,60 @@ module FunLang.AST where
 
 import FunLang.SrcSpan
 
-data Program a = Program a [TypeDef a] [FunDef a]
+data Program s v = Program s [TypeDef s] [FunDef s v]
   deriving Show
 
-type SrcProgram = Program SrcSpan
-type TyProgram  = Program (SrcSpan, Type)
+type SrcProgram = Program SrcSpan Var
+type TyProgram  = Program SrcSpan VarTy
 
-instance Annotated Program where
-  ann (Program a _ _) = a
-
-data TypeDef a = TypeDef a TypeName [TypeVar] [ConDef]
+data TypeDef s = TypeDef s (SrcTypeName s) [SrcTypeVar s] [ConDef s]
   deriving Show
 
 type SrcTypeDef = TypeDef SrcSpan
-type TyTypeDef  = TypeDef (SrcSpan, Type)
 
-instance Annotated TypeDef where
-  ann (TypeDef a _ _ _) = a
-
-data ConDef = ConDef ConName [Type]
+data ConDef s = ConDef s (SrcConName s) [SrcType s]
   deriving Show
 
-data FunDef a = FunDef a FunName Type [FunEq]
+data FunDef s v = FunDef s (SrcFunName s) (SrcType s) [FunEq s v]
   deriving Show
 
-type SrcFunDef = FunDef SrcSpan
-type TyFunDef  = FunDef (SrcSpan, Type)
+type SrcFunDef = FunDef SrcSpan Var
+type TyFunDef  = FunDef SrcSpan VarTy
 
-instance Annotated FunDef where
-  ann (FunDef a _ _ _) = a
-
-data FunEq = FunEq FunName [Pattern] Expr
+data FunEq s v = FunEq s (SrcFunName s) [Pattern s] (Expr s v)
   deriving Show
 
-data Pattern = LitP Literal
-             | VarP Var
-             | ConP [Pattern]
-             | DefaultP
+data Pattern s = LitP (SrcLiteral s)
+               | VarP (SrcVar s)  -- ???
+               | ConP s [Pattern s]
+               | DefaultP s
   deriving Show
 
-data Expr = LitE Literal
-          | VarE Var
-          | LambdaE [VarBinder] Expr
-          | TypeLambdaE [TypeVar] Expr
-          | TypeAppE Expr Type
-          | ConNameE ConName
-          | CaseE Expr [CaseAlt]
-          | LetE [(VarBinder, Expr)] Expr
-          | DoE [Stmt]
-          | BinOpE BinOp Expr Expr
+data Expr s v = LitE (SrcLiteral s)
+              | VarE s v
+              | LambdaE s [VarBinder s] (Expr s v)
+              | TypeLambdaE s [SrcTypeVar s] (Expr s v)
+              | TypeAppE s (Expr s v) (SrcType s)
+              | ConNameE (SrcConName s)
+              | CaseE s (Expr s v) [CaseAlt s v]
+              | LetE s [(VarBinder s, Expr s v)] (Expr s v)
+              | DoE s [Stmt s v]
+              | BinOpE s (SrcBinOp s) (Expr s v) (Expr s v)
+              | ParenE s (Expr s v) -- ???
   deriving Show
 
 data Literal = UnitLit
              | IntLit Int
   deriving Show
 
-newtype CaseAlt = CaseAlt (Pattern, Expr)
+type SrcLiteral s = (s, Literal)
+
+data CaseAlt s v = CaseAlt s (Pattern s) (Expr s v)
   deriving Show
 
-data Stmt = ExprS Expr
-          | BindS VarBinder Expr
-          | ReturnS Expr
+data Stmt s v = ExprS (Expr s v)
+              | BindS s (VarBinder s) (Expr s v)
+              | ReturnS s (Expr s v)
   deriving Show
 
 data BinOp = App
@@ -78,11 +71,19 @@ data BinOp = App
            | GreaterEq
   deriving Show
 
+type SrcBinOp s = (s, BinOp)
+
 data Type = TyTypeCon TypeName Kind
           | TyVar TypeVar
           | TyArrow Type Type
           | TyForAll TypeVar Type
           | TyApp Type Type
+  deriving Show
+
+data SrcType s = SrcTyApp s (SrcTypeName s) [SrcType s]
+               | SrcTyVar (SrcTypeVar s)
+               | SrcTyArrow s (SrcType s) (SrcType s)
+               | SrcTyForAll s (SrcTypeVar s) (SrcType s)
   deriving Show
 
 data Kind = StarK
@@ -92,44 +93,71 @@ data Kind = StarK
 newtype Var = Var String
   deriving Show
 
-newtype VarBinder = VarBinder (Var, Type)
+newtype VarTy = VarTy (Var, Type)
+  deriving Show
+
+type SrcVar s = (s, Var)
+
+data VarBinder s = VarBinder s (SrcVar s, SrcType s)
   deriving Show
 
 newtype TypeVar = TypeVar String
   deriving Show
 
+type SrcTypeVar s = (s, TypeVar)
+
 newtype TypeName = TypeName String
   deriving Show
+
+type SrcTypeName s = (s, TypeName)
 
 newtype ConName = ConName String
   deriving Show
 
+type SrcConName s = (s, ConName)
+
 newtype FunName = FunName String
   deriving Show
 
+type SrcFunName s = (s, FunName)
+
 -- Parsing helpers
-data TopDef a = TopTypeDef { getTypeDef :: TypeDef a }
-              | TopFunDef  { getFunDef  :: FunDef  a }
+data TopDef s v = TopTypeDef { getTypeDef :: TypeDef s   }
+                | TopFunDef  { getFunDef  :: FunDef  s v }
   deriving Show
 
-isTypeDef :: TopDef a -> Bool
+type SrcTopDef = TopDef SrcSpan Var
+
+isTypeDef :: TopDef s v -> Bool
 isTypeDef (TopTypeDef _) = True
 isTypeDef              _ = False
 
-isFunDef :: TopDef a -> Bool
+isFunDef :: TopDef s v -> Bool
 isFunDef (TopFunDef _) = True
 isFunDef             _ = False
 
-type SrcTopDef = TopDef SrcSpan
-type TyTopDef  = TopDef (SrcSpan, Type)
+class SrcAnnotated ast where
+  ann :: ast s -> s
 
-instance Annotated TopDef where
-  ann (TopTypeDef td) = ann td
-  ann (TopFunDef fd) = ann fd
+class SrcAnnotated2 ast where
+  ann2 :: ast s v -> s
 
-class Annotated ast where
-  ann :: ast a -> a
+instance SrcAnnotated2 (,) where
+  ann2 (s, _) = s
 
-getSrcSpan :: Annotated ast => ast SrcSpan -> SrcSpan
+instance SrcAnnotated2 TopDef where
+  ann2 (TopTypeDef td) = ann td
+  ann2 (TopFunDef fd)  = ann2 fd
+
+instance SrcAnnotated TypeDef where
+  ann (TypeDef s _ _ _) = s
+
+instance SrcAnnotated2 FunDef where
+  ann2 (FunDef s _ _ _) = s
+
+getSrcSpan :: SrcAnnotated ast => ast SrcSpan -> SrcSpan
 getSrcSpan = ann
+
+getSrcSpan2 :: SrcAnnotated2 ast => ast SrcSpan v -> SrcSpan
+getSrcSpan2 = ann2
 
