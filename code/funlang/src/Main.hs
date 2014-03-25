@@ -5,7 +5,7 @@ import FunLang.Parser
 
 main :: IO ()
 main = print $
-  lexer "type Bool = \n fun :" |>
+  lexer "type Bool = True | False \n type String A = S" |>
   parseFunLang "filename"
 
 (|>) :: a -> (a -> b) -> b

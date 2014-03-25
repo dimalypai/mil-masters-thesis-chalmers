@@ -20,6 +20,8 @@ type SrcTypeDef = TypeDef SrcSpan
 data ConDef s = ConDef s (SrcConName s) [SrcType s]
   deriving Show
 
+type SrcConDef = ConDef SrcSpan
+
 data FunDef s v = FunDef s (SrcFunName s) (SrcType s) [FunEq s v]
   deriving Show
 
@@ -148,6 +150,9 @@ instance SrcAnnotated2 TopDef where
 
 instance SrcAnnotated TypeDef where
   ann (TypeDef s _ _ _) = s
+
+instance SrcAnnotated ConDef where
+  ann (ConDef s _ _) = s
 
 instance SrcAnnotated2 FunDef where
   ann2 (FunDef s _ _ _) = s

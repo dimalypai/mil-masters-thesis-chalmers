@@ -80,16 +80,31 @@ topdef : typedef { TopTypeDef $1 }
 
 typedef :: { SrcTypeDef }
 typedef
-  : type upperId '=' {% withFileName $ \fileName ->
-                          TypeDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
-                                  (getTokSrcSpan $2, TypeName $ getId (getToken $2)) [] [] }
-  | type lowerId '=' {% throwError "Type name must begin with a capital letter" }
+  : type upperId list(typevar) '=' seplist1(condef, '|')
+      {% withFileName $ \fileName ->
+           TypeDef (combineSrcSpans [getTokSrcSpan $1, getSrcSpan (last $5)] fileName)
+                   (mkTokSrcSpan $2 fileName, TypeName $ getTokId $2)
+                   $3
+                   $5 }
+
+condef :: { SrcConDef }
+condef
+  : upperId {% withFileName $ \fileName ->
+                 ConDef (combineSrcSpans [getTokSrcSpan $1] fileName)
+                        (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
+                        [] }
 
 fundef :: { SrcFunDef }
 fundef
   : lowerId ':' {% withFileName $ \fileName ->
                      FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $2] fileName)
-                            (getTokSrcSpan $1, FunName $ getId (getToken $1)) undefined [] }
+                            (mkTokSrcSpan $1 fileName, FunName $ getTokId $1)
+                            undefined
+                            [] }
+
+typevar :: { SrcTypeVar SrcSpan }
+typevar : upperId {% withFileName $ \fileName ->
+                       (mkTokSrcSpan $1 fileName, TypeVar $ getTokId $1) }
 
 -- Helper productions
 

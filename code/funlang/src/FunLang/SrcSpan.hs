@@ -5,6 +5,7 @@ module FunLang.SrcSpan
   , mkSrcPos
   , srcSpanToPos
   , combineSrcSpans
+  , setSrcSpanFileName
   ) where
 
 import Text.Printf
@@ -51,4 +52,7 @@ combineSrcSpans spans fileName =
   let (SrcSpan _ startLine startCol _ _) = head spans
       (SrcSpan _ _ _ endLine endCol)     = last spans
   in mkSrcSpan fileName startLine startCol endLine endCol
+
+setSrcSpanFileName :: SrcSpan -> String -> SrcSpan
+setSrcSpanFileName ss fileName = ss { ssFileName = fileName }
 
