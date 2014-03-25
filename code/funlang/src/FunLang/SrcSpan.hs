@@ -8,7 +8,8 @@ module FunLang.SrcSpan
   , setSrcSpanFileName
   ) where
 
-import Text.Printf
+import FunLang.DebugShow
+import FunLang.PrettyPrinter
 
 -- | Span in the source file:
 -- * file name
@@ -27,9 +28,13 @@ data SrcSpan = SrcSpan
 mkSrcSpan :: String -> Int -> Int -> Int -> Int -> SrcSpan
 mkSrcSpan = SrcSpan
 
-instance Show SrcSpan where
-  show (SrcSpan fileName startLine startCol endLine endCol) =
-    printf "%s:%d,%d-%d,%d" fileName startLine startCol endLine endCol
+instance Pretty SrcSpan where
+  prPrn (SrcSpan fileName startLine startCol endLine endCol) =
+    text fileName <> colon <> int startLine <> comma <> int startCol <> char '-'
+      <> int endLine <> comma <> int endCol
+
+instance DebugShow SrcSpan where
+  showDebug = prPrn
 
 data SrcPos = SrcPos
   { spFileName :: String
@@ -40,8 +45,11 @@ data SrcPos = SrcPos
 mkSrcPos :: String -> Int -> Int -> SrcPos
 mkSrcPos = SrcPos
 
-instance Show SrcPos where
-  show (SrcPos fileName line col) = printf "%s:%d,%d" fileName line col
+instance Pretty SrcPos where
+  prPrn (SrcPos fileName line col) = text fileName <> colon <> int line <> comma <> int col
+
+instance DebugShow SrcPos where
+  showDebug = prPrn
 
 srcSpanToPos :: SrcSpan -> SrcPos
 srcSpanToPos (SrcSpan fileName line col _ _) = mkSrcPos fileName line col

@@ -8,6 +8,7 @@ import Control.Monad.Reader
 import FunLang.Lexer as Lex
 import FunLang.AST
 import FunLang.SrcSpan
+import FunLang.PrettyPrinter
 
 }
 
@@ -154,7 +155,7 @@ parseError toks = throwError $ "FunLang parsing error at " ++ getFirstTokenPosSt
 
 getFirstTokenPosString :: [TokenWithSpan] -> String
 getFirstTokenPosString []    = "end of file"
-getFirstTokenPosString (t:_) = show $ srcSpanToPos $ getTokSrcSpan t
+getFirstTokenPosString (t:_) = prPrint $ srcSpanToPos $ getTokSrcSpan t
 
 filterMap :: (a -> Bool) -> (a -> b) -> [a] -> [b]
 filterMap p f = map f . filter p
