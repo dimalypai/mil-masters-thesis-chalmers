@@ -1,6 +1,10 @@
-module FunLang.AST where
+module FunLang.AST
+  ( module FunLang.AST
+  , module FunLang.SrcAnnotated
+  ) where
 
 import FunLang.SrcSpan
+import FunLang.SrcAnnotated
 
 data Program s v = Program s [TypeDef s] [FunDef s v]
   deriving Show
@@ -136,14 +140,7 @@ isFunDef :: TopDef s v -> Bool
 isFunDef (TopFunDef _) = True
 isFunDef             _ = False
 
-class SrcAnnotated ast where
-  ann :: ast s -> s
-
-class SrcAnnotated2 ast where
-  ann2 :: ast s v -> s
-
-instance SrcAnnotated2 (,) where
-  ann2 (s, _) = s
+-- Source annotations
 
 instance SrcAnnotated2 TopDef where
   ann2 (TopTypeDef td) = ann td
@@ -154,10 +151,4 @@ instance SrcAnnotated TypeDef where
 
 instance SrcAnnotated2 FunDef where
   ann2 (FunDef s _ _ _) = s
-
-getSrcSpan :: SrcAnnotated ast => ast SrcSpan -> SrcSpan
-getSrcSpan = ann
-
-getSrcSpan2 :: SrcAnnotated2 ast => ast SrcSpan v -> SrcSpan
-getSrcSpan2 = ann2
 
