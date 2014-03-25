@@ -7,6 +7,7 @@ import Control.Monad.Reader
 
 import FunLang.Lexer as Lex
 import FunLang.AST
+import FunLang.AST.SrcAnnotated
 import FunLang.SrcSpan
 import FunLang.PrettyPrinter
 

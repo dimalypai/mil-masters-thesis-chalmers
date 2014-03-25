@@ -1,11 +1,6 @@
-module FunLang.AST
-  ( module FunLang.AST
-  , module FunLang.SrcAnnotated
-  ) where
+module FunLang.AST where
 
 import FunLang.SrcSpan
-import FunLang.SrcAnnotated
-import FunLang.DebugShow
 
 data Program s v = Program s [TypeDef s] [FunDef s v]
 
@@ -122,47 +117,4 @@ isTypeDef              _ = False
 isFunDef :: TopDef s v -> Bool
 isFunDef (TopFunDef _) = True
 isFunDef             _ = False
-
--- Source annotations
-
-instance SrcAnnotated2 TopDef where
-  ann2 (TopTypeDef td) = ann td
-  ann2 (TopFunDef fd)  = ann2 fd
-
-instance SrcAnnotated TypeDef where
-  ann (TypeDef s _ _ _) = s
-
-instance SrcAnnotated ConDef where
-  ann (ConDef s _ _) = s
-
-instance SrcAnnotated2 FunDef where
-  ann2 (FunDef s _ _ _) = s
-
--- DebugShow
-
-instance DebugShow s => DebugShow (Program s v) where
-  showDebug (Program s typeDefs funDefs) =
-    text "Program" <+> showDebug s $$
-      (nest indLvl (showDebug typeDefs)) $$
-      (nest indLvl (showDebug funDefs))
-
-instance DebugShow s => DebugShow (TypeDef s) where
-  showDebug (TypeDef s typeName typeVars conDefs) =
-    text "TypeDef" <+> showDebug s $$
-      (nest indLvl (showDebug typeName)) $$
-      (nest indLvl (showDebug typeVars)) $$
-      (nest indLvl (showDebug conDefs))
-
-instance DebugShow s => DebugShow (FunDef s v) where
-  showDebug (FunDef s _ _ _) =
-    text "FunDef" <+> showDebug s
-
-instance DebugShow TypeName where
-  showDebug typeName = text $ show typeName
-
-instance DebugShow TypeVar where
-  showDebug typeVar = text $ show typeVar
-
-instance DebugShow s => DebugShow (ConDef s) where
-  showDebug (ConDef s _ _) = text "ConDef" <+> showDebug s
 

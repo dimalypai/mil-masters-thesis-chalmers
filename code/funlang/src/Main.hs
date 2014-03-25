@@ -2,7 +2,7 @@ module Main where
 
 import FunLang.Lexer
 import FunLang.Parser
-import FunLang.DebugShow
+import FunLang.AST.DebugShow
 
 main :: IO ()
 main = putStrLn $ renderDebug p
