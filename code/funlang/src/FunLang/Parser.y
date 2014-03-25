@@ -79,15 +79,17 @@ topdef : typedef { TopTypeDef $1 }
        | fundef  { TopFunDef $1 }
 
 typedef :: { SrcTypeDef }
-typedef : type upperId '=' {% withFileName $ \fileName ->
-                                TypeDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
-                                        (getTokSrcSpan $2, TypeName $ getId (getToken $2)) [] [] }
-        | type lowerId '=' {% throwError "Type name must begin with a capital letter" }
+typedef
+  : type upperId '=' {% withFileName $ \fileName ->
+                          TypeDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+                                  (getTokSrcSpan $2, TypeName $ getId (getToken $2)) [] [] }
+  | type lowerId '=' {% throwError "Type name must begin with a capital letter" }
 
 fundef :: { SrcFunDef }
-fundef : lowerId ':' {% withFileName $ \fileName ->
-                          FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $2] fileName)
-                                 (getTokSrcSpan $1, FunName $ getId (getToken $1)) undefined [] }
+fundef
+  : lowerId ':' {% withFileName $ \fileName ->
+                     FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $2] fileName)
+                            (getTokSrcSpan $1, FunName $ getId (getToken $1)) undefined [] }
 
 -- Helper productions
 
