@@ -31,12 +31,13 @@ spec =
     it "parses a program with single simplest data type" $
       let baseName = "SingleSimpleDataType"
           fileName = mkFileName baseName
-          ast = Program (mkSrcSpan fileName 1 1 1 10)
-                  [TypeDef (mkSrcSpan fileName 1 1 1 10)
-                     (mkSrcSpan fileName 1 6 1 6, TypeName "T")
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 1 10)
+                  [TypeDef (srcSp 1 1 1 10)
+                     (srcSp 1 6 1 6, TypeName "T")
                      []
-                     [ConDef (mkSrcSpan fileName 1 10 1 10)
-                        (mkSrcSpan fileName 1 10 1 10, ConName "T")
+                     [ConDef (srcSp 1 10 1 10)
+                        (srcSp 1 10 1 10, ConName "T")
                         []]]
                   []
       in successCase baseName ast
