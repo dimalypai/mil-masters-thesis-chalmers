@@ -43,6 +43,38 @@ spec =
                   []
       in successCase baseName ast
 
+    it "parses a program with single simple data type with type variables" $
+      let baseName = "SingleDataTypeWithTypeVars"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 1 14)
+                  [TypeDef (srcSp 1 1 1 14)
+                     (srcSp 1 6 1 6, TypeName "T")
+                     [(srcSp 1 8 1 8, TypeVar "A"),
+                      (srcSp 1 10 1 10, TypeVar "B")]
+                     [ConDef (srcSp 1 14 1 14)
+                        (srcSp 1 14 1 14, ConName "C")
+                        []]]
+                  []
+      in successCase baseName ast
+
+    it "parses a program with single simple data type with several simple constructors" $
+      let baseName = "SingleDataTypeWithSeveralSimpleConstructors"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 1 16)
+                  [TypeDef (srcSp 1 1 1 16)
+                     (srcSp 1 6 1 6, TypeName "T")
+                     []
+                     [ConDef (srcSp 1 10 1 11)
+                        (srcSp 1 10 1 11, ConName "C1")
+                        [],
+                      ConDef (srcSp 1 15 1 16)
+                        (srcSp 1 10 1 11, ConName "C2")
+                        []]]
+                  []
+      in successCase baseName ast
+
     -- Failure
     describe "gives an error message when" $ do
       it "given an empty program" $
