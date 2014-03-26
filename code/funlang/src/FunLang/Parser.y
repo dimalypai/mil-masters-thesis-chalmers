@@ -1,6 +1,6 @@
 {
 
-module FunLang.Parser (parseFunLang) where
+module FunLang.Parser (parse, parseFunLang) where
 
 import Control.Monad.Error
 import Control.Monad.Reader
@@ -75,6 +75,7 @@ program : list1(topdef) {% withFileName $ \fileName ->
                              Program (combineSrcSpans (map getSrcSpan2 $1) fileName)
                                      (filterMap isTypeDef getTypeDef $1)
                                      (filterMap isFunDef  getFunDef  $1) }
+        | {- empty -} {% throwError "Empty program" }
 
 topdef :: { SrcTopDef }
 topdef : typedef { TopTypeDef $1 }
@@ -148,8 +149,11 @@ type FileName = String
 
 funLang :: [TokenWithSpan] -> ParseM SrcProgram
 
-parseFunLang :: String -> [TokenWithSpan] -> Either ParseError SrcProgram
-parseFunLang fileName toks = runReader (runErrorT $ runParse $ funLang toks) fileName
+parse :: FileName -> [TokenWithSpan] -> Either ParseError SrcProgram
+parse fileName toks = runReader (runErrorT $ runParse $ funLang toks) fileName
+
+parseFunLang :: FileName -> String -> Either ParseError SrcProgram
+parseFunLang fileName input = parse fileName (lexer input)
 
 parseError :: [TokenWithSpan] -> ParseM a
 parseError toks = throwError $ "FunLang parsing error at " ++ getFirstTokenPosString toks

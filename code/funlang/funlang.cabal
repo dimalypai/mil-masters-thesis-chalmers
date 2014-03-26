@@ -38,6 +38,7 @@ test-suite spec
                    , pretty
                    , mtl
                    , hspec
+                   , filepath
   build-tools:       alex
                    , happy
   other-modules:     FunLang.Lexer
