@@ -1,0 +1,2 @@
+FunLang parsing error at TypeZeroConstructors.fl:1,1-1,8:
+  Definition of type T doesn't have any constructors

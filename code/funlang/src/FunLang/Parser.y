@@ -75,7 +75,7 @@ program : list1(topdef) {% withFileName $ \fileName ->
                              Program (combineSrcSpans (map getSrcSpan2 $1) fileName)
                                      (filterMap isTypeDef getTypeDef $1)
                                      (filterMap isFunDef  getFunDef  $1) }
-        | {- empty -} {% throwError EmptyProgram }
+        | {- empty -} {% withFileNameM $ \fileName -> throwError $ EmptyProgram fileName }
 
 topdef :: { SrcTopDef }
 topdef : typedef { TopTypeDef $1 }
@@ -89,6 +89,14 @@ typedef
                    (mkTokSrcSpan $2 fileName, TypeName $ getTokId $2)
                    $3
                    $5 }
+  | type lowerId list(typevar) '=' seplist1(condef, '|')
+      {% withFileNameM $ \fileName ->
+           throwError $ TypeDefLowerId (getTokId $2)
+                                       (setSrcSpanFileName (getTokSrcSpan $2) fileName) }
+  | type upperId list(typevar) '='
+      {% withFileNameM $ \fileName ->
+           throwError $ TypeDefNoCons (getTokId $2)
+                                      (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName) }
 
 condef :: { SrcConDef }
 condef
@@ -155,11 +163,11 @@ parseFunLang :: FileName -> String -> Either ParseError SrcProgram
 parseFunLang fileName input = parse fileName (lexer input)
 
 parseError :: [TokenWithSpan] -> ParseM a
-parseError toks = ask >>= \fileName ->
+parseError toks = withFileNameM $ \fileName ->
   throwError $ GeneralError (getFirstTokenPosString toks fileName)
 
 getFirstTokenPosString :: [TokenWithSpan] -> FileName -> String
-getFirstTokenPosString []    fileName = "end of file"
+getFirstTokenPosString []    fileName = fileName ++ ":end of file"
 getFirstTokenPosString (t:_) fileName =
   prPrint $ setSrcPosFileName (srcSpanToPos $ getTokSrcSpan t) fileName
 
@@ -168,6 +176,9 @@ filterMap p f = map f . filter p
 
 withFileName :: (String -> a) -> ParseM a
 withFileName f = ask >>= \fileName -> return $ f fileName
+
+withFileNameM :: (String -> ParseM a) -> ParseM a
+withFileNameM f = ask >>= \fileName -> f fileName
 
 }
 

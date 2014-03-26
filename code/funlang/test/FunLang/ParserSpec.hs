@@ -48,6 +48,15 @@ spec =
       it "given an empty program" $
         failureCase "Empty"
 
+      it "given a program with type definition with no constructors" $
+        failureCase "TypeZeroConstructors"
+
+      it "given a program with type definition with missing equal sign" $
+        failureCase "TypeMissingEqualSign"
+
+      it "given a program with type definition with lower case type name" $
+        failureCase "TypeLowerId"
+
 -- Infrastructure
 
 successCase :: String -> SrcProgram -> IO ()
