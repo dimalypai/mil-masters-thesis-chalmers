@@ -23,7 +23,7 @@ data SrcSpan = SrcSpan
   , ssStartCol  :: Int
   , ssEndLine   :: Int
   , ssEndCol    :: Int
-  } deriving Eq
+  } deriving (Show, Eq)
 
 mkSrcSpan :: String -> Int -> Int -> Int -> Int -> SrcSpan
 mkSrcSpan = SrcSpan
