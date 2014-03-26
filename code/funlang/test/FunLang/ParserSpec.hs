@@ -30,7 +30,7 @@ spec =
     -- Success
     it "parses a program with single simplest data type" $
       let baseName = "SingleSimpleDataType"
-          fileName = baseName <.> "fl"
+          fileName = mkFileName baseName
           ast = Program (mkSrcSpan fileName 1 1 1 10)
                   [TypeDef (mkSrcSpan fileName 1 1 1 10)
                      (mkSrcSpan fileName 1 6 1 6, TypeName "T")
@@ -51,25 +51,28 @@ spec =
 successCase :: String -> SrcProgram -> IO ()
 successCase baseName result = do
   input <- successRead baseName
-  let Right pr = parseFunLang (baseName <.> "fl") input
+  let Right pr = parseFunLang (mkFileName baseName) input
   renderDebug pr `shouldBe` renderDebug result
 
 successRead :: String -> IO String
-successRead baseName = readFile (successDir </> baseName <.> "fl")
+successRead baseName = readFile (successDir </> mkFileName baseName)
 
 failureCase :: String -> IO ()
 failureCase baseName = do
   (input, errMsg) <- failureRead baseName
-  let Left err = parseFunLang (baseName <.> "fl") input
+  let Left err = parseFunLang (mkFileName baseName) input
   err `shouldBe` errMsg
 
 failureRead :: String -> IO (String, String)
 failureRead baseName =
-  liftM2 (,) (readFile (failureDir </> baseName <.> "fl"))
+  liftM2 (,) (readFile (failureDir </> mkFileName baseName))
              (dropNewLine <$> readFile (failureDir </> baseName <.> "err"))
   where dropNewLine "" = ""
         dropNewLine str = let l = last str
                           in if l == '\n' || l == '\r'
                              then dropNewLine (init str)
                              else str
+
+mkFileName :: String -> String
+mkFileName baseName = baseName <.> "fl"
 
