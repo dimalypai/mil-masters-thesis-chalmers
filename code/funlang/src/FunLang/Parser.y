@@ -9,7 +9,7 @@ import FunLang.Lexer as Lex
 import FunLang.AST
 import FunLang.AST.SrcAnnotated
 import FunLang.SrcSpan
-import FunLang.PrettyPrinter
+import FunLang.Parser.ParseError
 
 }
 
@@ -75,7 +75,7 @@ program : list1(topdef) {% withFileName $ \fileName ->
                              Program (combineSrcSpans (map getSrcSpan2 $1) fileName)
                                      (filterMap isTypeDef getTypeDef $1)
                                      (filterMap isFunDef  getFunDef  $1) }
-        | {- empty -} {% throwError "Empty program" }
+        | {- empty -} {% throwError EmptyProgram }
 
 topdef :: { SrcTopDef }
 topdef : typedef { TopTypeDef $1 }
@@ -144,7 +144,6 @@ seplist1rev(p, s) : p                  { [$1] }
 newtype ParseM a = ParseM { runParse :: ErrorT ParseError (Reader FileName) a }
   deriving (Monad, MonadError ParseError, MonadReader FileName)
 
-type ParseError = String
 type FileName = String
 
 funLang :: [TokenWithSpan] -> ParseM SrcProgram
@@ -156,11 +155,13 @@ parseFunLang :: FileName -> String -> Either ParseError SrcProgram
 parseFunLang fileName input = parse fileName (lexer input)
 
 parseError :: [TokenWithSpan] -> ParseM a
-parseError toks = throwError $ "FunLang parsing error at " ++ getFirstTokenPosString toks
+parseError toks = ask >>= \fileName ->
+  throwError $ GeneralError (getFirstTokenPosString toks fileName)
 
-getFirstTokenPosString :: [TokenWithSpan] -> String
-getFirstTokenPosString []    = "end of file"
-getFirstTokenPosString (t:_) = prPrint $ srcSpanToPos $ getTokSrcSpan t
+getFirstTokenPosString :: [TokenWithSpan] -> FileName -> String
+getFirstTokenPosString []    fileName = "end of file"
+getFirstTokenPosString (t:_) fileName =
+  prPrint $ setSrcPosFileName (srcSpanToPos $ getTokSrcSpan t) fileName
 
 filterMap :: (a -> Bool) -> (a -> b) -> [a] -> [b]
 filterMap p f = map f . filter p

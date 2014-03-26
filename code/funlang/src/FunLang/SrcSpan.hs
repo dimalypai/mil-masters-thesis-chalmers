@@ -6,6 +6,7 @@ module FunLang.SrcSpan
   , srcSpanToPos
   , combineSrcSpans
   , setSrcSpanFileName
+  , setSrcPosFileName
   ) where
 
 import FunLang.DebugShow
@@ -63,4 +64,7 @@ combineSrcSpans spans fileName =
 
 setSrcSpanFileName :: SrcSpan -> String -> SrcSpan
 setSrcSpanFileName ss fileName = ss { ssFileName = fileName }
+
+setSrcPosFileName :: SrcPos -> String -> SrcPos
+setSrcPosFileName sp fileName = sp { spFileName = fileName }
 

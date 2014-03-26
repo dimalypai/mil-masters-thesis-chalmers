@@ -8,6 +8,7 @@ import Control.Applicative ((<$>))
 import FunLang.AST
 import FunLang.AST.DebugShow
 import FunLang.Parser
+import FunLang.Parser.ParseError
 import FunLang.SrcSpan
 
 main :: IO ()
@@ -62,7 +63,7 @@ failureCase :: String -> IO ()
 failureCase baseName = do
   (input, errMsg) <- failureRead baseName
   let Left err = parseFunLang (mkFileName baseName) input
-  err `shouldBe` errMsg
+  prPrint err `shouldBe` errMsg
 
 failureRead :: String -> IO (String, String)
 failureRead baseName =
