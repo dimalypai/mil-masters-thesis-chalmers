@@ -50,13 +50,6 @@ tokens :-
   return { \p s -> (KW_Return, posn p s) }
   type   { \p s -> (KW_Type,   posn p s) }
   unit   { \p s -> (KW_Unit,   posn p s) }
-  -- Keywords for types???
-  Input  { \p s -> (KW_TyInput,  posn p s) }
-  Int    { \p s -> (KW_TyInt,    posn p s) }
-  IO     { \p s -> (KW_TyIO,     posn p s) }
-  Output { \p s -> (KW_TyOutput, posn p s) }
-  State  { \p s -> (KW_TyState,  posn p s) }
-  Unit   { \p s -> (KW_TyUnit,   posn p s) }
 
   -- Symbols
   "=" { \p s -> (Equal, posn p s) }
@@ -114,13 +107,6 @@ data Token =
   | KW_Return
   | KW_Type
   | KW_Unit
-  -- Keywords for types
-  | KW_TyInput
-  | KW_TyInt
-  | KW_TyIO
-  | KW_TyOutput
-  | KW_TyState
-  | KW_TyUnit
   -- Symbols
   | Equal
   | Colon
@@ -173,13 +159,6 @@ instance Show Token where
   show KW_Return = "return"
   show KW_Type   = "type"
   show KW_Unit   = "unit"
-  -- Keywords for types
-  show KW_TyInput  = "Input"
-  show KW_TyInt    = "Int"
-  show KW_TyIO     = "IO"
-  show KW_TyOutput = "Output"
-  show KW_TyState  = "State"
-  show KW_TyUnit   = "Unit"
   -- Symbols
   show Equal = "="
   show Colon = ":"
