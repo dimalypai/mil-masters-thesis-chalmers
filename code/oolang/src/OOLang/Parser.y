@@ -91,9 +91,9 @@ import OOLang.Parser.ParseError
   -- Literals
   falseLit  { $$@(FalseLit, _) }
   trueLit   { $$@(TrueLit,  _) }
-  intLit    { $$@(Lex.IntLit _, _) }
-  floatLit  { $$@(FloatLit _ _, _) }
-  stringLit { $$@(StringLit  _, _) }
+  intLit    { $$@(Lex.IntLit     _, _) }
+  floatLit  { $$@(Lex.FloatLit _ _, _) }
+  stringLit { $$@(Lex.StringLit  _, _) }
 %%
 
 program :: { SrcProgram }
