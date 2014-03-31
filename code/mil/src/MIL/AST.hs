@@ -19,8 +19,6 @@ data Expr = LitE Literal
           | TypeLambdaE TypeVar Expr
           | TypeAppE Expr Type
           | ConNameE ConName
-          | TupleE [Expr]
-          | ProjE Expr Int
           | NewRefE Expr
           | DerefE Expr
           | AssignRefE Expr Expr
@@ -50,7 +48,6 @@ data Type = TyMonad MilMonad Type
           | TyArrow Type Type
           | TyForAll TypeVar Type
           | TyApp Type Type
-          | TyTuple [Type]
           | TyMonadCons MilMonad MilMonad
   deriving Show
 
