@@ -7,10 +7,17 @@ import Control.Monad.Error
 import FunLang.SrcSpan
 import FunLang.PrettyPrinter
 
-data ParseError = EmptyProgram String
-                | TypeDefLowerId String SrcSpan
-                | TypeDefNoCons String SrcSpan
-                | GeneralError String  -- source position string
+data ParseError =
+    -- | Empty program error. Contains a file name.
+    EmptyProgram String
+    -- | Lower case instead of upper case type name.
+    -- Contains a type name (starting with a lower case letter) and a source span of the name.
+  | TypeDefLowerId String SrcSpan
+    -- | Zero constructors in the type definition.
+    -- Contains a type name and a source span of the type definition.
+  | TypeDefNoCons String SrcSpan
+    -- | General error. Contains a source position string.  
+  | GeneralError String
 
 instance Error ParseError where
   strMsg = GeneralError

@@ -8,9 +8,9 @@ import OOLang.SrcSpan
 import OOLang.PrettyPrinter
 
 data ParseError =
-    -- | Empty program error. Contains file name.
+    -- | Empty program error. Contains a file name.
     EmptyProgram String
-    -- | General error. Contains source position string.
+    -- | General error. Contains a source position string.
   | GeneralError String
 
 instance Error ParseError where
