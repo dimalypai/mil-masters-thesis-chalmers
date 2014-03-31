@@ -13,7 +13,7 @@ data FunDef = FunDef FunName Type Expr
   deriving Show
 
 data Expr = LitE Literal
-          | VarE Var
+          | VarE VarBinder
           | LambdaE VarBinder Expr
           | AppE Expr Expr
           | TypeLambdaE TypeVar Expr
