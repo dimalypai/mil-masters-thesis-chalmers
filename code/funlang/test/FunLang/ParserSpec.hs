@@ -4,11 +4,10 @@ import System.FilePath ((</>), (<.>))
 import Test.Hspec
 import Control.Monad (liftM2)
 import Control.Applicative ((<$>))
+import Text.Show.Pretty
 
 import FunLang.AST
-import FunLang.AST.DebugShow
 import FunLang.Parser
-import FunLang.Parser.ParseError
 import FunLang.SrcSpan
 
 main :: IO ()
@@ -70,7 +69,7 @@ spec =
                         (srcSp 1 10 1 11, ConName "C1")
                         [],
                       ConDef (srcSp 1 15 1 16)
-                        (srcSp 1 10 1 11, ConName "C2")
+                        (srcSp 1 15 1 16, ConName "C2")
                         []]]
                   []
       in successCase baseName ast
@@ -95,7 +94,7 @@ successCase :: String -> SrcProgram -> IO ()
 successCase baseName result = do
   input <- successRead baseName
   let Right pr = parseFunLang (mkFileName baseName) input
-  renderDebug pr `shouldBe` renderDebug result
+  ppShow pr `shouldBe` ppShow result
 
 successRead :: String -> IO String
 successRead baseName = readFile (successDir </> mkFileName baseName)

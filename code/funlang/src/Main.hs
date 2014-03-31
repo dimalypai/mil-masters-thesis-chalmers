@@ -1,10 +1,10 @@
 module Main where
 
 import System.IO
+import Text.Show.Pretty
 
 import FunLang.Lexer
 import FunLang.Parser
-import FunLang.AST.DebugShow
 
 main :: IO ()
 main = do
@@ -17,7 +17,7 @@ main = do
                       parse "fli"
               case p of
                 Left err -> putStrLn $ prPrint err
-                Right pr -> putStrLn $ renderDebug pr
+                Right pr -> putStrLn $ ppShow pr
               main
 
 (|>) :: a -> (a -> b) -> b

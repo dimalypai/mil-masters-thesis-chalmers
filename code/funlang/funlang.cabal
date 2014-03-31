@@ -21,6 +21,7 @@ executable flc
   build-depends:       base >= 4.6 && < 4.7
                      , array
                      , pretty
+                     , pretty-show
                      , mtl
   hs-source-dirs:      src
   build-tools:         alex
@@ -36,6 +37,7 @@ test-suite spec
   build-depends:     base >= 4.6 && < 4.7
                    , array
                    , pretty
+                   , pretty-show
                    , mtl
                    , hspec
                    , filepath
