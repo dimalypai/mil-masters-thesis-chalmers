@@ -10,7 +10,7 @@ module OOLang.Lexer
   (
     lexer
   , Token(..)
-  , TokenWithSpan(..)
+  , TokenWithSpan
   , getToken
   ) where
 
@@ -38,79 +38,79 @@ tokens :-
   @comment ;
 
   -- Keywords
-  class     { \p s -> TokWSpan KW_Class     (posn p s) }
-  def       { \p s -> TokWSpan KW_Def       (posn p s) }
-  do        { \p s -> TokWSpan KW_Do        (posn p s) }
-  else      { \p s -> TokWSpan KW_Else      (posn p s) }
-  end       { \p s -> TokWSpan KW_End       (posn p s) }
-  if        { \p s -> TokWSpan KW_If        (posn p s) }
-  just      { \p s -> TokWSpan KW_Just      (posn p s) }
-  nothing   { \p s -> TokWSpan KW_Nothing   (posn p s) }
-  otherwise { \p s -> TokWSpan KW_Otherwise (posn p s) }
-  private   { \p s -> TokWSpan KW_Private   (posn p s) }
-  public    { \p s -> TokWSpan KW_Public    (posn p s) }
-  pure      { \p s -> TokWSpan KW_Pure      (posn p s) }
-  ref       { \p s -> TokWSpan KW_Ref       (posn p s) }
-  return    { \p s -> TokWSpan KW_Return    (posn p s) }
-  static    { \p s -> TokWSpan KW_Static    (posn p s) }
-  then      { \p s -> TokWSpan KW_Then      (posn p s) }
-  unit      { \p s -> TokWSpan KW_Unit      (posn p s) }
-  when      { \p s -> TokWSpan KW_When      (posn p s) }
-  while     { \p s -> TokWSpan KW_While     (posn p s) }
+  class     { \p s -> (KW_Class,     posn p s) }
+  def       { \p s -> (KW_Def,       posn p s) }
+  do        { \p s -> (KW_Do,        posn p s) }
+  else      { \p s -> (KW_Else,      posn p s) }
+  end       { \p s -> (KW_End,       posn p s) }
+  if        { \p s -> (KW_If,        posn p s) }
+  just      { \p s -> (KW_Just,      posn p s) }
+  nothing   { \p s -> (KW_Nothing,   posn p s) }
+  otherwise { \p s -> (KW_Otherwise, posn p s) }
+  private   { \p s -> (KW_Private,   posn p s) }
+  public    { \p s -> (KW_Public,    posn p s) }
+  pure      { \p s -> (KW_Pure,      posn p s) }
+  ref       { \p s -> (KW_Ref,       posn p s) }
+  return    { \p s -> (KW_Return,    posn p s) }
+  static    { \p s -> (KW_Static,    posn p s) }
+  then      { \p s -> (KW_Then,      posn p s) }
+  unit      { \p s -> (KW_Unit,      posn p s) }
+  when      { \p s -> (KW_When,      posn p s) }
+  while     { \p s -> (KW_While,     posn p s) }
 
   -- Keywords for types
-  Int     { \p s -> TokWSpan KW_TyInt     (posn p s) }
-  Maybe   { \p s -> TokWSpan KW_TyMaybe   (posn p s) }
-  Mutable { \p s -> TokWSpan KW_TyMutable (posn p s) }
-  Ref     { \p s -> TokWSpan KW_TyRef     (posn p s) }
-  Unit    { \p s -> TokWSpan KW_TyUnit    (posn p s) }
+  Int     { \p s -> (KW_TyInt,     posn p s) }
+  Maybe   { \p s -> (KW_TyMaybe,   posn p s) }
+  Mutable { \p s -> (KW_TyMutable, posn p s) }
+  Ref     { \p s -> (KW_TyRef,     posn p s) }
+  Unit    { \p s -> (KW_TyUnit,    posn p s) }
 
   -- Symbols
-  "=" { \p s -> TokWSpan Equal (posn p s) }
-  ":" { \p s -> TokWSpan Colon (posn p s) }
+  "=" { \p s -> (Equal, posn p s) }
+  ":" { \p s -> (Colon, posn p s) }
 
-  "+"  { \p s -> TokWSpan Plus      (posn p s) }
-  "-"  { \p s -> TokWSpan Minus     (posn p s) }
-  "*"  { \p s -> TokWSpan Star      (posn p s) }
-  "/"  { \p s -> TokWSpan Slash     (posn p s) }
-  "%"  { \p s -> TokWSpan Percent   (posn p s) }
-  "<"  { \p s -> TokWSpan Less      (posn p s) }
-  ">"  { \p s -> TokWSpan Greater   (posn p s) }
-  "<=" { \p s -> TokWSpan LessEq    (posn p s) }
-  ">=" { \p s -> TokWSpan GreaterEq (posn p s) }
-  "/=" { \p s -> TokWSpan NotEq     (posn p s) }
+  "+"  { \p s -> (Plus,      posn p s) }
+  "-"  { \p s -> (Minus,     posn p s) }
+  "*"  { \p s -> (Star,      posn p s) }
+  "/"  { \p s -> (Slash,     posn p s) }
+  "%"  { \p s -> (Percent,   posn p s) }
+  "<"  { \p s -> (Less,      posn p s) }
+  ">"  { \p s -> (Greater,   posn p s) }
+  "<=" { \p s -> (LessEq,    posn p s) }
+  ">=" { \p s -> (GreaterEq, posn p s) }
+  "/=" { \p s -> (NotEq,     posn p s) }
 
-  "=>" { \p s -> TokWSpan FatArrow (posn p s) }
-  "->" { \p s -> TokWSpan Arrow    (posn p s) }
-  "\"  { \p s -> TokWSpan Lambda   (posn p s) }
+  "=>" { \p s -> (FatArrow, posn p s) }
+  "->" { \p s -> (Arrow,    posn p s) }
+  "\"  { \p s -> (Lambda,   posn p s) }
 
-  "."  { \p s -> TokWSpan Dot            (posn p s) }
-  "::" { \p s -> TokWSpan DoubleColon    (posn p s) }
-  "?"  { \p s -> TokWSpan Question       (posn p s) }
-  "??" { \p s -> TokWSpan DoubleQuestion (posn p s) }
+  "."  { \p s -> (Dot,            posn p s) }
+  "::" { \p s -> (DoubleColon,    posn p s) }
+  "?"  { \p s -> (Question,       posn p s) }
+  "??" { \p s -> (DoubleQuestion, posn p s) }
 
-  "<-" { \p s -> TokWSpan LeftArrow (posn p s) }
-  ":=" { \p s -> TokWSpan ColonEq   (posn p s) }
-  "!"  { \p s -> TokWSpan Bang      (posn p s) }
+  "<-" { \p s -> (LeftArrow, posn p s) }
+  ":=" { \p s -> (ColonEq,   posn p s) }
+  "!"  { \p s -> (Bang,      posn p s) }
 
-  "&&" { \p s -> TokWSpan And (posn p s) }
-  "||" { \p s -> TokWSpan Or  (posn p s) }
+  "&&" { \p s -> (And, posn p s) }
+  "||" { \p s -> (Or,  posn p s) }
 
-  "(" { \p s -> TokWSpan OpenParen  (posn p s) }
-  ")" { \p s -> TokWSpan CloseParen (posn p s) }
+  "(" { \p s -> (OpenParen,  posn p s) }
+  ")" { \p s -> (CloseParen, posn p s) }
 
-  ";" { \p s -> TokWSpan SemiColon (posn p s) }
+  ";" { \p s -> (SemiColon, posn p s) }
 
   -- Identifiers
-  @lowerId { \p s -> TokWSpan (LowerId s) (posn p s) }
-  @upperId { \p s -> TokWSpan (UpperId s) (posn p s) }
+  @lowerId { \p s -> (LowerId s, posn p s) }
+  @upperId { \p s -> (UpperId s, posn p s) }
 
   -- Literals
-  false     { \p s -> TokWSpan FalseLit (posn p s) }
-  true      { \p s -> TokWSpan TrueLit  (posn p s) }
-  $digit+                                   { \p s -> TokWSpan (IntLit $ read s) (posn p s) }
-  $digit+(\.$digit+)? (e (\+|\-)? $digit+)? { \p s -> TokWSpan (FloatLit (read s) s) (posn p s) }
-  @string { \p s -> TokWSpan (StringLit $ read s) (posn p s) }
+  false     { \p s -> (FalseLit, posn p s) }
+  true      { \p s -> (TrueLit,  posn p s) }
+  $digit+                                   { \p s -> (IntLit $ read s, posn p s) }
+  $digit+(\.$digit+)? (e (\+|\-)? $digit+)? { \p s -> (FloatLit (read s) s, posn p s) }
+  @string { \p s -> (StringLit $ read s, posn p s) }
 
 {
 
@@ -261,17 +261,19 @@ instance Show Token where
   show (StringLit s)  = show s
 
 -- | Token with it's source span.
-data TokenWithSpan = TokWSpan Token SrcSpan
-  deriving (Show, Eq)
+type TokenWithSpan = (Token, SrcSpan)
 
 getToken :: TokenWithSpan -> Token
-getToken (TokWSpan tok _) = tok
+getToken = fst
+
+getTokSrcSpan :: TokenWithSpan -> SrcSpan
+getTokSrcSpan = snd
 
 -- | Converts Alex source position to source span.
 -- Takes token string for length calculation.
 -- NONAME is used as a source file name. Should be replaced in the parser.
 posn :: AlexPosn -> String -> SrcSpan
-posn (AlexPn _ l c) tokStr = SrcSpan "NONAME" l c l (c + length tokStr - 1)
+posn (AlexPn _ l c) tokStr = mkSrcSpan "NONAME" l c l (c + length tokStr - 1)
 
 -- | Top-level lexing function.
 lexer :: String -> [TokenWithSpan]
