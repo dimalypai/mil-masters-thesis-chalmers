@@ -1,6 +1,10 @@
 {
 
-module FunLang.Parser (parse, parseFunLang) where
+module FunLang.Parser
+  ( parse
+  , parseFunLang
+  , module FunLang.Parser.ParseError
+  ) where
 
 import Control.Monad.Error
 import Control.Monad.Reader
