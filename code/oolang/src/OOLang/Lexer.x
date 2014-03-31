@@ -12,6 +12,7 @@ module OOLang.Lexer
   , Token(..)
   , TokenWithSpan
   , getToken
+  , getTokSrcSpan
   ) where
 
 import OOLang.SrcSpan
