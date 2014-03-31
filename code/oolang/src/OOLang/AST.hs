@@ -1,36 +1,41 @@
 module OOLang.AST where
 
-newtype Program = Program ([ClassDef], [FunDef])
+import OOLang.SrcSpan
+
+data Program s v = Program s ([ClassDef s v], [FunDef s v])
   deriving Show
 
-data ClassDef = ClassDef ClassName (Maybe ClassName) [MemberDecl]
+type SrcProgram = Program SrcSpan Var
+type TyProgram  = Program SrcSpan VarTy
+
+data ClassDef s v = ClassDef s (SrcClassName s) (Maybe (SrcClassName s)) [MemberDecl s v]
   deriving Show
 
-data FunDef = FunDef FunName FunType [Stmt] Bool
+data FunDef s v = FunDef s (SrcFunName s) (SrcFunType s) [Stmt s v] Bool
   deriving Show
 
-data MemberDecl = FieldDecl Declaration [Modifier]
-                | MethodDecl FunDef [Modifier]
+data MemberDecl s v = FieldDecl s (Declaration s v) [SrcModifier s]
+                    | MethodDecl s (FunDef s v) [SrcModifier s]
   deriving Show
 
-data Stmt = DeclS Declaration
-          | ExprS Expr
-          | AssignS AssignOp Expr Expr
-          | WhileS Expr [Stmt]
-          | WhenS Expr [Stmt] [Stmt]
-          | ReturnS Expr
+data Stmt s v = DeclS (Declaration s v)
+              | ExprS (Expr s v)
+              | AssignS s (SrcAssignOp s) (Expr s v) (Expr s v)
+              | WhileS s (Expr s v) [Stmt s v]
+              | WhenS s (Expr s v) [Stmt s v] [Stmt s v]
+              | ReturnS s (Expr s v)
   deriving Show
 
-data Expr = LitE Literal
-          | VarE Var
-          | FunNameE FunName
-          | LambdaE [VarBinder] Expr
-          | ClassAccessE ClassName Expr
-          | ClassAccessStaticE ClassName Expr
-          | DerefE Expr
-          | BinOpE BinOp Expr Expr
-          | IfThenElseE Expr Expr Expr
-          | JustE Expr
+data Expr s v = LitE (SrcLiteral s)
+              | VarE s v
+              | FunNameE (SrcFunName s)
+              | LambdaE s [VarBinder s] (Expr s v)
+              | ClassAccessE s (SrcClassName s) (Expr s v)
+              | ClassAccessStaticE s (SrcClassName s) (Expr s v)
+              | DerefE s (Expr s v)
+              | BinOpE s (SrcBinOp s) (Expr s v) (Expr s v)
+              | IfThenElseE s (Expr s v) (Expr s v) (Expr s v)
+              | JustE s (Expr s v)
   deriving Show
 
 data Literal = UnitLit
@@ -38,6 +43,8 @@ data Literal = UnitLit
              | IntLit Int
              | NothingLit
   deriving Show
+
+type SrcLiteral s = (s, Literal)
 
 data BinOp = App
            | MemberAccess
@@ -56,6 +63,8 @@ data BinOp = App
            | GreaterEq
   deriving Show
 
+type SrcBinOp s = (s, BinOp)
+
 data Type = TyUnit
           | TyBool
           | TyInt
@@ -64,32 +73,53 @@ data Type = TyUnit
           | TyMaybe Type
           | TyMutable Type
           | TyRef Type
+
+data SrcType s = SrcTyUnit s
+               | SrcTyBool s
+               | SrcTyInt s
+               | SrcTyClass (SrcClassName s)
+               | SrcTyArrow s (SrcType s) (SrcType s)
+               | SrcTyMaybe s (SrcType s)
+               | SrcTyMutable s (SrcType s)
+               | SrcTyRef s (SrcType s)
   deriving Show
 
-data FunType = FunType [VarBinder] Type
+data SrcFunType s = SrcFunType s [VarBinder s] (SrcType s)
   deriving Show
 
-data Declaration = Decl VarBinder (Maybe Init)
+data Declaration s v = Decl s (VarBinder s) (Maybe (Init s v))
   deriving Show
 
-data Init = Init AssignOp Expr
+data Init s v = Init s (SrcAssignOp s) (Expr s v)
   deriving Show
 
 data AssignOp = AssignEqual | AssignMut | AssignRef
   deriving Show
 
+type SrcAssignOp s = (s, AssignOp)
+
 data Modifier = Public | Private | Static
   deriving Show
+
+type SrcModifier s = (s, Modifier)
 
 newtype Var = Var String
   deriving Show
 
-newtype VarBinder = VarBind (Var, Type)
+newtype VarTy = VarTy (Var, Type)
+
+type SrcVar s = (s, Var)
+
+data VarBinder s = VarBinder s (SrcVar s, SrcType s)
   deriving Show
 
 newtype ClassName = ClassName String
   deriving Show
 
+type SrcClassName s = (s, ClassName)
+
 newtype FunName = FunName String
   deriving Show
+
+type SrcFunName s = (s, FunName)
 

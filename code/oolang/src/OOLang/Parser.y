@@ -15,11 +15,12 @@ import OOLang.AST
   def { undefined }
 %%
 
-Program : { undefined }
+program :: { SrcProgram }
+program : { undefined }
 
 {
 
-parseOOLang :: [TokenWithSpan] -> Program
+parseOOLang :: [TokenWithSpan] -> SrcProgram
 
 parseError :: [TokenWithSpan] -> a
 parseError toks = error $ "OOLang parsing error"
