@@ -189,3 +189,11 @@ General thoughts. Week 8
           But for some occurences of types we would like to have SrcSpans. The same goes for constructors. Mostly for stuff in the environment, which
           is kind of internal.
 
+Meeting 2014-03-31
+==================
+
+* Source tree annotations.
+* Parsing errors.
+* Nameless representation of terms: probably no.
+* Tuples in MIL: probably no.
+
