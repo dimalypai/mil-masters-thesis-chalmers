@@ -41,6 +41,8 @@ data Expr s v = LitE (SrcLiteral s)
 data Literal = UnitLit
              | BoolLit Bool
              | IntLit Int
+             | FloatLit Double String  -- the user string
+             | StringLit String
              | NothingLit
   deriving Show
 

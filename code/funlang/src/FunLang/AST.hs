@@ -48,6 +48,8 @@ data Expr s v = LitE (SrcLiteral s)
 
 data Literal = UnitLit
              | IntLit Int
+             | FloatLit Double String  -- the user string
+             | StringLit String
   deriving Show
 
 type SrcLiteral s = (s, Literal)
