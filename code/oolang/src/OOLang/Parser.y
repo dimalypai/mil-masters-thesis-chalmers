@@ -22,7 +22,78 @@ import OOLang.Parser.ParseError
 %monad     { ParseM }
 
 %token
-  def { undefined }
+  -- Keywords
+  class     { $$@(KW_Class,     _) }
+  def       { $$@(KW_Def,       _) }
+  do        { $$@(KW_Do,        _) }
+  else      { $$@(KW_Else,      _) }
+  end       { $$@(KW_End,       _) }
+  if        { $$@(KW_If,        _) }
+  just      { $$@(KW_Just,      _) }
+  nothing   { $$@(KW_Nothing,   _) }
+  otherwise { $$@(KW_Otherwise, _) }
+  private   { $$@(KW_Private,   _) }
+  public    { $$@(KW_Public,    _) }
+  pure      { $$@(KW_Pure,      _) }
+  ref       { $$@(KW_Ref,       _) }
+  return    { $$@(KW_Return,    _) }
+  static    { $$@(KW_Static,    _) }
+  then      { $$@(KW_Then,      _) }
+  unit      { $$@(KW_Unit,      _) }
+  when      { $$@(KW_When,      _) }
+  while     { $$@(KW_While,     _) }
+  -- Keywords for types
+  Int     { $$@(KW_TyInt,     _) }
+  Maybe   { $$@(KW_TyMaybe,   _) }
+  Mutable { $$@(KW_TyMutable, _) }
+  Ref     { $$@(KW_TyRef,     _) }
+  Unit    { $$@(KW_TyUnit,    _) }
+  -- Symbols
+  '=' { $$@(Lex.Equal, _) }
+  ':' { $$@(Colon,     _) }
+
+  '+'  { $$@(Plus,          _) }
+  '-'  { $$@(Minus,         _) }
+  '*'  { $$@(Star,          _) }
+  '/'  { $$@(Slash,         _) }
+  '%'  { $$@(Percent,       _) }
+  '<'  { $$@(Lex.Less,      _) }
+  '>'  { $$@(Lex.Greater,   _) }
+  '<=' { $$@(Lex.LessEq,    _) }
+  '>=' { $$@(Lex.GreaterEq, _) }
+  '/=' { $$@(Lex.NotEq,     _) }
+
+  '=>' { $$@(FatArrow, _) }
+  '->' { $$@(Arrow,    _) }
+  '\\' { $$@(Lambda,   _) }
+
+  '.'  { $$@(Dot,            _) }
+  '::' { $$@(DoubleColon,    _) }
+  '?'  { $$@(Question,       _) }
+  '??' { $$@(DoubleQuestion, _) }
+
+  '<-' { $$@(LeftArrow, _) }
+  ':=' { $$@(ColonEq,   _) }
+  '!'  { $$@(Bang,      _) }
+
+  '&&' { $$@(And, _) }
+  '||' { $$@(Or,  _) }
+
+  '(' { $$@(OpenParen,  _) }
+  ')' { $$@(CloseParen, _) }
+
+  ';' { $$@(SemiColon, _) }
+
+  -- Identifiers
+  lowerId { $$@(LowerId s, _) }
+  upperId { $$@(UpperId s, _) }
+
+  -- Literals
+  falseLit  { $$@(FalseLit, _) }
+  trueLit   { $$@(TrueLit,  _) }
+  intLit    { $$@(Lex.IntLit _, _) }
+  floatLit  { $$@(FloatLit _ _, _) }
+  stringLit { $$@(StringLit  _, _) }
 %%
 
 program :: { SrcProgram }
