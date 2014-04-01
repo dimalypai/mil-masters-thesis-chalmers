@@ -103,6 +103,8 @@ tokens :-
 
   "(" { \p s -> (OpenParen,  posn p s) }
   ")" { \p s -> (CloseParen, posn p s) }
+  "{" { \p s -> (OpenCurly,  posn p s) }
+  "}" { \p s -> (CloseCurly, posn p s) }
 
   ";" { \p s -> (SemiColon, posn p s) }
 
@@ -181,6 +183,8 @@ data Token =
 
   | OpenParen
   | CloseParen
+  | OpenCurly
+  | CloseCurly
 
   | SemiColon
   -- Identifiers
@@ -255,6 +259,8 @@ instance Show Token where
 
   show OpenParen  = "("
   show CloseParen = ")"
+  show OpenCurly  = "{"
+  show CloseCurly = "}"
 
   show SemiColon = ";"
   -- Identifiers

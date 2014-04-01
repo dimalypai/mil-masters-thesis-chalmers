@@ -21,6 +21,7 @@ instance SrcAnnotated SrcType where
   ann (SrcTyUnit s) = s
   ann (SrcTyBool s) = s
   ann (SrcTyInt s) = s
+  ann (SrcTyArrow s _ _) = s
 
 instance SrcAnnotated VarBinder where
   ann (VarBinder s _ _) = s
