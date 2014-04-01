@@ -44,6 +44,7 @@ import OOLang.Parser.ParseError
   when      { $$@(KW_When,      _) }
   while     { $$@(KW_While,     _) }
   -- Keywords for types
+  Bool    { $$@(KW_TyBool,    _) }
   Int     { $$@(KW_TyInt,     _) }
   Maybe   { $$@(KW_TyMaybe,   _) }
   Mutable { $$@(KW_TyMutable, _) }
@@ -127,7 +128,9 @@ fundef
                   $2 }
 
 type :: { SrcType SrcSpan }
-type : Unit {% withFileName $ \fileName -> SrcTyUnit $ mkTokSrcSpan $1 fileName}
+type : Unit {% withFileName $ \fileName -> SrcTyUnit $ mkTokSrcSpan $1 fileName }
+     | Bool {% withFileName $ \fileName -> SrcTyBool $ mkTokSrcSpan $1 fileName }
+     | Int  {% withFileName $ \fileName -> SrcTyInt  $ mkTokSrcSpan $1 fileName }
 
 varbinder :: { VarBinder SrcSpan }
 varbinder

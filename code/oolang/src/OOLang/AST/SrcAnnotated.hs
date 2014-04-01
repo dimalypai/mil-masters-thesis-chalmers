@@ -19,6 +19,8 @@ instance SrcAnnotated2 FunDef where
 
 instance SrcAnnotated SrcType where
   ann (SrcTyUnit s) = s
+  ann (SrcTyBool s) = s
+  ann (SrcTyInt s) = s
 
 instance SrcAnnotated VarBinder where
   ann (VarBinder s _ _) = s
