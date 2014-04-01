@@ -141,7 +141,7 @@ funtype :: { SrcFunType SrcSpan }
 funtype
   : funargs type {% withFileName $ \fileName ->
                       SrcFunType (combineSrcSpans
-                                    (tokensToSrcSpanList $1 ++ [getSrcSpan $2])
+                                    (srcAnnListToSrcSpanList $1 ++ [getSrcSpan $2])
                                     fileName)
                                  $1
                                  $2 }
@@ -221,8 +221,8 @@ withFileName f = ask >>= \fileName -> return $ f fileName
 withFileNameM :: (String -> ParseM a) -> ParseM a
 withFileNameM f = ask >>= \fileName -> f fileName
 
-tokensToSrcSpanList :: SrcAnnotated a => [a SrcSpan] -> [SrcSpan]
-tokensToSrcSpanList xs = if null xs then [] else [getSrcSpan (head xs)]
+srcAnnListToSrcSpanList :: SrcAnnotated a => [a SrcSpan] -> [SrcSpan]
+srcAnnListToSrcSpanList xs = if null xs then [] else [getSrcSpan (head xs)]
 
 }
 
