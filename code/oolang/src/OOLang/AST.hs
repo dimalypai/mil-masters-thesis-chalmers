@@ -2,7 +2,7 @@ module OOLang.AST where
 
 import OOLang.SrcSpan
 
-data Program s v = Program s ([ClassDef s v], [FunDef s v])
+data Program s v = Program s [ClassDef s v] [FunDef s v]
   deriving Show
 
 type SrcProgram = Program SrcSpan Var
@@ -11,8 +11,12 @@ type TyProgram  = Program SrcSpan VarTy
 data ClassDef s v = ClassDef s (SrcClassName s) (Maybe (SrcClassName s)) [MemberDecl s v]
   deriving Show
 
+type SrcClassDef = ClassDef SrcSpan Var
+
 data FunDef s v = FunDef s (SrcFunName s) (SrcFunType s) [Stmt s v] Bool
   deriving Show
+
+type SrcFunDef = FunDef SrcSpan Var
 
 data MemberDecl s v = FieldDecl s (Declaration s v) [SrcModifier s]
                     | MethodDecl s (FunDef s v) [SrcModifier s]
@@ -112,7 +116,7 @@ newtype VarTy = VarTy (Var, Type)
 
 type SrcVar s = (s, Var)
 
-data VarBinder s = VarBinder s (SrcVar s, SrcType s)
+data VarBinder s = VarBinder s (SrcVar s) (SrcType s)
   deriving Show
 
 newtype ClassName = ClassName String
@@ -124,4 +128,19 @@ newtype FunName = FunName String
   deriving Show
 
 type SrcFunName s = (s, FunName)
+
+-- Parsing helpers
+
+data TopDef s v = TopClassDef { getClassDef :: ClassDef s v }
+                | TopFunDef   { getFunDef   :: FunDef s v   }
+
+type SrcTopDef = TopDef SrcSpan Var
+
+isClassDef :: TopDef s v -> Bool
+isClassDef (TopClassDef _) = True
+isClassDef               _ = False
+
+isFunDef :: TopDef s v -> Bool
+isFunDef (TopFunDef _) = True
+isFunDef             _ = False
 

@@ -4,6 +4,8 @@ module OOLang.SrcSpan
   , SrcPos
   , mkSrcPos
   , srcSpanToPos
+  , combineSrcSpans
+  , setSrcSpanFileName
   , setSrcPosFileName
   ) where
 
@@ -40,6 +42,13 @@ instance Pretty SrcPos where
 
 srcSpanToPos :: SrcSpan -> SrcPos
 srcSpanToPos (SrcSpan fileName line col _ _) = mkSrcPos fileName line col
+
+combineSrcSpans :: [SrcSpan] -> String -> SrcSpan
+combineSrcSpans [ss]  fileName = setSrcSpanFileName ss fileName
+combineSrcSpans spans fileName =
+  let (SrcSpan _ startLine startCol _ _) = head spans
+      (SrcSpan _ _ _ endLine endCol)     = last spans
+  in mkSrcSpan fileName startLine startCol endLine endCol
 
 setSrcSpanFileName :: SrcSpan -> String -> SrcSpan
 setSrcSpanFileName ss fileName =

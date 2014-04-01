@@ -13,6 +13,9 @@ module OOLang.Lexer
   , TokenWithSpan
   , getToken
   , getTokSrcSpan
+  , getId
+  , getTokId
+  , mkTokSrcSpan
   ) where
 
 import OOLang.SrcSpan
@@ -269,6 +272,17 @@ getToken = fst
 
 getTokSrcSpan :: TokenWithSpan -> SrcSpan
 getTokSrcSpan = snd
+
+getId :: Token -> String
+getId (LowerId s) = s
+getId (UpperId s) = s
+getId         tok = error $ show tok ++ " is not an Id token"
+
+getTokId :: TokenWithSpan -> String
+getTokId = getId . getToken
+
+mkTokSrcSpan :: TokenWithSpan -> String -> SrcSpan
+mkTokSrcSpan tok fileName = setSrcSpanFileName (getTokSrcSpan tok) fileName
 
 -- | Converts Alex source position to source span.
 -- Takes token string for length calculation.
