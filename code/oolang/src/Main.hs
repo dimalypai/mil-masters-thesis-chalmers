@@ -14,14 +14,14 @@ import OOLang.Parser
 
 main :: IO ()
 main = do
-    hSetBuffering stdout NoBuffering
-    (flags, nonOpts) <- getArgs >>= compilerOpts
-    when (Help `elem` flags) $ do
-      printHelp
-      exitSuccess
-    if Interactive `elem` flags
-      then interactive
-      else compiler flags nonOpts
+  hSetBuffering stdout NoBuffering
+  (flags, nonOpts) <- getArgs >>= compilerOpts
+  when (Help `elem` flags) $ do
+    printHelp
+    exitSuccess
+  if Interactive `elem` flags
+    then interactive
+    else compiler flags nonOpts
 
 interactive :: IO ()
 interactive = do
