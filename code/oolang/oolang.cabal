@@ -23,6 +23,7 @@ executable oolc
                      , pretty
                      , pretty-show
                      , mtl
+                     , filepath
   hs-source-dirs:      src
   build-tools:         alex
                      , happy
