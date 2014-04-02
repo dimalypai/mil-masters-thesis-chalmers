@@ -88,6 +88,7 @@ data SrcType s = SrcTyUnit s
                | SrcTyMaybe s (SrcType s)
                | SrcTyMutable s (SrcType s)
                | SrcTyRef s (SrcType s)
+               | SrcTyParen s (SrcType s)
   deriving Show
 
 data SrcFunType s = SrcFunType s [VarBinder s] (SrcType s)

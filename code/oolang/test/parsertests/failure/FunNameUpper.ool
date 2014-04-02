@@ -1,0 +1,1 @@
+def pure Fun : Unit => end

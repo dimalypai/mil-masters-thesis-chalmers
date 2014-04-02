@@ -1,0 +1,4 @@
+def fun : Unit =>
+
+def g : Int =>
+end

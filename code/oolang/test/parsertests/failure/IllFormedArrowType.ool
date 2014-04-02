@@ -1,0 +1,2 @@
+def fun : {x : Int -> } -> Unit =>
+end

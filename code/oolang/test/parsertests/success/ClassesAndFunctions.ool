@@ -1,0 +1,7 @@
+class Super => end
+
+def fun : {f : Int -> Int} -> Unit =>
+end
+
+class Child < Super => end
+

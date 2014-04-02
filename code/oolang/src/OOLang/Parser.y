@@ -133,26 +133,50 @@ fundef
 
 type :: { SrcType SrcSpan }
 type : maybearrtype { $1 }
-     | atomtype { $1 }
-     | Mutable '(' maybearrtype ')' { undefined }
-     | Ref '(' maybearrtype ')' { undefined }
-     | Mutable atomtype { undefined }
-     | Ref atomtype { undefined }
-     | '(' type ')' { $2 }
+     | atomtype     { $1 }
+     | Mutable '(' maybearrtype ')'
+         {% withFileName $ \fileName ->
+              SrcTyMutable (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
+                           $3 }
+     | Ref '(' maybearrtype ')'
+         {% withFileName $ \fileName ->
+              SrcTyRef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
+                       $3 }
+     | Mutable atomtype
+         {% withFileName $ \fileName ->
+              SrcTyMutable (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
+                           $2 }
+     | Ref atomtype
+         {% withFileName $ \fileName ->
+              SrcTyRef (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
+                       $2 }
+     | '(' type ')'
+         {% withFileName $ \fileName ->
+              SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+                         $2 }
 
 maybearrtype :: { SrcType SrcSpan }
-maybearrtype : Maybe atomtype { undefined }
-             | type '->' type {% withFileName $ \fileName ->
-                                   SrcTyArrow (combineSrcSpans [ getSrcSpan $1
-                                                               , getSrcSpan $3] fileName)
-                                              $1
-                                              $3 }
+maybearrtype
+  : Maybe atomtype
+      {% withFileName $ \fileName ->
+           SrcTyMaybe (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
+                      $2 }
+  | type '->' type
+      {% withFileName $ \fileName ->
+           SrcTyArrow (combineSrcSpans [getSrcSpan $1, getSrcSpan $3] fileName)
+                      $1
+                      $3 }
+  | Maybe '(' maybearrtype ')'
+      {% withFileName $ \fileName ->
+           SrcTyMaybe (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
+                      $3 }
 
 atomtype :: { SrcType SrcSpan }
-atomtype : Unit {% withFileName $ \fileName -> SrcTyUnit $ mkTokSrcSpan $1 fileName }
-         | Bool {% withFileName $ \fileName -> SrcTyBool $ mkTokSrcSpan $1 fileName }
-         | Int  {% withFileName $ \fileName -> SrcTyInt  $ mkTokSrcSpan $1 fileName }
-         | upperId { undefined }
+atomtype : Unit    {% withFileName $ \fileName -> SrcTyUnit $ mkTokSrcSpan $1 fileName }
+         | Bool    {% withFileName $ \fileName -> SrcTyBool $ mkTokSrcSpan $1 fileName }
+         | Int     {% withFileName $ \fileName -> SrcTyInt  $ mkTokSrcSpan $1 fileName }
+         | upperId {% withFileName $ \fileName -> SrcTyClass ( mkTokSrcSpan $1 fileName
+                                                             , ClassName $ getTokId $1 ) }
 
 varbinder :: { VarBinder SrcSpan }
 varbinder

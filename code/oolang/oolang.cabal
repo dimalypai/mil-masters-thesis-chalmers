@@ -40,6 +40,7 @@ test-suite spec
                    , pretty-show
                    , mtl
                    , hspec
+                   , filepath
   build-tools:       alex
                    , happy
   other-modules:     OOLang.Lexer

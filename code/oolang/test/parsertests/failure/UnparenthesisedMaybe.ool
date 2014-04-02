@@ -1,0 +1,2 @@
+def fun : Maybe Maybe Maybe Int =>
+end

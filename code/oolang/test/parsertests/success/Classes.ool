@@ -1,0 +1,6 @@
+class Shape =>
+end
+
+class Circle < Shape =>
+end
+

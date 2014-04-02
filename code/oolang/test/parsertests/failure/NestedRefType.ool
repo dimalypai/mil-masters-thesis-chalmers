@@ -1,0 +1,2 @@
+def fun : Ref (Ref Int) =>
+end

@@ -1,0 +1,6 @@
+def f : {x : Int} -> {y : Bool} -> (Int -> Bool) -> Unit =>
+end
+
+def pure g : Int =>
+end
+

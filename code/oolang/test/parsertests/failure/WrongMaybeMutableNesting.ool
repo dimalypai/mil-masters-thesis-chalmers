@@ -1,0 +1,2 @@
+def fun : Maybe (Mutable Int) =>
+end
