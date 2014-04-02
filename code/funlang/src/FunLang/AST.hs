@@ -99,7 +99,7 @@ newtype VarTy = VarTy (Var, Type)
 
 type SrcVar s = (s, Var)
 
-data VarBinder s = VarBinder s (SrcVar s, SrcType s)
+data VarBinder s = VarBinder s (SrcVar s) (SrcType s)
   deriving Show
 
 newtype TypeVar = TypeVar String
