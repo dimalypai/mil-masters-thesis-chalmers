@@ -4,7 +4,6 @@ import System.FilePath ((</>), (<.>))
 import Test.Hspec
 import Control.Monad (liftM2)
 import Control.Applicative ((<$>))
-import Text.Show.Pretty
 
 import OOLang.AST
 import OOLang.Parser
