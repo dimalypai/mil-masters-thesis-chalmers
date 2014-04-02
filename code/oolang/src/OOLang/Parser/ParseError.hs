@@ -4,7 +4,7 @@ module OOLang.Parser.ParseError
   ) where
 
 import Control.Monad.Error
-import OOLang.SrcSpan
+import OOLang.SrcSpan()
 import OOLang.PrettyPrinter
 
 data ParseError =
