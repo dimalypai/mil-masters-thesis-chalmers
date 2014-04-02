@@ -72,6 +72,8 @@ import FunLang.Parser.ParseError
   intLit    { $$@(Lex.IntLit     _, _) }
   floatLit  { $$@(Lex.FloatLit _ _, _) }
   stringLit { $$@(Lex.StringLit  _, _) }
+
+%right '->'
 %%
 
 program :: { SrcProgram }
@@ -104,18 +106,26 @@ typedef
 
 condef :: { SrcConDef }
 condef
-  : upperId {% withFileName $ \fileName ->
-                 ConDef (combineSrcSpans [getTokSrcSpan $1] fileName)
-                        (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
-                        [] }
+  : upperId list(srctype) {% withFileName $ \fileName ->
+                               ConDef (combineSrcSpans [getTokSrcSpan $1] fileName)
+                                      (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
+                                      $2 }
 
 fundef :: { SrcFunDef }
 fundef
-  : lowerId ':' {% withFileName $ \fileName ->
-                     FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $2] fileName)
-                            (mkTokSrcSpan $1 fileName, FunName $ getTokId $1)
-                            undefined
-                            [] }
+  : lowerId ':' srctype {% withFileName $ \fileName ->
+                             FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $2] fileName)
+                                    (mkTokSrcSpan $1 fileName, FunName $ getTokId $1)
+                                    $3
+                                    [] }
+
+srctype :: { SrcType SrcSpan }
+srctype : '(' upperId list1(srctype) ')'
+            { SrcTyApp (getTokSrcSpan $1) (getTokSrcSpan $2, TypeName $ getTokId $2) $3 }
+        | upperId { SrcTyApp (getTokSrcSpan $1) (getTokSrcSpan $1, TypeName $ getTokId $1) [] }
+        | srctype '->' srctype { SrcTyArrow (getTokSrcSpan $2) $1 $3 }
+        | forall typevar '.' srctype { SrcTyForAll (getTokSrcSpan $1) $2 $4 }
+        | '(' srctype ')' { $2 }
 
 typevar :: { SrcTypeVar SrcSpan }
 typevar : upperId {% withFileName $ \fileName ->
