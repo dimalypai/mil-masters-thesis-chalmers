@@ -1,12 +1,13 @@
 module Main where
 
 import System.IO
-import System.Environment
+import System.Environment (getArgs)
 import System.Console.GetOpt
 import System.FilePath
 import System.Exit
 import Text.Show.Pretty
 import Control.Monad (when)
+import Data.List (intercalate)
 
 import OOLang.Lexer
 import OOLang.Parser
@@ -19,23 +20,46 @@ main = do
       printHelp
       exitSuccess
     if Interactive `elem` flags
-      then do putStr "ooli> "
-              input <- getLine
-              if input == ":q"
-                then exitSuccess
-                else do let p = lexer input |>
-                                parse "ooli"
-                        case p of
-                          Left err -> putStrLn (prPrint err)
-                          Right pr -> putStrLn (ppShow pr)
-              main
-      else do let filePath = head nonOpts
-              src <- readFile filePath
-              let p = lexer src |>
-                      parse (takeFileName filePath)
-              case p of
-                Left err -> putStrLn (prPrint err) >> exitFailure
-                Right pr -> putStrLn (ppShow pr) >> exitSuccess
+      then interactive
+      else compiler flags nonOpts
+
+interactive :: IO ()
+interactive = do
+  putStr "ooli> "
+  input <- getLine
+  case input of
+    ':':'q':_ -> exitSuccess
+    ":parse" -> do
+      src <- readProgram
+      case lexer src |> parse "ooli" of
+        Left err  -> putStrLn (prPrint err)
+        Right ast -> putStrLn (ppShow ast)
+    ":tc" -> putStrLn "Not implemented yet"
+    _ -> putStrLn "Wrong command"
+  interactive
+
+readProgram :: IO String
+readProgram = readProgram' 1 []
+  where readProgram' :: Int -> [String] -> IO String
+        readProgram' line revProgram = do
+          putStr $ "ooli|" ++ show line ++ " "
+          input <- getLine
+          if input == ":ok"
+            then return $ intercalate "\n" $ reverse revProgram
+            else readProgram' (line + 1) (input : revProgram)
+
+compiler :: [Flag] -> [String] -> IO ()
+compiler flags args = do
+  when (null args) $ do
+    printHelp
+    exitFailure
+  let filePath = head args
+  src <- readFile filePath
+  let p = lexer src |>
+          parse (takeFileName filePath)
+  case p of
+    Left err -> putStrLn (prPrint err) >> exitFailure
+    Right pr -> putStrLn (ppShow pr) >> exitSuccess
 
 data Flag = Interactive | DumpAst | Help
   deriving Eq
