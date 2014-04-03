@@ -55,7 +55,7 @@ data Kind = StarK
           | Kind :=>: Kind
   deriving Show
 
-newtype VarBinder = VarBind (Var, Type)
+newtype VarBinder = VarBinder (Var, Type)
   deriving Show
 
 newtype Var = Var String
