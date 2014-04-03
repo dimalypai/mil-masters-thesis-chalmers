@@ -1,0 +1,7 @@
+type T = MkT
+
+type Bool = True | False
+
+type Either A B = Left A
+                | Right B
+

@@ -4,7 +4,6 @@ import System.FilePath ((</>), (<.>))
 import Test.Hspec
 import Control.Monad (liftM2)
 import Control.Applicative ((<$>))
-import Text.Show.Pretty
 
 import FunLang.AST
 import FunLang.Parser
@@ -28,49 +27,36 @@ spec :: Spec
 spec =
   describe "parseFunLang" $ do
     -- Success
-    it "parses a program with single simplest data type" $
-      let baseName = "SingleSimpleDataType"
+    it "parses data types" $
+      let baseName = "DataTypes"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 1 10)
-                  [TypeDef (srcSp 1 1 1 10)
-                     (srcSp 1 6 1 6, TypeName "T")
-                     []
-                     [ConDef (srcSp 1 10 1 10)
-                        (srcSp 1 10 1 10, ConName "T")
-                        []]]
-                  []
-      in successCase baseName ast
-
-    it "parses a program with single simple data type with type variables" $
-      let baseName = "SingleDataTypeWithTypeVars"
-          fileName = mkFileName baseName
-          srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 1 14)
-                  [TypeDef (srcSp 1 1 1 14)
-                     (srcSp 1 6 1 6, TypeName "T")
-                     [(srcSp 1 8 1 8, TypeVar "A"),
-                      (srcSp 1 10 1 10, TypeVar "B")]
-                     [ConDef (srcSp 1 14 1 14)
-                        (srcSp 1 14 1 14, ConName "C")
-                        []]]
-                  []
-      in successCase baseName ast
-
-    it "parses a program with single simple data type with several simple constructors" $
-      let baseName = "SingleDataTypeWithSeveralSimpleConstructors"
-          fileName = mkFileName baseName
-          srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 1 16)
-                  [TypeDef (srcSp 1 1 1 16)
-                     (srcSp 1 6 1 6, TypeName "T")
-                     []
-                     [ConDef (srcSp 1 10 1 11)
-                        (srcSp 1 10 1 11, ConName "C1")
-                        [],
-                      ConDef (srcSp 1 15 1 16)
-                        (srcSp 1 15 1 16, ConName "C2")
-                        []]]
+          ast = Program (srcSp 1 1 6 25)
+                  [ TypeDef (srcSp 1 1 1 10)
+                      (srcSp 1 6 1 6, TypeName "T")
+                      []
+                      [ConDef (srcSp 1 10 1 12)
+                         (srcSp 1 10 1 12, ConName "MkT")
+                         []]
+                  , TypeDef (srcSp 3 1 3 24)
+                      (srcSp 3 6 3 9, TypeName "Bool")
+                      []
+                      [ ConDef (srcSp 3 13 3 16)
+                          (srcSp 3 13 3 16, ConName "True")
+                          []
+                      , ConDef (srcSp 3 20 3 24)
+                          (srcSp 3 20 3 24, ConName "False")
+                          []]
+                  , TypeDef (srcSp 5 1 6 25)
+                      (srcSp 5 6 5 11, TypeName "Either")
+                      [ (srcSp 5 13 5 13, TypeVar "A")
+                      , (srcSp 5 15 5 15, TypeVar "B")]
+                      [ ConDef (srcSp 5 19 5 24)
+                          (srcSp 5 19 5 22, ConName "Left")
+                          []
+                      , ConDef (srcSp 6 19 6 25)
+                          (srcSp 6 19 6 23, ConName "Right")
+                          []]]
                   []
       in successCase baseName ast
 
@@ -94,7 +80,7 @@ successCase :: String -> SrcProgram -> IO ()
 successCase baseName result = do
   input <- successRead baseName
   let Right pr = parseFunLang (mkFileName baseName) input
-  ppShow pr `shouldBe` ppShow result
+  show pr `shouldBe` show result
 
 successRead :: String -> IO String
 successRead baseName = readFile (successDir </> mkFileName baseName)
