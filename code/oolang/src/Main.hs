@@ -40,11 +40,18 @@ interactive typeEnv = do
       case lexer src |> parse "ooli" of
         Left parseErr -> putStrLn (prPrint parseErr)
         Right srcProgram ->
+          case typeCheck srcProgram of
+            Left tcErr -> putStrLn (prPrint tcErr)
+            Right (tyProgram, _) -> putStrLn (ppShow tyProgram) >> interactive typeEnv
+    ":define" -> do
+      src <- readProgram
+      case lexer src |> parse "ooli" of
+        Left parseErr -> putStrLn (prPrint parseErr)
+        Right srcProgram ->
           case typeCheckStage srcProgram typeEnv of
             Left tcErr -> putStrLn (prPrint tcErr)
             Right (tyProgram, typeEnv') -> putStrLn (ppShow tyProgram) >> interactive typeEnv'
     --':':'t' : exprStr ->
-    --":define" -> readProgram
     --":compile" -> readProgram
     --exprStr ->
     _ -> putStrLn "Wrong command"

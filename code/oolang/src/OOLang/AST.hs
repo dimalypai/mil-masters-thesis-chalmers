@@ -24,6 +24,9 @@ data MemberDecl s v = FieldDecl s (Declaration s v) [SrcModifier s]
                     | MethodDecl s (FunDef s v) [SrcModifier s]
   deriving Show
 
+type SrcMemberDecl = MemberDecl SrcSpan Var
+type TyMemberDecl  = MemberDecl SrcSpan VarTy
+
 data Stmt s v = DeclS (Declaration s v)
               | ExprS (Expr s v)
               | AssignS s (SrcAssignOp s) (Expr s v) (Expr s v)
@@ -31,6 +34,9 @@ data Stmt s v = DeclS (Declaration s v)
               | WhenS s (Expr s v) [Stmt s v] [Stmt s v]
               | ReturnS s (Expr s v)
   deriving Show
+
+type SrcStmt = Stmt SrcSpan Var
+type TyStmt  = Stmt SrcSpan VarTy
 
 data Expr s v = LitE (SrcLiteral s)
               | VarE s v
@@ -43,6 +49,9 @@ data Expr s v = LitE (SrcLiteral s)
               | IfThenElseE s (Expr s v) (Expr s v) (Expr s v)
               | JustE s (Expr s v)
   deriving Show
+
+type SrcExpr = Expr SrcSpan Var
+type TyExpr  = Expr SrcSpan VarTy
 
 data Literal = UnitLit
              | BoolLit Bool
@@ -125,7 +134,7 @@ data VarBinder s = VarBinder s (SrcVar s) (SrcType s)
   deriving Show
 
 newtype ClassName = ClassName String
-  deriving Show
+  deriving (Show, Eq)
 
 type SrcClassName s = (s, ClassName)
 
