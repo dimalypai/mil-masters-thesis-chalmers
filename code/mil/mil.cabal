@@ -16,6 +16,8 @@ cabal-version:       >= 1.10
 library
   exposed-modules:     MIL.Lexer
                        MIL.Parser
+                       MIL.AST
+                       MIL.AST.PrettyPrinter
   -- other-extensions:    
   build-depends:       base >= 4.6 && < 4.7
                      , array
