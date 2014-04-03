@@ -138,6 +138,9 @@ newtype ClassName = ClassName String
 
 type SrcClassName s = (s, ClassName)
 
+getClassName :: SrcClassName s -> ClassName
+getClassName = snd
+
 newtype FunName = FunName String
   deriving Show
 

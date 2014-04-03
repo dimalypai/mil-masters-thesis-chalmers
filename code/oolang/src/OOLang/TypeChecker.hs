@@ -26,14 +26,14 @@ tcProgram (Program s classDefs funDefs) = do
   return $ Program s tyClassDefs tyFunDefs
 
 tcClassDef :: SrcClassDef -> TypeCheckM TyClassDef
-tcClassDef (ClassDef s className mSuperClassName members) = do
+tcClassDef (ClassDef s srcClassName mSuperSrcClassName members) = do
   classTypeEnv <- getClassTypeEnv
-  when (snd className `elem` classTypeEnv) $
+  when (getClassName srcClassName `elem` classTypeEnv) $
     throwError $ OtherError "Class is already defined"
-  modifyClassTypeEnv (snd className :)
-  return $ ClassDef s className mSuperClassName []
+  modifyClassTypeEnv (getClassName srcClassName :)
+  return $ ClassDef s srcClassName mSuperSrcClassName []
 
 tcFunDef :: SrcFunDef -> TypeCheckM TyFunDef
-tcFunDef (FunDef s funName funType stmts isPure) = do
-  return $ FunDef s funName funType [] isPure
+tcFunDef (FunDef s srcFunName srcFunType stmts isPure) = do
+  return $ FunDef s srcFunName srcFunType [] isPure
 
