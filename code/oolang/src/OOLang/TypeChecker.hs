@@ -2,7 +2,7 @@ module OOLang.TypeChecker
   ( typeCheck
   , typeCheckStage
   , TypeEnv
-  , emptyTypeEnv
+  , initTypeEnv
   , module OOLang.TypeChecker.TcError
   ) where
 
@@ -11,7 +11,7 @@ import OOLang.TypeChecker.TypeCheckM
 import OOLang.TypeChecker.TcError
 
 typeCheck :: SrcProgram -> Either TcError (TyProgram, TypeEnv)
-typeCheck srcProgram = runTypeCheckM (tcProgram srcProgram) emptyTypeEnv
+typeCheck srcProgram = runTypeCheckM (tcProgram srcProgram) initTypeEnv
 
 typeCheckStage :: SrcProgram -> TypeEnv -> Either TcError (TyProgram, TypeEnv)
 typeCheckStage srcProgram typeEnv = runTypeCheckM (tcProgram srcProgram) typeEnv

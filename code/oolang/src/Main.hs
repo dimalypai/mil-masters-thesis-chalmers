@@ -21,7 +21,7 @@ main = do
     printHelp
     exitSuccess
   if Interactive `elem` flags
-    then interactive flags emptyTypeEnv []
+    then interactive flags initTypeEnv []
     else compiler flags nonOpts
 
 interactive :: [Flag] -> TypeEnv -> [String] -> IO ()

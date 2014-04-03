@@ -4,7 +4,7 @@ module OOLang.TypeChecker.TypeCheckM
   ( TypeCheckM
   , runTypeCheckM
   , TypeEnv
-  , emptyTypeEnv
+  , initTypeEnv
   , mkTypeEnv
   , FunTypeEnv
   , getFunTypeEnv
@@ -38,8 +38,8 @@ newtype TypeEnv = TypeEnv { unTypeEnv :: (FunTypeEnv, ClassTypeEnv) }
 type FunTypeEnv = [FunName]
 type ClassTypeEnv = [ClassName]
 
-emptyTypeEnv :: TypeEnv
-emptyTypeEnv = TypeEnv ([], [])
+initTypeEnv :: TypeEnv
+initTypeEnv = TypeEnv ([], [])
 
 mkTypeEnv :: FunTypeEnv -> ClassTypeEnv -> TypeEnv
 mkTypeEnv funTypeEnv classTypeEnv = TypeEnv (funTypeEnv, classTypeEnv)
