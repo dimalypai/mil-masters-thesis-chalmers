@@ -12,11 +12,13 @@ data ClassDef s v = ClassDef s (SrcClassName s) (Maybe (SrcClassName s)) [Member
   deriving Show
 
 type SrcClassDef = ClassDef SrcSpan Var
+type TyClassDef  = ClassDef SrcSpan VarTy
 
 data FunDef s v = FunDef s (SrcFunName s) (SrcFunType s) [Stmt s v] Bool
   deriving Show
 
 type SrcFunDef = FunDef SrcSpan Var
+type TyFunDef  = FunDef SrcSpan VarTy
 
 data MemberDecl s v = FieldDecl s (Declaration s v) [SrcModifier s]
                     | MethodDecl s (FunDef s v) [SrcModifier s]
@@ -79,6 +81,7 @@ data Type = TyUnit
           | TyMaybe Type
           | TyMutable Type
           | TyRef Type
+  deriving Show
 
 data SrcType s = SrcTyUnit s
                | SrcTyBool s
@@ -114,6 +117,7 @@ newtype Var = Var String
   deriving Show
 
 newtype VarTy = VarTy (Var, Type)
+  deriving Show
 
 type SrcVar s = (s, Var)
 

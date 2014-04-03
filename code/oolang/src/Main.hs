@@ -11,6 +11,7 @@ import Data.List (intercalate)
 
 import OOLang.Lexer
 import OOLang.Parser
+import OOLang.TypeChecker
 
 main :: IO ()
 main = do
@@ -20,11 +21,11 @@ main = do
     printHelp
     exitSuccess
   if Interactive `elem` flags
-    then interactive
+    then interactive emptyTypeEnv
     else compiler flags nonOpts
 
-interactive :: IO ()
-interactive = do
+interactive :: TypeEnv -> IO ()
+interactive typeEnv = do
   putStr "ooli> "
   input <- getLine
   case input of
@@ -32,11 +33,22 @@ interactive = do
     ":parse" -> do
       src <- readProgram
       case lexer src |> parse "ooli" of
-        Left err  -> putStrLn (prPrint err)
-        Right ast -> putStrLn (ppShow ast)
-    ":tc" -> putStrLn "Not implemented yet"
+        Left parseErr -> putStrLn (prPrint parseErr)
+        Right srcProgram -> putStrLn (ppShow srcProgram)
+    ":tc" -> do
+      src <- readProgram
+      case lexer src |> parse "ooli" of
+        Left parseErr -> putStrLn (prPrint parseErr)
+        Right srcProgram ->
+          case typeCheckStage srcProgram typeEnv of
+            Left tcErr -> putStrLn (prPrint tcErr)
+            Right (tyProgram, typeEnv') -> putStrLn (ppShow tyProgram) >> interactive typeEnv'
+    --':':'t' : exprStr ->
+    --":define" -> readProgram
+    --":compile" -> readProgram
+    --exprStr ->
     _ -> putStrLn "Wrong command"
-  interactive
+  interactive typeEnv
 
 readProgram :: IO String
 readProgram = readProgram' 1 []
@@ -58,8 +70,8 @@ compiler flags args = do
   let p = lexer src |>
           parse (takeFileName filePath)
   case p of
-    Left err -> putStrLn (prPrint err) >> exitFailure
-    Right pr -> putStrLn (ppShow pr) >> exitSuccess
+    Left parseErr -> putStrLn (prPrint parseErr) >> exitFailure
+    Right srcProgram -> putStrLn (ppShow srcProgram) >> exitSuccess
 
 data Flag = Interactive | DumpAst | Help
   deriving Eq
