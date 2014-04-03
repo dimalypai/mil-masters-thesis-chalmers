@@ -7,7 +7,7 @@ import System.FilePath
 import System.Exit
 import Text.Show.Pretty
 import Control.Monad (when)
-import Data.List (intercalate)
+import Data.List (intercalate, stripPrefix)
 
 import OOLang.Lexer
 import OOLang.Parser
@@ -21,11 +21,11 @@ main = do
     printHelp
     exitSuccess
   if Interactive `elem` flags
-    then interactive emptyTypeEnv
+    then interactive emptyTypeEnv []
     else compiler flags nonOpts
 
-interactive :: TypeEnv -> IO ()
-interactive typeEnv = do
+interactive :: TypeEnv -> [String] -> IO ()
+interactive typeEnv programStrs = do
   putStr "ooli> "
   input <- getLine
   case input of
@@ -42,7 +42,9 @@ interactive typeEnv = do
         Right srcProgram ->
           case typeCheck srcProgram of
             Left tcErr -> putStrLn (prPrint tcErr)
-            Right (tyProgram, _) -> putStrLn (ppShow tyProgram) >> interactive typeEnv
+            Right (tyProgram, _) -> do
+              putStrLn (ppShow tyProgram)
+              interactive typeEnv programStrs
     ":define" -> do
       src <- readProgram
       case lexer src |> parse "ooli" of
@@ -50,12 +52,18 @@ interactive typeEnv = do
         Right srcProgram ->
           case typeCheckStage srcProgram typeEnv of
             Left tcErr -> putStrLn (prPrint tcErr)
-            Right (tyProgram, typeEnv') -> putStrLn (ppShow tyProgram) >> interactive typeEnv'
-    --':':'t' : exprStr ->
-    --":compile" -> readProgram
-    --exprStr ->
-    _ -> putStrLn "Wrong command"
-  interactive typeEnv
+            Right (tyProgram, typeEnv') -> do
+              putStrLn (ppShow tyProgram)
+              interactive typeEnv' (src : programStrs)
+    --":compile" ->
+    command -> do
+      let processCommand cmd | Just fileName <- stripPrefix ":save " cmd =
+            writeFile fileName ((intercalate "\n\n" $ reverse programStrs) ++ "\n")
+          --:t
+          --exprStr
+          processCommand _ = putStrLn "Wrong command"
+      processCommand command
+  interactive typeEnv programStrs
 
 readProgram :: IO String
 readProgram = readProgram' 1 []
