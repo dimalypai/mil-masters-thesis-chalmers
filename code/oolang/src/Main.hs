@@ -21,11 +21,11 @@ main = do
     printHelp
     exitSuccess
   if Interactive `elem` flags
-    then interactive emptyTypeEnv []
+    then interactive flags emptyTypeEnv []
     else compiler flags nonOpts
 
-interactive :: TypeEnv -> [String] -> IO ()
-interactive typeEnv programStrs = do
+interactive :: [Flag] -> TypeEnv -> [String] -> IO ()
+interactive flags typeEnv programStrs = do
   putStr "ooli> "
   input <- getLine
   case input of
@@ -34,7 +34,9 @@ interactive typeEnv programStrs = do
       src <- readProgram
       case lexer src |> parse "ooli" of
         Left parseErr -> putStrLn (prPrint parseErr)
-        Right srcProgram -> putStrLn (ppShow srcProgram)
+        Right srcProgram -> do
+          when (DumpAst `elem` flags) $
+            putStrLn (ppShow srcProgram)
     ":tc" -> do
       src <- readProgram
       case lexer src |> parse "ooli" of
@@ -43,8 +45,8 @@ interactive typeEnv programStrs = do
           case typeCheck srcProgram of
             Left tcErr -> putStrLn (prPrint tcErr)
             Right (tyProgram, _) -> do
-              putStrLn (ppShow tyProgram)
-              interactive typeEnv programStrs
+              when (DumpAst `elem` flags) $
+                putStrLn (ppShow tyProgram)
     ":define" -> do
       src <- readProgram
       case lexer src |> parse "ooli" of
@@ -53,17 +55,16 @@ interactive typeEnv programStrs = do
           case typeCheckStage srcProgram typeEnv of
             Left tcErr -> putStrLn (prPrint tcErr)
             Right (tyProgram, typeEnv') -> do
-              putStrLn (ppShow tyProgram)
-              interactive typeEnv' (src : programStrs)
+              when (DumpAst `elem` flags) $
+                putStrLn (ppShow tyProgram)
+              interactive flags typeEnv' (src : programStrs)
     --":compile" ->
     command -> do
       let processCommand cmd | Just fileName <- stripPrefix ":save " cmd =
             writeFile fileName ((intercalate "\n\n" $ reverse programStrs) ++ "\n")
-          --:t
-          --exprStr
           processCommand _ = putStrLn "Wrong command"
       processCommand command
-  interactive typeEnv programStrs
+  interactive flags typeEnv programStrs
 
 readProgram :: IO String
 readProgram = readProgram' 1 []
