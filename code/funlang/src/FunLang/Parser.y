@@ -3,7 +3,8 @@
 module FunLang.Parser
   ( parse
   , parseFunLang
-  , module FunLang.Parser.ParseError
+  , ParseError
+  , prPrint
   ) where
 
 import Control.Monad.Error

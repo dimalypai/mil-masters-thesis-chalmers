@@ -7,6 +7,7 @@ module FunLang.SrcSpan
   , combineSrcSpans
   , setSrcSpanFileName
   , setSrcPosFileName
+  , prPrint
   ) where
 
 import FunLang.PrettyPrinter

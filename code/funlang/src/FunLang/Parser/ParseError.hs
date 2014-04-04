@@ -1,6 +1,6 @@
 module FunLang.Parser.ParseError
   ( ParseError(..)
-  , module FunLang.PrettyPrinter
+  , prPrint
   ) where
 
 import Control.Monad.Error
