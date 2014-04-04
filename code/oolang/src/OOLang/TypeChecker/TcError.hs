@@ -1,6 +1,6 @@
 module OOLang.TypeChecker.TcError
   ( TcError(..)
-  , module OOLang.PrettyPrinter
+  , prPrint
   ) where
 
 import Control.Monad.Error

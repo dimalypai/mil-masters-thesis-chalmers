@@ -3,7 +3,8 @@
 module OOLang.Parser
   ( parse
   , parseOOLang
-  , module OOLang.Parser.ParseError
+  , ParseError
+  , prPrint
   ) where
 
 import Control.Monad.Error

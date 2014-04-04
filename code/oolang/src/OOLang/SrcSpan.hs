@@ -7,6 +7,7 @@ module OOLang.SrcSpan
   , combineSrcSpans
   , setSrcSpanFileName
   , setSrcPosFileName
+  , prPrint
   ) where
 
 import OOLang.PrettyPrinter

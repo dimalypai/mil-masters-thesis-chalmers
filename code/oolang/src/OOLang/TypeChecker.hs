@@ -3,7 +3,8 @@ module OOLang.TypeChecker
   , typeCheckStage
   , TypeEnv
   , initTypeEnv
-  , module OOLang.TypeChecker.TcError
+  , TcError
+  , prPrint
   ) where
 
 import OOLang.AST

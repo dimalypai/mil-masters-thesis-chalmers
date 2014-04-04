@@ -1,6 +1,6 @@
 module OOLang.Parser.ParseError
   ( ParseError(..)
-  , module OOLang.PrettyPrinter
+  , prPrint
   ) where
 
 import Control.Monad.Error
