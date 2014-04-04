@@ -6,6 +6,7 @@
     -fno-warn-name-shadowing
  #-}
 
+-- | Lexing module.
 module OOLang.Lexer
   (
     lexer
@@ -194,7 +195,7 @@ data Token =
   | FalseLit
   | TrueLit
   | IntLit Int
-  | FloatLit Double String  -- keep the user string
+  | FloatLit Double String  -- ^ The user string (for displaying).
   | StringLit String
   deriving Eq
 
@@ -282,14 +283,19 @@ getToken = fst
 getTokSrcSpan :: TokenWithSpan -> SrcSpan
 getTokSrcSpan = snd
 
+-- | Returns a string from a token that represents identifier ('LowerId' or 'UpperId').
+-- For others - throws an error.
 getId :: Token -> String
 getId (LowerId s) = s
 getId (UpperId s) = s
 getId         tok = error $ show tok ++ " is not an Id token"
 
+-- | Returns a string from a token with source span that represents identifier ('LowerId' or 'UpperId').
+-- For others - throws an error.
 getTokId :: TokenWithSpan -> String
 getTokId = getId . getToken
 
+-- | Sets a file name (second argument) in the source span of a given token with span.
 mkTokSrcSpan :: TokenWithSpan -> String -> SrcSpan
 mkTokSrcSpan tok fileName = setSrcSpanFileName (getTokSrcSpan tok) fileName
 

@@ -1,3 +1,4 @@
+-- | Main module of the OOLang compiler.
 module Main where
 
 import System.IO
@@ -13,6 +14,9 @@ import OOLang.Lexer
 import OOLang.Parser
 import OOLang.TypeChecker
 
+-- | Main entry point.
+-- Gets compiler arguments.
+-- Dispatches on Help and Interactive.
 main :: IO ()
 main = do
   hSetBuffering stdout NoBuffering
@@ -24,11 +28,18 @@ main = do
     then interactive flags initTypeEnv []
     else compiler flags nonOpts
 
+-- | Main interactive loop. Invoked with `oolc -i`.
+-- Gets compiler flags as a first argument.
+-- Two other arguments are for maintaining and accumulating type environment
+-- (used and updated with `:define` command) and a reversed list of source
+-- programs (every new defined program becomes a head of the list, used with
+-- `:save` command).
 interactive :: [Flag] -> TypeEnv -> [String] -> IO ()
-interactive flags typeEnv programStrs = do
+interactive flags typeEnv revProgramStrs = do
   putStr "ooli> "
   input <- getLine
   case input of
+    -- anything that begins with ":q" exits the program
     ':':'q':_ -> exitSuccess
     ":parse" -> do
       src <- readProgram
@@ -37,6 +48,8 @@ interactive flags typeEnv programStrs = do
         Right srcProgram -> do
           when (DumpAst `elem` flags) $
             putStrLn (ppShow srcProgram)
+    -- `:tc` is purely local type checking, touches neither the type
+    -- environment nor the list of programs
     ":tc" -> do
       src <- readProgram
       case lexer src |> parse "ooli" of
@@ -47,6 +60,9 @@ interactive flags typeEnv programStrs = do
             Right (tyProgram, _) -> do
               when (DumpAst `elem` flags) $
                 putStrLn (ppShow tyProgram)
+    -- `:define` interacts with the global state.
+    -- It uses 'typeCheckStage' to pass the current type environment and to get
+    -- a new one. It also saves a program to the program list.
     ":define" -> do
       src <- readProgram
       case lexer src |> parse "ooli" of
@@ -57,17 +73,22 @@ interactive flags typeEnv programStrs = do
             Right (tyProgram, typeEnv') -> do
               when (DumpAst `elem` flags) $
                 putStrLn (ppShow tyProgram)
-              interactive flags typeEnv' (src : programStrs)
+              interactive flags typeEnv' (src : revProgramStrs)
     --":compile" ->
+    -- All commands with arguments go here
     command -> do
       let processCommand cmd | Just fileName <- stripPrefix ":save " cmd =
-            writeFile fileName ((intercalate "\n\n" $ reverse programStrs) ++ "\n")
+          -- `:save` takes a file name and saves a current list of programs to the file
+            writeFile fileName ((intercalate "\n\n" $ reverse revProgramStrs) ++ "\n")
           processCommand _ = putStrLn "Wrong command"
       processCommand command
-  interactive flags typeEnv programStrs
+  interactive flags typeEnv revProgramStrs
 
+-- | Enters the program entering mode and returns a program text as a String.
 readProgram :: IO String
 readProgram = readProgram' 1 []
+  -- Helper function that counts line numbers (for display) and accumulates
+  -- program lines in reverse order.
   where readProgram' :: Int -> [String] -> IO String
         readProgram' line revProgram = do
           putStr $ "ooli|" ++ show line ++ " "
@@ -76,6 +97,9 @@ readProgram = readProgram' 1 []
             then return $ intercalate "\n" $ reverse revProgram
             else readProgram' (line + 1) (input : revProgram)
 
+-- | Main compilation function.
+-- Takes compiler flags and a list of non-options. We currently use it just for
+-- one file name.
 compiler :: [Flag] -> [String] -> IO ()
 compiler flags args = do
   when (null args) $ do
@@ -89,26 +113,33 @@ compiler flags args = do
     Left parseErr -> putStrLn (prPrint parseErr) >> exitFailure
     Right srcProgram -> putStrLn (ppShow srcProgram) >> exitSuccess
 
+-- | Compiler flags.
 data Flag = Interactive | DumpAst | Help
   deriving Eq
 
+-- | Description and mapping of compiler flags.
 options :: [OptDescr Flag]
 options =
   [ Option ['i'] ["interactive"] (NoArg Interactive) "Interactive mode (REPL)"
-  , Option []    ["dump-ast"]    (NoArg DumpAst)     "Write AST to a file"  -- TODO
+  , Option []    ["dump-ast"]    (NoArg DumpAst)     "Write AST to a file"
   , Option ['h'] ["help"]        (NoArg Help)        "Prints this help information"
   ]
 
+-- | Takes a list of arguments and parses them to a list of compiler flags and
+-- non-options. In the case of errors, prints help information.
 compilerOpts :: [String] -> IO ([Flag], [String])
 compilerOpts argv =
   case getOpt Permute options argv of
     (opts, nonOpts, []) -> return (opts, nonOpts)
     (_, _, errs) -> ioError (userError (concat errs ++ "Try the -h (--help) option"))
 
+-- | Prints help information.
 printHelp :: IO ()
 printHelp = putStr $ usageInfo header options
   where header = "Usage: oolc [OPTIONS] file"
 
+-- | Postfix application. Inspired by OCaml/F#.
+-- Used with lexer and parser calls.
 (|>) :: a -> (a -> b) -> b
 a |> f = f a
 

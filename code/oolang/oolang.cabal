@@ -1,6 +1,6 @@
 name:                oolang
 version:             0.1.0.0
--- synopsis:            
+synopsis:            OOLang compiler. Part of the Master's thesis at Chalmers University of Technology. Supervisor: Josef Svenningsson.
 -- description:         
 license:             MIT
 license-file:        LICENSE
