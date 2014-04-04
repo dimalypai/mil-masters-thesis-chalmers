@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
 module MIL.AST.PrettyPrinter
-  ( module MIL.PrettyPrinter
+  ( prPrint
   ) where
 
 import MIL.AST
