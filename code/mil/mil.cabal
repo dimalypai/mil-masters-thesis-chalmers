@@ -1,6 +1,6 @@
 name:                mil
 version:             0.1.0.0
--- synopsis:            
+synopsis:            Monadic intermediate language. Part of the Master's thesis at Chalmers University of Technology. Supervisor: Josef Svenningsson.
 -- description:         
 license:             MIT
 license-file:        LICENSE

@@ -1,5 +1,6 @@
 {
 
+-- | Parsing module. Written using Happy.
 module MIL.Parser where
 
 import MIL.Lexer

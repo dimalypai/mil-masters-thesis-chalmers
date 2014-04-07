@@ -1,5 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+-- | Module containing instances of 'Pretty' for syntax tree nodes.
+--
+-- Note: Instances are orphaned.
 module MIL.AST.PrettyPrinter
   ( prPrint
   ) where
@@ -19,6 +22,7 @@ instance Pretty TypeDef where
     where prConDefs =
             if null consWithBars
               then empty
+              -- This hacking is going on for nice indentation
               else vsep ((equals <+> head consWithBars) : tail consWithBars)
           consWithBars = intersperse (text "| ") (map prPrn conDefs)
 
@@ -73,6 +77,7 @@ instance Pretty ConName where
 instance Pretty FunName where
   prPrn (FunName funNameStr) = text funNameStr
 
+-- | Indentation level for code.
 indLvl :: Int
 indLvl = 2
 

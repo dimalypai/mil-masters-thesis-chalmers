@@ -6,6 +6,7 @@
     -fno-warn-name-shadowing
  #-}
 
+-- | Lexing module. Written using Alex.
 module MIL.Lexer
   (
     lexer
@@ -127,7 +128,7 @@ data Token =
   | UpperId String
   -- Literals
   | IntLit Int
-  | FloatLit Double String  -- keep the user string
+  | FloatLit Double String  -- ^ The user string (for displaying)
   deriving Eq
 
 instance Show Token where
