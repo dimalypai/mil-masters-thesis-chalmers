@@ -1,5 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+-- | Module containing instances of 'SrcAnnotated' and 'SrcAnnotated2' for
+-- syntax tree nodes.
+-- Note: Instances are orphaned.
 module FunLang.AST.SrcAnnotated
   ( module FunLang.SrcAnnotated
   ) where

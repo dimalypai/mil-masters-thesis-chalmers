@@ -1,5 +1,6 @@
 {
 
+-- | Parsing module. Written using Happy.
 module FunLang.Parser
   ( parse
   , parseFunLang
@@ -164,35 +165,48 @@ seplist1rev(p, s) : p                  { [$1] }
 
 {
 
+-- | Parsing monad.
+-- Uses 'ErrorT' for error reporting and 'Reader' for having file name in the
+-- environment (to file names in spans after lexing).
 newtype ParseM a = ParseM { runParse :: ErrorT ParseError (Reader FileName) a }
   deriving (Monad, MonadError ParseError, MonadReader FileName)
 
 type FileName = String
 
+-- | Main parsing function provided by Happy.
 funLang :: [TokenWithSpan] -> ParseM SrcProgram
 
+-- | One of the entry points to the Parser. Works on list of tokens.
 parse :: FileName -> [TokenWithSpan] -> Either ParseError SrcProgram
 parse fileName toks = runReader (runErrorT $ runParse $ funLang toks) fileName
 
+-- | One of the entry points to the Parser. Works on program text.
 parseFunLang :: FileName -> String -> Either ParseError SrcProgram
 parseFunLang fileName input = parse fileName (lexer input)
 
+-- | Generates a general parsing error with a source position of the token where the error occured.
 parseError :: [TokenWithSpan] -> ParseM a
 parseError toks = withFileNameM $ \fileName ->
   throwError $ GeneralError (getFirstTokenPosString toks fileName)
 
+-- | Given a list of tokens and a file name, returns a string representing the source position
+-- of the first token in the list (or end of file - if it is empty).
+-- Used in error messages.
 getFirstTokenPosString :: [TokenWithSpan] -> FileName -> String
 getFirstTokenPosString []    fileName = fileName ++ ":end of file"
 getFirstTokenPosString (t:_) fileName =
   prPrint $ setSrcPosFileName (srcSpanToPos $ getTokSrcSpan t) fileName
 
+-- | Helper function that does filtering and then mapping.
 filterMap :: (a -> Bool) -> (a -> b) -> [a] -> [b]
 filterMap p f = map f . filter p
 
-withFileName :: (String -> a) -> ParseM a
+-- | Helper function providing a file name.
+withFileName :: (FileName -> a) -> ParseM a
 withFileName f = ask >>= \fileName -> return $ f fileName
 
-withFileNameM :: (String -> ParseM a) -> ParseM a
+-- | Helper monadic function providing a file name.
+withFileNameM :: (FileName -> ParseM a) -> ParseM a
 withFileNameM f = ask >>= \fileName -> f fileName
 
 }

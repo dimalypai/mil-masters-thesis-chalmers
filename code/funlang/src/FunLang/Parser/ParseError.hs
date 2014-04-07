@@ -1,3 +1,4 @@
+-- | Module for parsing errors and their pretty printing.
 module FunLang.Parser.ParseError
   ( ParseError(..)
   , prPrint
@@ -7,6 +8,8 @@ import Control.Monad.Error
 import FunLang.SrcSpan
 import FunLang.PrettyPrinter
 
+-- | All specific parsing errors go here.
+-- Non-specific parsing errors are represented using 'GeneralError'.
 data ParseError =
     -- | Empty program error. Contains a file name.
     EmptyProgram String
@@ -36,6 +39,7 @@ instance Pretty ParseError where
   prPrn (GeneralError strPos) =
     parseErrorHeader <> text strPos
 
+-- | Indentation level for error messages.
 indLvl :: Int
 indLvl = 2
 
