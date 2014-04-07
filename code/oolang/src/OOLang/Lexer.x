@@ -6,7 +6,7 @@
     -fno-warn-name-shadowing
  #-}
 
--- | Lexing module.
+-- | Lexing module. Written using Alex.
 module OOLang.Lexer
   (
     lexer
