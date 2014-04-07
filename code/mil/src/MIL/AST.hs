@@ -87,6 +87,15 @@ isAtomicType              _ = False
 
 -- Precedences
 
+getExprPrec :: Expr -> Int
+getExprPrec (LitE    {}) = 5
+getExprPrec (VarE    {}) = 5
+getExprPrec (LambdaE {}) = 3
+getExprPrec (AppE    {}) = 4
+
+exprHasLowerPrec :: Expr -> Expr -> Bool
+exprHasLowerPrec e1 e2 = getExprPrec e1 < getExprPrec e2
+
 getTypePrec :: Type -> Int
 getTypePrec (TyTypeCon {}) = 4
 getTypePrec (TyVar     {}) = 4

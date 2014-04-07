@@ -32,6 +32,12 @@ instance Pretty FunDef where
 
 instance Pretty Expr where
   prPrn (LitE lit) = prPrn lit
+  prPrn (VarE (VarBinder (v, _))) = prPrn v
+  prPrn (LambdaE varBind e) = text "\\" <> prPrn varBind <+> text "->" <+> prPrn e
+  prPrn e@(AppE e1 e2) =
+    -- This relies on exprHasLowerPrec using < and not <=.
+    -- In this way left associativity of application works fine.
+    prPrnParens (e1 `exprHasLowerPrec` e) e1 <+> prPrnParens (e2 `exprHasLowerPrec` e) e2
 
 instance Pretty Literal where
   prPrn UnitLit    = text "unit"
@@ -45,7 +51,15 @@ instance Pretty Type where
   prPrn (TyForAll typeVar t) =
     text "forall" <+> prPrn typeVar <+> text "." <+> prPrn t
   prPrn t@(TyApp t1 t2) =
+    -- We apply only type constructors at the moment, so this is fine (not having t1 in parens).
+    -- Probably, it should be done as for expressions instead.
     prPrn t1 <+> prPrnParens (t2 `typeHasLowerPrec` t) t2
+
+instance Pretty VarBinder where
+  prPrn (VarBinder (v, t)) = parens $ prPrn v <+> colon <+> prPrn t
+
+instance Pretty Var where
+  prPrn (Var varStr) = text varStr
 
 instance Pretty TypeVar where
   prPrn (TypeVar typeVarStr) = text typeVarStr
