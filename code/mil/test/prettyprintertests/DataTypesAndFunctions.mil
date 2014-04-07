@@ -1,0 +1,6 @@
+type T
+  = MkT;
+
+fun : Unit = unit;
+
+fun2 : Int = 2;

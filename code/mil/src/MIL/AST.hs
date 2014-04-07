@@ -80,3 +80,28 @@ data MilMonad = Id
               | IO
   deriving Show
 
+isAtomicType :: Type -> Bool
+isAtomicType (TyTypeCon {}) = True
+isAtomicType (TyVar     {}) = True
+isAtomicType              _ = False
+
+-- Precedences
+
+getTypePrec :: Type -> Int
+getTypePrec (TyTypeCon {}) = 4
+getTypePrec (TyVar     {}) = 4
+getTypePrec (TyArrow   {}) = 2
+getTypePrec (TyForAll  {}) = 1
+getTypePrec (TyApp     {}) = 3
+
+typeHasLowerPrec :: Type -> Type -> Bool
+typeHasLowerPrec t1 t2 = getTypePrec t1 <= getTypePrec t2
+
+-- Smart constructors
+
+mkTypeVar :: String -> Type
+mkTypeVar = TyVar . TypeVar
+
+mkSimpleType :: String -> Type
+mkSimpleType typeName = TyTypeCon (TypeName typeName) StarK
+

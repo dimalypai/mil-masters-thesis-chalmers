@@ -8,6 +8,10 @@ import Text.PrettyPrint
 class Pretty a where
   prPrn :: a -> Doc
 
+  prPrnParens :: Bool -> a -> Doc
+  prPrnParens True  = parens . prPrn
+  prPrnParens False = prPrn
+
 prPrint :: Pretty a => a -> String
 prPrint = render . prPrn
 

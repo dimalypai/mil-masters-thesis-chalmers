@@ -37,6 +37,7 @@ test-suite spec
                    , array
                    , pretty
                    , hspec
+                   , filepath
   build-tools:       alex
                    , happy
   other-modules:     MIL.Lexer

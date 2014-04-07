@@ -1,0 +1,6 @@
+type T
+  = MkT;
+
+type Tree A
+  = Empty
+  | Node A (Tree A) (Tree A);
