@@ -65,7 +65,7 @@ type SrcTypeDef = TypeDef SrcSpan
 --
 -- * constructor name
 --
--- * constructors fields (expressed as types)
+-- * constructor fields (expressed as types)
 data ConDef s = ConDef s (SrcConName s) [SrcType s]
   deriving Show
 
@@ -195,7 +195,7 @@ data SrcType s = SrcTyApp s (SrcTypeName s) [SrcType s]
                | SrcTyForAll s (SrcTypeVar s) (SrcType s)
   deriving Show
 
--- | "Type of the type".
+-- | \"Type of the type\".
 -- This representation is more general that we allow in the language. Also note,
 -- that we don't really support System F Omega: all type constructors must be
 -- fully applied and all type variables are of kind *. There is no syntactic
