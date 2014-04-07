@@ -1,3 +1,4 @@
+-- | Parser tests.
 module FunLang.ParserSpec (main, spec) where
 
 import System.FilePath ((</>), (<.>))
@@ -9,6 +10,7 @@ import FunLang.AST
 import FunLang.Parser
 import FunLang.SrcSpan
 
+-- | To be able to run this module from GHCi.
 main :: IO ()
 main = hspec spec
 
@@ -23,6 +25,7 @@ successDir = testDir </> "success"
 failureDir :: FilePath
 failureDir = testDir </> "failure"
 
+-- | Main specification function.
 spec :: Spec
 spec =
   describe "parseFunLang" $ do
@@ -76,21 +79,28 @@ spec =
 
 -- Infrastructure
 
+-- | Takes a file base name and an expected AST and performs a test (by
+-- comparing showed ASTs).
 successCase :: String -> SrcProgram -> IO ()
 successCase baseName result = do
   input <- successRead baseName
   let Right pr = parseFunLang (mkFileName baseName) input
   show pr `shouldBe` show result
 
+-- | Takes a file base name and reads a source program.
 successRead :: String -> IO String
 successRead baseName = readFile (successDir </> mkFileName baseName)
 
+-- | Takes a file base name and performs a test (by comparing pretty printed
+-- error message).
 failureCase :: String -> IO ()
 failureCase baseName = do
   (input, errMsg) <- failureRead baseName
   let Left err = parseFunLang (mkFileName baseName) input
   prPrint err `shouldBe` errMsg
 
+-- | Takes a file base name and reads a source program and expected error
+-- message (from .err file).
 failureRead :: String -> IO (String, String)
 failureRead baseName =
   liftM2 (,) (readFile (failureDir </> mkFileName baseName))
@@ -101,6 +111,7 @@ failureRead baseName =
                              then dropNewLine (init str)
                              else str
 
+-- | Turns base name into a file name (by appending extension).
 mkFileName :: String -> String
 mkFileName baseName = baseName <.> "fl"
 

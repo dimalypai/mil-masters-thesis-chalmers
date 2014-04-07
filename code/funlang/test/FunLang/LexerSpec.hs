@@ -1,3 +1,4 @@
+-- | Lexer tests.
 module FunLang.LexerSpec (main, spec) where
 
 import Test.Hspec
@@ -6,9 +7,11 @@ import Data.List (intercalate)
 import FunLang.Lexer
 import FunLang.SrcSpan
 
+-- | To be able to run this module from GHCi.
 main :: IO ()
 main = hspec spec
 
+-- | Main specification function.
 spec :: Spec
 spec =
   describe "lexer" $ do
