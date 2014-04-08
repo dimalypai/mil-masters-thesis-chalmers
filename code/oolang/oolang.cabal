@@ -24,6 +24,7 @@ executable oolc
                      , pretty-show
                      , mtl
                      , filepath
+                     , containers
   hs-source-dirs:      src
   build-tools:         alex
                      , happy
@@ -42,6 +43,7 @@ test-suite spec
                    , mtl
                    , hspec
                    , filepath
+                   , containers
   build-tools:       alex
                    , happy
   other-modules:     OOLang.Lexer

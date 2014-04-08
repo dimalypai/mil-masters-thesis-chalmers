@@ -1,0 +1,6 @@
+def main : Unit => end
+
+class A => end
+
+class B < A => end
+

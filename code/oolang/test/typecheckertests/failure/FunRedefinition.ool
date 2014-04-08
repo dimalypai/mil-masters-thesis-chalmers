@@ -1,0 +1,6 @@
+def main : Unit => end
+
+def f : Unit => end
+
+def f : Int => end
+

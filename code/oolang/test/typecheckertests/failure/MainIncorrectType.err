@@ -1,0 +1,2 @@
+OOLang type checking error at MainIncorrectType.ool:1,12-1,14:
+  Function main has to have type Unit, but it has type Int

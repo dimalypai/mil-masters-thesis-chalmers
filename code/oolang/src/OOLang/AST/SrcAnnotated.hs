@@ -32,6 +32,9 @@ instance SrcAnnotated TypeS where
   ann (SrcTyRef s _) = s
   ann (SrcTyParen s _) = s
 
+instance SrcAnnotated FunType where
+  ann (FunType s _ _) = s
+
 instance SrcAnnotated VarBinder where
   ann (VarBinder s _ _) = s
 

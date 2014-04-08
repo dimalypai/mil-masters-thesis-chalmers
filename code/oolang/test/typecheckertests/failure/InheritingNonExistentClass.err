@@ -1,0 +1,2 @@
+OOLang type checking error at InheritingNonExistentClass.ool:3,11-3,11:
+  Class B is not defined

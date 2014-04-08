@@ -182,6 +182,14 @@ data TypeS s = SrcTyUnit s
 
 type SrcType = TypeS SrcSpan
 
+-- | Converts a source representation of type to an internal one.
+srcTypeToType :: TypeS s -> Type
+srcTypeToType (SrcTyUnit _) = TyUnit
+srcTypeToType (SrcTyBool _) = TyBool
+srcTypeToType (SrcTyInt  _) = TyInt
+srcTypeToType (SrcTyClass srcClassName) = TyClass $ getClassName srcClassName
+srcTypeToType (SrcTyArrow _ st1 st2) = TyArrow (srcTypeToType st1) (srcTypeToType st2)
+
 -- | Function type as it is represented in the source:
 --
 -- * source annotation
@@ -196,6 +204,15 @@ data FunType s = FunType s [VarBinder s] (TypeS s)
   deriving Show
 
 type SrcFunType = FunType SrcSpan
+
+-- | Transforms function type which has variable binders and return type to one
+-- big internal type (right associative type arrow without parameter names).
+funTypeToType :: FunType s -> Type
+funTypeToType (FunType _ varBinders srcRetType) = funTypeToType' varBinders
+  where funTypeToType' []       = retType
+        funTypeToType' (vb:vbs) = TyArrow (srcTypeToType $ getVarBinderType vb)
+                                          (funTypeToType' vbs)
+        retType = srcTypeToType srcRetType
 
 -- | Name (variable) declaration.
 -- Consists of var binder and an optional initialiser.
@@ -250,8 +267,11 @@ data VarBinder s = VarBinder s (VarS s) (TypeS s)
 
 type SrcVarBinder = VarBinder SrcSpan
 
+getVarBinderType :: VarBinder s -> TypeS s
+getVarBinderType (VarBinder _ _ vbType) = vbType
+
 newtype ClassName = ClassName String
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 type ClassNameS s = (s, ClassName)
 type SrcClassName = ClassNameS SrcSpan
@@ -260,10 +280,13 @@ getClassName :: ClassNameS s -> ClassName
 getClassName = snd
 
 newtype FunName = FunName String
-  deriving Show
+  deriving (Show, Eq, Ord)
 
 type FunNameS s = (s, FunName)
 type SrcFunName = FunNameS SrcSpan
+
+getFunName :: FunNameS s -> FunName
+getFunName = snd
 
 -- Parsing helpers
 

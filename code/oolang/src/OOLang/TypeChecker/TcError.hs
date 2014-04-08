@@ -6,12 +6,22 @@ module OOLang.TypeChecker.TcError
 
 import Control.Monad.Error
 
-import OOLang.SrcSpan
+import OOLang.AST
+import OOLang.AST.PrettyPrinter
+import OOLang.SrcSpan()
+import OOLang.AST.SrcAnnotated
 import OOLang.PrettyPrinter
 
 -- | Data type containing all possible type checking errors and 'OtherError'.
 data TcError =
-  OtherError String  -- ^ Contains error message.
+    ClassAlreadyDefined SrcClassName
+  | ClassNotDefined SrcClassName
+  | FunctionAlreadyDefined SrcFunName
+  | MainNotDefined
+  | MainWrongType SrcFunType
+  | MainPure SrcFunName
+  | InheritanceCycle
+  | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
   strMsg = OtherError
@@ -24,6 +34,31 @@ tcErrorHeaderSpan :: Doc
 tcErrorHeaderSpan = tcErrorHeader <+> text "at "
 
 instance Pretty TcError where
+  prPrn (ClassAlreadyDefined srcClassName) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcClassName) <> colon $+$
+    nest indLvl (text "Class" <+> prPrn (getClassName srcClassName) <+> text "is already defined")
+
+  prPrn (ClassNotDefined srcClassName) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcClassName) <> colon $+$
+    nest indLvl (text "Class" <+> prPrn (getClassName srcClassName) <+> text "is not defined")
+
+  prPrn (FunctionAlreadyDefined srcFunName) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcFunName) <> colon $+$
+    nest indLvl (text "Function" <+> prPrn (getFunName srcFunName) <+> text "is already defined")
+
+  prPrn MainNotDefined = tcErrorHeader <> colon <+> text "Function main is not defined"
+
+  prPrn (MainWrongType srcFunType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcFunType) <> colon $+$
+    nest indLvl (text "Function main has to have type" <+> prPrn TyUnit <>
+      text ", but it has type" <+> prPrn (funTypeToType srcFunType))
+
+  prPrn (MainPure srcFunName) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcFunName) <> colon $+$
+    nest indLvl (text "Function main is declared as pure")
+
+  prPrn InheritanceCycle = tcErrorHeader <> colon <+> text "Inheritance cycle was detected"
+
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 
 -- | Indentation level for error messages.
