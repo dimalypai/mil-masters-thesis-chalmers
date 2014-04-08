@@ -133,7 +133,7 @@ fundef
                   []
                   $2 }
 
-type :: { SrcType SrcSpan }
+type :: { SrcType }
 type : maybearrtype { $1 }
      | atomtype     { $1 }
      | Mutable '(' maybearrtype ')'
@@ -157,7 +157,7 @@ type : maybearrtype { $1 }
               SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                          $2 }
 
-maybearrtype :: { SrcType SrcSpan }
+maybearrtype :: { SrcType }
 maybearrtype
   : Maybe atomtype
       {% withFileName $ \fileName ->
@@ -173,14 +173,14 @@ maybearrtype
            SrcTyMaybe (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
                       $3 }
 
-atomtype :: { SrcType SrcSpan }
+atomtype :: { SrcType }
 atomtype : Unit    {% withFileName $ \fileName -> SrcTyUnit $ mkTokSrcSpan $1 fileName }
          | Bool    {% withFileName $ \fileName -> SrcTyBool $ mkTokSrcSpan $1 fileName }
          | Int     {% withFileName $ \fileName -> SrcTyInt  $ mkTokSrcSpan $1 fileName }
          | upperId {% withFileName $ \fileName -> SrcTyClass ( mkTokSrcSpan $1 fileName
                                                              , ClassName $ getTokId $1 ) }
 
-varbinder :: { VarBinder SrcSpan }
+varbinder :: { SrcVarBinder }
 varbinder
   : '{' lowerId ':' type '}'
       {% withFileName $ \fileName ->
@@ -188,20 +188,20 @@ varbinder
                      (mkTokSrcSpan $2 fileName, Var $ getTokId $2)
                      $4 }
 
-funtype :: { SrcFunType SrcSpan }
+funtype :: { SrcFunType }
 funtype
   : funargs type {% withFileName $ \fileName ->
-                      SrcFunType (combineSrcSpans
-                                    (srcAnnListToSrcSpanList $1 ++ [getSrcSpan $2])
-                                    fileName)
-                                 $1
-                                 $2 }
+                      FunType (combineSrcSpans
+                                 (srcAnnListToSrcSpanList $1 ++ [getSrcSpan $2])
+                                 fileName)
+                              $1
+                              $2 }
 
-funargs :: { [VarBinder SrcSpan] }
+funargs :: { [SrcVarBinder] }
 funargs : {- empty -}                    { [] }
         | seplist1(varbinder, '->') '->' { $1 }
 
-superclass :: { SrcClassName SrcSpan }
+superclass :: { SrcClassName }
 superclass : '<' upperId {% withFileName $ \fileName ->
                               (mkTokSrcSpan $2 fileName, ClassName $ getTokId $2) }
 
