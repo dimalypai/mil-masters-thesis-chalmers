@@ -55,7 +55,7 @@ spec =
                   []
                   [ FunDef (srcSp 1 1 2 3)
                       (srcSp 1 5 1 5, FunName "f")
-                      (SrcFunType (srcSp 1 9 1 56)
+                      (FunType (srcSp 1 9 1 56)
                          [ VarBinder (srcSp 1 9 1 17)
                              (srcSp 1 10 1 10, Var "x")
                              (SrcTyInt (srcSp 1 14 1 16))
@@ -72,7 +72,7 @@ spec =
                       False
                   , FunDef (srcSp 4 1 5 3)
                       (srcSp 4 10 4 10, FunName "g")
-                      (SrcFunType (srcSp 4 14 4 16)
+                      (FunType (srcSp 4 14 4 16)
                          []
                          (SrcTyInt (srcSp 4 14 4 16)))
                       []
@@ -94,7 +94,7 @@ spec =
                       []]
                   [FunDef (srcSp 3 1 4 3)
                      (srcSp 3 5 3 7, FunName "fun")
-                     (SrcFunType (srcSp 3 11 3 34)
+                     (FunType (srcSp 3 11 3 34)
                         [VarBinder (srcSp 3 11 3 26)
                            (srcSp 3 12 3 12, Var "f")
                            (SrcTyArrow (srcSp 3 16 3 25)
@@ -113,7 +113,7 @@ spec =
                   []
                   [FunDef (srcSp 1 1 5 3)
                      (srcSp 1 5 1 7, FunName "fun")
-                     (SrcFunType (srcSp 1 11 4 39)
+                     (FunType (srcSp 1 11 4 39)
                         []
                         (SrcTyArrow (srcSp 1 11 4 39)
                            (SrcTyParen (srcSp 1 11 1 22)
