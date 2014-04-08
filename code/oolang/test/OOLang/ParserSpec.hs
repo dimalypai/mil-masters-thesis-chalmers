@@ -9,6 +9,7 @@ import Control.Applicative ((<$>))
 import OOLang.AST
 import OOLang.Parser
 import OOLang.SrcSpan
+import OOLang.TestUtils
 
 -- | To be able to run this module from GHCi.
 main :: IO ()
@@ -231,13 +232,4 @@ failureRead :: String -> IO (String, String)
 failureRead baseName =
   liftM2 (,) (readFile (failureDir </> mkFileName baseName))
              (dropNewLine <$> readFile (failureDir </> baseName <.> "err"))
-  where dropNewLine "" = ""
-        dropNewLine str = let l = last str
-                          in if l == '\n' || l == '\r'
-                             then dropNewLine (init str)
-                             else str
-
--- | Turns base name into a file name (by appending extension).
-mkFileName :: String -> String
-mkFileName baseName = baseName <.> "ool"
 
