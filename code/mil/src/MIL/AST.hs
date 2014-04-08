@@ -165,8 +165,21 @@ getExprPrec (VarE    {}) = 5
 getExprPrec (LambdaE {}) = 3
 getExprPrec (AppE    {}) = 4
 
+-- | Returns whether the first expression has a lower precedence than the
+-- second one. Convenient to use in infix form.
+--
+-- Note: It is reflexive: e `exprHasLowerPrec` e ==> True
 exprHasLowerPrec :: Expr -> Expr -> Bool
-exprHasLowerPrec e1 e2 = getExprPrec e1 < getExprPrec e2
+exprHasLowerPrec e1 e2 = getExprPrec e1 <= getExprPrec e2
+
+-- | Returns whether the first expression has a lower precedence than the
+-- second one. Convenient to use in infix form.
+-- This version can be used with associative operators, for example: arithmetic
+-- operations, function application. See "MIL.AST.PrettyPrinter".
+--
+-- Note: It is *not* reflexive: e `exprHasLowerPrecAssoc` e ==> False
+exprHasLowerPrecAssoc :: Expr -> Expr -> Bool
+exprHasLowerPrecAssoc e1 e2 = getExprPrec e1 < getExprPrec e2
 
 getTypePrec :: Type -> Int
 getTypePrec (TyTypeCon {}) = 4
@@ -175,8 +188,21 @@ getTypePrec (TyArrow   {}) = 2
 getTypePrec (TyForAll  {}) = 1
 getTypePrec (TyApp     {}) = 3
 
+-- | Returns whether the first type operator has a lower precedence than the
+-- second one. Convenient to use in infix form.
+--
+-- Note: It is reflexive: t `typeHasLowerPrec` t ==> True
 typeHasLowerPrec :: Type -> Type -> Bool
 typeHasLowerPrec t1 t2 = getTypePrec t1 <= getTypePrec t2
+
+-- | Returns whether the first type operator has a lower precedence than the
+-- second one. Convenient to use in infix form.
+-- This version can be used with associative type operators, for example:
+-- arrow, type application. See "MIL.AST.PrettyPrinter".
+--
+-- Note: It is *not* reflexive: t `typeHasLowerPrecAssoc` t ==> False
+typeHasLowerPrecAssoc :: Type -> Type -> Bool
+typeHasLowerPrecAssoc t1 t2 = getTypePrec t1 < getTypePrec t2
 
 -- Smart constructors
 
