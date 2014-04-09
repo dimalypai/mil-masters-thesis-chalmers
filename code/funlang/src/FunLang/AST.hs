@@ -205,12 +205,15 @@ data Type = TyTypeCon TypeName Kind
 
 -- | Source representation of types. How a user entered them.
 --
+-- 'SrcTyParen' is used for better source spans.
+--
 -- Note: during parsing we can't distinguish between type names (type
 -- constructors) and type variables, therefore they all are handled with
 -- SrcTyApp.
 data TypeS s = SrcTyApp s (TypeNameS s) [TypeS s]
              | SrcTyArrow s (TypeS s) (TypeS s)
              | SrcTyForAll s (TypeVarS s) (TypeS s)
+             | SrcTyParen s (TypeS s)
   deriving Show
 
 type SrcType = TypeS SrcSpan
