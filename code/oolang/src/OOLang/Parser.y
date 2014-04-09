@@ -192,7 +192,7 @@ funtype :: { SrcFunType }
 funtype
   : funargs type {% withFileName $ \fileName ->
                       FunType (combineSrcSpans
-                                 (srcAnnListToSrcSpanList $1 ++ [getSrcSpan $2])
+                                 (srcAnnListToSrcSpanListHead $1 ++ [getSrcSpan $2])
                                  fileName)
                               $1
                               $2 }
@@ -288,8 +288,8 @@ withFileNameM f = ask >>= \fileName -> f fileName
 -- | Takes a list of source tree nodes annotated with SrcSpan.
 -- If it's empty - returns an empty list
 -- , otherwise - returns a source span of the head.
-srcAnnListToSrcSpanList :: SrcAnnotated a => [a SrcSpan] -> [SrcSpan]
-srcAnnListToSrcSpanList xs = if null xs then [] else [getSrcSpan (head xs)]
+srcAnnListToSrcSpanListHead :: SrcAnnotated a => [a SrcSpan] -> [SrcSpan]
+srcAnnListToSrcSpanListHead xs = if null xs then [] else [getSrcSpan (head xs)]
 
 }
 
