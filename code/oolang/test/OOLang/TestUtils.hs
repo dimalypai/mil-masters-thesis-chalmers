@@ -1,3 +1,4 @@
+-- | Utility functions for testing.
 module OOLang.TestUtils where
 
 import System.FilePath ((<.>))
