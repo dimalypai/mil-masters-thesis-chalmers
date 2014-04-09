@@ -110,7 +110,7 @@ condef :: { SrcConDef }
 condef
   : upperId list(srctype)
       {% withFileName $ \fileName ->
-           ConDef (combineSrcSpans (getTokSrcSpan $1 : srcAnnListToSrcSpanList $2) fileName)
+           ConDef (combineSrcSpans (getTokSrcSpan $1 : srcAnnListToSrcSpanListLast $2) fileName)
                   (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
                   $2 }
 
@@ -125,7 +125,9 @@ fundef
 srctype :: { SrcType }
 srctype : '(' upperId list1(srctype) ')'
             {% withFileName $ \fileName ->
-                 SrcTyApp (mkTokSrcSpan $1 fileName) (mkTokSrcSpan $2 fileName, TypeName $ getTokId $2) $3 }
+                 SrcTyApp (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
+                          (mkTokSrcSpan $2 fileName, TypeName $ getTokId $2)
+                          $3 }
         | upperId
             {% withFileName $ \fileName ->
                  SrcTyApp (mkTokSrcSpan $1 fileName) (mkTokSrcSpan $1 fileName, TypeName $ getTokId $1) [] }
@@ -217,9 +219,9 @@ withFileNameM f = ask >>= \fileName -> f fileName
 
 -- | Takes a list of source tree nodes annotated with SrcSpan.
 -- If it's empty - returns an empty list
--- , otherwise - returns a source span of the head.
-srcAnnListToSrcSpanList :: SrcAnnotated a => [a SrcSpan] -> [SrcSpan]
-srcAnnListToSrcSpanList xs = if null xs then [] else [getSrcSpan (head xs)]
+-- , otherwise - returns a source span of the last element.
+srcAnnListToSrcSpanListLast :: SrcAnnotated a => [a SrcSpan] -> [SrcSpan]
+srcAnnListToSrcSpanListLast xs = if null xs then [] else [getSrcSpan (last xs)]
 
 }
 

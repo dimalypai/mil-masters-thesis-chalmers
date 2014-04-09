@@ -2,6 +2,6 @@ type T = MkT
 
 type Bool = True | False
 
-type Either A B = Left A
-                | Right B
+type Tree2 A B = Empty B
+               | Node A (Tree2 A B) (Tree2 A B)
 

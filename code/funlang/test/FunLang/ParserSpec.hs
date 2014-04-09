@@ -35,7 +35,7 @@ spec =
       let baseName = "DataTypes"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 6 25)
+          ast = Program (srcSp 1 1 6 47)
                   [ TypeDef (srcSp 1 1 1 12)
                       (srcSp 1 6 1 6, TypeName "T")
                       []
@@ -51,20 +51,36 @@ spec =
                       , ConDef (srcSp 3 20 3 24)
                           (srcSp 3 20 3 24, ConName "False")
                           []]
-                  , TypeDef (srcSp 5 1 6 25)
-                      (srcSp 5 6 5 11, TypeName "Either")
-                      [ (srcSp 5 13 5 13, TypeVar "A")
-                      , (srcSp 5 15 5 15, TypeVar "B")]
-                      [ ConDef (srcSp 5 19 5 24)
-                          (srcSp 5 19 5 22, ConName "Left")
+                  , TypeDef (srcSp 5 1 6 47)
+                      (srcSp 5 6 5 10, TypeName "Tree2")
+                      [ (srcSp 5 12 5 12, TypeVar "A")
+                      , (srcSp 5 14 5 14, TypeVar "B")]
+                      [ ConDef (srcSp 5 18 5 24)
+                          (srcSp 5 18 5 22, ConName "Empty")
                           [SrcTyApp (srcSp 5 24 5 24)
-                             (srcSp 5 24 5 24, TypeName "A")
+                             (srcSp 5 24 5 24, TypeName "B")
                              []]
-                      , ConDef (srcSp 6 19 6 25)
-                          (srcSp 6 19 6 23, ConName "Right")
-                          [SrcTyApp (srcSp 6 25 6 25)
-                             (srcSp 6 25 6 25, TypeName "B")
-                             []]]]
+                      , ConDef (srcSp 6 18 6 47)
+                          (srcSp 6 18 6 21, ConName "Node")
+                          [ SrcTyApp (srcSp 6 23 6 23)
+                              (srcSp 6 23 6 23, TypeName "A")
+                              []
+                          , SrcTyApp (srcSp 6 25 6 35)
+                              (srcSp 6 26 6 30, TypeName "Tree2")
+                              [ SrcTyApp (srcSp 6 32 6 32)
+                                  (srcSp 6 32 6 32, TypeName "A")
+                                  []
+                              , SrcTyApp (srcSp 6 34 6 34)
+                                  (srcSp 6 34 6 34, TypeName "B")
+                                  []]
+                          , SrcTyApp (srcSp 6 37 6 47)
+                              (srcSp 6 38 6 42, TypeName "Tree2")
+                              [ SrcTyApp (srcSp 6 44 6 44)
+                                  (srcSp 6 44 6 44, TypeName "A")
+                                  []
+                              , SrcTyApp (srcSp 6 46 6 46)
+                                  (srcSp 6 46 6 46, TypeName "B")
+                                  []]]]]
                   []
       in successCase baseName ast
 
