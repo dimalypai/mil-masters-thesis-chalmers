@@ -9,6 +9,7 @@ import Control.Applicative ((<$>))
 import FunLang.AST
 import FunLang.Parser
 import FunLang.SrcSpan
+import FunLang.TestUtils
 
 -- | To be able to run this module from GHCi.
 main :: IO ()
@@ -35,7 +36,7 @@ spec =
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
           ast = Program (srcSp 1 1 6 25)
-                  [ TypeDef (srcSp 1 1 1 10)
+                  [ TypeDef (srcSp 1 1 1 12)
                       (srcSp 1 6 1 6, TypeName "T")
                       []
                       [ConDef (srcSp 1 10 1 12)
@@ -56,10 +57,14 @@ spec =
                       , (srcSp 5 15 5 15, TypeVar "B")]
                       [ ConDef (srcSp 5 19 5 24)
                           (srcSp 5 19 5 22, ConName "Left")
-                          []
+                          [SrcTyApp (srcSp 5 24 5 24)
+                             (srcSp 5 24 5 24, TypeName "A")
+                             []]
                       , ConDef (srcSp 6 19 6 25)
                           (srcSp 6 19 6 23, ConName "Right")
-                          []]]
+                          [SrcTyApp (srcSp 6 25 6 25)
+                             (srcSp 6 25 6 25, TypeName "B")
+                             []]]]
                   []
       in successCase baseName ast
 
@@ -105,13 +110,4 @@ failureRead :: String -> IO (String, String)
 failureRead baseName =
   liftM2 (,) (readFile (failureDir </> mkFileName baseName))
              (dropNewLine <$> readFile (failureDir </> baseName <.> "err"))
-  where dropNewLine "" = ""
-        dropNewLine str = let l = last str
-                          in if l == '\n' || l == '\r'
-                             then dropNewLine (init str)
-                             else str
-
--- | Turns base name into a file name (by appending extension).
-mkFileName :: String -> String
-mkFileName baseName = baseName <.> "fl"
 

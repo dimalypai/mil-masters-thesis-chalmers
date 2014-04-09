@@ -108,10 +108,11 @@ typedef
 
 condef :: { SrcConDef }
 condef
-  : upperId list(srctype) {% withFileName $ \fileName ->
-                               ConDef (combineSrcSpans [getTokSrcSpan $1] fileName)
-                                      (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
-                                      $2 }
+  : upperId list(srctype)
+      {% withFileName $ \fileName ->
+           ConDef (combineSrcSpans (getTokSrcSpan $1 : srcAnnListToSrcSpanList $2) fileName)
+                  (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
+                  $2 }
 
 fundef :: { SrcFunDef }
 fundef
@@ -123,10 +124,15 @@ fundef
 
 srctype :: { SrcType }
 srctype : '(' upperId list1(srctype) ')'
-            { SrcTyApp (getTokSrcSpan $1) (getTokSrcSpan $2, TypeName $ getTokId $2) $3 }
-        | upperId { SrcTyApp (getTokSrcSpan $1) (getTokSrcSpan $1, TypeName $ getTokId $1) [] }
-        | srctype '->' srctype { SrcTyArrow (getTokSrcSpan $2) $1 $3 }
-        | forall typevar '.' srctype { SrcTyForAll (getTokSrcSpan $1) $2 $4 }
+            {% withFileName $ \fileName ->
+                 SrcTyApp (mkTokSrcSpan $1 fileName) (mkTokSrcSpan $2 fileName, TypeName $ getTokId $2) $3 }
+        | upperId
+            {% withFileName $ \fileName ->
+                 SrcTyApp (mkTokSrcSpan $1 fileName) (mkTokSrcSpan $1 fileName, TypeName $ getTokId $1) [] }
+        | srctype '->' srctype {% withFileName $ \fileName ->
+                                    SrcTyArrow (mkTokSrcSpan $2 fileName) $1 $3 }
+        | forall typevar '.' srctype {% withFileName $ \fileName ->
+                                          SrcTyForAll (mkTokSrcSpan $1 fileName) $2 $4 }
         | '(' srctype ')' { $2 }
 
 typevar :: { SrcTypeVar }
@@ -208,6 +214,12 @@ withFileName f = ask >>= \fileName -> return $ f fileName
 -- | Helper monadic function providing a file name.
 withFileNameM :: (FileName -> ParseM a) -> ParseM a
 withFileNameM f = ask >>= \fileName -> f fileName
+
+-- | Takes a list of source tree nodes annotated with SrcSpan.
+-- If it's empty - returns an empty list
+-- , otherwise - returns a source span of the head.
+srcAnnListToSrcSpanList :: SrcAnnotated a => [a SrcSpan] -> [SrcSpan]
+srcAnnListToSrcSpanList xs = if null xs then [] else [getSrcSpan (head xs)]
 
 }
 

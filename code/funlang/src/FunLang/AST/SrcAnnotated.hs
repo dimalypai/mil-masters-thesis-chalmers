@@ -24,3 +24,8 @@ instance SrcAnnotated ConDef where
 instance SrcAnnotated2 FunDef where
   ann2 (FunDef s _ _ _) = s
 
+instance SrcAnnotated TypeS where
+  ann (SrcTyApp s _ _) = s
+  ann (SrcTyArrow s _ _) = s
+  ann (SrcTyForAll s _ _) = s
+
