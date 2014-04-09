@@ -121,7 +121,7 @@ fundef
                                     $3
                                     [] }
 
-srctype :: { SrcType SrcSpan }
+srctype :: { SrcType }
 srctype : '(' upperId list1(srctype) ')'
             { SrcTyApp (getTokSrcSpan $1) (getTokSrcSpan $2, TypeName $ getTokId $2) $3 }
         | upperId { SrcTyApp (getTokSrcSpan $1) (getTokSrcSpan $1, TypeName $ getTokId $1) [] }
@@ -129,7 +129,7 @@ srctype : '(' upperId list1(srctype) ')'
         | forall typevar '.' srctype { SrcTyForAll (getTokSrcSpan $1) $2 $4 }
         | '(' srctype ')' { $2 }
 
-typevar :: { SrcTypeVar SrcSpan }
+typevar :: { SrcTypeVar }
 typevar : upperId {% withFileName $ \fileName ->
                        (mkTokSrcSpan $1 fileName, TypeVar $ getTokId $1) }
 

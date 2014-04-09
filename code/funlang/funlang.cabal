@@ -1,7 +1,7 @@
 name:                funlang
 version:             0.1.0.0
-synopsis:            FunLang compiler. Part of the Master's thesis at Chalmers University of Technology. Supervisor: Josef Svenningsson.
--- description:      
+synopsis:            FunLang compiler.
+description:         Part of the Master's thesis at Chalmers University of Technology. Supervisor: Josef Svenningsson.
 license:             MIT
 license-file:        LICENSE
 author:              Dmytro Lypai
@@ -23,6 +23,8 @@ executable flc
                      , pretty
                      , pretty-show
                      , mtl
+                     , filepath
+                     , containers
   hs-source-dirs:      src
   build-tools:         alex
                      , happy

@@ -10,19 +10,20 @@
 -- and v) and some of them don't (and have only s).
 --
 -- In general, sometimes there are two version of the data type, one of which
--- may have Src prefix. This distinction is for source representation of the
--- program (Src data types) and internal representation which is used in later
--- phases (after parsing). The most important is 'Type' and 'SrcType'.
+-- may have S suffix. This distinction is for source representation of the
+-- program (S data types) and internal representation which is used in later
+-- phases (after parsing). The most important is 'Type' and 'TypeS'.
 --
 -- Some of the data types (which have several data constructors and/or
 -- recursive) have s fields wired-in, while others if possible have a type
 -- synonym for a pair where the first component is s and the second is
 -- unannotated data type. Look at most of the *Name data types.
 --
--- For most of the data types with both s and v there are two type synonyms:
--- Src and Ty versions of it. Both use 'SrcSpan' as s and Src uses 'Var' as v,
--- Ty uses 'VarTy' as v. Src variants result from parsing, Ty variants result
--- from type checking.
+-- For most of the data types there are type synonyms: Src and Ty versions.
+-- Src versions exist for all data types, Ty - only for data types with two
+-- type parameters.  Both use 'SrcSpan' as s and Src uses 'Var' as v (or
+-- nothing at all), Ty uses 'VarTy' as v. Src variants result from parsing, Ty
+-- variants result from type checking.
 --
 -- newtypes are used quite extensively to have a strong distinction between
 -- different types of names.
@@ -54,7 +55,7 @@ type TyProgram  = Program SrcSpan VarTy
 -- * list of type variables (type parameters)
 --
 -- * list of constructor definitions
-data TypeDef s = TypeDef s (SrcTypeName s) [SrcTypeVar s] [ConDef s]
+data TypeDef s = TypeDef s (TypeNameS s) [TypeVarS s] [ConDef s]
   deriving Show
 
 type SrcTypeDef = TypeDef SrcSpan
@@ -66,7 +67,7 @@ type SrcTypeDef = TypeDef SrcSpan
 -- * constructor name
 --
 -- * constructor fields (expressed as types)
-data ConDef s = ConDef s (SrcConName s) [SrcType s]
+data ConDef s = ConDef s (ConNameS s) [TypeS s]
   deriving Show
 
 type SrcConDef = ConDef SrcSpan
@@ -80,7 +81,7 @@ type SrcConDef = ConDef SrcSpan
 -- * function type
 --
 -- * list of function equations
-data FunDef s v = FunDef s (SrcFunName s) (SrcType s) [FunEq s v]
+data FunDef s v = FunDef s (FunNameS s) (TypeS s) [FunEq s v]
   deriving Show
 
 type SrcFunDef = FunDef SrcSpan Var
@@ -95,20 +96,25 @@ type TyFunDef  = FunDef SrcSpan VarTy
 -- * list of patterns
 --
 -- * expression (body)
-data FunEq s v = FunEq s (SrcFunName s) [Pattern s] (Expr s v)
+data FunEq s v = FunEq s (FunNameS s) [Pattern s] (Expr s v)
   deriving Show
+
+type SrcFunEq = FunEq SrcSpan Var
+type TyFunEq  = FunEq SrcSpan VarTy
 
 -- | Patterns.
 data Pattern s =
     -- | Literal pattern (constant).
-    LitP (SrcLiteral s)
+    LitP (LiteralS s)
     -- | Variable pattern.
-  | VarP (SrcVar s)  -- ???
+  | VarP (VarS s)  -- ???
     -- | Constructor pattern. May be nested.
   | ConP s [Pattern s]
     -- | Default alternative: underscore.
   | DefaultP s
   deriving Show
+
+type SrcPattern = Pattern SrcSpan
 
 -- | Expression representation.
 --
@@ -128,18 +134,21 @@ data Pattern s =
 -- definitions.
 --
 -- 'DoE' represents simplified Haskell do-blocks for built-in monads.
-data Expr s v = LitE (SrcLiteral s)
+data Expr s v = LitE (LiteralS s)
               | VarE s v
               | LambdaE s [VarBinder s] (Expr s v)
-              | TypeLambdaE s [SrcTypeVar s] (Expr s v)
-              | TypeAppE s (Expr s v) (SrcType s)
-              | ConNameE (SrcConName s)
+              | TypeLambdaE s [TypeVarS s] (Expr s v)
+              | TypeAppE s (Expr s v) (TypeS s)
+              | ConNameE (ConNameS s)
               | CaseE s (Expr s v) [CaseAlt s v]
               | LetE s [(VarBinder s, Expr s v)] (Expr s v)
               | DoE s [Stmt s v]
-              | BinOpE s (SrcBinOp s) (Expr s v) (Expr s v)
+              | BinOpE s (BinOpS s) (Expr s v) (Expr s v)
               | ParenE s (Expr s v) -- ???
   deriving Show
+
+type SrcExpr = Expr SrcSpan Var
+type TyExpr  = Expr SrcSpan VarTy
 
 -- | Literal constants.
 data Literal = UnitLit
@@ -148,16 +157,23 @@ data Literal = UnitLit
              | StringLit String
   deriving Show
 
-type SrcLiteral s = (s, Literal)
+type LiteralS s = (s, Literal)
+type SrcLiteral = LiteralS SrcSpan
 
 data CaseAlt s v = CaseAlt s (Pattern s) (Expr s v)
   deriving Show
+
+type SrcCaseAlt = CaseAlt SrcSpan Var
+type TyCaseAlt  = CaseAlt SrcSpan VarTy
 
 -- | Statements are parts of the do-block and represent monadic code.
 data Stmt s v = ExprS (Expr s v)
               | BindS s (VarBinder s) (Expr s v)
               | ReturnS s (Expr s v)
   deriving Show
+
+type SrcStmt = Stmt SrcSpan Var
+type TyStmt  = Stmt SrcSpan VarTy
 
 -- | Binary operators are factored out from 'Expr'.
 data BinOp = App
@@ -173,7 +189,8 @@ data BinOp = App
            | GreaterEq
   deriving Show
 
-type SrcBinOp s = (s, BinOp)
+type BinOpS s = (s, BinOp)
+type SrcBinOp = BinOpS SrcSpan
 
 -- | Internal representation of types. What types really represent.
 --
@@ -184,16 +201,19 @@ data Type = TyTypeCon TypeName Kind
           | TyArrow Type Type
           | TyForAll TypeVar Type
           | TyApp Type Type
+  deriving Show
 
 -- | Source representation of types. How a user entered them.
 --
 -- Note: during parsing we can't distinguish between type names (type
 -- constructors) and type variables, therefore they all are handled with
 -- SrcTyApp.
-data SrcType s = SrcTyApp s (SrcTypeName s) [SrcType s]
-               | SrcTyArrow s (SrcType s) (SrcType s)
-               | SrcTyForAll s (SrcTypeVar s) (SrcType s)
+data TypeS s = SrcTyApp s (TypeNameS s) [TypeS s]
+             | SrcTyArrow s (TypeS s) (TypeS s)
+             | SrcTyForAll s (TypeVarS s) (TypeS s)
   deriving Show
+
+type SrcType = TypeS SrcSpan
 
 -- | \"Type of the type\".
 -- This representation is more general that we allow in the language. Also note,
@@ -203,38 +223,47 @@ data SrcType s = SrcTyApp s (SrcTypeName s) [SrcType s]
 -- (kind) checking.
 data Kind = StarK
           | Kind :=>: Kind
+  deriving Show
 
 newtype Var = Var String
   deriving Show
 
+type VarS s = (s, Var)
+type SrcVar = VarS SrcSpan
+
 -- | Variable annotated with its type.
 newtype VarTy = VarTy (Var, Type)
-
-type SrcVar s = (s, Var)
+  deriving Show
 
 -- | Var binder is a pair of variable name and a type (in their source representations).
-data VarBinder s = VarBinder s (SrcVar s) (SrcType s)
+data VarBinder s = VarBinder s (VarS s) (TypeS s)
   deriving Show
+
+type SrcVarBinder = VarBinder SrcSpan
 
 newtype TypeVar = TypeVar String
   deriving Show
 
-type SrcTypeVar s = (s, TypeVar)
+type TypeVarS s = (s, TypeVar)
+type SrcTypeVar = TypeVarS SrcSpan
 
 newtype TypeName = TypeName String
   deriving Show
 
-type SrcTypeName s = (s, TypeName)
+type TypeNameS s = (s, TypeName)
+type SrcTypeName = TypeNameS SrcSpan
 
 newtype ConName = ConName String
   deriving Show
 
-type SrcConName s = (s, ConName)
+type ConNameS s = (s, ConName)
+type SrcConName = ConNameS SrcSpan
 
 newtype FunName = FunName String
   deriving Show
 
-type SrcFunName s = (s, FunName)
+type FunNameS s = (s, FunName)
+type SrcFunName = FunNameS SrcSpan
 
 -- Parsing helpers
 
