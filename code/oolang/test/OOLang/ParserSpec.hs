@@ -58,23 +58,23 @@ spec =
                       (FunType (srcSp 1 9 1 56)
                          [ VarBinder (srcSp 1 9 1 17)
                              (srcSp 1 10 1 10, Var "x")
-                             (SrcTyInt (srcSp 1 14 1 16))
+                             (SrcTyInt $ srcSp 1 14 1 16)
                          , VarBinder (srcSp 1 22 1 31)
                              (srcSp 1 23 1 23, Var "y")
-                             (SrcTyBool (srcSp 1 27 1 30))]
+                             (SrcTyBool $ srcSp 1 27 1 30)]
                          (SrcTyArrow (srcSp 1 36 1 56)
                             (SrcTyParen (srcSp 1 36 1 48)
                                (SrcTyArrow (srcSp 1 37 1 47)
-                                 (SrcTyInt (srcSp 1 37 1 39))
-                                 (SrcTyBool (srcSp 1 44 1 47))))
-                            (SrcTyUnit (srcSp 1 53 1 56))))
+                                 (SrcTyInt $ srcSp 1 37 1 39)
+                                 (SrcTyBool $ srcSp 1 44 1 47)))
+                            (SrcTyUnit $ srcSp 1 53 1 56)))
                       []
                       False
                   , FunDef (srcSp 4 1 5 3)
                       (srcSp 4 10 4 10, FunName "g")
                       (FunType (srcSp 4 14 4 16)
                          []
-                         (SrcTyInt (srcSp 4 14 4 16)))
+                         (SrcTyInt $ srcSp 4 14 4 16))
                       []
                       True]
       in successCase baseName ast
@@ -98,9 +98,9 @@ spec =
                         [VarBinder (srcSp 3 11 3 26)
                            (srcSp 3 12 3 12, Var "f")
                            (SrcTyArrow (srcSp 3 16 3 25)
-                              (SrcTyInt (srcSp 3 16 3 18))
-                              (SrcTyInt (srcSp 3 23 3 25)))]
-                        (SrcTyUnit (srcSp 3 31 3 34)))
+                              (SrcTyInt $ srcSp 3 16 3 18)
+                              (SrcTyInt $ srcSp 3 23 3 25))]
+                        (SrcTyUnit $ srcSp 3 31 3 34))
                      []
                      False]
       in successCase baseName ast
@@ -118,23 +118,23 @@ spec =
                         (SrcTyArrow (srcSp 1 11 4 39)
                            (SrcTyParen (srcSp 1 11 1 22)
                              (SrcTyArrow (srcSp 1 12 1 21)
-                                (SrcTyInt (srcSp 1 12 1 14))
-                                (SrcTyInt (srcSp 1 19 1 21))))
+                                (SrcTyInt $ srcSp 1 12 1 14)
+                                (SrcTyInt $ srcSp 1 19 1 21)))
                            (SrcTyArrow (srcSp 2 11 4 39)
                               (SrcTyMutable (srcSp 2 11 2 40)
                                  (SrcTyMaybe (srcSp 2 20 2 39)
                                     (SrcTyArrow (srcSp 2 27 2 38)
-                                       (SrcTyBool (srcSp 2 27 2 30))
-                                       (SrcTyBool (srcSp 2 35 2 38)))))
+                                       (SrcTyBool $ srcSp 2 27 2 30)
+                                       (SrcTyBool $ srcSp 2 35 2 38))))
                               (SrcTyArrow (srcSp 3 11 4 39)
                                  (SrcTyRef (srcSp 3 11 3 18)
-                                    (SrcTyBool (srcSp 3 15 3 18)))
+                                    (SrcTyBool $ srcSp 3 15 3 18))
                                  (SrcTyRef (srcSp 4 11 4 39)
                                     (SrcTyArrow (srcSp 4 16 4 38)
                                        (SrcTyMaybe (srcSp 4 16 4 25)
-                                          (SrcTyBool (srcSp 4 22 4 25)))
+                                          (SrcTyBool $ srcSp 4 22 4 25))
                                        (SrcTyMaybe (srcSp 4 30 4 38)
-                                          (SrcTyInt (srcSp 4 36 4 38)))))))))
+                                          (SrcTyInt $ srcSp 4 36 4 38))))))))
                      []
                      False]
       in successCase baseName ast
