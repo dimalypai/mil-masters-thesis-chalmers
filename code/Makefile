@@ -1,4 +1,6 @@
 all: mil funlang oolang
+docs:
+	make action="haddock --executables --hyperlink-source"
 mil:
 	cd mil; cabal $(action)
 funlang:
