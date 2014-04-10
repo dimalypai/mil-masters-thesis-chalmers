@@ -76,6 +76,100 @@ spec =
                   []
       in successCase baseName ast
 
+    it "parses functions" $
+      let baseName = "Functions"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 7 10)
+                  []
+                  [ FunDef (srcSp 1 1 3 10)
+                      (srcSp 1 1 1 1, FunName "f")
+                      (SrcTyCon (srcSp 1 5 1 8, TypeName "Unit"))
+                      [ FunEq (srcSp 2 1 2 9)
+                          (srcSp 2 1 2 1, FunName "f")
+                          []
+                          (LitE (srcSp 2 5 2 8, UnitLit))
+                      , FunEq (srcSp 3 1 3 9)
+                          (srcSp 3 1 3 1, FunName "f")
+                          []
+                          (LitE (srcSp 3 5 3 8, UnitLit))]
+                  , FunDef (srcSp 5 1 7 10)
+                      (srcSp 5 1 5 1, FunName "g")
+                      (SrcTyArrow (srcSp 5 5 5 15)
+                         (SrcTyCon (srcSp 5 5 5 8, TypeName "Unit"))
+                         (SrcTyCon (srcSp 5 13 5 15, TypeName "Int")))
+                      [ FunEq (srcSp 6 1 6 6)
+                          (srcSp 6 1 6 1, FunName "g")
+                          []
+                          (VarE (srcSp 6 5 6 5) (Var "x"))
+                      , FunEq (srcSp 7 1 7 9)
+                          (srcSp 7 1 7 1, FunName "g")
+                          []
+                          (LitE (srcSp 7 5 7 8, UnitLit))]]
+      in successCase baseName ast
+
+    it "parses data types and functions" $
+      let baseName = "DataTypesAndFunctions"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 6 16)
+                  [ TypeDef (srcSp 1 1 1 12)
+                      (srcSp 1 6 1 7, TypeName "Id")
+                      []
+                      [ConDef (srcSp 1 11 1 12)
+                         (srcSp 1 11 1 12, ConName "Id")
+                         []]
+                  , TypeDef (srcSp 6 1 6 16)
+                      (srcSp 6 6 6 6, TypeName "A")
+                      [(srcSp 6 8 6 8, TypeVar "T")]
+                      [ConDef (srcSp 6 12 6 16)
+                         (srcSp 6 12 6 14, ConName "MkA")
+                         [SrcTyCon (srcSp 6 16 6 16, TypeName "T")]]]
+                  [ FunDef (srcSp 3 1 4 10)
+                      (srcSp 3 1 3 1, FunName "f")
+                      (SrcTyCon (srcSp 3 5 3 7, TypeName "Int"))
+                      [FunEq (srcSp 4 1 4 9)
+                         (srcSp 4 1 4 1, FunName "f")
+                         []
+                         (LitE (srcSp 4 5 4 8, UnitLit))]]
+      in successCase baseName ast
+
+    it "parses types" $
+      let baseName = "Types"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 4 10)
+                  []
+                  [FunDef (srcSp 1 1 4 10)
+                     (srcSp 1 1 1 1, FunName "f")
+                     (SrcTyForAll (srcSp 1 5 3 47)
+                        (srcSp 1 12 1 12, TypeVar "A")
+                        (SrcTyArrow (srcSp 1 16 3 47)
+                           (SrcTyParen (srcSp 1 16 1 23)
+                              (SrcTyArrow (srcSp 1 17 1 22)
+                                 (SrcTyCon (srcSp 1 17 1 17, TypeName "A"))
+                                 (SrcTyCon (srcSp 1 22 1 22, TypeName "A"))))
+                           (SrcTyArrow (srcSp 2 16 3 47)
+                              (SrcTyCon (srcSp 2 16 2 18, TypeName "Int"))
+                              (SrcTyParen (srcSp 3 16 3 47)
+                                 (SrcTyArrow (srcSp 3 17 3 46)
+                                    (SrcTyApp (srcSp 3 17 3 30)
+                                       (SrcTyApp (srcSp 3 17 3 25)
+                                          (SrcTyCon (srcSp 3 17 3 21, TypeName "State"))
+                                          (SrcTyCon (srcSp 3 23 3 25, TypeName "Int")))
+                                       (SrcTyCon (srcSp 3 27 3 30, TypeName "Unit")))
+                                    (SrcTyApp (srcSp 3 35 3 46)
+                                       (SrcTyParen (srcSp 3 35 3 42)
+                                          (SrcTyApp (srcSp 3 36 3 41)
+                                             (SrcTyCon (srcSp 3 36 3 39, TypeName "Pair"))
+                                             (SrcTyCon (srcSp 3 41 3 41, TypeName "A"))))
+                                       (SrcTyCon (srcSp 3 44 3 46, TypeName "Int"))))))))
+                     [FunEq (srcSp 4 1 4 9)
+                        (srcSp 4 1 4 1, FunName "f")
+                        []
+                        (LitE (srcSp 4 5 4 8, UnitLit))]]
+      in successCase baseName ast
+
     -- Failure
     describe "gives an error message when" $ do
       it "given an empty program" $

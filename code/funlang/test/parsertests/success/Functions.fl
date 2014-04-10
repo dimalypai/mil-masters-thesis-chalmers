@@ -1,0 +1,8 @@
+f : Unit
+f = unit;
+f = unit;;
+
+g : Unit -> Int
+g = x;
+g = unit;;
+

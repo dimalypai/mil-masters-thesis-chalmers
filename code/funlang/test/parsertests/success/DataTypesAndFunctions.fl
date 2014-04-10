@@ -1,0 +1,7 @@
+type Id = Id
+
+f : Int
+f = unit;;
+
+type A T = MkA T
+

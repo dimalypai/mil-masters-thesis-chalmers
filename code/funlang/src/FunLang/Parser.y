@@ -128,9 +128,26 @@ fundef :: { SrcFunDef }
 fundef
   : lowerId ':' srctype list1(funeq) ';'
       {% withFileName $ \fileName ->
-           FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $2] fileName)
+           FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $5] fileName)
                   (mkTokSrcSpan $1 fileName, FunName $ getTokId $1)
-                  $3 [] }
+                  $3 $4 }
+
+funeq :: { SrcFunEq }
+funeq : lowerId '=' expr ';'
+  {% withFileName $ \fileName ->
+       FunEq (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
+             (mkTokSrcSpan $1 fileName, FunName $ getTokId $1)
+             [] $3 }
+
+expr :: { SrcExpr }
+expr : literal { LitE $1 }
+     | lowerId {% withFileName $ \fileName ->
+                    VarE (mkTokSrcSpan $1 fileName)
+                         (Var $ getTokId $1) }
+
+literal :: { SrcLiteral }
+literal : unit {% withFileName $ \fileName ->
+                    (mkTokSrcSpan $1 fileName, UnitLit) }
 
 srctype :: { SrcType }
 srctype
