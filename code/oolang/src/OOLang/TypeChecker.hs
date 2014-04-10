@@ -34,8 +34,8 @@ tcProgram :: SrcProgram -> TypeCheckM TyProgram
 tcProgram (Program s classDefs funDefs) = do
   collectDefs classDefs funDefs
   -- Now first information about definitions is in the environment:
-  -- * class names and their super classes
-  -- * function names and their types and purity indicators
+  -- + class names and their super classes
+  -- + function names and their types and purity indicators
   checkMain
   checkInheritance
   tyClassDefs <- mapM tcClassDef classDefs
