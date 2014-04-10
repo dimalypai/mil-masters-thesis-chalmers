@@ -108,11 +108,22 @@ typedef
 
 condef :: { SrcConDef }
 condef
-  : upperId list(srctype)
+  : upperId list(confield)
       {% withFileName $ \fileName ->
            ConDef (combineSrcSpans (getTokSrcSpan $1 : srcAnnListToSrcSpanListLast $2) fileName)
                   (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
                   $2 }
+
+-- Constructor field gets a special production instead of using srctype to
+-- remove ambiguity with the type application
+confield :: { SrcType }
+confield
+  : upperId {% withFileName $ \fileName ->
+                 SrcTyCon (mkTokSrcSpan $1 fileName, TypeName $ getTokId $1) }
+  | '(' srctype ')'
+      {% withFileName $ \fileName ->
+           SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+                      $2 }
 
 fundef :: { SrcFunDef }
 fundef
@@ -123,19 +134,34 @@ fundef
                                     [] }
 
 srctype :: { SrcType }
-srctype : '(' upperId list1(srctype) ')'
-            {% withFileName $ \fileName ->
-                 SrcTyApp (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
-                          (mkTokSrcSpan $2 fileName, TypeName $ getTokId $2)
-                          $3 }
-        | upperId
-            {% withFileName $ \fileName ->
-                 SrcTyApp (mkTokSrcSpan $1 fileName) (mkTokSrcSpan $1 fileName, TypeName $ getTokId $1) [] }
-        | srctype '->' srctype {% withFileName $ \fileName ->
-                                    SrcTyArrow (mkTokSrcSpan $2 fileName) $1 $3 }
-        | forall typevar '.' srctype {% withFileName $ \fileName ->
-                                          SrcTyForAll (mkTokSrcSpan $1 fileName) $2 $4 }
-        | '(' srctype ')' { $2 }
+srctype
+  : apptype { $1 }
+  | srctype '->' srctype
+      {% withFileName $ \fileName ->
+           SrcTyArrow (combineSrcSpans [getSrcSpan $1, getSrcSpan $3] fileName)
+                      $1 $3 }
+  | forall typevar '.' srctype
+      {% withFileName $ \fileName ->
+           SrcTyForAll (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $4] fileName)
+                       $2 $4 }
+
+apptype :: { SrcType }
+apptype
+  : upperId {% withFileName $ \fileName ->
+                 SrcTyCon (mkTokSrcSpan $1 fileName, TypeName $ getTokId $1) }
+  | '(' srctype ')'
+      {% withFileName $ \fileName ->
+           SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+                      $2 }
+  | apptype '(' srctype ')'
+      {% withFileName $ \fileName ->
+           SrcTyApp (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $4] fileName)
+                    $1
+                    (SrcTyParen (combineSrcSpans [getTokSrcSpan $2, getTokSrcSpan $4] fileName) $3) }
+  | apptype upperId
+      {% withFileName $ \fileName ->
+           SrcTyApp (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $2] fileName)
+                    $1 (SrcTyCon (mkTokSrcSpan $2 fileName, TypeName $ getTokId $2)) }
 
 typevar :: { SrcTypeVar }
 typevar : upperId {% withFileName $ \fileName ->

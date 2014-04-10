@@ -194,23 +194,29 @@ type SrcBinOp = BinOpS SrcSpan
 
 -- | Internal representation of types. What types really represent.
 --
+-- Type constructors are fully applied. See also comment on 'Kind'.
+--
 -- Note: we don't have data constructors for built-in types. They all are
--- handled uniformly with user-defined data types.
-data Type = TyTypeCon TypeName Kind
-          | TyVar TypeVar
+-- handled uniformly with user-defined data types with 'TyApp'. But function
+-- arrows have a special treatment.
+data Type = TyVar TypeVar
           | TyArrow Type Type
+          | TyApp TypeName [Type]
           | TyForAll TypeVar Type
-          | TyApp Type Type
   deriving Show
 
 -- | Source representation of types. How a user entered them.
+--
+-- We use binary application and 'SrcTyCon' as opposed to the 'Type' because of
+-- a more convenient parsing.
 --
 -- 'SrcTyParen' is used for better source spans.
 --
 -- Note: during parsing we can't distinguish between type names (type
 -- constructors) and type variables, therefore they all are handled with
--- SrcTyApp.
-data TypeS s = SrcTyApp s (TypeNameS s) [TypeS s]
+-- 'SrcTyCon'.
+data TypeS s = SrcTyCon (TypeNameS s)
+             | SrcTyApp s (TypeS s) (TypeS s)
              | SrcTyArrow s (TypeS s) (TypeS s)
              | SrcTyForAll s (TypeVarS s) (TypeS s)
              | SrcTyParen s (TypeS s)
