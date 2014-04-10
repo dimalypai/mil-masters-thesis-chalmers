@@ -95,8 +95,7 @@ typedef
       {% withFileName $ \fileName ->
            TypeDef (combineSrcSpans [getTokSrcSpan $1, getSrcSpan (last $5)] fileName)
                    (mkTokSrcSpan $2 fileName, TypeName $ getTokId $2)
-                   $3
-                   $5 }
+                   $3 $5 }
   | type lowerId list(typevar) '=' seplist1(condef, '|')
       {% withFileNameM $ \fileName ->
            throwError $ TypeDefLowerId (getTokId $2)
@@ -127,11 +126,11 @@ confield
 
 fundef :: { SrcFunDef }
 fundef
-  : lowerId ':' srctype {% withFileName $ \fileName ->
-                             FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $2] fileName)
-                                    (mkTokSrcSpan $1 fileName, FunName $ getTokId $1)
-                                    $3
-                                    [] }
+  : lowerId ':' srctype list1(funeq) ';'
+      {% withFileName $ \fileName ->
+           FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $2] fileName)
+                  (mkTokSrcSpan $1 fileName, FunName $ getTokId $1)
+                  $3 [] }
 
 srctype :: { SrcType }
 srctype
