@@ -15,8 +15,19 @@ cabal-version:       >= 1.10
 
 executable oolc
   main-is:             Main.hs
-  other-modules:       OOLang.Lexer
+  other-modules:       OOLang.AST
+                       OOLang.AST.PrettyPrinter
+                       OOLang.AST.SrcAnnotated
+                       OOLang.Lexer
                        OOLang.Parser
+                       OOLang.Parser.ParseError
+                       OOLang.PrettyPrinter
+                       OOLang.SrcAnnotated
+                       OOLang.SrcSpan
+                       OOLang.TypeChecker
+                       OOLang.TypeChecker.TcError
+                       OOLang.TypeChecker.TypeCheckM
+                       OOLang.Utils
   -- other-extensions:    
   build-depends:       base >= 4.6 && < 4.7
                      , array

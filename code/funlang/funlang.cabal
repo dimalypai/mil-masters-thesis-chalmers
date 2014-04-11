@@ -15,8 +15,19 @@ cabal-version:       >= 1.10
 
 executable flc
   main-is:             Main.hs
-  other-modules:       FunLang.Lexer
+  other-modules:       FunLang.AST
+                       FunLang.AST.PrettyPrinter
+                       FunLang.AST.SrcAnnotated
+                       FunLang.Lexer
                        FunLang.Parser
+                       FunLang.Parser.ParseError
+                       FunLang.PrettyPrinter
+                       FunLang.SrcAnnotated
+                       FunLang.SrcSpan
+                       FunLang.TypeChecker
+                       FunLang.TypeChecker.TcError
+                       FunLang.TypeChecker.TypeCheckM
+                       FunLang.Utils
   -- other-extensions:    
   build-depends:       base >= 4.6 && < 4.7
                      , array
