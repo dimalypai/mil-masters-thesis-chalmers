@@ -1,2 +1,2 @@
 OOLang type checking error at ClassRedefinition.ool:3,7-3,7:
-  Class C is already defined
+  Class 'C' is already defined

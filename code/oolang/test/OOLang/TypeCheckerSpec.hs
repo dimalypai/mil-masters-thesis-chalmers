@@ -57,7 +57,7 @@ spec =
     -- Failure
     describe "gives an error message" $ do
       it "given a program without main function" $
-        failureCase "AbsentMain"
+        failureCase "MainNotDefined"
 
       it "given a program with incorrect type of main" $
         failureCase "MainIncorrectType"

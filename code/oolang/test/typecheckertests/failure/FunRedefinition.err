@@ -1,2 +1,2 @@
 OOLang type checking error at FunRedefinition.ool:5,5-5,5:
-  Function f is already defined
+  Function 'f' is already defined

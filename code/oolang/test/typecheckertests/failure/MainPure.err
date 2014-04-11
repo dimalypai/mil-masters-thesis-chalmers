@@ -1,2 +1,2 @@
 OOLang type checking error at MainPure.ool:1,10-1,13:
-  Function main is declared as pure
+  Function 'main' is declared as pure
