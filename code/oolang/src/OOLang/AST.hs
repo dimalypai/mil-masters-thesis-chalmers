@@ -115,6 +115,7 @@ data Expr s v = LitE (LiteralS s)
               | LambdaE s [VarBinder s] (Expr s v)
               | ClassAccessE s (ClassNameS s) (Expr s v)
               | ClassAccessStaticE s (ClassNameS s) (Expr s v)
+              | NewRefE s (Expr s v)
               | DerefE s (Expr s v)
               | BinOpE s (BinOpS s) (Expr s v) (Expr s v)
               | IfThenElseE s (Expr s v) (Expr s v) (Expr s v)
@@ -141,7 +142,6 @@ data BinOp = App
            | MemberAccess
            | MemberAccessMaybe
            | NullCoalesce
-           | NewRef
            | Add
            | Sub
            | Mul
