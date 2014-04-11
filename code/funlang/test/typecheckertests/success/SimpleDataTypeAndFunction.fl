@@ -1,0 +1,8 @@
+main : IO Unit
+main = unit;; # This is fine for now
+
+type T = MkT
+
+fun : Unit
+fun = unit;;
+

@@ -1,0 +1,7 @@
+type T = MkT
+
+main : IO Unit
+main = unit;;
+
+type T = T
+

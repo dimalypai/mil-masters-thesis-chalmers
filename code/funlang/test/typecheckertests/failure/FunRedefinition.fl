@@ -1,0 +1,9 @@
+main : IO Unit
+main = unit;;
+
+f : Int
+f = unit;;
+
+f : Unit
+f = unit;;
+

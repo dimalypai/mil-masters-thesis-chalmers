@@ -1,0 +1,2 @@
+FunLang type checking error at FunRedefinition.fl:7,1-7,1:
+  Function 'f' is already defined

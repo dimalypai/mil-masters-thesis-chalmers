@@ -203,12 +203,12 @@ data Type = TyVar TypeVar
           | TyArrow Type Type
           | TyApp TypeName [Type]
           | TyForAll TypeVar Type
-  deriving Show
+  deriving (Show, Eq)
 
 -- | Source representation of types. How a user entered them.
 --
 -- We use binary application and 'SrcTyCon' as opposed to the 'Type' because of
--- a more convenient parsing.
+-- a more convenient parsing. This is more general than we allow in the language.
 --
 -- 'SrcTyParen' is used for better source spans.
 --
@@ -234,6 +234,12 @@ data Kind = StarK
           | Kind :=>: Kind
   deriving Show
 
+-- | Constructs a kind from an integer that denotes the number of parameters of
+-- a type constructor
+mkKind :: Int -> Kind
+mkKind 0 = StarK
+mkKind n = StarK :=>: mkKind (n - 1)
+
 newtype Var = Var String
   deriving Show
 
@@ -251,16 +257,22 @@ data VarBinder s = VarBinder s (VarS s) (TypeS s)
 type SrcVarBinder = VarBinder SrcSpan
 
 newtype TypeVar = TypeVar String
-  deriving Show
+  deriving (Show, Eq)
 
 type TypeVarS s = (s, TypeVar)
 type SrcTypeVar = TypeVarS SrcSpan
 
+getTypeVar :: TypeVarS s -> TypeVar
+getTypeVar = snd
+
 newtype TypeName = TypeName String
-  deriving Show
+  deriving (Show, Eq, Ord)
 
 type TypeNameS s = (s, TypeName)
 type SrcTypeName = TypeNameS SrcSpan
+
+getTypeName :: TypeNameS s -> TypeName
+getTypeName = snd
 
 newtype ConName = ConName String
   deriving Show
@@ -269,10 +281,13 @@ type ConNameS s = (s, ConName)
 type SrcConName = ConNameS SrcSpan
 
 newtype FunName = FunName String
-  deriving Show
+  deriving (Show, Eq, Ord)
 
 type FunNameS s = (s, FunName)
 type SrcFunName = FunNameS SrcSpan
+
+getFunName :: FunNameS s -> FunName
+getFunName = snd
 
 -- Parsing helpers
 
