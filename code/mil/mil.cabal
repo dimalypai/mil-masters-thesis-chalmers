@@ -3,7 +3,6 @@ version:             0.1.0.0
 synopsis:            Monadic intermediate language.
 description:         Part of the Master's thesis at Chalmers University of Technology. Supervisor: Josef Svenningsson.
 license:             MIT
-license-file:        LICENSE
 author:              Dmytro Lypai
 maintainer:          dmytrolypai@gmail.com
 -- copyright:           
