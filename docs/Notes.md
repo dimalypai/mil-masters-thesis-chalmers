@@ -197,3 +197,19 @@ Meeting 2014-03-31
 * Nameless representation of terms: probably no.
 * Tuples in MIL: probably no.
 
+General thoughts. Week 10
+=========================
+
+* What about monad inference?
+* SSA/ANF effects: IO and State? Lift?
+* llvm-general
+* Stack and heap
+* Jump effect: continuation?
+
+Meeting 2014-04-14
+==================
+
+* lift adds anything to the left of Monad (cons).
+* type argument for monadic operations (get, put etc.) adds anything on the right of Monad (append).
+* Monad inference: probably no. Just use monad laws with lifts.
+
