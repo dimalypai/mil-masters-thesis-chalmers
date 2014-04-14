@@ -170,6 +170,42 @@ spec =
                         (LitE (srcSp 4 5 4 8, UnitLit))]]
       in successCase baseName ast
 
+    it "parses expressions" $
+      let baseName = "Expressions"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 11 10)
+                  []
+                  [ FunDef (srcSp 1 1 2 9)
+                      (srcSp 1 1 1 3, FunName "fun")
+                      (SrcTyCon (srcSp 1 7 1 9, TypeName "Int"))
+                      [FunEq (srcSp 2 1 2 8)
+                         (srcSp 2 1 2 3, FunName "fun")
+                         []
+                         (LitE (srcSp 2 7 2 7, IntLit 1))]
+                  , FunDef (srcSp 4 1 5 13)
+                      (srcSp 4 1 4 4, FunName "fun2")
+                      (SrcTyCon (srcSp 4 8 4 12, TypeName "Float"))
+                      [FunEq (srcSp 5 1 5 12)
+                         (srcSp 5 1 5 4, FunName "fun2")
+                         []
+                         (LitE (srcSp 5 8 5 11, FloatLit 0.01 "0.01"))]
+                  , FunDef (srcSp 7 1 8 16)
+                      (srcSp 7 1 7 4, FunName "fun3")
+                      (SrcTyCon (srcSp 7 8 7 13, TypeName "String"))
+                      [FunEq (srcSp 8 1 8 15)
+                         (srcSp 8 1 8 4, FunName "fun3")
+                         []
+                         (LitE (srcSp 8 8 8 14, StringLit "Hello"))]
+                  , FunDef (srcSp 10 1 11 10)
+                      (srcSp 10 1 10 4, FunName "fun4")
+                      (SrcTyCon (srcSp 10 8 10 11, TypeName "Unit"))
+                      [FunEq (srcSp 11 1 11 9)
+                         (srcSp 11 1 11 4, FunName "fun4")
+                         []
+                         (VarE (srcSp 11 8 11 8) (Var "x"))]]
+      in successCase baseName ast
+
     -- Failure
     describe "gives an error message when" $ do
       it "given an empty program" $

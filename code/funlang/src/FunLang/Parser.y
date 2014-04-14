@@ -12,7 +12,7 @@ import Control.Monad.Error
 import Control.Monad.Reader
 
 import FunLang.Lexer as Lex
-import FunLang.AST
+import FunLang.AST as AST
 import FunLang.AST.SrcAnnotated
 import FunLang.SrcSpan
 import FunLang.Parser.ParseError
@@ -146,8 +146,15 @@ expr : literal { LitE $1 }
                          (Var $ getTokId $1) }
 
 literal :: { SrcLiteral }
-literal : unit {% withFileName $ \fileName ->
-                    (mkTokSrcSpan $1 fileName, UnitLit) }
+literal
+  : unit {% withFileName $ \fileName ->
+              (mkTokSrcSpan $1 fileName, UnitLit) }
+  | intLit {% withFileName $ \fileName ->
+                (mkTokSrcSpan $1 fileName, AST.IntLit $ getIntLitValue $1) }
+  | floatLit {% withFileName $ \fileName ->
+                  (mkTokSrcSpan $1 fileName, AST.FloatLit (getFloatLitValue $1) (getFloatLitString $1)) }
+  | stringLit {% withFileName $ \fileName ->
+                   (mkTokSrcSpan $1 fileName, AST.StringLit $ getStringLitValue $1) }
 
 srctype :: { SrcType }
 srctype

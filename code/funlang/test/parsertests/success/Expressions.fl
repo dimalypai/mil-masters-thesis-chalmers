@@ -1,0 +1,12 @@
+fun : Int
+fun = 1;;
+
+fun2 : Float
+fun2 = 0.01;;
+
+fun3 : String
+fun3 = "Hello";;
+
+fun4 : Unit
+fun4 = x;;
+
