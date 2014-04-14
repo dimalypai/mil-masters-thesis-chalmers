@@ -76,8 +76,8 @@ data Expr = LitE Literal
           | DerefE Expr
           | AssignRefE Expr Expr
           | LetE VarBinder Expr Expr
-          | ReturnE Expr MilMonad
-          | LiftE Expr MilMonad MilMonad
+          | ReturnE Expr TypeM
+          | LiftE Expr TypeM TypeM
           | LetRecE [(VarBinder, Expr)] Expr
           | CaseE Expr [CaseAlt]
   deriving Show
@@ -106,13 +106,20 @@ data Pattern =
 --
 -- Note: we don't have data constructors for built-in types. They all are
 -- handled uniformly with user-defined data types.
-data Type = TyMonad MilMonad Type
-          | TyTypeCon TypeName Kind
+--
+-- TODO: monads
+data Type = TyTypeCon TypeName
           | TyVar TypeVar
           | TyArrow Type Type
           | TyForAll TypeVar Type
           | TyApp Type Type
-          | TyMonadCons MilMonad MilMonad
+          | TyMonad TypeM
+  deriving Show
+
+-- | Monadic type. It is either a single monad or a monad on top of another
+-- 'TypeM'. This represents a monad transformers stack, basically.
+data TypeM = MTyMonad MilMonad
+           | MTyMonadCons MilMonad TypeM
   deriving Show
 
 -- | "Type of the type".
@@ -182,11 +189,15 @@ exprHasLowerPrecAssoc :: Expr -> Expr -> Bool
 exprHasLowerPrecAssoc e1 e2 = getExprPrec e1 < getExprPrec e2
 
 getTypePrec :: Type -> Int
-getTypePrec (TyTypeCon {}) = 4
-getTypePrec (TyVar     {}) = 4
+getTypePrec (TyTypeCon {}) = 5
+getTypePrec (TyVar     {}) = 5
 getTypePrec (TyArrow   {}) = 2
 getTypePrec (TyForAll  {}) = 1
-getTypePrec (TyApp     {}) = 3
+getTypePrec (TyApp     {}) = 4
+-- Dirty hacking for nice pretty printing:
+-- Atomic monad doesn't get parentheses, but cons does.
+getTypePrec (TyMonad (MTyMonad {})) = 4
+getTypePrec (TyMonad (MTyMonadCons {})) = 3
 
 -- | Returns whether the first type operator has a lower precedence than the
 -- second one. Convenient to use in infix form.
@@ -210,5 +221,5 @@ mkTypeVar :: String -> Type
 mkTypeVar = TyVar . TypeVar
 
 mkSimpleType :: String -> Type
-mkSimpleType typeName = TyTypeCon (TypeName typeName) StarK
+mkSimpleType typeName = TyTypeCon (TypeName typeName)
 

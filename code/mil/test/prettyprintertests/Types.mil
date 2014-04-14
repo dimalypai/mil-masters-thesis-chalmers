@@ -3,3 +3,5 @@ fun : forall A . A -> A = unit;
 fun2 : (Pair Int Int -> Int) -> Int -> Unit = unit;
 
 fun3 : (forall A . A -> A) -> Int -> Unit = unit;
+
+fun4 : (State Int ::: Error String ::: Id) A = unit;

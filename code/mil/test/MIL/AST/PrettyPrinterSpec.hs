@@ -38,10 +38,10 @@ spec =
                             (ConName "Node")
                             [ mkTypeVar "A"
                             , TyApp
-                                (TyTypeCon (TypeName "Tree") (StarK :=>: StarK))
+                                (TyTypeCon (TypeName "Tree"))
                                 (mkTypeVar "A")
                             , TyApp
-                                (TyTypeCon (TypeName "Tree") (StarK :=>: StarK))
+                                (TyTypeCon (TypeName "Tree"))
                                 (mkTypeVar "A")]]]
                   , [])
       in testCase baseName ast
@@ -92,8 +92,7 @@ spec =
                            (TyArrow
                               (TyApp
                                  (TyApp
-                                    (TyTypeCon (TypeName "Pair")
-                                       (StarK :=>: (StarK :=>: StarK)))
+                                    (TyTypeCon (TypeName "Pair"))
                                     (mkSimpleType "Int"))
                                  (mkSimpleType "Int"))
                               (mkSimpleType "Int"))
@@ -109,6 +108,17 @@ spec =
                            (TyArrow
                               (mkSimpleType "Int")
                               (mkSimpleType "Unit")))
+                        (LitE UnitLit)
+                    , FunDef
+                        (FunName "fun4")
+                        (TyApp
+                           (TyMonad
+                              (MTyMonadCons
+                                 (State (TyTypeCon (TypeName "Int")))
+                                 (MTyMonadCons
+                                    (Error (TyTypeCon (TypeName "String")))
+                                    (MTyMonad Id))))
+                           (mkTypeVar "A"))
                         (LitE UnitLit)])
       in testCase baseName ast
 

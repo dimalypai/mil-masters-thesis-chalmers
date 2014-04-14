@@ -68,7 +68,7 @@ instance Pretty Literal where
 
 -- See Note [Precedences and associativity]
 instance Pretty Type where
-  prPrn (TyTypeCon typeName _) = prPrn typeName
+  prPrn (TyTypeCon typeName) = prPrn typeName
   prPrn (TyVar typeVar) = prPrn typeVar
   prPrn t@(TyArrow t1 t2) =
     prPrnParens (t1 `typeHasLowerPrec` t) t1 <+>
@@ -79,6 +79,11 @@ instance Pretty Type where
   prPrn t@(TyApp t1 t2) =
     prPrnParens (t1 `typeHasLowerPrecAssoc` t) t1 <+>
     prPrnParens (t2 `typeHasLowerPrec` t) t2
+  prPrn (TyMonad tm) = prPrn tm
+
+instance Pretty TypeM where
+  prPrn (MTyMonad m) = prPrn m
+  prPrn (MTyMonadCons m tm) = prPrn m <+> text ":::" <+> prPrn tm
 
 instance Pretty VarBinder where
   prPrn (VarBinder (v, t)) = parens $ prPrn v <+> colon <+> prPrn t
@@ -97,6 +102,13 @@ instance Pretty ConName where
 
 instance Pretty FunName where
   prPrn (FunName funNameStr) = text funNameStr
+
+instance Pretty MilMonad where
+  prPrn Id = text "Id"
+  prPrn (State st) = text "State" <+> prPrn st
+  prPrn (Error et) = text "Error" <+> prPrn et
+  prPrn Lift = text "Lift"
+  prPrn IO = text "IO"
 
 -- | Indentation level for code.
 indLvl :: Int
