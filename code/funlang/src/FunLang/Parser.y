@@ -75,7 +75,6 @@ import FunLang.Parser.ParseError
   floatLit  { $$@(Lex.FloatLit _ _, _) }
   stringLit { $$@(Lex.StringLit  _, _) }
 
-%right '->'
 %%
 
 program :: { SrcProgram }
@@ -158,8 +157,8 @@ literal
 
 srctype :: { SrcType }
 srctype
-  : apptype { $1 }
-  | srctype '->' srctype
+  : appsrctype { $1 }
+  | appsrctype '->' srctype
       {% withFileName $ \fileName ->
            SrcTyArrow (combineSrcSpans [getSrcSpan $1, getSrcSpan $3] fileName)
                       $1 $3 }
@@ -168,23 +167,22 @@ srctype
            SrcTyForAll (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $4] fileName)
                        $2 $4 }
 
-apptype :: { SrcType }
-apptype
+-- This production is introduced in order to avoid shift/reduce conflicts
+appsrctype :: { SrcType }
+appsrctype
+  : atomsrctype { $1 }
+  | appsrctype atomsrctype {% withFileName $ \fileName ->
+                                SrcTyApp (combineSrcSpans [getSrcSpan $1, getSrcSpan $2] fileName)
+                                         $1 $2 }
+
+atomsrctype :: { SrcType }
+atomsrctype
   : upperId {% withFileName $ \fileName ->
                  SrcTyCon (mkTokSrcSpan $1 fileName, TypeName $ getTokId $1) }
   | '(' srctype ')'
       {% withFileName $ \fileName ->
            SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                       $2 }
-  | apptype '(' srctype ')'
-      {% withFileName $ \fileName ->
-           SrcTyApp (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $4] fileName)
-                    $1
-                    (SrcTyParen (combineSrcSpans [getTokSrcSpan $2, getTokSrcSpan $4] fileName) $3) }
-  | apptype upperId
-      {% withFileName $ \fileName ->
-           SrcTyApp (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $2] fileName)
-                    $1 (SrcTyCon (mkTokSrcSpan $2 fileName, TypeName $ getTokId $2)) }
 
 typevar :: { SrcTypeVar }
 typevar : upperId {% withFileName $ \fileName ->
