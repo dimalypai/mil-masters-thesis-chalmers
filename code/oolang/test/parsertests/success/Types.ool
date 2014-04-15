@@ -2,4 +2,5 @@ def fun : (Int -> Int)
        -> Mutable (Maybe (Bool -> Bool))
        -> Ref Bool
        -> Ref (Maybe Bool -> Maybe Int) =>
+  unit;
 end

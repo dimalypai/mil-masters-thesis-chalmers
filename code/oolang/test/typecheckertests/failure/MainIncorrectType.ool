@@ -1,1 +1,1 @@
-def main : Int => end
+def main : Int => unit; end

@@ -1,2 +1,3 @@
 def fun : (a -> b) -> Unit =>
+  unit;
 end

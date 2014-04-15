@@ -17,6 +17,10 @@ module OOLang.Lexer
   , getId
   , getTokId
   , mkTokSrcSpan
+  , getIntLitValue
+  , getFloatLitValue
+  , getFloatLitString
+  , getStringLitValue
   ) where
 
 import OOLang.SrcSpan
@@ -298,6 +302,30 @@ getTokId = getId . getToken
 -- | Sets a file name (second argument) in the source span of a given token with span.
 mkTokSrcSpan :: TokenWithSpan -> String -> SrcSpan
 mkTokSrcSpan tok fileName = setSrcSpanFileName (getTokSrcSpan tok) fileName
+
+-- | Returns a value of integer literal.
+-- For tokens other than IntLit - throws an error.
+getIntLitValue :: TokenWithSpan -> Int
+getIntLitValue (IntLit i, _) = i
+getIntLitValue           tok = error $ show tok ++ " is not an integer literal token"
+
+-- | Returns a value of float literal.
+-- For tokens other than FloatLit - throws an error.
+getFloatLitValue :: TokenWithSpan -> Double
+getFloatLitValue (FloatLit f _, _) = f
+getFloatLitValue               tok = error $ show tok ++ " is not a float literal token"
+
+-- | Returns a user string of float literal.
+-- For tokens other than FloatLit - throws an error.
+getFloatLitString :: TokenWithSpan -> String
+getFloatLitString (FloatLit _ s, _) = s
+getFloatLitString               tok = error $ show tok ++ " is not a float literal token"
+
+-- | Returns a value of string literal.
+-- For tokens other than StringLit - throws an error.
+getStringLitValue :: TokenWithSpan -> String
+getStringLitValue (StringLit s, _) = s
+getStringLitValue              tok = error $ show tok ++ " is not a string literal token"
 
 -- | Converts Alex source position to source span.
 -- Takes token string for length calculation.

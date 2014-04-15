@@ -1,2 +1,3 @@
 def fun : Maybe Maybe Maybe Int =>
+  unit;
 end

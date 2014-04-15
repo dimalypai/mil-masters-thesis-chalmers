@@ -1,6 +1,7 @@
 class Super => end
 
 def fun : {f : Int -> Int} -> Unit =>
+  unit;
 end
 
 class Child < Super => end

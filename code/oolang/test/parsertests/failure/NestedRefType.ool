@@ -1,2 +1,3 @@
 def fun : Ref (Ref Int) =>
+  unit;
 end

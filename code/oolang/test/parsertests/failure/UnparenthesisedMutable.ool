@@ -1,2 +1,3 @@
 def fun : Mutable Maybe Int =>
+  unit;
 end

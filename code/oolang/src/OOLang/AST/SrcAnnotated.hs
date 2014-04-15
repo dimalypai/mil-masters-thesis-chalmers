@@ -21,6 +21,9 @@ instance SrcAnnotated2 ClassDef where
 instance SrcAnnotated2 FunDef where
   ann2 (FunDef s _ _ _ _) = s
 
+instance SrcAnnotated2 Expr where
+  ann2 (LitE lit) = ann2 lit
+
 instance SrcAnnotated TypeS where
   ann (SrcTyUnit s) = s
   ann (SrcTyBool s) = s

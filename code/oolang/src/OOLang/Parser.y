@@ -12,7 +12,7 @@ import Control.Monad.Error
 import Control.Monad.Reader
 
 import OOLang.Lexer as Lex
-import OOLang.AST
+import OOLang.AST as AST
 import OOLang.AST.SrcAnnotated
 import OOLang.SrcSpan
 import OOLang.Parser.ParseError
@@ -124,13 +124,32 @@ classdef
 
 fundef :: { SrcFunDef }
 fundef
-  : def optb(pure) lowerId ':' funtype '=>' end
+  : def optb(pure) lowerId ':' funtype '=>' list1(stmt) end
       {% withFileName $ \fileName ->
-           FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $7] fileName)
+           FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $8] fileName)
                   (mkTokSrcSpan $3 fileName, FunName $ getTokId $3)
-                  $5
-                  []
-                  $2 }
+                  $5 $7 $2 }
+
+stmt :: { SrcStmt }
+stmt
+  : expr ';'
+      {% withFileName $ \fileName ->
+           ExprS (combineSrcSpans [getSrcSpan2 $1, getTokSrcSpan $2] fileName)
+                 $1 }
+
+expr :: { SrcExpr }
+expr : literal { LitE $1 }
+
+literal :: { SrcLiteral }
+literal
+  : unit {% withFileName $ \fileName ->
+              (mkTokSrcSpan $1 fileName, UnitLit) }
+  | intLit {% withFileName $ \fileName ->
+                (mkTokSrcSpan $1 fileName, AST.IntLit $ getIntLitValue $1) }
+  | floatLit {% withFileName $ \fileName ->
+                  (mkTokSrcSpan $1 fileName, AST.FloatLit (getFloatLitValue $1) (getFloatLitString $1)) }
+  | stringLit {% withFileName $ \fileName ->
+                   (mkTokSrcSpan $1 fileName, AST.StringLit $ getStringLitValue $1) }
 
 type :: { SrcType }
 type : maybearrtype { $1 }

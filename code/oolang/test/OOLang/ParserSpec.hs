@@ -51,9 +51,9 @@ spec =
       let baseName = "Functions"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 5 3)
+          ast = Program (srcSp 1 1 7 3)
                   []
-                  [ FunDef (srcSp 1 1 2 3)
+                  [ FunDef (srcSp 1 1 3 3)
                       (srcSp 1 5 1 5, FunName "f")
                       (FunType (srcSp 1 9 1 56)
                          [ VarBinder (srcSp 1 9 1 17)
@@ -68,14 +68,16 @@ spec =
                                  (SrcTyInt $ srcSp 1 37 1 39)
                                  (SrcTyBool $ srcSp 1 44 1 47)))
                             (SrcTyUnit $ srcSp 1 53 1 56)))
-                      []
+                      [ExprS (srcSp 2 3 2 7)
+                         (LitE (srcSp 2 3 2 6, UnitLit))]
                       False
-                  , FunDef (srcSp 4 1 5 3)
-                      (srcSp 4 10 4 10, FunName "g")
-                      (FunType (srcSp 4 14 4 16)
+                  , FunDef (srcSp 5 1 7 3)
+                      (srcSp 5 10 5 10, FunName "g")
+                      (FunType (srcSp 5 14 5 16)
                          []
-                         (SrcTyInt $ srcSp 4 14 4 16))
-                      []
+                         (SrcTyInt $ srcSp 5 14 5 16))
+                      [ExprS (srcSp 6 3 6 4)
+                         (LitE (srcSp 6 3 6 3, IntLit 1))]
                       True]
       in successCase baseName ast
 
@@ -83,16 +85,16 @@ spec =
       let baseName = "ClassesAndFunctions"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 6 26)
+          ast = Program (srcSp 1 1 7 26)
                   [ ClassDef (srcSp 1 1 1 18)
                       (srcSp 1 7 1 11, ClassName "Super")
                       Nothing
                       []
-                  , ClassDef (srcSp 6 1 6 26)
-                      (srcSp 6 7 6 11, ClassName "Child")
-                      (Just (srcSp 6 15 6 19, ClassName "Super"))
+                  , ClassDef (srcSp 7 1 7 26)
+                      (srcSp 7 7 7 11, ClassName "Child")
+                      (Just (srcSp 7 15 7 19, ClassName "Super"))
                       []]
-                  [FunDef (srcSp 3 1 4 3)
+                  [FunDef (srcSp 3 1 5 3)
                      (srcSp 3 5 3 7, FunName "fun")
                      (FunType (srcSp 3 11 3 34)
                         [VarBinder (srcSp 3 11 3 26)
@@ -101,7 +103,8 @@ spec =
                               (SrcTyInt $ srcSp 3 16 3 18)
                               (SrcTyInt $ srcSp 3 23 3 25))]
                         (SrcTyUnit $ srcSp 3 31 3 34))
-                     []
+                     [ExprS (srcSp 4 3 4 7)
+                        (LitE (srcSp 4 3 4 6, UnitLit))]
                      False]
       in successCase baseName ast
 
@@ -109,9 +112,9 @@ spec =
       let baseName = "Types"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 5 3)
+          ast = Program (srcSp 1 1 6 3)
                   []
-                  [FunDef (srcSp 1 1 5 3)
+                  [FunDef (srcSp 1 1 6 3)
                      (srcSp 1 5 1 7, FunName "fun")
                      (FunType (srcSp 1 11 4 39)
                         []
@@ -135,7 +138,8 @@ spec =
                                           (SrcTyBool $ srcSp 4 22 4 25))
                                        (SrcTyMaybe (srcSp 4 30 4 38)
                                           (SrcTyInt $ srcSp 4 36 4 38))))))))
-                     []
+                     [ExprS (srcSp 5 3 5 7)
+                        (LitE (srcSp 5 3 5 6, UnitLit))]
                      False]
       in successCase baseName ast
 
@@ -176,6 +180,9 @@ spec =
 
       it "given a function definition with missing end" $
         failureCase "FunMissingEnd"
+
+      it "given an empty function definition" $
+        failureCase "EmptyFunDef"
 
       it "given a variable binder with missing variable name" $
         failureCase "VarBinderMissingName"

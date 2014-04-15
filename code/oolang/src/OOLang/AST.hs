@@ -88,8 +88,8 @@ data MemberDecl s v = FieldDecl s (Declaration s v) [ModifierS s]
 type SrcMemberDecl = MemberDecl SrcSpan Var
 type TyMemberDecl  = MemberDecl SrcSpan VarTy
 
-data Stmt s v = DeclS (Declaration s v)
-              | ExprS (Expr s v)
+data Stmt s v = DeclS s (Declaration s v)
+              | ExprS s (Expr s v)
               | AssignS s (AssignOpS s) (Expr s v) (Expr s v)
               | WhileS s (Expr s v) [Stmt s v]
               | WhenS s (Expr s v) [Stmt s v] [Stmt s v]

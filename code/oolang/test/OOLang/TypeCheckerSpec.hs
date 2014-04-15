@@ -45,7 +45,7 @@ spec =
                       (srcSp 5 7 5 7, ClassName "B")
                       (Just (srcSp 5 11 5 11, ClassName "A"))
                       []]
-                  [FunDef (srcSp 1 1 1 22)
+                  [FunDef (srcSp 1 1 1 28)
                      (srcSp 1 5 1 8, FunName "main")
                      (FunType (srcSp 1 12 1 15)
                         []
