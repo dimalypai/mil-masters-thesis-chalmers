@@ -120,8 +120,7 @@ classdef
       {% withFileName $ \fileName ->
            ClassDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $5] fileName)
                     (mkTokSrcSpan $2 fileName, ClassName $ getTokId $2)
-                    $3
-                    [] }
+                    $3 [] }
 
 fundef :: { SrcFunDef }
 fundef
@@ -194,8 +193,7 @@ funtype
                       FunType (combineSrcSpans
                                  (srcAnnListToSrcSpanListHead $1 ++ [getSrcSpan $2])
                                  fileName)
-                              $1
-                              $2 }
+                              $1 $2 }
 
 funargs :: { [SrcVarBinder] }
 funargs : {- empty -}                    { [] }
