@@ -174,28 +174,36 @@ spec =
       let baseName = "Expressions"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 2 28)
+          ast = Program (srcSp 1 1 2 56)
                   []
-                  [ FunDef (srcSp 1 1 2 28)
+                  [ FunDef (srcSp 1 1 2 56)
                       (srcSp 1 1 1 3, FunName "fun")
                       (SrcTyCon (srcSp 1 7 1 10, TypeName "Unit"))
-                      [FunEq (srcSp 2 1 2 27)
+                      [FunEq (srcSp 2 1 2 55)
                          (srcSp 2 1 2 3, FunName "fun")
                          []
-                         (BinOpE (srcSp 2 7 2 26)
-                            (srcSp 2 16 2 16, App)
-                            (BinOpE (srcSp 2 7 2 15)
-                               (srcSp 2 8 2 8, App)
-                               (VarE (srcSp 2 7 2 7) (Var "f"))
-                               (LitE (srcSp 2 9 2 15, StringLit "Hello")))
-                            (ParenE (srcSp 2 17 2 26)
-                               (BinOpE (srcSp 2 18 2 25)
-                                  (srcSp 2 21 2 21, App)
-                                  (BinOpE (srcSp 2 18 2 20)
-                                     (srcSp 2 19 2 19, App)
-                                     (VarE (srcSp 2 18 2 18) (Var "h"))
-                                     (LitE (srcSp 2 20 2 20, IntLit 1)))
-                                  (LitE (srcSp 2 22 2 25, FloatLit 0.01 "0.01")))))]]
+                         (BinOpE (srcSp 2 7 2 54)
+                            (srcSp 2 44 2 44, App)
+                            (BinOpE (srcSp 2 7 2 43)
+                               (srcSp 2 36 2 36, App)
+                               (ParenE (srcSp 2 7 2 35)
+                                  (LambdaE (srcSp 2 8 2 34)
+                                     [ VarBinder (srcSp 2 9 2 18)
+                                         (srcSp 2 9 2 9, Var "x")
+                                         (SrcTyCon (srcSp 2 13 2 18, TypeName "String"))
+                                     , VarBinder (srcSp 2 20 2 27)
+                                         (srcSp 2 20 2 20, Var "y")
+                                         (SrcTyCon (srcSp 2 24 2 27, TypeName "Unit"))]
+                                     (LitE (srcSp 2 31 2 34, UnitLit))))
+                               (LitE (srcSp 2 37 2 43, StringLit "Hello")))
+                            (ParenE (srcSp 2 45 2 54)
+                               (BinOpE (srcSp 2 46 2 53)
+                                  (srcSp 2 49 2 49, App)
+                                  (BinOpE (srcSp 2 46 2 48)
+                                     (srcSp 2 47 2 47, App)
+                                     (VarE (srcSp 2 46 2 46) (Var "h"))
+                                     (LitE (srcSp 2 48 2 48, IntLit 1)))
+                                  (LitE (srcSp 2 50 2 53, FloatLit 0.01 "0.01")))))]]
       in successCase baseName ast
 
     -- Failure

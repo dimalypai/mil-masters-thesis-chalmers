@@ -139,7 +139,12 @@ funeq : lowerId '=' expr ';'
              [] $3 }
 
 expr :: { SrcExpr }
-expr : appexpr { $1 }
+expr
+  : appexpr { $1 }
+  | '\\' list1(varbinder) '.' expr
+      {% withFileName $ \fileName ->
+           LambdaE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $4] fileName)
+                   $2 $4}
 
 -- This production is introduced in order to avoid shift/reduce conflicts
 appexpr :: { SrcExpr }
@@ -167,6 +172,11 @@ literal
                   (mkTokSrcSpan $1 fileName, AST.FloatLit (getFloatLitValue $1) (getFloatLitString $1)) }
   | stringLit {% withFileName $ \fileName ->
                    (mkTokSrcSpan $1 fileName, AST.StringLit $ getStringLitValue $1) }
+
+varbinder :: { SrcVarBinder }
+varbinder : lowerId ':' srctype {% withFileName $ \fileName ->
+                                     VarBinder (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $3] fileName)
+                                               (mkTokSrcSpan $1 fileName, Var $ getTokId $1) $3}
 
 srctype :: { SrcType }
 srctype
