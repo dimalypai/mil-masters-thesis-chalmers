@@ -6,6 +6,7 @@ module FunLang.SrcSpan
   , mkSrcPos
   , srcSpanToPos
   , combineSrcSpans
+  , srcSpanBetween
   , setSrcSpanFileName
   , setSrcPosFileName
   , prPrint
@@ -65,6 +66,16 @@ combineSrcSpans spans fileName =
   let (SrcSpan _ startLine startCol _ _) = head spans
       (SrcSpan _ _ _ endLine endCol)     = last spans
   in mkSrcSpan fileName startLine startCol endLine endCol
+
+-- | Finds a source span between two source spans by taking the end position of
+-- the first span (adds 1 to column) and the start position of the second one
+-- (subtracts 1 from column).
+-- Fixes a file name as well.
+srcSpanBetween :: SrcSpan -> SrcSpan -> String -> SrcSpan
+srcSpanBetween ss1 ss2 fileName =
+  let (SrcSpan _ _ _ startLine startCol) = ss1
+      (SrcSpan _ endLine endCol _ _)     = ss2
+  in mkSrcSpan fileName startLine (startCol + 1) endLine (endCol - 1)
 
 -- | Changes a file name in a given source span.
 setSrcSpanFileName :: SrcSpan -> String -> SrcSpan

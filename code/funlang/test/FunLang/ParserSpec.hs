@@ -174,36 +174,28 @@ spec =
       let baseName = "Expressions"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 11 10)
+          ast = Program (srcSp 1 1 2 28)
                   []
-                  [ FunDef (srcSp 1 1 2 9)
+                  [ FunDef (srcSp 1 1 2 28)
                       (srcSp 1 1 1 3, FunName "fun")
-                      (SrcTyCon (srcSp 1 7 1 9, TypeName "Int"))
-                      [FunEq (srcSp 2 1 2 8)
+                      (SrcTyCon (srcSp 1 7 1 10, TypeName "Unit"))
+                      [FunEq (srcSp 2 1 2 27)
                          (srcSp 2 1 2 3, FunName "fun")
                          []
-                         (LitE (srcSp 2 7 2 7, IntLit 1))]
-                  , FunDef (srcSp 4 1 5 13)
-                      (srcSp 4 1 4 4, FunName "fun2")
-                      (SrcTyCon (srcSp 4 8 4 12, TypeName "Float"))
-                      [FunEq (srcSp 5 1 5 12)
-                         (srcSp 5 1 5 4, FunName "fun2")
-                         []
-                         (LitE (srcSp 5 8 5 11, FloatLit 0.01 "0.01"))]
-                  , FunDef (srcSp 7 1 8 16)
-                      (srcSp 7 1 7 4, FunName "fun3")
-                      (SrcTyCon (srcSp 7 8 7 13, TypeName "String"))
-                      [FunEq (srcSp 8 1 8 15)
-                         (srcSp 8 1 8 4, FunName "fun3")
-                         []
-                         (LitE (srcSp 8 8 8 14, StringLit "Hello"))]
-                  , FunDef (srcSp 10 1 11 10)
-                      (srcSp 10 1 10 4, FunName "fun4")
-                      (SrcTyCon (srcSp 10 8 10 11, TypeName "Unit"))
-                      [FunEq (srcSp 11 1 11 9)
-                         (srcSp 11 1 11 4, FunName "fun4")
-                         []
-                         (VarE (srcSp 11 8 11 8) (Var "x"))]]
+                         (BinOpE (srcSp 2 7 2 26)
+                            (srcSp 2 16 2 16, App)
+                            (BinOpE (srcSp 2 7 2 15)
+                               (srcSp 2 8 2 8, App)
+                               (VarE (srcSp 2 7 2 7) (Var "f"))
+                               (LitE (srcSp 2 9 2 15, StringLit "Hello")))
+                            (ParenE (srcSp 2 17 2 26)
+                               (BinOpE (srcSp 2 18 2 25)
+                                  (srcSp 2 21 2 21, App)
+                                  (BinOpE (srcSp 2 18 2 20)
+                                     (srcSp 2 19 2 19, App)
+                                     (VarE (srcSp 2 18 2 18) (Var "h"))
+                                     (LitE (srcSp 2 20 2 20, IntLit 1)))
+                                  (LitE (srcSp 2 22 2 25, FloatLit 0.01 "0.01")))))]]
       in successCase baseName ast
 
     -- Failure

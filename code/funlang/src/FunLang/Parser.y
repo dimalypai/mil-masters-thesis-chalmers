@@ -139,10 +139,23 @@ funeq : lowerId '=' expr ';'
              [] $3 }
 
 expr :: { SrcExpr }
-expr : literal { LitE $1 }
-     | lowerId {% withFileName $ \fileName ->
-                    VarE (mkTokSrcSpan $1 fileName)
-                         (Var $ getTokId $1) }
+expr : appexpr { $1 }
+
+-- This production is introduced in order to avoid shift/reduce conflicts
+appexpr :: { SrcExpr }
+appexpr : atomexpr { $1 }
+        | appexpr atomexpr {% withFileName $ \fileName ->
+                                BinOpE (combineSrcSpans [getSrcSpan2 $1, getSrcSpan2 $2] fileName)
+                                       (srcSpanBetween (getSrcSpan2 $1) (getSrcSpan2 $2) fileName, App) $1 $2 }
+
+atomexpr :: { SrcExpr }
+atomexpr : literal { LitE $1 }
+         | lowerId {% withFileName $ \fileName ->
+                        VarE (mkTokSrcSpan $1 fileName)
+                             (Var $ getTokId $1) }
+         | '(' expr ')' {% withFileName $ \fileName ->
+                             ParenE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+                                    $2 }
 
 literal :: { SrcLiteral }
 literal

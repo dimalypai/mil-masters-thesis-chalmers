@@ -134,6 +134,8 @@ type SrcPattern = Pattern SrcSpan
 -- definitions.
 --
 -- 'DoE' represents simplified Haskell do-blocks for built-in monads.
+--
+-- 'ParenE' is used for better source spans and pretty printing.
 data Expr s v = LitE (LiteralS s)
               | VarE s v
               | LambdaE s [VarBinder s] (Expr s v)
@@ -144,7 +146,7 @@ data Expr s v = LitE (LiteralS s)
               | LetE s [(VarBinder s, Expr s v)] (Expr s v)
               | DoE s [Stmt s v]
               | BinOpE s (BinOpS s) (Expr s v) (Expr s v)
-              | ParenE s (Expr s v) -- ???
+              | ParenE s (Expr s v)
   deriving Show
 
 type SrcExpr = Expr SrcSpan Var
