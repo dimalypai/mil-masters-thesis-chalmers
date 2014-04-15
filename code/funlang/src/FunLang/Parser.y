@@ -148,10 +148,12 @@ expr
 
 -- This production is introduced in order to avoid shift/reduce conflicts
 appexpr :: { SrcExpr }
-appexpr : atomexpr { $1 }
-        | appexpr atomexpr {% withFileName $ \fileName ->
-                                BinOpE (combineSrcSpans [getSrcSpan2 $1, getSrcSpan2 $2] fileName)
-                                       (srcSpanBetween (getSrcSpan2 $1) (getSrcSpan2 $2) fileName, App) $1 $2 }
+appexpr
+  : atomexpr { $1 }
+  | appexpr atomexpr
+      {% withFileName $ \fileName ->
+           BinOpE (combineSrcSpans [getSrcSpan2 $1, getSrcSpan2 $2] fileName)
+                  (srcSpanBetween (getSrcSpan2 $1) (getSrcSpan2 $2) fileName, App) $1 $2 }
 
 atomexpr :: { SrcExpr }
 atomexpr : literal { LitE $1 }
@@ -174,9 +176,11 @@ literal
                    (mkTokSrcSpan $1 fileName, AST.StringLit $ getStringLitValue $1) }
 
 varbinder :: { SrcVarBinder }
-varbinder : lowerId ':' srctype {% withFileName $ \fileName ->
-                                     VarBinder (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $3] fileName)
-                                               (mkTokSrcSpan $1 fileName, Var $ getTokId $1) $3}
+varbinder
+  : lowerId ':' srctype
+      {% withFileName $ \fileName ->
+           VarBinder (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $3] fileName)
+                     (mkTokSrcSpan $1 fileName, Var $ getTokId $1) $3}
 
 srctype :: { SrcType }
 srctype
