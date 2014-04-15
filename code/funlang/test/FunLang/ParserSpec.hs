@@ -225,6 +225,28 @@ spec =
                             (LitE (srcSp 5 33 5 33, IntLit 1)))]]
       in successCase baseName ast
 
+    it "parses case expressions and constructor names" $
+      let baseName = "CaseConExpressions"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 5 5)
+                  []
+                  [FunDef (srcSp 1 1 5 5)
+                     (srcSp 1 1 1 3, FunName "fun")
+                     (SrcTyCon (srcSp 1 7 1 10, TypeName "Unit"))
+                     [FunEq (srcSp 2 1 5 4)
+                        (srcSp 2 1 2 3, FunName "fun")
+                        []
+                        (CaseE (srcSp 2 7 5 3)
+                           (LitE (srcSp 2 12 2 12, IntLit 0))
+                           [ CaseAlt (srcSp 3 3 3 13)
+                               (LitP (srcSp 3 5 3 5, IntLit 0))
+                               (ConNameE (srcSp 3 10 3 13, ConName "True"))
+                           , CaseAlt (srcSp 4 3 4 14)
+                               (DefaultP $ srcSp 4 5 4 5)
+                               (ConNameE (srcSp 4 10 4 14, ConName "False"))])]]
+      in successCase baseName ast
+
     it "parses statements (do-expressions)" $
       let baseName = "Statements"
           fileName = mkFileName baseName

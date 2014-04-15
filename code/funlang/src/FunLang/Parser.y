@@ -138,6 +138,10 @@ expr
       {% withFileName $ \fileName ->
            TypeLambdaE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $4] fileName)
                        $2 $4 }
+  | case expr of list1(casealt) end
+      {% withFileName $ \fileName ->
+           CaseE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $5] fileName)
+                 $2 $4 }
   | do list1(stmt) end
       {% withFileName $ \fileName ->
            DoE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
@@ -161,6 +165,8 @@ atomexpr : literal { LitE $1 }
          | lowerId {% withFileName $ \fileName ->
                         VarE (mkTokSrcSpan $1 fileName)
                              (Var $ getTokId $1) }
+         | upperId {% withFileName $ \fileName ->
+                        ConNameE (mkTokSrcSpan $1 fileName, ConName $ getTokId $1) }
          | '(' expr ')' {% withFileName $ \fileName ->
                              ParenE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                                     $2 }
@@ -175,6 +181,16 @@ literal
                   (mkTokSrcSpan $1 fileName, AST.FloatLit (getFloatLitValue $1) (getFloatLitString $1)) }
   | stringLit {% withFileName $ \fileName ->
                    (mkTokSrcSpan $1 fileName, AST.StringLit $ getStringLitValue $1) }
+
+casealt :: { SrcCaseAlt }
+casealt
+  : '|' pattern '->' expr {% withFileName $ \fileName ->
+                               CaseAlt (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $4] fileName)
+                                       $2 $4 }
+
+pattern :: { SrcPattern }
+pattern : literal { LitP $1 }
+        | '_'     {% withFileName $ \fileName -> DefaultP (mkTokSrcSpan $1 fileName) }
 
 stmt :: { SrcStmt }
 stmt
