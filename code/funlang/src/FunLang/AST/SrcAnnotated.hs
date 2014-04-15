@@ -30,6 +30,7 @@ instance SrcAnnotated2 Expr where
   ann2 (LambdaE s _ _) = s
   ann2 (TypeLambdaE s _ _) = s
   ann2 (TypeAppE s _ _) = s
+  ann2 (DoE s _) = s
   ann2 (BinOpE s _ _ _) = s
   ann2 (ParenE s _) = s
 
