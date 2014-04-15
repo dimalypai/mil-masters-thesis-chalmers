@@ -170,7 +170,7 @@ data Type = TyUnit
 
 -- | Source representation of types. How a user entered them.
 --
--- 'SrcTyParen' is used for better source spans.
+-- 'SrcTyParen' is used for better source spans and pretty printing.
 data TypeS s = SrcTyUnit s
              | SrcTyBool s
              | SrcTyInt s

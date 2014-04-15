@@ -129,6 +129,8 @@ type SrcPattern = Pattern SrcSpan
 --
 -- 'ConNameE' stands on its own because constructors act as functions.
 --
+-- Function names are represented as 'VarE'.
+--
 -- 'LetE' represents both recursive and non-recursive let. So we have a list of
 -- definitions both for convenience and to be able to handle mutually recursive
 -- definitions.
