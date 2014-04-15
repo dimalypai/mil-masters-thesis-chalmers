@@ -170,8 +170,8 @@ spec =
                         (LitE (srcSp 4 5 4 8, UnitLit))]]
       in successCase baseName ast
 
-    it "parses expressions" $
-      let baseName = "Expressions"
+    it "parses lambda, application and literal expressions" $
+      let baseName = "LamAppLitExpressions"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
           ast = Program (srcSp 1 1 5 35)
