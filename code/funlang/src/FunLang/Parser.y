@@ -106,22 +106,11 @@ typedef
 
 condef :: { SrcConDef }
 condef
-  : upperId list(confield)
+  : upperId list(atomsrctype)
       {% withFileName $ \fileName ->
            ConDef (combineSrcSpans (getTokSrcSpan $1 : srcAnnListToSrcSpanListLast $2) fileName)
                   (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
                   $2 }
-
--- Constructor field gets a special production instead of using srctype to
--- remove ambiguity with the type application
-confield :: { SrcType }
-confield
-  : upperId {% withFileName $ \fileName ->
-                 SrcTyCon (mkTokSrcSpan $1 fileName, TypeName $ getTokId $1) }
-  | '(' srctype ')'
-      {% withFileName $ \fileName ->
-           SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
-                      $2 }
 
 fundef :: { SrcFunDef }
 fundef
