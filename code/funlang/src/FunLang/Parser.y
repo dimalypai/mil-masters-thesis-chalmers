@@ -145,6 +145,10 @@ expr
       {% withFileName $ \fileName ->
            LambdaE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $4] fileName)
                    $2 $4}
+  | '/\\' list1(typevar) '.' expr
+      {% withFileName $ \fileName ->
+           TypeLambdaE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $4] fileName)
+                       $2 $4 }
   | do list1(stmt) end
       {% withFileName $ \fileName ->
            DoE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
@@ -158,6 +162,10 @@ appexpr
       {% withFileName $ \fileName ->
            BinOpE (combineSrcSpans [getSrcSpan2 $1, getSrcSpan2 $2] fileName)
                   (srcSpanBetween (getSrcSpan2 $1) (getSrcSpan2 $2) fileName, App) $1 $2 }
+  | appexpr '[' srctype ']'
+      {% withFileName $ \fileName ->
+           TypeAppE (combineSrcSpans [getSrcSpan2 $1, getTokSrcSpan $4] fileName)
+                    $1 $3 }
 
 atomexpr :: { SrcExpr }
 atomexpr : literal { LitE $1 }

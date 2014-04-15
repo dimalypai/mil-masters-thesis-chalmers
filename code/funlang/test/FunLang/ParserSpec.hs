@@ -174,7 +174,7 @@ spec =
       let baseName = "Expressions"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 2 56)
+          ast = Program (srcSp 1 1 5 35)
                   []
                   [ FunDef (srcSp 1 1 2 56)
                       (srcSp 1 1 1 3, FunName "fun")
@@ -203,7 +203,26 @@ spec =
                                      (srcSp 2 47 2 47, App)
                                      (VarE (srcSp 2 46 2 46) (Var "h"))
                                      (LitE (srcSp 2 48 2 48, IntLit 1)))
-                                  (LitE (srcSp 2 50 2 53, FloatLit 0.01 "0.01")))))]]
+                                  (LitE (srcSp 2 50 2 53, FloatLit 0.01 "0.01")))))]
+                  , FunDef (srcSp 4 1 5 35)
+                      (srcSp 4 1 4 4, FunName "fun2")
+                      (SrcTyCon (srcSp 4 8 4 11, TypeName "Unit"))
+                      [FunEq (srcSp 5 1 5 34)
+                         (srcSp 5 1 5 4, FunName "fun2")
+                         []
+                         (BinOpE (srcSp 5 8 5 33)
+                            (srcSp 5 32 5 32, App)
+                            (TypeAppE (srcSp 5 8 5 31)
+                               (ParenE (srcSp 5 8 5 25)
+                                  (TypeLambdaE (srcSp 5 9 5 24)
+                                     [(srcSp 5 11 5 11, TypeVar "T")]
+                                     (LambdaE (srcSp 5 15 5 24)
+                                        [VarBinder (srcSp 5 16 5 20)
+                                           (srcSp 5 16 5 16, Var "x")
+                                           (SrcTyCon (srcSp 5 20 5 20, TypeName "T"))]
+                                        (VarE (srcSp 5 24 5 24) (Var "x")))))
+                                  (SrcTyCon (srcSp 5 28 5 30, TypeName "Int")))
+                            (LitE (srcSp 5 33 5 33, IntLit 1)))]]
       in successCase baseName ast
 
     it "parses statements (do-expressions)" $
