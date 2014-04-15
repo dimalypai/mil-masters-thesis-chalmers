@@ -212,7 +212,7 @@ data Type = TyVar TypeVar
 -- We use binary application and 'SrcTyCon' as opposed to the 'Type' because of
 -- a more convenient parsing. This is more general than we allow in the language.
 --
--- 'SrcTyParen' is used for better source spans.
+-- 'SrcTyParen' is used for better source spans and pretty printing.
 --
 -- Note: during parsing we can't distinguish between type names (type
 -- constructors) and type variables, therefore they all are handled with
