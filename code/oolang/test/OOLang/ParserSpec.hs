@@ -143,6 +143,44 @@ spec =
                      False]
       in successCase baseName ast
 
+    it "parses statements" $
+      let baseName = "Statements"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 5 3)
+                  []
+                  [FunDef (srcSp 1 1 5 3)
+                     (srcSp 1 5 1 7, FunName "fun")
+                     (FunType (srcSp 1 11 1 14)
+                        []
+                        (SrcTyUnit $ srcSp 1 11 1 14))
+                     [ DeclS (srcSp 2 3 2 18)
+                         (Decl (srcSp 2 3 2 17)
+                            (VarBinder (srcSp 2 3 2 17)
+                               (srcSp 2 3 2 3, Var "x")
+                               (SrcTyMutable (srcSp 2 7 2 17)
+                                  (SrcTyInt $ srcSp 2 15 2 17)))
+                            Nothing)
+                     , DeclS (srcSp 3 3 3 14)
+                         (Decl (srcSp 3 3 3 13)
+                            (VarBinder (srcSp 3 3 3 9)
+                               (srcSp 3 3 3 3, Var "y")
+                               (SrcTyInt $ srcSp 3 7 3 9))
+                            (Just $ Init (srcSp 3 11 3 13)
+                               (srcSp 3 11 3 11, AssignEqual)
+                               (LitE (srcSp 3 13 3 13, IntLit 1))))
+                     , DeclS (srcSp 4 3 4 23)
+                         (Decl (srcSp 4 3 4 22)
+                            (VarBinder (srcSp 4 3 4 17)
+                               (srcSp 4 3 4 3, Var "z")
+                               (SrcTyMutable (srcSp 4 7 4 17)
+                                  (SrcTyInt $ srcSp 4 15 4 17)))
+                            (Just $ Init (srcSp 4 19 4 22)
+                               (srcSp 4 19 4 20, AssignMut)
+                               (LitE (srcSp 4 22 4 22, IntLit 1))))]
+                     False]
+      in successCase baseName ast
+
     -- Failure
     describe "gives an error message" $ do
       it "given an empty program" $

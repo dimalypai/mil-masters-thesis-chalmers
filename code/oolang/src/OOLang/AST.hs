@@ -272,6 +272,9 @@ type SrcVarBinder = VarBinder SrcSpan
 getVarBinderType :: VarBinder s -> TypeS s
 getVarBinderType (VarBinder _ _ vbType) = vbType
 
+setVarBinderAnn :: VarBinder s -> s -> VarBinder s
+setVarBinderAnn (VarBinder _ v t) s = VarBinder s v t
+
 newtype ClassName = ClassName String
   deriving (Show, Eq, Ord)
 

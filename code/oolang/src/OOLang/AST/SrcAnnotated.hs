@@ -38,6 +38,12 @@ instance SrcAnnotated TypeS where
 instance SrcAnnotated FunType where
   ann (FunType s _ _) = s
 
+instance SrcAnnotated2 Declaration where
+  ann2 (Decl s _ _) = s
+
+instance SrcAnnotated2 Init where
+  ann2 (Init s _ _) = s
+
 instance SrcAnnotated VarBinder where
   ann (VarBinder s _ _) = s
 

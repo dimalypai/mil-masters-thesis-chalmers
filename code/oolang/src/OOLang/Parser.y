@@ -10,6 +10,7 @@ module OOLang.Parser
 
 import Control.Monad.Error
 import Control.Monad.Reader
+import Data.Maybe (maybeToList)
 
 import OOLang.Lexer as Lex
 import OOLang.AST as AST
@@ -136,6 +137,10 @@ stmt
       {% withFileName $ \fileName ->
            ExprS (combineSrcSpans [getSrcSpan2 $1, getTokSrcSpan $2] fileName)
                  $1 }
+  | decl ';'
+      {% withFileName $ \fileName ->
+           DeclS (combineSrcSpans [getSrcSpan2 $1, getTokSrcSpan $2] fileName)
+                 $1 }
 
 expr :: { SrcExpr }
 expr : literal { LitE $1 }
@@ -150,6 +155,22 @@ literal
                   (mkTokSrcSpan $1 fileName, AST.FloatLit (getFloatLitValue $1) (getFloatLitString $1)) }
   | stringLit {% withFileName $ \fileName ->
                    (mkTokSrcSpan $1 fileName, AST.StringLit $ getStringLitValue $1) }
+
+decl :: { SrcDeclaration }
+decl
+  : varbinder opt(init)
+      {% withFileName $ \fileName ->
+           Decl (combineSrcSpans (getSrcSpan $1 : maybeToList (fmap getSrcSpan2 $2)) fileName)
+                $1 $2 }
+
+init :: { SrcInit }
+init : assignop expr {% withFileName $ \fileName ->
+                          Init (combineSrcSpans [getSrcSpan2 $1, getSrcSpan2 $2] fileName)
+                               $1 $2 }
+
+assignop :: { SrcAssignOp }
+assignop : '=' {% withFileName $ \fileName -> (mkTokSrcSpan $1 fileName, AssignEqual) }
+         | '<-' {% withFileName $ \fileName -> (mkTokSrcSpan $1 fileName, AssignMut) }
 
 type :: { SrcType }
 type : maybearrtype { $1 }
@@ -200,11 +221,11 @@ atomtype : Unit    {% withFileName $ \fileName -> SrcTyUnit $ mkTokSrcSpan $1 fi
 
 varbinder :: { SrcVarBinder }
 varbinder
-  : '{' lowerId ':' type '}'
+  : lowerId ':' type
       {% withFileName $ \fileName ->
-           VarBinder (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $5] fileName)
-                     (mkTokSrcSpan $2 fileName, Var $ getTokId $2)
-                     $4 }
+           VarBinder (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $3] fileName)
+                     (mkTokSrcSpan $1 fileName, Var $ getTokId $1)
+                     $3 }
 
 funtype :: { SrcFunType }
 funtype
@@ -215,8 +236,14 @@ funtype
                               $1 $2 }
 
 funargs :: { [SrcVarBinder] }
-funargs : {- empty -}                    { [] }
-        | seplist1(varbinder, '->') '->' { $1 }
+funargs : {- empty -}                 { [] }
+        | seplist1(funarg, '->') '->' { $1 }
+
+funarg :: { SrcVarBinder }
+funarg
+  : '{' varbinder '}'
+      {% withFileName $ \fileName ->
+           setVarBinderAnn $2 (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName) }
 
 superclass :: { SrcClassName }
 superclass : '<' upperId {% withFileName $ \fileName ->
