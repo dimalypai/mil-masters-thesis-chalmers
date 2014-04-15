@@ -85,8 +85,9 @@ successCase :: String -> TyProgram -> IO ()
 successCase baseName result = do
   input <- successRead baseName
   let Right srcProgram = parseOOLang (mkFileName baseName) input
-  let Right (tyProgram, _) = typeCheck srcProgram
-  show tyProgram `shouldBe` show result
+  case typeCheck srcProgram of
+    Right (tyProgram, _) -> show tyProgram `shouldBe` show result
+    Left err -> error $ prPrint err
 
 -- | Takes a file base name and reads a source program.
 successRead :: String -> IO String

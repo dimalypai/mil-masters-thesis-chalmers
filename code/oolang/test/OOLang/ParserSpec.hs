@@ -211,8 +211,9 @@ spec =
 successCase :: String -> SrcProgram -> IO ()
 successCase baseName result = do
   input <- successRead baseName
-  let Right pr = parseOOLang (mkFileName baseName) input
-  show pr `shouldBe` show result
+  case parseOOLang (mkFileName baseName) input of
+    Right pr -> show pr `shouldBe` show result
+    Left err -> error $ prPrint err
 
 -- | Takes a file base name and reads a source program.
 successRead :: String -> IO String
