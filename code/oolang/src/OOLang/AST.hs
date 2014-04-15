@@ -226,25 +226,35 @@ type SrcDeclaration = Declaration SrcSpan Var
 type TyDeclaration  = Declaration SrcSpan VarTy
 
 -- | Initialiser expression. Uses different assignment operators.
-data Init s v = Init s (AssignOpS s) (Expr s v)
+data Init s v = Init s (InitOpS s) (Expr s v)
   deriving Show
 
 type SrcInit = Init SrcSpan Var
 type TyInit  = Init SrcSpan VarTy
 
--- | Assignment operators are factored out. Some of them are not really
--- assignments:
+-- | Assignment operators are factored out.
+--
+-- * Mutable (<-) is for Mutable.
+--
+-- * Ref (:=) is used for Ref (references).
+data AssignOp = AssignMut | AssignRef
+  deriving Show
+
+type AssignOpS s = (s, AssignOp)
+type SrcAssignOp = AssignOpS SrcSpan
+
+-- | Operators used in declaration statements.
 --
 -- * Equal is used for immutable (default) variables.
 --
 -- * Mutable (<-) is for Mutable.
 --
 -- * Ref (:=) is used for Ref (references).
-data AssignOp = AssignEqual | AssignMut | AssignRef
+data InitOp = InitEqual | InitMut | InitRef
   deriving Show
 
-type AssignOpS s = (s, AssignOp)
-type SrcAssignOp = AssignOpS SrcSpan
+type InitOpS s = (s, InitOp)
+type SrcInitOp = InitOpS SrcSpan
 
 -- | Modifiers are used in class member declarations.
 data Modifier = Public | Private | Static

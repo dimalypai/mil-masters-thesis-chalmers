@@ -186,13 +186,13 @@ decl
                 $1 $2 }
 
 init :: { SrcInit }
-init : assignop expr {% withFileName $ \fileName ->
-                          Init (combineSrcSpans [getSrcSpan2 $1, getSrcSpan2 $2] fileName)
-                               $1 $2 }
+init : initop expr {% withFileName $ \fileName ->
+                        Init (combineSrcSpans [getSrcSpan2 $1, getSrcSpan2 $2] fileName)
+                             $1 $2 }
 
-assignop :: { SrcAssignOp }
-assignop : '=' {% withFileName $ \fileName -> (mkTokSrcSpan $1 fileName, AssignEqual) }
-         | '<-' {% withFileName $ \fileName -> (mkTokSrcSpan $1 fileName, AssignMut) }
+initop :: { SrcInitOp }
+initop : '=' {% withFileName $ \fileName -> (mkTokSrcSpan $1 fileName, InitEqual) }
+       | '<-' {% withFileName $ \fileName -> (mkTokSrcSpan $1 fileName, InitMut) }
 
 type :: { SrcType }
 type : maybearrtype { $1 }

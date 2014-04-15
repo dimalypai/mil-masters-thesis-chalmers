@@ -167,7 +167,7 @@ spec =
                                (srcSp 3 3 3 3, Var "y")
                                (SrcTyInt $ srcSp 3 7 3 9))
                             (Just $ Init (srcSp 3 11 3 13)
-                               (srcSp 3 11 3 11, AssignEqual)
+                               (srcSp 3 11 3 11, InitEqual)
                                (LitE (srcSp 3 13 3 13, IntLit 1))))
                      , DeclS (srcSp 4 3 4 23)
                          (Decl (srcSp 4 3 4 22)
@@ -176,7 +176,7 @@ spec =
                                (SrcTyMutable (srcSp 4 7 4 17)
                                   (SrcTyInt $ srcSp 4 15 4 17)))
                             (Just $ Init (srcSp 4 19 4 22)
-                               (srcSp 4 19 4 20, AssignMut)
+                               (srcSp 4 19 4 20, InitMut)
                                (LitE (srcSp 4 22 4 22, IntLit 1))))]
                      False]
       in successCase baseName ast
