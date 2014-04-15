@@ -12,8 +12,8 @@ import FunLang.AST
 import FunLang.SrcAnnotated
 
 instance SrcAnnotated2 TopDef where
-  ann2 (TopTypeDef td) = ann td
-  ann2 (TopFunDef fd)  = ann2 fd
+  ann2 (TopTypeDef typeDef) = ann typeDef
+  ann2 (TopFunDef funDef)  = ann2 funDef
 
 instance SrcAnnotated TypeDef where
   ann (TypeDef s _ _ _) = s
@@ -30,7 +30,7 @@ instance SrcAnnotated2 Expr where
   ann2 (LambdaE s _ _) = s
   ann2 (TypeLambdaE s _ _) = s
   ann2 (TypeAppE s _ _) = s
-  ann2 (ConNameE cn) = ann2 cn
+  ann2 (ConNameE conName) = ann2 conName
   ann2 (CaseE s _ _) = s
   ann2 (DoE s _) = s
   ann2 (BinOpE s _ _ _) = s
