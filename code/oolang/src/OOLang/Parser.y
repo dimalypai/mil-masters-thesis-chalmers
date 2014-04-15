@@ -149,6 +149,10 @@ literal :: { SrcLiteral }
 literal
   : unit {% withFileName $ \fileName ->
               (mkTokSrcSpan $1 fileName, UnitLit) }
+  | falseLit {% withFileName $ \fileName ->
+                  (mkTokSrcSpan $1 fileName, AST.BoolLit False) }
+  | trueLit {% withFileName $ \fileName ->
+                 (mkTokSrcSpan $1 fileName, AST.BoolLit True) }
   | intLit {% withFileName $ \fileName ->
                 (mkTokSrcSpan $1 fileName, AST.IntLit $ getIntLitValue $1) }
   | floatLit {% withFileName $ \fileName ->
