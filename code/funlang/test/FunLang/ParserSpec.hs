@@ -206,6 +206,39 @@ spec =
                                   (LitE (srcSp 2 50 2 53, FloatLit 0.01 "0.01")))))]]
       in successCase baseName ast
 
+    it "parses statements (do-expressions)" $
+      let baseName = "Statements"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 6 5)
+                  []
+                  [FunDef (srcSp 1 1 6 5)
+                     (srcSp 1 1 1 4, FunName "main")
+                     (SrcTyApp (srcSp 1 8 1 14)
+                        (SrcTyCon (srcSp 1 8 1 9, TypeName "IO"))
+                        (SrcTyCon (srcSp 1 11 1 14, TypeName "Unit")))
+                     [FunEq (srcSp 2 1 6 4)
+                        (srcSp 2 1 2 4, FunName "main")
+                        []
+                        (DoE (srcSp 2 8 6 3)
+                           [ ExprS (srcSp 3 3 3 13)
+                               (BinOpE (srcSp 3 3 3 12)
+                                  (srcSp 3 11 3 11, App)
+                                  (VarE (srcSp 3 3 3 10) (Var "printInt"))
+                                  (LitE (srcSp 3 12 3 12, IntLit 1)))
+                           , BindS (srcSp 4 3 4 25)
+                               (VarBinder (srcSp 4 3 4 10)
+                                  (srcSp 4 3 4 3, Var "x")
+                                  (SrcTyCon (srcSp 4 7 4 10, TypeName "Unit")))
+                               (BinOpE (srcSp 4 15 4 24)
+                                  (srcSp 4 23 4 23, App)
+                                  (VarE (srcSp 4 15 4 22) (Var "printInt"))
+                                  (LitE (srcSp 4 24 4 24, IntLit 2)))
+                           , ReturnS (srcSp 5 3 5 11)
+                               (VarE (srcSp 5 10 5 10) (Var "x"))
+                           ])]]
+      in successCase baseName ast
+
     -- Failure
     describe "gives an error message when" $ do
       it "given an empty program" $

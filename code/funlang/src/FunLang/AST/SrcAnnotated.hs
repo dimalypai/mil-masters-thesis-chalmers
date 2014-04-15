@@ -37,3 +37,6 @@ instance SrcAnnotated TypeS where
   ann (SrcTyForAll s _ _) = s
   ann (SrcTyParen s _) = s
 
+instance SrcAnnotated VarBinder where
+  ann (VarBinder s _ _) = s
+

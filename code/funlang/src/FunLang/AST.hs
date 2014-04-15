@@ -169,7 +169,9 @@ type SrcCaseAlt = CaseAlt SrcSpan Var
 type TyCaseAlt  = CaseAlt SrcSpan VarTy
 
 -- | Statements are parts of the do-block and represent monadic code.
-data Stmt s v = ExprS (Expr s v)
+--
+-- 'ReturnS' is separate because we don't have type classes like in Haskell.
+data Stmt s v = ExprS s (Expr s v)
               | BindS s (VarBinder s) (Expr s v)
               | ReturnS s (Expr s v)
   deriving Show

@@ -145,6 +145,10 @@ expr
       {% withFileName $ \fileName ->
            LambdaE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $4] fileName)
                    $2 $4}
+  | do list1(stmt) end
+      {% withFileName $ \fileName ->
+           DoE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+               $2 }
 
 -- This production is introduced in order to avoid shift/reduce conflicts
 appexpr :: { SrcExpr }
@@ -174,6 +178,20 @@ literal
                   (mkTokSrcSpan $1 fileName, AST.FloatLit (getFloatLitValue $1) (getFloatLitString $1)) }
   | stringLit {% withFileName $ \fileName ->
                    (mkTokSrcSpan $1 fileName, AST.StringLit $ getStringLitValue $1) }
+
+stmt :: { SrcStmt }
+stmt
+  : expr ';' {% withFileName $ \fileName ->
+                  ExprS (combineSrcSpans [getSrcSpan2 $1, getTokSrcSpan $2] fileName)
+                        $1 }
+  | varbinder '<-' expr ';'
+      {% withFileName $ \fileName ->
+           BindS (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $4] fileName)
+                 $1 $3 }
+  | return expr ';'
+      {% withFileName $ \fileName ->
+           ReturnS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+                   $2 }
 
 varbinder :: { SrcVarBinder }
 varbinder
