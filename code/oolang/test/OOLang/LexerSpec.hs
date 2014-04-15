@@ -25,14 +25,14 @@ spec =
 
     it "recognises all keywords correctly" $
       map getToken
-        (lexer "class def do else end if just nothing \
+        (lexer "class def do else end false if just nothing \
               \ otherwise private public pure ref return \
-              \ static then unit when while \
+              \ static then true unit when while \
               \ Int Maybe Mutable Ref Unit")
         `shouldBe`
-      [ KW_Class, KW_Def, KW_Do, KW_Else, KW_End, KW_If, KW_Just, KW_Nothing
+      [ KW_Class, KW_Def, KW_Do, KW_Else, KW_End, KW_False, KW_If, KW_Just, KW_Nothing
       , KW_Otherwise, KW_Private, KW_Public, KW_Pure, KW_Ref, KW_Return
-      , KW_Static, KW_Then, KW_Unit, KW_When, KW_While
+      , KW_Static, KW_Then, KW_True, KW_Unit, KW_When, KW_While
       , KW_TyInt, KW_TyMaybe, KW_TyMutable, KW_TyRef, KW_TyUnit
       ]
 
@@ -71,9 +71,9 @@ spec =
 
     it "shows tokens correctly" $
       intercalate " " (map (show . getToken)
-        (lexer "class def do else end if just nothing \
+        (lexer "class def do else end false if just nothing \
               \ otherwise private public pure ref return \
-              \ static then unit when while \
+              \ static then true unit when while \
               \ Int Maybe Mutable Ref Unit \
               \ =  :  +  -  *  /  %  <  >  <=  >=  /= \
               \ =>  ->  \\  .  ::  ?  ??  <-  :=  ! \
@@ -81,9 +81,9 @@ spec =
               \ 1 0.1 1.0e-2 1e-2 \"str\" \
               \ x C var123 Shape"))
         `shouldBe`
-      "class def do else end if just nothing\
+      "class def do else end false if just nothing\
      \ otherwise private public pure ref return\
-     \ static then unit when while\
+     \ static then true unit when while\
      \ Int Maybe Mutable Ref Unit\
      \ = : + - * / % < > <= >= /=\
      \ => -> \\ . :: ? ?? <- := !\

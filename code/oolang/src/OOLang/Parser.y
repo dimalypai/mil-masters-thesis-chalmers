@@ -32,6 +32,7 @@ import OOLang.Parser.ParseError
   do        { $$@(KW_Do,        _) }
   else      { $$@(KW_Else,      _) }
   end       { $$@(KW_End,       _) }
+  false     { $$@(KW_False,     _) }
   if        { $$@(KW_If,        _) }
   just      { $$@(KW_Just,      _) }
   nothing   { $$@(KW_Nothing,   _) }
@@ -43,6 +44,7 @@ import OOLang.Parser.ParseError
   return    { $$@(KW_Return,    _) }
   static    { $$@(KW_Static,    _) }
   then      { $$@(KW_Then,      _) }
+  true      { $$@(KW_True,      _) }
   unit      { $$@(KW_Unit,      _) }
   when      { $$@(KW_When,      _) }
   while     { $$@(KW_While,     _) }
@@ -96,8 +98,6 @@ import OOLang.Parser.ParseError
   upperId { $$@(UpperId s, _) }
 
   -- Literals
-  falseLit  { $$@(FalseLit, _) }
-  trueLit   { $$@(TrueLit,  _) }
   intLit    { $$@(Lex.IntLit     _, _) }
   floatLit  { $$@(Lex.FloatLit _ _, _) }
   stringLit { $$@(Lex.StringLit  _, _) }
@@ -149,10 +149,10 @@ literal :: { SrcLiteral }
 literal
   : unit {% withFileName $ \fileName ->
               (mkTokSrcSpan $1 fileName, UnitLit) }
-  | falseLit {% withFileName $ \fileName ->
-                  (mkTokSrcSpan $1 fileName, AST.BoolLit False) }
-  | trueLit {% withFileName $ \fileName ->
-                 (mkTokSrcSpan $1 fileName, AST.BoolLit True) }
+  | false {% withFileName $ \fileName ->
+               (mkTokSrcSpan $1 fileName, AST.BoolLit False) }
+  | true {% withFileName $ \fileName ->
+              (mkTokSrcSpan $1 fileName, AST.BoolLit True) }
   | intLit {% withFileName $ \fileName ->
                 (mkTokSrcSpan $1 fileName, AST.IntLit $ getIntLitValue $1) }
   | floatLit {% withFileName $ \fileName ->

@@ -52,6 +52,7 @@ tokens :-
   do        { \p s -> (KW_Do,        posn p s) }
   else      { \p s -> (KW_Else,      posn p s) }
   end       { \p s -> (KW_End,       posn p s) }
+  false     { \p s -> (KW_False,     posn p s) }
   if        { \p s -> (KW_If,        posn p s) }
   just      { \p s -> (KW_Just,      posn p s) }
   nothing   { \p s -> (KW_Nothing,   posn p s) }
@@ -63,6 +64,7 @@ tokens :-
   return    { \p s -> (KW_Return,    posn p s) }
   static    { \p s -> (KW_Static,    posn p s) }
   then      { \p s -> (KW_Then,      posn p s) }
+  true      { \p s -> (KW_True,      posn p s) }
   unit      { \p s -> (KW_Unit,      posn p s) }
   when      { \p s -> (KW_When,      posn p s) }
   while     { \p s -> (KW_While,     posn p s) }
@@ -118,8 +120,6 @@ tokens :-
   @upperId { \p s -> (UpperId s, posn p s) }
 
   -- Literals
-  false     { \p s -> (FalseLit, posn p s) }
-  true      { \p s -> (TrueLit,  posn p s) }
   $digit+                                   { \p s -> (IntLit $ read s, posn p s) }
   $digit+(\.$digit+)? (e (\+|\-)? $digit+)? { \p s -> (FloatLit (read s) s, posn p s) }
   @string { \p s -> (StringLit $ read s, posn p s) }
@@ -134,6 +134,7 @@ data Token =
   | KW_Do
   | KW_Else
   | KW_End
+  | KW_False
   | KW_If
   | KW_Just
   | KW_Nothing
@@ -145,6 +146,7 @@ data Token =
   | KW_Return
   | KW_Static
   | KW_Then
+  | KW_True
   | KW_Unit
   | KW_When
   | KW_While
@@ -196,8 +198,6 @@ data Token =
   | LowerId String
   | UpperId String
   -- Literals
-  | FalseLit
-  | TrueLit
   | IntLit Int
   | FloatLit Double String  -- ^ The user string (for displaying).
   | StringLit String
@@ -210,6 +210,7 @@ instance Show Token where
   show KW_Do        = "do"
   show KW_Else      = "else"
   show KW_End       = "end"
+  show KW_False     = "false"
   show KW_If        = "if"
   show KW_Just      = "just"
   show KW_Nothing   = "nothing"
@@ -221,6 +222,7 @@ instance Show Token where
   show KW_Return    = "return"
   show KW_Static    = "static"
   show KW_Then      = "then"
+  show KW_True      = "true"
   show KW_Unit      = "unit"
   show KW_When      = "when"
   show KW_While     = "while"
@@ -272,8 +274,6 @@ instance Show Token where
   show (LowerId s) = s
   show (UpperId s) = s
   -- Literals
-  show FalseLit       = "false"
-  show TrueLit        = "true"
   show (IntLit n)     = show n
   show (FloatLit f s) = s
   show (StringLit s)  = show s
