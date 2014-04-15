@@ -107,11 +107,11 @@ type TyStmt  = Stmt SrcSpan VarTy
 -- place instead of 'Var', which means that it is also annotated with the type
 -- of this variable.
 --
--- 'FunNameE' stands on its own because OOLang has functions as first-class
--- values and supports currying.
+-- Function names are represented as 'VarE'.
+--
+-- 'ParenE' is used for better source spans and pretty printing.
 data Expr s v = LitE (LiteralS s)
               | VarE s v
-              | FunNameE (FunNameS s)
               | LambdaE s [VarBinder s] (Expr s v)
               | ClassAccessE s (ClassNameS s) (Expr s v)
               | ClassAccessStaticE s (ClassNameS s) (Expr s v)
@@ -120,6 +120,7 @@ data Expr s v = LitE (LiteralS s)
               | BinOpE s (BinOpS s) (Expr s v) (Expr s v)
               | IfThenElseE s (Expr s v) (Expr s v) (Expr s v)
               | JustE s (Expr s v)
+              | ParenE s (Expr s v)
   deriving Show
 
 type SrcExpr = Expr SrcSpan Var
