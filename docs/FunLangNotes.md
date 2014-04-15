@@ -15,3 +15,8 @@
     + maybe have just one handler for exception in general
 * Side-effects: fixed set/hierarchy of monads
 
+Effects:
+
+* Monadic stuff (with built-ins).
+* Lift: explicit recursion, mutual recursion.
+

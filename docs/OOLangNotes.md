@@ -15,3 +15,10 @@
     + record subtyping?
 * Explicit nullability (Maybe/Option) for both value and reference types (in C# lingo)
 
+Effects:
+
+* Lift: loops, explicit recursion, mutual recursion.
+* State: Assignments (<- and :=).
+* IO: built-in functions.
+* Error: division, throw.
+
