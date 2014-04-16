@@ -273,6 +273,53 @@ spec =
                                (ConNameE (srcSp 5 10 5 14, ConName "False"))])]]
       in successCase baseName ast
 
+    it "parses binary operations" $
+      let baseName = "BinOpExpressions"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 2 63)
+                  []
+                  [FunDef (srcSp 1 1 2 63)
+                     (srcSp 1 1 1 3, FunName "fun")
+                     (SrcTyCon (srcSp 1 7 1 9, TypeName "Int"))
+                     [FunEq (srcSp 2 1 2 62)
+                        (srcSp 2 1 2 3, FunName "fun")
+                        []
+                        (TypeLambdaE (srcSp 2 7 2 61)
+                           [(srcSp 2 9 2 9, TypeVar "T")]
+                           (LambdaE (srcSp 2 13 2 61)
+                              [VarBinder (srcSp 2 14 2 18)
+                                 (srcSp 2 14 2 14, Var "x")
+                                 (SrcTyCon (srcSp 2 18 2 18, TypeName "T"))]
+                              (LambdaE (srcSp 2 22 2 61)
+                                 [VarBinder (srcSp 2 23 2 27)
+                                    (srcSp 2 23 2 23, Var "y")
+                                    (SrcTyCon (srcSp 2 27 2 27, TypeName "T"))]
+                                 (BinOpE (srcSp 2 31 2 61)
+                                    (srcSp 2 51 2 51, Equal)
+                                    (BinOpE (srcSp 2 31 2 49)
+                                       (srcSp 2 37 2 37, Add)
+                                       (BinOpE (srcSp 2 31 2 35)
+                                          (srcSp 2 33 2 33, Add)
+                                          (LitE (srcSp 2 31 2 31, IntLit 1))
+                                          (LitE (srcSp 2 35 2 35, IntLit 2)))
+                                       (BinOpE (srcSp 2 39 2 49)
+                                          (srcSp 2 47 2 47, Mul)
+                                          (ParenE (srcSp 2 39 2 45)
+                                             (BinOpE (srcSp 2 40 2 44)
+                                                (srcSp 2 42 2 42, Add)
+                                                (LitE (srcSp 2 40 2 40, IntLit 3))
+                                                (LitE (srcSp 2 44 2 44, IntLit 4))))
+                                          (LitE (srcSp 2 49 2 49, IntLit 5))))
+                                    (BinOpE (srcSp 2 53 2 61)
+                                       (srcSp 2 59 2 59, Mul)
+                                       (BinOpE (srcSp 2 53 2 57)
+                                          (srcSp 2 55 2 55, Mul)
+                                          (LitE (srcSp 2 53 2 53, IntLit 2))
+                                          (LitE (srcSp 2 57 2 57, IntLit 3)))
+                                       (LitE (srcSp 2 61 2 61, IntLit 4)))))))]]
+      in successCase baseName ast
+
     it "parses statements (do-expressions)" $
       let baseName = "Statements"
           fileName = mkFileName baseName

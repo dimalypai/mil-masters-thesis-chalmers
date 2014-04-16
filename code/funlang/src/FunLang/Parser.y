@@ -76,6 +76,10 @@ import FunLang.Parser.ParseError
   floatLit  { $$@(Lex.FloatLit _ _, _) }
   stringLit { $$@(Lex.StringLit  _, _) }
 
+%nonassoc '.'  -- lambdas bind less tightly than others, go to the right as far as possible
+%left '<' '>' '<=' '>=' '=' '/='
+%left '+' '-'
+%left '*' '/'
 %%
 
 program :: { SrcProgram }
@@ -147,6 +151,16 @@ expr
       {% withFileName $ \fileName ->
            DoE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                $2 }
+  | expr '+' expr  {% binOp $1 $2 $3 Add }
+  | expr '-' expr  {% binOp $1 $2 $3 Sub }
+  | expr '*' expr  {% binOp $1 $2 $3 Mul }
+  | expr '/' expr  {% binOp $1 $2 $3 Div }
+  | expr '<' expr  {% binOp $1 $2 $3 AST.Less }
+  | expr '>' expr  {% binOp $1 $2 $3 AST.Greater }
+  | expr '<=' expr {% binOp $1 $2 $3 AST.LessEq }
+  | expr '>=' expr {% binOp $1 $2 $3 AST.GreaterEq }
+  | expr '=' expr  {% binOp $1 $2 $3 AST.Equal }
+  | expr '/=' expr {% binOp $1 $2 $3 AST.NotEq }
 
 -- This production is introduced in order to avoid shift/reduce conflicts
 appexpr :: { SrcExpr }
@@ -347,6 +361,15 @@ withFileNameM f = ask >>= \fileName -> f fileName
 -- , otherwise - returns a source span of the last element.
 srcAnnListToSrcSpanListLast :: SrcAnnotated a => [a SrcSpan] -> [SrcSpan]
 srcAnnListToSrcSpanListLast xs = if null xs then [] else [getSrcSpan (last xs)]
+
+-- | Parsing action asbtraction for binary operations.
+-- Takes first operand, operation token, second operand, and operation constructor.
+binOp :: SrcExpr -> TokenWithSpan -> SrcExpr -> BinOp -> ParseM SrcExpr
+binOp e1 opTok e2 op =
+  withFileName $ \fileName ->
+    BinOpE (combineSrcSpans [getSrcSpan2 e1, getSrcSpan2 e2] fileName)
+           (mkTokSrcSpan opTok fileName, op)
+           e1 e2
 
 }
 
