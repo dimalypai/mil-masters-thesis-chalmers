@@ -147,9 +147,9 @@ spec =
       let baseName = "Statements"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 5 3)
+          ast = Program (srcSp 1 1 6 3)
                   []
-                  [FunDef (srcSp 1 1 5 3)
+                  [FunDef (srcSp 1 1 6 3)
                      (srcSp 1 5 1 7, FunName "fun")
                      (FunType (srcSp 1 11 1 14)
                         []
@@ -177,7 +177,11 @@ spec =
                                   (SrcTyInt $ srcSp 4 15 4 17)))
                             (Just $ Init (srcSp 4 19 4 22)
                                (srcSp 4 19 4 20, InitMut)
-                               (LitE (srcSp 4 22 4 22, IntLit 1))))]
+                               (LitE (srcSp 4 22 4 22, IntLit 1))))
+                     , AssignS (srcSp 5 3 5 9)
+                         (srcSp 5 5 5 6, AssignMut)
+                         (srcSp 5 3 5 3, Var "x")
+                         (LitE (srcSp 5 8 5 8, IntLit 2))]
                      False]
       in successCase baseName ast
 

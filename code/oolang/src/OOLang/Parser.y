@@ -141,6 +141,10 @@ stmt
       {% withFileName $ \fileName ->
            DeclS (combineSrcSpans [getSrcSpan2 $1, getTokSrcSpan $2] fileName)
                  $1 }
+  | lowerId assignop expr ';'
+      {% withFileName $ \fileName ->
+           AssignS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
+                   $2 (mkTokSrcSpan $1 fileName, Var $ getTokId $1) $3 }
 
 expr :: { SrcExpr }
 expr : appexpr { $1 }
@@ -177,6 +181,9 @@ literal
                   (mkTokSrcSpan $1 fileName, AST.FloatLit (getFloatLitValue $1) (getFloatLitString $1)) }
   | stringLit {% withFileName $ \fileName ->
                    (mkTokSrcSpan $1 fileName, AST.StringLit $ getStringLitValue $1) }
+
+assignop :: { SrcAssignOp }
+assignop : '<-' {% withFileName $ \fileName -> (mkTokSrcSpan $1 fileName, AssignMut) }
 
 decl :: { SrcDeclaration }
 decl

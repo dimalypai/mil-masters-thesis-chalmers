@@ -2,12 +2,13 @@
 -- tree and some helper functions.
 --
 -- AST is parameterised. Some of the data types have only one type parameter s
--- (stands for source) and some have two - s and v (stands for variable).
--- The reason is that variable occurences are parameterised and are represented
--- differently at different stages.  For more on this look at the 'Expr' data
--- type (it is the only place where a field of type v is present). Thus, some
--- of the data types eventually contain 'Expr' (and therefore must have both s
--- and v) and some of them don't (and have only s).
+-- (stands for source) and some have two - s and v (stands for variable). The
+-- reason is that variable occurences are parameterised and are represented
+-- differently at different stages. For more on this look at the 'Expr' and
+-- 'Stmt' data types (these are the only places where a field of type v is
+-- present). Thus, some of the data types eventually contain 'Expr' or 'Stmt'
+-- (and therefore must have both s and v) and some of them don't (and have only
+-- s).
 --
 -- In general, sometimes there are two version of the data type, one of which
 -- may have S suffix. This distinction is for source representation of the
@@ -90,7 +91,11 @@ type TyMemberDecl  = MemberDecl SrcSpan VarTy
 
 data Stmt s v = DeclS s (Declaration s v)
               | ExprS s (Expr s v)
-              | AssignS s (AssignOpS s) (Expr s v) (Expr s v)
+                -- | It uses type parameter v. We allow to assign only to
+                -- variables. Unfortunately we have to explicitly use (s, v)
+                -- here instead of 'VarS' for example, because we abstract over
+                -- variables.
+              | AssignS s (AssignOpS s) (s, v) (Expr s v)
               | WhileS s (Expr s v) [Stmt s v]
               | WhenS s (Expr s v) [Stmt s v] [Stmt s v]
               | ReturnS s (Expr s v)
