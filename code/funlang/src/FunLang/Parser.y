@@ -190,8 +190,27 @@ casealt
                                        $2 $4 }
 
 pattern :: { SrcPattern }
-pattern : literal { LitP $1 }
-        | '_'     {% withFileName $ \fileName -> DefaultP (mkTokSrcSpan $1 fileName) }
+pattern
+  : atompattern { $1 }
+  | varbinder   { VarP $1 }
+  | upperId list1(atompattern)
+      {% withFileName $ \fileName ->
+           ConP (combineSrcSpans [getTokSrcSpan $1, getSrcSpan (last $2)] fileName)
+                (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
+                $2 }
+
+atompattern :: { SrcPattern }
+atompattern
+  : literal { LitP $1 }
+  | upperId {% withFileName $ \fileName ->
+                 ConP (mkTokSrcSpan $1 fileName)
+                      (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
+                      [] }
+  | '_'     {% withFileName $ \fileName -> DefaultP (mkTokSrcSpan $1 fileName) }
+  | '(' pattern ')'
+      {% withFileName $ \fileName ->
+           ParenP (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+                  $2 }
 
 stmt :: { SrcStmt }
 stmt

@@ -107,11 +107,14 @@ data Pattern s =
     -- | Literal pattern (constant).
     LitP (LiteralS s)
     -- | Variable pattern.
-  | VarP (VarS s)  -- ???
+  | VarP (VarBinder s)
     -- | Constructor pattern. May be nested.
-  | ConP s [Pattern s]
+  | ConP s (ConNameS s) [Pattern s]
     -- | Default alternative: underscore.
   | DefaultP s
+    -- | Pattern in parentheses. Used for better source spans and pretty
+    -- printing.
+  | ParenP s (Pattern s)
   deriving Show
 
 type SrcPattern = Pattern SrcSpan

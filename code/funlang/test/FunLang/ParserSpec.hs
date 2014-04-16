@@ -229,22 +229,38 @@ spec =
       let baseName = "CaseConExpressions"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 5 5)
+          ast = Program (srcSp 1 1 6 5)
                   []
-                  [FunDef (srcSp 1 1 5 5)
+                  [FunDef (srcSp 1 1 6 5)
                      (srcSp 1 1 1 3, FunName "fun")
                      (SrcTyCon (srcSp 1 7 1 10, TypeName "Unit"))
-                     [FunEq (srcSp 2 1 5 4)
+                     [FunEq (srcSp 2 1 6 4)
                         (srcSp 2 1 2 3, FunName "fun")
                         []
-                        (CaseE (srcSp 2 7 5 3)
+                        (CaseE (srcSp 2 7 6 3)
                            (LitE (srcSp 2 12 2 12, IntLit 0))
                            [ CaseAlt (srcSp 3 3 3 13)
                                (LitP (srcSp 3 5 3 5, IntLit 0))
                                (ConNameE (srcSp 3 10 3 13, ConName "True"))
-                           , CaseAlt (srcSp 4 3 4 14)
-                               (DefaultP $ srcSp 4 5 4 5)
-                               (ConNameE (srcSp 4 10 4 14, ConName "False"))])]]
+                           , CaseAlt (srcSp 4 3 4 41)
+                               (ConP (srcSp 4 5 4 33)
+                                  (srcSp 4 5 4 7, ConName "Con")
+                                  [ ParenP (srcSp 4 9 4 17)
+                                      (VarP (VarBinder (srcSp 4 10 4 16)
+                                         (srcSp 4 10 4 10, Var "x")
+                                         (SrcTyCon (srcSp 4 14 4 16, TypeName "Int"))))
+                                  , DefaultP (srcSp 4 19 4 19)
+                                  , ConP (srcSp 4 21 4 24)
+                                      (srcSp 4 21 4 24, ConName "True")
+                                      []
+                                  , ParenP (srcSp 4 26 4 33)
+                                      (ConP (srcSp 4 27 4 32)
+                                         (srcSp 4 27 4 30, ConName "Con2")
+                                         [LitP (srcSp 4 32 4 32, IntLit 0)])])
+                               (ConNameE (srcSp 4 38 4 41, ConName "True"))
+                           , CaseAlt (srcSp 5 3 5 14)
+                               (DefaultP $ srcSp 5 5 5 5)
+                               (ConNameE (srcSp 5 10 5 14, ConName "False"))])]]
       in successCase baseName ast
 
     it "parses statements (do-expressions)" $

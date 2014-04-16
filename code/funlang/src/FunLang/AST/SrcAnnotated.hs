@@ -24,6 +24,13 @@ instance SrcAnnotated ConDef where
 instance SrcAnnotated2 FunDef where
   ann2 (FunDef s _ _ _) = s
 
+instance SrcAnnotated Pattern where
+  ann (LitP lit) = ann2 lit
+  ann (VarP varBinder) = ann varBinder
+  ann (ConP s _ _) = s
+  ann (DefaultP s) = s
+  ann (ParenP s _) = s
+
 instance SrcAnnotated2 Expr where
   ann2 (LitE lit) = ann2 lit
   ann2 (VarE s _) = s
