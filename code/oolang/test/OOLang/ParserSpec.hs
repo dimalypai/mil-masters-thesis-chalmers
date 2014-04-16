@@ -302,6 +302,52 @@ spec =
                      False]
       in successCase baseName ast
 
+    it "parses binary operations" $
+      let baseName = "BinOpExpressions"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 4 3)
+                  []
+                  [FunDef (srcSp 1 1 4 3)
+                     (srcSp 1 5 1 7, FunName "fun")
+                     (FunType (srcSp 1 11 1 14)
+                        []
+                        (SrcTyUnit $ srcSp 1 11 1 14))
+                     [ ExprS (srcSp 2 3 2 34)
+                         (BinOpE (srcSp 2 3 2 33)
+                            (srcSp 2 23 2 23, Equal)
+                            (BinOpE (srcSp 2 3 2 21)
+                               (srcSp 2 9 2 9, Add)
+                               (BinOpE (srcSp 2 3 2 7)
+                                  (srcSp 2 5 2 5, Add)
+                                  (LitE (srcSp 2 3 2 3, IntLit 1))
+                                  (LitE (srcSp 2 7 2 7, IntLit 2)))
+                               (BinOpE (srcSp 2 11 2 21)
+                                  (srcSp 2 19 2 19, Mul)
+                                  (ParenE (srcSp 2 11 2 17)
+                                     (BinOpE (srcSp 2 12 2 16)
+                                        (srcSp 2 14 2 14, Add)
+                                        (LitE (srcSp 2 12 2 12, IntLit 3))
+                                        (LitE (srcSp 2 16 2 16, IntLit 4))))
+                                  (LitE (srcSp 2 21 2 21, IntLit 5))))
+                            (BinOpE (srcSp 2 25 2 33)
+                               (srcSp 2 31 2 31, Mul)
+                               (BinOpE (srcSp 2 25 2 29)
+                                  (srcSp 2 27 2 27, Mul)
+                                  (LitE (srcSp 2 25 2 25, IntLit 2))
+                                  (LitE (srcSp 2 29 2 29, IntLit 3)))
+                               (LitE (srcSp 2 33 2 33, IntLit 4))))
+                     , ExprS (srcSp 3 3 3 14)
+                         (BinOpE (srcSp 3 3 3 13)
+                            (srcSp 3 5 3 6, NothingCoalesce)
+                            (VarE (srcSp 3 3 3 3) (Var "x"))
+                            (BinOpE (srcSp 3 8 3 13)
+                               (srcSp 3 10 3 11, NothingCoalesce)
+                               (VarE (srcSp 3 8 3 8) (Var "y"))
+                               (VarE (srcSp 3 13 3 13) (Var "z"))))]
+                     False]
+      in successCase baseName ast
+
     -- Failure
     describe "gives an error message" $ do
       it "given an empty program" $

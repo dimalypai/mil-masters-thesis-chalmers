@@ -149,7 +149,7 @@ type SrcLiteral = LiteralS SrcSpan
 
 -- | Binary operators are factored out from 'Expr'.
 data BinOp = App
-           | NullCoalesce
+           | NothingCoalesce
            | Add
            | Sub
            | Mul

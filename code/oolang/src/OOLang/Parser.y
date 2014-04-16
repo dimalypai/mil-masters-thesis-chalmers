@@ -103,6 +103,11 @@ import OOLang.Parser.ParseError
   stringLit { $$@(Lex.StringLit  _, _) }
 
 %right '->'
+
+%right '??'  -- there is no real reason for it not to be left as well
+%left '<' '>' '<=' '>=' '=' '/='
+%left '+' '-'
+%left '*' '/'
 %%
 
 program :: { SrcProgram }
@@ -162,10 +167,22 @@ stmt
                   $2 $4 }
 
 expr :: { SrcExpr }
-expr : appexpr { $1 }
-     | just atomexpr {% withFileName $ \fileName ->
-                          JustE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $2] fileName)
-                                $2 }
+expr
+  : appexpr { $1 }
+  | just atomexpr {% withFileName $ \fileName ->
+                       JustE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $2] fileName)
+                             $2 }
+  | expr '??' expr {% binOp $1 $2 $3 NothingCoalesce }
+  | expr '+' expr  {% binOp $1 $2 $3 Add }
+  | expr '-' expr  {% binOp $1 $2 $3 Sub }
+  | expr '*' expr  {% binOp $1 $2 $3 Mul }
+  | expr '/' expr  {% binOp $1 $2 $3 Div }
+  | expr '<' expr  {% binOp $1 $2 $3 AST.Less }
+  | expr '>' expr  {% binOp $1 $2 $3 AST.Greater }
+  | expr '<=' expr {% binOp $1 $2 $3 AST.LessEq }
+  | expr '>=' expr {% binOp $1 $2 $3 AST.GreaterEq }
+  | expr '=' expr  {% binOp $1 $2 $3 AST.Equal }
+  | expr '/=' expr {% binOp $1 $2 $3 AST.NotEq }
 
 -- This production is introduced in order to avoid shift/reduce conflicts
 appexpr :: { SrcExpr }
@@ -407,6 +424,15 @@ withFileNameM f = ask >>= \fileName -> f fileName
 -- , otherwise - returns a source span of the head.
 srcAnnListToSrcSpanListHead :: SrcAnnotated a => [a SrcSpan] -> [SrcSpan]
 srcAnnListToSrcSpanListHead xs = if null xs then [] else [getSrcSpan (head xs)]
+
+-- | Parsing action asbtraction for binary operations.
+-- Takes first operand, operation token, second operand, and operation constructor.
+binOp :: SrcExpr -> TokenWithSpan -> SrcExpr -> BinOp -> ParseM SrcExpr
+binOp e1 opTok e2 op =
+  withFileName $ \fileName ->
+    BinOpE (combineSrcSpans [getSrcSpan2 e1, getSrcSpan2 e2] fileName)
+           (mkTokSrcSpan opTok fileName, op)
+           e1 e2
 
 }
 
