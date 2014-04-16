@@ -122,11 +122,11 @@ fundef
                   $3 $4 }
 
 funeq :: { SrcFunEq }
-funeq : lowerId '=' expr ';'
+funeq : lowerId list(atompattern) '=' expr ';'
   {% withFileName $ \fileName ->
-       FunEq (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
+       FunEq (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $5] fileName)
              (mkTokSrcSpan $1 fileName, FunName $ getTokId $1)
-             [] $3 }
+             $2 $4 }
 
 expr :: { SrcExpr }
 expr

@@ -82,17 +82,27 @@ spec =
           srcSp = mkSrcSpan fileName
           ast = Program (srcSp 1 1 7 10)
                   []
-                  [ FunDef (srcSp 1 1 3 10)
+                  [ FunDef (srcSp 1 1 3 28)
                       (srcSp 1 1 1 1, FunName "f")
                       (SrcTyCon (srcSp 1 5 1 8, TypeName "Unit"))
-                      [ FunEq (srcSp 2 1 2 9)
+                      [ FunEq (srcSp 2 1 2 27)
                           (srcSp 2 1 2 1, FunName "f")
-                          []
-                          (LitE (srcSp 2 5 2 8, UnitLit))
-                      , FunEq (srcSp 3 1 3 9)
+                          [ ConP (srcSp 2 3 2 6)
+                              (srcSp 2 3 2 6, ConName "True")
+                              []
+                          , LitP (srcSp 2 11 2 11, IntLit 0)]
+                          (LitE (srcSp 2 23 2 26, UnitLit))
+                      , FunEq (srcSp 3 1 3 27)
                           (srcSp 3 1 3 1, FunName "f")
-                          []
-                          (LitE (srcSp 3 5 3 8, UnitLit))]
+                          [ ParenP (srcSp 3 3 3 9)
+                              (ConP (srcSp 3 4 3 8)
+                                 (srcSp 3 4 3 6, ConName "Con")
+                                 [DefaultP $ srcSp 3 8 3 8])
+                          , ParenP (srcSp 3 11 3 19)
+                              (VarP (VarBinder (srcSp 3 12 3 18)
+                                 (srcSp 3 12 3 12, Var "n")
+                                 (SrcTyCon (srcSp 3 16 3 18, TypeName "Int"))))]
+                          (LitE (srcSp 3 23 3 26, UnitLit))]
                   , FunDef (srcSp 5 1 7 10)
                       (srcSp 5 1 5 1, FunName "g")
                       (SrcTyArrow (srcSp 5 5 5 15)

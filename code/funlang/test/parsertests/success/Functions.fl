@@ -1,6 +1,6 @@
 f : Unit
-f = unit;
-f = unit;;
+f True    0         = unit;
+f (Con _) (n : Int) = unit;;
 
 g : Unit -> Int
 g = x;
