@@ -75,6 +75,7 @@ tokens :-
   "->" { \p s -> (Arrow,     posn p s) }
   "/\" { \p s -> (BigLambda, posn p s) }
   "."  { \p s -> (Dot,       posn p s) }
+  "=>" { \p s -> (FatArrow,  posn p s) }
   "<-" { \p s -> (LeftArrow, posn p s) }
 
   "|"  { \p s -> (Bar,        posn p s) }
@@ -131,6 +132,7 @@ data Token =
   | Arrow
   | BigLambda
   | Dot
+  | FatArrow
   | LeftArrow
 
   | Bar
@@ -183,6 +185,7 @@ instance Show Token where
   show Arrow     = "->"
   show BigLambda = "/\\"
   show Dot       = "."
+  show FatArrow  = "=>"
   show LeftArrow = "<-"
 
   show Bar        = "|"

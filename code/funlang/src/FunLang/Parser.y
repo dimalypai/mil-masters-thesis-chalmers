@@ -53,6 +53,7 @@ import FunLang.Parser.ParseError
   '->'  { $$@(Arrow,     _) }
   '/\\' { $$@(BigLambda, _) }
   '.'   { $$@(Dot,       _) }
+  '=>'  { $$@(FatArrow,  _) }
   '<-'  { $$@(LeftArrow, _) }
 
   '|' { $$@(Bar,        _) }
@@ -184,7 +185,7 @@ literal
 
 casealt :: { SrcCaseAlt }
 casealt
-  : '|' pattern '->' expr {% withFileName $ \fileName ->
+  : '|' pattern '=>' expr {% withFileName $ \fileName ->
                                CaseAlt (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $4] fileName)
                                        $2 $4 }
 

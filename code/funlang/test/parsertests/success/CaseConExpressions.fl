@@ -1,6 +1,6 @@
 fun : Unit
 fun = case 0 of
-  | 0 -> True
-  | _ -> False
+  | 0 => True
+  | _ => False
 end;;
 

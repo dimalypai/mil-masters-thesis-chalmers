@@ -34,11 +34,11 @@ spec =
     it "recognises all symbols correctly" $
       map getToken
         (lexer "=  :  +  -  *  /  %  <  >  <=  >=  /= \
-              \ \\  ->  /\\  .  <- \
+              \ \\  ->  /\\  .  =>  <- \
               \ |  _  &&  ||  (  )  [  ]  ;")
         `shouldBe`
       [ Equal, Colon, Plus, Minus, Star, Slash, Percent, Less, Greater
-      , LessEq, GreaterEq, NotEq, Lambda, Arrow, BigLambda, Dot, LeftArrow
+      , LessEq, GreaterEq, NotEq, Lambda, Arrow, BigLambda, Dot, FatArrow, LeftArrow
       , Bar, Underscore, And, Or, OpenParen, CloseParen, OpenSquare, CloseSquare
       , SemiColon
       ]
@@ -68,14 +68,14 @@ spec =
       intercalate " " (map (show . getToken)
         (lexer "case do end forall of return type unit \
               \ =  :  +  -  *  /  %  <  >  <=  >=  /= \
-              \ \\  ->  /\\  .  <- \
+              \ \\  ->  /\\  .  =>  <- \
               \ |  _  &&  ||  (  )  [  ]  ; \
               \ 1 0.1 1.0e-2 1e-2 \"str\" \
               \ x T var123 True"))
         `shouldBe`
       "case do end forall of return type unit\
      \ = : + - * / % < > <= >= /=\
-     \ \\ -> /\\ . <-\
+     \ \\ -> /\\ . => <-\
      \ | _ && || ( ) [ ] ;\
      \ 1 0.1 1.0e-2 1e-2 \"str\"\
      \ x T var123 True"
