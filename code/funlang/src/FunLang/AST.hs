@@ -167,6 +167,9 @@ data Literal = UnitLit
 type LiteralS s = (s, Literal)
 type SrcLiteral = LiteralS SrcSpan
 
+getLiteral :: LiteralS s -> Literal
+getLiteral = snd
+
 data CaseAlt s v = CaseAlt s (Pattern s) (Expr s v)
   deriving Show
 
@@ -208,11 +211,22 @@ type SrcBinOp = BinOpS SrcSpan
 -- Note: we don't have data constructors for built-in types. They all are
 -- handled uniformly with user-defined data types with 'TyApp'. But function
 -- arrows have a special treatment.
-data Type = TyVar TypeVar
+data Type = TyVar TypeVar  -- ^ Always of kind *
           | TyArrow Type Type
           | TyApp TypeName [Type]
           | TyForAll TypeVar Type
   deriving (Show, Eq)
+
+isTypeVar :: Type -> Bool
+isTypeVar (TyVar _) = True
+isTypeVar         _ = False
+
+-- | Unsafe.
+getTyAppTypeName :: Type -> TypeName
+getTyAppTypeName (TyApp typeName _) = typeName
+
+mkSimpleType :: String -> Type
+mkSimpleType typeName = TyApp (TypeName typeName) []
 
 -- | Source representation of types. How a user entered them.
 --
@@ -241,7 +255,7 @@ type SrcType = TypeS SrcSpan
 -- (kind) checking.
 data Kind = StarK
           | Kind :=>: Kind
-  deriving Show
+  deriving (Show, Eq)
 
 -- | Constructs a kind from an integer that denotes the number of parameters of
 -- a type constructor
@@ -266,13 +280,16 @@ data VarBinder s = VarBinder s (VarS s) (TypeS s)
 type SrcVarBinder = VarBinder SrcSpan
 
 newtype TypeVar = TypeVar String
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 type TypeVarS s = (s, TypeVar)
 type SrcTypeVar = TypeVarS SrcSpan
 
 getTypeVar :: TypeVarS s -> TypeVar
 getTypeVar = snd
+
+typeVarToTypeName :: TypeVar -> TypeName
+typeVarToTypeName (TypeVar typeVar) = TypeName typeVar
 
 newtype TypeName = TypeName String
   deriving (Show, Eq, Ord)
@@ -282,6 +299,9 @@ type SrcTypeName = TypeNameS SrcSpan
 
 getTypeName :: TypeNameS s -> TypeName
 getTypeName = snd
+
+typeNameToTypeVar :: TypeName -> TypeVar
+typeNameToTypeVar (TypeName typeName) = TypeVar typeName
 
 newtype ConName = ConName String
   deriving Show

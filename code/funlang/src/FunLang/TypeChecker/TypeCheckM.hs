@@ -1,6 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 -- | Module containing type checking monad and API for building a type checker.
+-- This module mostly is for working with type environment (querying, adding).
+-- Nothing smart should happen here.
 module FunLang.TypeChecker.TypeCheckM
   ( TypeCheckM
   , runTypeCheckM
@@ -8,7 +10,10 @@ module FunLang.TypeChecker.TypeCheckM
   , initTypeEnv
   , mkTypeEnv
   , DataTypeEnv
-  , getDataTypeEnv
+  , dtiKind
+  , dtiCons
+  , dtiSrcTypeName
+  , getDataTypeInfo
   , modifyDataTypeEnv
   , isTypeDefined
   , addType
@@ -16,11 +21,10 @@ module FunLang.TypeChecker.TypeCheckM
   , ftiType
   , ftiSrcType
   , ftiSrcFunName
-  , getFunTypeEnv
+  , getFunTypeInfo
   , modifyFunTypeEnv
   , isFunctionDefined
   , addFunction
-  , getFunTypeInfo
   , module Control.Monad.Error
   ) where
 
@@ -30,9 +34,11 @@ import Control.Monad.Identity
 import Control.Applicative
 import qualified Data.Map as Map
 import Data.Maybe (fromJust)
+import Control.Arrow (second)
 
 import FunLang.AST
 import FunLang.TypeChecker.TcError
+import FunLang.BuiltIn
 
 -- | Type checking monad. Uses 'StateT' for type environment and 'ErrorT' for
 -- error handling.
@@ -52,7 +58,9 @@ newtype TypeEnv = TypeEnv { unTypeEnv :: (DataTypeEnv, DataConTypeEnv, FunTypeEn
 
 -- | Initial type environment.
 initTypeEnv :: TypeEnv
-initTypeEnv = TypeEnv (Map.empty, Map.empty, Map.empty)
+initTypeEnv = TypeEnv ( Map.fromList $ map (second builtInDataTypeInfo) builtInDataTypes
+                      , Map.empty
+                      , Map.empty)
 
 -- | Smart constructor for 'TypeEnv'.
 mkTypeEnv :: DataTypeEnv -> DataConTypeEnv -> FunTypeEnv -> TypeEnv
@@ -64,14 +72,23 @@ mkTypeEnv dataTypeEnv dataConTypeEnv funTypeEnv =
 type DataTypeEnv = Map.Map TypeName DataTypeInfo
 
 data DataTypeInfo = DataTypeInfo
-  Kind
-  [ConName]
-  SrcTypeName
+  { dtiKind        :: Kind
+  , dtiCons        :: [ConName]
+  , dtiSrcTypeName :: SrcTypeName  -- ^ Source name. For error messages.
+  }
 
 getDataTypeEnv :: TypeCheckM DataTypeEnv
 getDataTypeEnv = do
   (dataTypeEnv, _, _) <- gets unTypeEnv
   return dataTypeEnv
+
+-- | Returns all information about the data type from the environment.
+--
+-- Note: Unsafe. Should be used only after check that data type is defined.
+getDataTypeInfo :: TypeName -> TypeCheckM DataTypeInfo
+getDataTypeInfo typeName = do
+  dataTypeEnv <- getDataTypeEnv
+  return $ fromJust $ Map.lookup typeName dataTypeEnv  -- fromJust may fail
 
 modifyDataTypeEnv :: (DataTypeEnv -> DataTypeEnv) -> TypeCheckM ()
 modifyDataTypeEnv f = do
@@ -90,6 +107,9 @@ addType :: SrcTypeName -> Kind -> TypeCheckM ()
 addType srcTypeName kind = do
   let typeName = getTypeName srcTypeName
   modifyDataTypeEnv $ Map.insert typeName (DataTypeInfo kind dataConsStub srcTypeName)
+
+builtInDataTypeInfo :: Kind -> DataTypeInfo
+builtInDataTypeInfo kind = DataTypeInfo kind undefined undefined
 
 -- | A placeholder for data constructors in the DataTypeEnv.  There are moments
 -- during the type checking when this information is not available yet.
@@ -131,6 +151,14 @@ getFunTypeEnv = do
   (_, _, funTypeEnv) <- gets unTypeEnv
   return funTypeEnv
 
+-- | Returns all information about the function from the environment.
+--
+-- Note: Unsafe. Should be used only after check that function is defined.
+getFunTypeInfo :: FunName -> TypeCheckM FunTypeInfo
+getFunTypeInfo funName = do
+  funTypeEnv <- getFunTypeEnv
+  return $ fromJust $ Map.lookup funName funTypeEnv  -- fromJust may fail
+
 modifyFunTypeEnv :: (FunTypeEnv -> FunTypeEnv) -> TypeCheckM ()
 modifyFunTypeEnv f = do
   (dataTypeEnv, dataConTypeEnv, funTypeEnv) <-
@@ -144,21 +172,10 @@ isFunctionDefined funName = do
 
 -- | Doesn't check if the function is already in the environment.
 -- Will overwrite it in this case.
-addFunction :: SrcFunName -> SrcType -> TypeCheckM ()
-addFunction srcFunName funSrcType = do
+addFunction :: SrcFunName -> Type -> SrcType -> TypeCheckM ()
+addFunction srcFunName funType funSrcType = do
   let funName = getFunName srcFunName
-  modifyFunTypeEnv $ Map.insert funName (FunTypeInfo funTypeStub funSrcType srcFunName)
-
--- | Returns all information about the function from the environment.
---
--- Note: Unsafe. Should be used only after check that function is defined.
-getFunTypeInfo :: FunName -> TypeCheckM FunTypeInfo
-getFunTypeInfo funName = do
-  funTypeEnv <- getFunTypeEnv
-  return $ fromJust $ Map.lookup funName funTypeEnv  -- fromJust may fail
-
-funTypeStub :: Type
-funTypeStub = error "Internal representation of the function type is not available yet"
+  modifyFunTypeEnv $ Map.insert funName (FunTypeInfo funType funSrcType srcFunName)
 
 -- Utils
 

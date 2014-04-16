@@ -15,3 +15,9 @@ unlessM condM a = do
   cond <- condM
   unless cond a
 
+-- | Monadic version of if expression.
+ifM :: Monad m => m Bool -> m a -> m a -> m a
+ifM condM th el = do
+  cond <- condM
+  if cond then th else el
+
