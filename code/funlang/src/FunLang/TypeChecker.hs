@@ -76,6 +76,8 @@ collectFunDef (FunDef _ srcFunName funSrcType _) = do
   addFunction srcFunName funSrcType
 
 -- | Program needs to have an entry point: `main : IO Unit`.
+-- May throw a different error (IllFormedType) if the specified type of `main`
+-- is not well-formed.
 checkMain :: TypeCheckM ()
 checkMain = do
   unlessM (isFunctionDefined $ FunName "main") $
