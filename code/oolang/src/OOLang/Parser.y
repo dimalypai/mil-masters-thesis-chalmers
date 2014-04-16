@@ -174,13 +174,29 @@ appexpr
                   (srcSpanBetween (getSrcSpan2 $1) (getSrcSpan2 $2) fileName, App) $1 $2 }
 
 atomexpr :: { SrcExpr }
-atomexpr : literal { LitE $1 }
-         | lowerId {% withFileName $ \fileName ->
-                        VarE (mkTokSrcSpan $1 fileName)
-                             (Var $ getTokId $1) }
-         | '(' expr ')' {% withFileName $ \fileName ->
-                             ParenE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
-                                    $2 }
+atomexpr
+  : literal { LitE $1 }
+  | lowerId {% withFileName $ \fileName ->
+                 VarE (mkTokSrcSpan $1 fileName)
+                      (Var $ getTokId $1) }
+  | '(' expr ')' {% withFileName $ \fileName ->
+                      ParenE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+                             $2 }
+  | atomexpr '.' lowerId
+      {% withFileName $ \fileName ->
+           MemberAccessE (combineSrcSpans [getSrcSpan2 $1, getTokSrcSpan $3] fileName)
+                         $1
+                         (mkTokSrcSpan $3 fileName, FunName $ getTokId $3) }
+  | atomexpr '?' lowerId
+      {% withFileName $ \fileName ->
+           MemberAccessMaybeE (combineSrcSpans [getSrcSpan2 $1, getTokSrcSpan $3] fileName)
+                              $1
+                              (mkTokSrcSpan $3 fileName, FunName $ getTokId $3) }
+  | upperId '.' lowerId
+      {% withFileName $ \fileName ->
+           ClassAccessE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+                        (mkTokSrcSpan $1 fileName, ClassName $ getTokId $1)
+                        (mkTokSrcSpan $3 fileName, FunName $ getTokId $3) }
 
 literal :: { SrcLiteral }
 literal

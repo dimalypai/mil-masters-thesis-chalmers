@@ -24,6 +24,9 @@ instance SrcAnnotated2 FunDef where
 instance SrcAnnotated2 Expr where
   ann2 (LitE lit) = ann2 lit
   ann2 (VarE s _) = s
+  ann2 (MemberAccessE s _ _) = s
+  ann2 (MemberAccessMaybeE s _ _) = s
+  ann2 (ClassAccessE s _ _) = s
   ann2 (BinOpE s _ _ _) = s
   ann2 (ParenE s _) = s
 

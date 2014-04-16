@@ -258,6 +258,47 @@ spec =
                      False]
       in successCase baseName ast
 
+    it "parses class expressions" $
+      let baseName = "ClassExpressions"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 5 3)
+                  []
+                  [FunDef (srcSp 1 1 5 3)
+                     (srcSp 1 5 1 7, FunName "fun")
+                     (FunType (srcSp 1 11 1 14)
+                        []
+                        (SrcTyUnit $ srcSp 1 11 1 14))
+                     [ ExprS (srcSp 2 3 2 20)
+                         (BinOpE (srcSp 2 3 2 19)
+                            (srcSp 2 18 2 18, App)
+                            (MemberAccessE (srcSp 2 3 2 17)
+                               (ParenE (srcSp 2 3 2 12)
+                                  (BinOpE (srcSp 2 4 2 11)
+                                     (srcSp 2 10 2 10, App)
+                                     (MemberAccessE (srcSp 2 4 2 9)
+                                        (VarE (srcSp 2 4 2 4) (Var "x"))
+                                        (srcSp 2 6 2 9, FunName "fun1"))
+                                     (LitE (srcSp 2 11 2 11, IntLit 1))))
+                               (srcSp 2 14 2 17, FunName "fun2"))
+                            (LitE (srcSp 2 19 2 19, IntLit 2)))
+                     , ExprS (srcSp 3 3 3 17)
+                         (BinOpE (srcSp 3 3 3 16)
+                            (srcSp 3 15 3 15, App)
+                            (MemberAccessMaybeE (srcSp 3 3 3 14)
+                               (VarE (srcSp 3 3 3 3) (Var "x"))
+                               (srcSp 3 7 3 14, FunName "maybeFun"))
+                            (LitE (srcSp 3 16 3 16, IntLit 1)))
+                     , ExprS (srcSp 4 3 4 15)
+                         (BinOpE (srcSp 4 3 4 14)
+                            (srcSp 4 13 4 13, App)
+                            (ClassAccessE (srcSp 4 3 4 12)
+                               (srcSp 4 3 4 8, ClassName "Object")
+                               (srcSp 4 10 4 12, FunName "new"))
+                            (LitE (srcSp 4 14 4 14, IntLit 1)))]
+                     False]
+      in successCase baseName ast
+
     -- Failure
     describe "gives an error message" $ do
       it "given an empty program" $

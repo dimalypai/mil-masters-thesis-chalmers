@@ -1,0 +1,6 @@
+def fun : Unit =>
+  (x.fun1 1).fun2 2;
+  x ? maybeFun 1;
+  Object.new 1;
+end
+
