@@ -163,6 +163,9 @@ stmt
 
 expr :: { SrcExpr }
 expr : appexpr { $1 }
+     | just atomexpr {% withFileName $ \fileName ->
+                          JustE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $2] fileName)
+                                $2 }
 
 -- This production is introduced in order to avoid shift/reduce conflicts
 appexpr :: { SrcExpr }
@@ -212,6 +215,8 @@ literal
                   (mkTokSrcSpan $1 fileName, AST.FloatLit (getFloatLitValue $1) (getFloatLitString $1)) }
   | stringLit {% withFileName $ \fileName ->
                    (mkTokSrcSpan $1 fileName, AST.StringLit $ getStringLitValue $1) }
+  | nothing {% withFileName $ \fileName ->
+                 (mkTokSrcSpan $1 fileName, NothingLit) }
 
 assignop :: { SrcAssignOp }
 assignop : '<-' {% withFileName $ \fileName -> (mkTokSrcSpan $1 fileName, AssignMut) }

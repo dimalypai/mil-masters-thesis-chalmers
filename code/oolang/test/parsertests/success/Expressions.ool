@@ -1,3 +1,4 @@
 def fun : Unit =>
   f unit true (h "Hello" 1 0.01);
+  just nothing;
 end
