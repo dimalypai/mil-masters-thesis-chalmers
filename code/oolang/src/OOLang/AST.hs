@@ -118,8 +118,12 @@ type TyStmt  = Stmt SrcSpan VarTy
 data Expr s v = LitE (LiteralS s)
               | VarE s v
               | LambdaE s [VarBinder s] (Expr s v)
-              | ClassAccessE s (ClassNameS s) (Expr s v)
-              | ClassAccessStaticE s (ClassNameS s) (Expr s v)
+                -- | We restrict member access to only functions.
+              | MemberAccessE s (Expr s v) (FunNameS s)
+              | MemberAccessMaybeE s (Expr s v) (FunNameS s)
+                -- | Class access is just for new (constructor) right now.
+              | ClassAccessE s (ClassNameS s) (FunNameS s)
+              | ClassAccessStaticE s (ClassNameS s) (MemberNameS s)
               | NewRefE s (Expr s v)
               | DerefE s (Expr s v)
               | BinOpE s (BinOpS s) (Expr s v) (Expr s v)
@@ -145,8 +149,6 @@ type SrcLiteral = LiteralS SrcSpan
 
 -- | Binary operators are factored out from 'Expr'.
 data BinOp = App
-           | MemberAccess
-           | MemberAccessMaybe
            | NullCoalesce
            | Add
            | Sub
@@ -308,6 +310,13 @@ type SrcFunName = FunNameS SrcSpan
 
 getFunName :: FunNameS s -> FunName
 getFunName = snd
+
+-- | Denotes class field or method name.
+newtype MemberName = MemberName String
+  deriving Show
+
+type MemberNameS s = (s, MemberName)
+type SrcMemberName = MemberNameS SrcSpan
 
 -- Parsing helpers
 
