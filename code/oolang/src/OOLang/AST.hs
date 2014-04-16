@@ -125,6 +125,8 @@ data Expr s v = LitE (LiteralS s)
               | ClassAccessE s (ClassNameS s) (FunNameS s)
               | ClassAccessStaticE s (ClassNameS s) (MemberNameS s)
               | NewRefE s (Expr s v)
+                -- | This operator produces a value of type A from a value of
+                -- type Ref A or Mutable A.
               | DerefE s (Expr s v)
               | BinOpE s (BinOpS s) (Expr s v) (Expr s v)
               | IfThenElseE s (Expr s v) (Expr s v) (Expr s v)

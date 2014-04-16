@@ -108,6 +108,8 @@ import OOLang.Parser.ParseError
 %left '<' '>' '<=' '>=' '=' '/='
 %left '+' '-'
 %left '*' '/'
+%left '.' '?'
+%right '!'
 %%
 
 program :: { SrcProgram }
@@ -217,6 +219,9 @@ atomexpr
            ClassAccessE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                         (mkTokSrcSpan $1 fileName, ClassName $ getTokId $1)
                         (mkTokSrcSpan $3 fileName, FunName $ getTokId $3) }
+  | '!' atomexpr {% withFileName $ \fileName ->
+                      DerefE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $2] fileName)
+                             $2 }
 
 literal :: { SrcLiteral }
 literal
