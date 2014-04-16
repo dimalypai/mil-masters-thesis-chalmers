@@ -159,8 +159,8 @@ spec =
                      False]
       in successCase baseName ast
 
-    it "parses statements" $
-      let baseName = "Statements"
+    it "parses declaration and assignment statements" $
+      let baseName = "DeclAssignStatements"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
           ast = Program (srcSp 1 1 6 3)
@@ -198,6 +198,28 @@ spec =
                          (srcSp 5 5 5 6, AssignMut)
                          (srcSp 5 3 5 3, Var "x")
                          (LitE (srcSp 5 8 5 8, IntLit 2))]
+                     False]
+      in successCase baseName ast
+
+    it "parses control flow statements" $
+      let baseName = "ControlStatements"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 8 3)
+                  []
+                  [FunDef (srcSp 1 1 8 3)
+                     (srcSp 1 5 1 7, FunName "fun")
+                     (FunType (srcSp 1 11 1 14)
+                        []
+                        (SrcTyUnit $ srcSp 1 11 1 14))
+                     [ WhenS (srcSp 2 3 5 6)
+                         (VarE (srcSp 2 8 2 8) (Var "b"))
+                         [ExprS (srcSp 3 5 3 9)
+                            (LitE (srcSp 3 5 3 8, UnitLit))]
+                         []
+                     , WhileS (srcSp 6 3 7 6)
+                         (LitE (srcSp 6 9 6 12, BoolLit True))
+                         []]
                      False]
       in successCase baseName ast
 

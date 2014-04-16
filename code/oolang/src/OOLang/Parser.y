@@ -152,6 +152,14 @@ stmt
       {% withFileName $ \fileName ->
            AssignS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
                    $2 (mkTokSrcSpan $1 fileName, Var $ getTokId $1) $3 }
+  | when expr do list(stmt) otherwise list(stmt) end ';'
+      {% withFileName $ \fileName ->
+           WhenS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $8] fileName)
+                 $2 $4 $6 }
+  | while expr do list(stmt) end ';'
+      {% withFileName $ \fileName ->
+           WhileS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $6] fileName)
+                  $2 $4 }
 
 expr :: { SrcExpr }
 expr : appexpr { $1 }

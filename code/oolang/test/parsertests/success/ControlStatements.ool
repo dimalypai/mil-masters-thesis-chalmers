@@ -1,0 +1,9 @@
+def fun : Unit =>
+  when b do
+    unit;
+  otherwise
+  end;
+  while true do
+  end;
+end
+
