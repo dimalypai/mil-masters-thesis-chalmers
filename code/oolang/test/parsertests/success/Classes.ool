@@ -1,6 +1,10 @@
 class Shape =>
+  x : Mutable Int;
 end
 
 class Circle < Shape =>
+  def pure area : Int =>
+    1;
+  end
 end
 

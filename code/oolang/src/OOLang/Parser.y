@@ -117,11 +117,18 @@ topdef : classdef { TopClassDef $1 }
 
 classdef :: { SrcClassDef }
 classdef
-  : class upperId opt(superclass) '=>' end
+  : class upperId opt(superclass) '=>' list(memberdecl) end
       {% withFileName $ \fileName ->
-           ClassDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $5] fileName)
+           ClassDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $6] fileName)
                     (mkTokSrcSpan $2 fileName, ClassName $ getTokId $2)
-                    $3 [] }
+                    $3 $5 }
+
+memberdecl :: { SrcMemberDecl }
+memberdecl : decl ';' {% withFileName $ \fileName ->
+                           FieldDecl (combineSrcSpans [getSrcSpan2 $1, getTokSrcSpan $2] fileName)
+                                     $1 [] }
+           | fundef { MethodDecl (getSrcSpan2 $1)
+                                 $1 [] }
 
 fundef :: { SrcFunDef }
 fundef

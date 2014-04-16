@@ -35,15 +35,31 @@ spec =
       let baseName = "Classes"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 5 3)
-                  [ ClassDef (srcSp 1 1 2 3)
+          ast = Program (srcSp 1 1 9 3)
+                  [ ClassDef (srcSp 1 1 3 3)
                       (srcSp 1 7 1 11, ClassName "Shape")
                       Nothing
-                      []
-                  , ClassDef (srcSp 4 1 5 3)
-                      (srcSp 4 7 4 12, ClassName "Circle")
-                      (Just (srcSp 4 16 4 20, ClassName "Shape"))
-                      []]
+                      [FieldDecl (srcSp 2 3 2 18)
+                         (Decl (srcSp 2 3 2 17)
+                            (VarBinder (srcSp 2 3 2 17)
+                               (srcSp 2 3 2 3, Var "x")
+                               (SrcTyMutable (srcSp 2 7 2 17)
+                                  (SrcTyInt $ srcSp 2 15 2 17)))
+                            Nothing)
+                         []]
+                  , ClassDef (srcSp 5 1 9 3)
+                      (srcSp 5 7 5 12, ClassName "Circle")
+                      (Just (srcSp 5 16 5 20, ClassName "Shape"))
+                      [MethodDecl (srcSp 6 3 8 5)
+                         (FunDef (srcSp 6 3 8 5)
+                            (srcSp 6 12 6 15, FunName "area")
+                            (FunType (srcSp 6 19 6 21)
+                               []
+                               (SrcTyInt $ srcSp 6 19 6 21))
+                            [ExprS (srcSp 7 5 7 6)
+                               (LitE (srcSp 7 5 7 5, IntLit 1))]
+                            True)
+                         []]]
                   []
       in successCase baseName ast
 
