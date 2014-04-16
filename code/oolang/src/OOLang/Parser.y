@@ -208,6 +208,10 @@ initop :: { SrcInitOp }
 initop : '=' {% withFileName $ \fileName -> (mkTokSrcSpan $1 fileName, InitEqual) }
        | '<-' {% withFileName $ \fileName -> (mkTokSrcSpan $1 fileName, InitMut) }
 
+-- Ref and Mutable may be only the outermost type, but then they can contain
+-- anything inside (Maybe, functions, atomic types, nesting of Maybes etc.).
+-- This is done to keep things simple and moreover, Ref and Mutable nesting doesn't
+-- make so much sense (if we think about normal variables in OO-languages, for example).
 type :: { SrcType }
 type : maybearrtype { $1 }
      | atomtype     { $1 }
@@ -232,6 +236,10 @@ type : maybearrtype { $1 }
               SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                          $2 }
 
+-- We allow arbitrary nesting of Maybe types, but they cannot contain Ref and
+-- Mutable types inside. This is done because Maybe denotes an immutable type
+-- and having anything mutable or a reference inside either violates this
+-- notion (with Ref, for example) or is just rather useless (with Mutable).
 maybearrtype :: { SrcType }
 maybearrtype
   : Maybe atomtype
