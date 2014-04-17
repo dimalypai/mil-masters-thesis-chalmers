@@ -77,6 +77,12 @@ spec =
       it "given a type definition which has diplicated names of type parameters" $
         failureCase "TypeParamsDuplication"
 
+      it "given type definitions with the same data constructors" $
+        failureCase "DataConAlreadyDefined"
+
+      it "given an expression referencing data constructor that is not defined" $
+        failureCase "DataConNotDefined"
+
       it "given a type where type variable has the same name as already defined type" $
         failureCase "TypeVarShadowsType"
 

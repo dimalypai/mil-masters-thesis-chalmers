@@ -17,6 +17,8 @@ data TcError =
     TypeAlreadyDefined SrcTypeName
   | TypeNotDefined SrcTypeName
   | TypeConIncorrectApp SrcTypeName Kind Kind
+  | ConAlreadyDefined SrcConName
+  | ConNotDefined SrcConName
   | FunctionAlreadyDefined SrcFunName
   | MainNotDefined
   | MainIncorrectType SrcType
@@ -52,6 +54,14 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcTypeName) <> colon $+$
     nest indLvl (text "Type constructor" <+> quotes (prPrn $ getTypeName srcTypeName) <+>
       text "has kind" <+> quotes (prPrn defKind) <> text ", but its usage assumes it has kind" <+> quotes (prPrn useKind))
+
+  prPrn (ConAlreadyDefined srcConName) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcConName) <> colon $+$
+    nest indLvl (text "Data constructor" <+> quotes (prPrn $ getConName srcConName) <+> text "is already defined")
+
+  prPrn (ConNotDefined srcConName) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcConName) <> colon $+$
+    nest indLvl (text "Data constructor" <+> quotes (prPrn $ getConName srcConName) <+> text "is not defined")
 
   prPrn (FunctionAlreadyDefined srcFunName) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcFunName) <> colon $+$

@@ -15,6 +15,11 @@ module FunLang.TypeChecker.TypeCheckM
   , isTypeDefined
   , addType
 
+  , dcontiType
+  , getDataConTypeInfo
+  , isDataConDefined
+  , addDataCon
+
   , ftiType
   , ftiSrcType
   , getFunTypeInfo
@@ -118,14 +123,40 @@ dataConsStub = error "Data constructors are not available yet"
 type DataConTypeEnv = Map.Map ConName DataConTypeInfo
 
 data DataConTypeInfo = DataConTypeInfo
-  Type
-  TypeName
-  SrcConName
+  { dcontiType     :: Type  -- ^ Function type of the data constructor.
+  , dcontiTypeName :: TypeName  -- ^ Type name of the data type constructor is defined in.
+  }
 
 getDataConTypeEnv :: TypeCheckM DataConTypeEnv
 getDataConTypeEnv = do
   (_, dataConTypeEnv, _) <- gets unTypeEnv
   return dataConTypeEnv
+
+-- | Returns all information about the data constructor from the environment.
+--
+-- Note: Unsafe. Should be used only after check that data constructor is defined.
+getDataConTypeInfo :: ConName -> TypeCheckM DataConTypeInfo
+getDataConTypeInfo conName = do
+  dataConTypeEnv <- getDataConTypeEnv
+  return $ fromJust $ Map.lookup conName dataConTypeEnv  -- fromJust may fail
+
+modifyDataConTypeEnv :: (DataConTypeEnv -> DataConTypeEnv) -> TypeCheckM ()
+modifyDataConTypeEnv f = do
+  (dataTypeEnv, dataConTypeEnv, funTypeEnv) <-
+    (,,) <$> getDataTypeEnv <*> getDataConTypeEnv <*> getFunTypeEnv
+  put $ mkTypeEnv dataTypeEnv (f dataConTypeEnv) funTypeEnv
+
+isDataConDefined :: ConName -> TypeCheckM Bool
+isDataConDefined conName = do
+  dataConTypeEnv <- getDataConTypeEnv
+  return $ Map.member conName dataConTypeEnv
+
+-- | Doesn't check if the constructor is already in the environment.
+-- Will overwrite it in this case.
+addDataCon :: SrcConName -> Type -> TypeName -> TypeCheckM ()
+addDataCon srcConName conType typeName = do
+  let conName = getConName srcConName
+  modifyDataConTypeEnv $ Map.insert conName (DataConTypeInfo conType typeName)
 
 -- Function type environment
 

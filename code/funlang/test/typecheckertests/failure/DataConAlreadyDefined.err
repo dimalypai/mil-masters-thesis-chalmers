@@ -1,0 +1,2 @@
+FunLang type checking error at DataConAlreadyDefined.fl:6,10-6,12:
+  Data constructor 'MkA' is already defined

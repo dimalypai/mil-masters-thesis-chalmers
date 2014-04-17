@@ -34,6 +34,9 @@ instance Pretty TypeVar where
 instance Pretty TypeName where
   prPrn (TypeName typeNameStr) = text typeNameStr
 
+instance Pretty ConName where
+  prPrn (ConName conNameStr) = text conNameStr
+
 instance Pretty FunName where
   prPrn (FunName funNameStr) = text funNameStr
 

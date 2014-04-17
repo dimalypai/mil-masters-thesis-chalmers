@@ -106,16 +106,23 @@ checkMain = do
 -- their function types.
 -- Data constructors are checked with type parameters in scope.
 tcTypeDef :: SrcTypeDef -> TypeCheckM ()
-tcTypeDef (TypeDef s srcTypeName srcTypeVars srcConDefs) = do
-  return ()  -- TODO
+tcTypeDef (TypeDef _ srcTypeName srcTypeVars srcConDefs) = do
+  let typeVars = map getTypeVar srcTypeVars
+  mapM_ (tcConDef (getTypeName srcTypeName) typeVars) srcConDefs
 
 -- | Checks that constructor fields are correct (well-formed, well-kinded and
 -- use types in scope).
 -- Constructs a function type for the data constructor.
 -- Adds the constructor with its type to the environment.
-tcConDef :: SrcConDef -> TypeCheckM ()
-tcConDef (ConDef s conName conFields) = do
-  return ()  -- TODO
+tcConDef :: TypeName -> [TypeVar] -> SrcConDef -> TypeCheckM ()
+tcConDef typeName typeVars (ConDef _ srcConName srcConFields) = do
+  whenM (isDataConDefined $ getConName srcConName) $
+    throwError $ ConAlreadyDefined srcConName
+  conFields <- mapM (srcTypeToTypeWithTypeVars $ Set.fromList typeVars) srcConFields
+  let conResultType = TyApp typeName (map TyVar typeVars)
+      conArrType = foldr (\t acc -> TyArrow t acc) conResultType conFields
+      conType = foldr (\tv acc -> TyForAll tv acc) conArrType typeVars
+  addDataCon srcConName conType typeName
 
 -- | Checks all function equations and their consistency (TODO).
 -- Returns type checked and annotated function definition.
@@ -146,8 +153,12 @@ tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type)
 tcExpr srcExpr =
   case srcExpr of
     LitE srcLit -> return (LitE srcLit, typeOfLiteral $ getLiteral srcLit)
-    VarE s var -> undefined
-    LambdaE s varBinders expr -> undefined
+    ConNameE srcConName -> do
+      let conName = getConName srcConName
+      unlessM (isDataConDefined conName) $
+        throwError $ ConNotDefined srcConName
+      dataConTypeInfo <- getDataConTypeInfo (getConName srcConName)
+      return (ConNameE srcConName, dcontiType dataConTypeInfo)
 
 typeOfLiteral :: Literal -> Type
 typeOfLiteral UnitLit      = unitType
@@ -168,6 +179,15 @@ tcStmt = undefined
 -- | Transforms a source representation of type into an internal one.
 -- Checks if the type is well-formed, well-kinded and uses types in scope.
 --
+-- For details see 'srcTypeToTypeWithTypeVars'.
+srcTypeToType :: SrcType -> TypeCheckM Type
+srcTypeToType = srcTypeToTypeWithTypeVars Set.empty
+
+-- | Transforms a source representation of type into an internal one with a set
+-- of type variables already in scope (used for type parameters in data type
+-- definitions).
+-- Checks if the type is well-formed, well-kinded and uses types in scope.
+--
 -- Type is ill-formed when something other than a type constructor or
 -- another type application or parenthesised type is on the left-hand side of
 -- the type application.
@@ -183,16 +203,18 @@ tcStmt = undefined
 -- The most interesting case is 'SrcTyApp', which is binary as opposed to the
 -- 'TyApp'. We recursively dive into the left-hand side of the application and
 -- collect transformed right-hand sides to the arguments list until we hit the
--- 'SrcTyCon'. There is a kind construction going to, see inline comments.
-srcTypeToType :: SrcType -> TypeCheckM Type
-srcTypeToType = srcTypeToType' Set.empty StarK
+-- 'SrcTyCon'.
+-- There is a kind construction going to, see inline comments in
+-- 'srcTypeToTypeWithTypeVars'.
+srcTypeToTypeWithTypeVars :: Set.Set TypeVar -> SrcType -> TypeCheckM Type
+srcTypeToTypeWithTypeVars tvars = srcTypeToTypeWithTypeVars' tvars StarK
   where
     -- We keep a set of type variables which are currently in scope.
     -- During the transformation we construct a kind that a type constructor
     -- should have, see 'SrcTyApp' case where it is modified and 'SrcTyCon'
     -- case where it is checked.
-    srcTypeToType' :: Set.Set TypeVar -> Kind -> SrcType -> TypeCheckM Type
-    srcTypeToType' typeVars kind (SrcTyCon srcTypeName) = do
+    srcTypeToTypeWithTypeVars' :: Set.Set TypeVar -> Kind -> SrcType -> TypeCheckM Type
+    srcTypeToTypeWithTypeVars' typeVars kind (SrcTyCon srcTypeName) = do
       let typeName = getTypeName srcTypeName
           typeVar = typeNameToTypeVar typeName
       ifM (isTypeDefined typeName)
@@ -204,7 +226,7 @@ srcTypeToType = srcTypeToType' Set.empty StarK
            then return $ TyVar typeVar
            else throwError $ TypeNotDefined srcTypeName)
 
-    srcTypeToType' typeVars kind st@(SrcTyApp _ stl str) = handleTyApp st stl str kind []
+    srcTypeToTypeWithTypeVars' typeVars kind st@(SrcTyApp _ stl str) = handleTyApp st stl str kind []
       where handleTyApp stApp st1 st2 k args =
             -- stApp is the whole SrcTyApp - used for error message
             -- st1 and st2 are components of the type application
@@ -215,38 +237,38 @@ srcTypeToType = srcTypeToType' Set.empty StarK
                   -- type constructor is on the left-hand side of the
                   -- application, it should have extra * in the kind (on the
                   -- left) in order for the type to be well-kinded.
-                  tyConOrVar <- srcTypeToType' typeVars (StarK :=>: k) sTyCon
+                  tyConOrVar <- srcTypeToTypeWithTypeVars' typeVars (StarK :=>: k) sTyCon
                   when (isTypeVar tyConOrVar) $
                     throwError $ TypeVarApp (srcTypeNameToTypeVar srcTypeName)
                   let typeName = getTyAppTypeName tyConOrVar  -- should not fail
                   -- start from kind *, it is another type constructor (another application)
-                  t2 <- srcTypeToType' typeVars StarK st2
+                  t2 <- srcTypeToTypeWithTypeVars' typeVars StarK st2
                   return $ TyApp typeName (t2 : args)
                 stApp'@(SrcTyApp _ st1' st2') -> do
                   -- start from kind *, it is another type constructor (another application)
-                  t2 <- srcTypeToType' typeVars StarK st2
+                  t2 <- srcTypeToTypeWithTypeVars' typeVars StarK st2
                   -- one more type application on the left, add * to the kind
                   handleTyApp stApp' st1' st2' (StarK :=>: k) (t2 : args)
                 -- just strip off the parens and replace the left-hand side
                 SrcTyParen _ st' -> handleTyApp stApp st' st2 k args
                 _ -> throwError $ IllFormedType stApp
 
-    srcTypeToType' typeVars kind (SrcTyArrow _ st1 st2) = do
+    srcTypeToTypeWithTypeVars' typeVars kind (SrcTyArrow _ st1 st2) = do
       -- type vars set and kind modifications are local to each side of the arrow
-      t1 <- srcTypeToType' typeVars kind st1
-      t2 <- srcTypeToType' typeVars kind st2
+      t1 <- srcTypeToTypeWithTypeVars' typeVars kind st1
+      t2 <- srcTypeToTypeWithTypeVars' typeVars kind st2
       return $ TyArrow t1 t2
 
-    srcTypeToType' typeVars kind (SrcTyForAll _ srcTypeVar st) = do
+    srcTypeToTypeWithTypeVars' typeVars kind (SrcTyForAll _ srcTypeVar st) = do
       let typeVar = getTypeVar srcTypeVar
       whenM (isTypeDefined $ typeVarToTypeName typeVar) $
         throwError $ TypeVarShadowsType srcTypeVar
       when (typeVar `Set.member` typeVars) $
         throwError $ TypeVarShadowsTypeVar srcTypeVar
       let typeVars' = Set.insert typeVar typeVars
-      t <- srcTypeToType' typeVars' kind st
+      t <- srcTypeToTypeWithTypeVars' typeVars' kind st
       return $ TyForAll typeVar t
 
-    srcTypeToType' typeVars kind (SrcTyParen _ st) =
-      srcTypeToType' typeVars kind st
+    srcTypeToTypeWithTypeVars' typeVars kind (SrcTyParen _ st) =
+      srcTypeToTypeWithTypeVars' typeVars kind st
 

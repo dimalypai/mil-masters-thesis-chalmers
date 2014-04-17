@@ -1,0 +1,2 @@
+FunLang type checking error at DataConNotDefined.fl:2,8-2,10:
+  Data constructor 'MkA' is not defined

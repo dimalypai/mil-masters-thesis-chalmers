@@ -307,10 +307,13 @@ srcTypeNameToTypeVar :: TypeNameS s -> TypeVarS s
 srcTypeNameToTypeVar (s, typeName) = (s, typeNameToTypeVar typeName)
 
 newtype ConName = ConName String
-  deriving Show
+  deriving (Show, Eq, Ord)
 
 type ConNameS s = (s, ConName)
 type SrcConName = ConNameS SrcSpan
+
+getConName :: ConNameS s -> ConName
+getConName = snd
 
 newtype FunName = FunName String
   deriving (Show, Eq, Ord)

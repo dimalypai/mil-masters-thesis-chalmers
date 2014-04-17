@@ -1,0 +1,7 @@
+main : IO Unit
+main = unit;;
+
+type A = MkA
+
+type B = MkA
+
