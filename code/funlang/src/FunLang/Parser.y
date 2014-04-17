@@ -86,7 +86,7 @@ import FunLang.Parser.ParseError
 
 program :: { SrcProgram }
 program : list1(topdef) {% withFileName $ \fileName ->
-                             Program (combineSrcSpans (map getSrcSpan2 $1) fileName)
+                             Program (combineSrcSpans (map getSrcSpan $1) fileName)
                                      (filterMap isTypeDef getTypeDef $1)
                                      (filterMap isFunDef  getFunDef  $1) }
         | {- empty -} {% withFileNameM $ \fileName -> throwError $ EmptyProgram fileName }
@@ -100,7 +100,7 @@ typedef
   : type upperId list(typevar) '=' seplist1(condef, '|')
       {% withFileName $ \fileName ->
            TypeDef (combineSrcSpans [getTokSrcSpan $1, getSrcSpan (last $5)] fileName)
-                   (mkTokSrcSpan $2 fileName, TypeName $ getTokId $2)
+                   (TypeName $ getTokId $2, mkTokSrcSpan $2 fileName)
                    $3 $5 }
   | type lowerId list(typevar) '=' seplist1(condef, '|')
       {% withFileNameM $ \fileName ->
@@ -116,7 +116,7 @@ condef
   : upperId list(atomsrctype)
       {% withFileName $ \fileName ->
            ConDef (combineSrcSpans (getTokSrcSpan $1 : srcAnnListToSrcSpanListLast $2) fileName)
-                  (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
+                  (ConName $ getTokId $1, mkTokSrcSpan $1 fileName)
                   $2 }
 
 fundef :: { SrcFunDef }
@@ -124,14 +124,14 @@ fundef
   : lowerId ':' srctype list1(funeq) ';'
       {% withFileName $ \fileName ->
            FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $5] fileName)
-                  (mkTokSrcSpan $1 fileName, FunName $ getTokId $1)
+                  (FunName $ getTokId $1, mkTokSrcSpan $1 fileName)
                   $3 $4 }
 
 funeq :: { SrcFunEq }
 funeq : lowerId list(atompattern) '=' expr ';'
   {% withFileName $ \fileName ->
        FunEq (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $5] fileName)
-             (mkTokSrcSpan $1 fileName, FunName $ getTokId $1)
+             (FunName $ getTokId $1, mkTokSrcSpan $1 fileName)
              $2 $4 }
 
 expr :: { SrcExpr }
@@ -139,11 +139,11 @@ expr
   : appexpr { $1 }
   | '\\' list1(varbinder) '.' expr
       {% withFileName $ \fileName ->
-           LambdaE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $4] fileName)
+           LambdaE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $4] fileName)
                    $2 $4}
   | '/\\' list1(typevar) '.' expr
       {% withFileName $ \fileName ->
-           TypeLambdaE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $4] fileName)
+           TypeLambdaE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $4] fileName)
                        $2 $4 }
   | case expr of list1(casealt) end
       {% withFileName $ \fileName ->
@@ -170,11 +170,11 @@ appexpr
   : atomexpr { $1 }
   | appexpr atomexpr
       {% withFileName $ \fileName ->
-           BinOpE (combineSrcSpans [getSrcSpan2 $1, getSrcSpan2 $2] fileName)
-                  (srcSpanBetween (getSrcSpan2 $1) (getSrcSpan2 $2) fileName, App) $1 $2 }
+           BinOpE (combineSrcSpans [getSrcSpan $1, getSrcSpan $2] fileName)
+                  (App, srcSpanBetween (getSrcSpan $1) (getSrcSpan $2) fileName) $1 $2 }
   | appexpr '[' srctype ']'
       {% withFileName $ \fileName ->
-           TypeAppE (combineSrcSpans [getSrcSpan2 $1, getTokSrcSpan $4] fileName)
+           TypeAppE (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $4] fileName)
                     $1 $3 }
 
 atomexpr :: { SrcExpr }
@@ -183,7 +183,7 @@ atomexpr : literal { LitE $1 }
                         VarE (mkTokSrcSpan $1 fileName)
                              (Var $ getTokId $1) }
          | upperId {% withFileName $ \fileName ->
-                        ConNameE (mkTokSrcSpan $1 fileName, ConName $ getTokId $1) }
+                        ConNameE (ConName $ getTokId $1, mkTokSrcSpan $1 fileName) }
          | '(' expr ')' {% withFileName $ \fileName ->
                              ParenE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                                     $2 }
@@ -191,18 +191,18 @@ atomexpr : literal { LitE $1 }
 literal :: { SrcLiteral }
 literal
   : unit {% withFileName $ \fileName ->
-              (mkTokSrcSpan $1 fileName, UnitLit) }
+              (UnitLit, mkTokSrcSpan $1 fileName) }
   | intLit {% withFileName $ \fileName ->
-                (mkTokSrcSpan $1 fileName, AST.IntLit $ getIntLitValue $1) }
+                (AST.IntLit $ getIntLitValue $1, mkTokSrcSpan $1 fileName) }
   | floatLit {% withFileName $ \fileName ->
-                  (mkTokSrcSpan $1 fileName, AST.FloatLit (getFloatLitValue $1) (getFloatLitString $1)) }
+                  (AST.FloatLit (getFloatLitValue $1) (getFloatLitString $1), mkTokSrcSpan $1 fileName) }
   | stringLit {% withFileName $ \fileName ->
-                   (mkTokSrcSpan $1 fileName, AST.StringLit $ getStringLitValue $1) }
+                   (AST.StringLit $ getStringLitValue $1, mkTokSrcSpan $1 fileName) }
 
 casealt :: { SrcCaseAlt }
 casealt
   : '|' pattern '=>' expr {% withFileName $ \fileName ->
-                               CaseAlt (combineSrcSpans [getTokSrcSpan $1, getSrcSpan2 $4] fileName)
+                               CaseAlt (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $4] fileName)
                                        $2 $4 }
 
 pattern :: { SrcPattern }
@@ -212,7 +212,7 @@ pattern
   | upperId list1(atompattern)
       {% withFileName $ \fileName ->
            ConP (combineSrcSpans [getTokSrcSpan $1, getSrcSpan (last $2)] fileName)
-                (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
+                (ConName $ getTokId $1, mkTokSrcSpan $1 fileName)
                 $2 }
 
 atompattern :: { SrcPattern }
@@ -220,7 +220,7 @@ atompattern
   : literal { LitP $1 }
   | upperId {% withFileName $ \fileName ->
                  ConP (mkTokSrcSpan $1 fileName)
-                      (mkTokSrcSpan $1 fileName, ConName $ getTokId $1)
+                      (ConName $ getTokId $1, mkTokSrcSpan $1 fileName)
                       [] }
   | '_'     {% withFileName $ \fileName -> DefaultP (mkTokSrcSpan $1 fileName) }
   | '(' pattern ')'
@@ -231,7 +231,7 @@ atompattern
 stmt :: { SrcStmt }
 stmt
   : expr ';' {% withFileName $ \fileName ->
-                  ExprS (combineSrcSpans [getSrcSpan2 $1, getTokSrcSpan $2] fileName)
+                  ExprS (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $2] fileName)
                         $1 }
   | varbinder '<-' expr ';'
       {% withFileName $ \fileName ->
@@ -247,7 +247,7 @@ varbinder
   : lowerId ':' srctype
       {% withFileName $ \fileName ->
            VarBinder (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $3] fileName)
-                     (mkTokSrcSpan $1 fileName, Var $ getTokId $1) $3}
+                     (Var $ getTokId $1, mkTokSrcSpan $1 fileName) $3}
 
 srctype :: { SrcType }
 srctype
@@ -272,7 +272,7 @@ appsrctype
 atomsrctype :: { SrcType }
 atomsrctype
   : upperId {% withFileName $ \fileName ->
-                 SrcTyCon (mkTokSrcSpan $1 fileName, TypeName $ getTokId $1) }
+                 SrcTyCon (TypeName $ getTokId $1, mkTokSrcSpan $1 fileName) }
   | '(' srctype ')'
       {% withFileName $ \fileName ->
            SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
@@ -280,7 +280,7 @@ atomsrctype
 
 typevar :: { SrcTypeVar }
 typevar : upperId {% withFileName $ \fileName ->
-                       (mkTokSrcSpan $1 fileName, TypeVar $ getTokId $1) }
+                       (TypeVar $ getTokId $1, mkTokSrcSpan $1 fileName) }
 
 -- Helper productions
 
@@ -376,8 +376,8 @@ srcAnnListToSrcSpanListLast xs = if null xs then [] else [getSrcSpan (last xs)]
 binOp :: SrcExpr -> TokenWithSpan -> SrcExpr -> BinOp -> ParseM SrcExpr
 binOp e1 opTok e2 op =
   withFileName $ \fileName ->
-    BinOpE (combineSrcSpans [getSrcSpan2 e1, getSrcSpan2 e2] fileName)
-           (mkTokSrcSpan opTok fileName, op)
+    BinOpE (combineSrcSpans [getSrcSpan e1, getSrcSpan e2] fileName)
+           (op, mkTokSrcSpan opTok fileName)
            e1 e2
 
 }

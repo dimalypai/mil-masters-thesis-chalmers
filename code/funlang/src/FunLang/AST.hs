@@ -2,12 +2,12 @@
 -- tree and some helper functions.
 --
 -- AST is parameterised. Some of the data types have only one type parameter s
--- (stands for source) and some have two - s and v (stands for variable).
--- The reason is that variable occurences are parameterised and are represented
--- differently at different stages.  For more on this look at the 'Expr' data
+-- (stands for source) and some have two - v (stands for variable) and s. The
+-- reason is that variable occurences are parameterised and are represented
+-- differently at different stages. For more on this look at the 'Expr' data
 -- type (it is the only place where a field of type v is present). Thus, some
--- of the data types eventually contain 'Expr' (and therefore must have both s
--- and v) and some of them don't (and have only s).
+-- of the data types eventually contain 'Expr' (and therefore must have both v
+-- and s) and some of them don't (and have only s).
 --
 -- In general, sometimes there are two version of the data type, one of which
 -- may have S suffix. This distinction is for source representation of the
@@ -16,8 +16,11 @@
 --
 -- Some of the data types (which have several data constructors and/or
 -- recursive) have s fields wired-in, while others if possible have a type
--- synonym for a pair where the first component is s and the second is
--- unannotated data type. Look at most of the *Name data types.
+-- synonym for a pair where the first component is unannotated data type and
+-- the second one is of type s. Look at most of the *Name data types. Note:
+-- this order of v and s (as well as when used as type parameters) is chosen
+-- for convenience of working with 'SrcAnnotated' type class (so that s is the
+-- last type parameter).
 --
 -- For most of the data types there are type synonyms: Src and Ty versions.
 -- Src versions exist for all data types, Ty - only for data types with two
@@ -40,11 +43,11 @@ import FunLang.SrcSpan
 -- * list of function definitions
 --
 -- Note: on the source level these two may be in any order.
-data Program s v = Program s [TypeDef s] [FunDef s v]
+data Program v s = Program s [TypeDef s] [FunDef v s]
   deriving Show
 
-type SrcProgram = Program SrcSpan Var
-type TyProgram  = Program SrcSpan VarTy
+type SrcProgram = Program Var   SrcSpan
+type TyProgram  = Program VarTy SrcSpan
 
 -- | Type definition:
 --
@@ -81,11 +84,11 @@ type SrcConDef = ConDef SrcSpan
 -- * function type
 --
 -- * list of function equations
-data FunDef s v = FunDef s (FunNameS s) (TypeS s) [FunEq s v]
+data FunDef v s = FunDef s (FunNameS s) (TypeS s) [FunEq v s]
   deriving Show
 
-type SrcFunDef = FunDef SrcSpan Var
-type TyFunDef  = FunDef SrcSpan VarTy
+type SrcFunDef = FunDef Var   SrcSpan
+type TyFunDef  = FunDef VarTy SrcSpan
 
 -- | Function equation:
 --
@@ -96,11 +99,11 @@ type TyFunDef  = FunDef SrcSpan VarTy
 -- * list of patterns
 --
 -- * expression (body)
-data FunEq s v = FunEq s (FunNameS s) [Pattern s] (Expr s v)
+data FunEq v s = FunEq s (FunNameS s) [Pattern s] (Expr v s)
   deriving Show
 
-type SrcFunEq = FunEq SrcSpan Var
-type TyFunEq  = FunEq SrcSpan VarTy
+type SrcFunEq = FunEq Var   SrcSpan
+type TyFunEq  = FunEq VarTy SrcSpan
 
 -- | Patterns.
 data Pattern s =
@@ -141,21 +144,21 @@ type SrcPattern = Pattern SrcSpan
 -- 'DoE' represents simplified Haskell do-blocks for built-in monads.
 --
 -- 'ParenE' is used for better source spans and pretty printing.
-data Expr s v = LitE (LiteralS s)
+data Expr v s = LitE (LiteralS s)
               | VarE s v
-              | LambdaE s [VarBinder s] (Expr s v)  -- ^ Not empty
-              | TypeLambdaE s [TypeVarS s] (Expr s v)  -- ^ Not empty
-              | TypeAppE s (Expr s v) (TypeS s)
+              | LambdaE s [VarBinder s] (Expr v s)  -- ^ Not empty
+              | TypeLambdaE s [TypeVarS s] (Expr v s)  -- ^ Not empty
+              | TypeAppE s (Expr v s) (TypeS s)
               | ConNameE (ConNameS s)
-              | CaseE s (Expr s v) [CaseAlt s v]  -- ^ Not empty
-              | LetE s [(VarBinder s, Expr s v)] (Expr s v)
-              | DoE s [Stmt s v]  -- ^ Not empty
-              | BinOpE s (BinOpS s) (Expr s v) (Expr s v)
-              | ParenE s (Expr s v)
+              | CaseE s (Expr v s) [CaseAlt v s]  -- ^ Not empty
+              | LetE s [(VarBinder s, Expr v s)] (Expr v s)
+              | DoE s [Stmt v s]  -- ^ Not empty
+              | BinOpE s (BinOpS s) (Expr v s) (Expr v s)
+              | ParenE s (Expr v s)
   deriving Show
 
-type SrcExpr = Expr SrcSpan Var
-type TyExpr  = Expr SrcSpan VarTy
+type SrcExpr = Expr Var   SrcSpan
+type TyExpr  = Expr VarTy SrcSpan
 
 -- | Literal constants.
 data Literal = UnitLit
@@ -164,28 +167,28 @@ data Literal = UnitLit
              | StringLit String
   deriving Show
 
-type LiteralS s = (s, Literal)
+type LiteralS s = (Literal, s)
 type SrcLiteral = LiteralS SrcSpan
 
 getLiteral :: LiteralS s -> Literal
-getLiteral = snd
+getLiteral = fst
 
-data CaseAlt s v = CaseAlt s (Pattern s) (Expr s v)
+data CaseAlt v s = CaseAlt s (Pattern s) (Expr v s)
   deriving Show
 
-type SrcCaseAlt = CaseAlt SrcSpan Var
-type TyCaseAlt  = CaseAlt SrcSpan VarTy
+type SrcCaseAlt = CaseAlt Var   SrcSpan
+type TyCaseAlt  = CaseAlt VarTy SrcSpan
 
 -- | Statements are parts of the do-block and represent monadic code.
 --
 -- 'ReturnS' is separate because we don't have type classes like in Haskell.
-data Stmt s v = ExprS s (Expr s v)
-              | BindS s (VarBinder s) (Expr s v)
-              | ReturnS s (TypeS s) (Expr s v)  -- ^ Annotated with monad.
+data Stmt v s = ExprS s (Expr v s)
+              | BindS s (VarBinder s) (Expr v s)
+              | ReturnS s (TypeS s) (Expr v s)  -- ^ Annotated with monad.
   deriving Show
 
-type SrcStmt = Stmt SrcSpan Var
-type TyStmt  = Stmt SrcSpan VarTy
+type SrcStmt = Stmt Var   SrcSpan
+type TyStmt  = Stmt VarTy SrcSpan
 
 -- | Binary operators are factored out from 'Expr'.
 data BinOp = App
@@ -201,11 +204,11 @@ data BinOp = App
            | GreaterEq
   deriving Show
 
-type BinOpS s = (s, BinOp)
+type BinOpS s = (BinOp, s)
 type SrcBinOp = BinOpS SrcSpan
 
 getBinOp :: BinOpS s -> BinOp
-getBinOp = snd
+getBinOp = fst
 
 -- | Internal representation of types. What types really represent.
 --
@@ -269,11 +272,11 @@ mkKind n = StarK :=>: mkKind (n - 1)
 newtype Var = Var String
   deriving (Show, Eq, Ord)
 
-type VarS s = (s, Var)
+type VarS s = (Var, s)
 type SrcVar = VarS SrcSpan
 
 getVar :: VarS s -> Var
-getVar = snd
+getVar = fst
 
 varToFunName :: Var -> FunName
 varToFunName (Var varName) = FunName varName
@@ -297,11 +300,11 @@ getBinderType (VarBinder s _ srcType) = srcType
 newtype TypeVar = TypeVar String
   deriving (Show, Eq, Ord)
 
-type TypeVarS s = (s, TypeVar)
+type TypeVarS s = (TypeVar, s)
 type SrcTypeVar = TypeVarS SrcSpan
 
 getTypeVar :: TypeVarS s -> TypeVar
-getTypeVar = snd
+getTypeVar = fst
 
 typeVarToTypeName :: TypeVar -> TypeName
 typeVarToTypeName (TypeVar typeVar) = TypeName typeVar
@@ -309,50 +312,50 @@ typeVarToTypeName (TypeVar typeVar) = TypeName typeVar
 newtype TypeName = TypeName String
   deriving (Show, Eq, Ord)
 
-type TypeNameS s = (s, TypeName)
+type TypeNameS s = (TypeName, s)
 type SrcTypeName = TypeNameS SrcSpan
 
 getTypeName :: TypeNameS s -> TypeName
-getTypeName = snd
+getTypeName = fst
 
 typeNameToTypeVar :: TypeName -> TypeVar
 typeNameToTypeVar (TypeName typeName) = TypeVar typeName
 
 srcTypeNameToTypeVar :: TypeNameS s -> TypeVarS s
-srcTypeNameToTypeVar (s, typeName) = (s, typeNameToTypeVar typeName)
+srcTypeNameToTypeVar (typeName, s) = (typeNameToTypeVar typeName, s)
 
 newtype ConName = ConName String
   deriving (Show, Eq, Ord)
 
-type ConNameS s = (s, ConName)
+type ConNameS s = (ConName, s)
 type SrcConName = ConNameS SrcSpan
 
 getConName :: ConNameS s -> ConName
-getConName = snd
+getConName = fst
 
 newtype FunName = FunName String
   deriving (Show, Eq, Ord)
 
-type FunNameS s = (s, FunName)
+type FunNameS s = (FunName, s)
 type SrcFunName = FunNameS SrcSpan
 
 getFunName :: FunNameS s -> FunName
-getFunName = snd
+getFunName = fst
 
 -- Parsing helpers
 
 -- | Used only in parsing to allow to mix type and function definitions and
 -- then have them reordered in the AST.
-data TopDef s v = TopTypeDef { getTypeDef :: TypeDef s   }
-                | TopFunDef  { getFunDef  :: FunDef  s v }
+data TopDef v s = TopTypeDef { getTypeDef :: TypeDef s   }
+                | TopFunDef  { getFunDef  :: FunDef  v s }
 
-type SrcTopDef = TopDef SrcSpan Var
+type SrcTopDef = TopDef Var SrcSpan
 
-isTypeDef :: TopDef s v -> Bool
+isTypeDef :: TopDef v s -> Bool
 isTypeDef (TopTypeDef _) = True
 isTypeDef              _ = False
 
-isFunDef :: TopDef s v -> Bool
+isFunDef :: TopDef v s -> Bool
 isFunDef (TopFunDef _) = True
 isFunDef             _ = False
 

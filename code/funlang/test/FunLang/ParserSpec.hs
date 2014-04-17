@@ -37,42 +37,42 @@ spec =
           srcSp = mkSrcSpan fileName
           ast = Program (srcSp 1 1 6 47)
                   [ TypeDef (srcSp 1 1 1 12)
-                      (srcSp 1 6 1 6, TypeName "T")
+                      (TypeName "T", srcSp 1 6 1 6)
                       []
                       [ConDef (srcSp 1 10 1 12)
-                         (srcSp 1 10 1 12, ConName "MkT")
+                         (ConName "MkT", srcSp 1 10 1 12)
                          []]
                   , TypeDef (srcSp 3 1 3 24)
-                      (srcSp 3 6 3 9, TypeName "Bool")
+                      (TypeName "Bool", srcSp 3 6 3 9)
                       []
                       [ ConDef (srcSp 3 13 3 16)
-                          (srcSp 3 13 3 16, ConName "True")
+                          (ConName "True", srcSp 3 13 3 16)
                           []
                       , ConDef (srcSp 3 20 3 24)
-                          (srcSp 3 20 3 24, ConName "False")
+                          (ConName "False", srcSp 3 20 3 24)
                           []]
                   , TypeDef (srcSp 5 1 6 47)
-                      (srcSp 5 6 5 10, TypeName "Tree2")
-                      [ (srcSp 5 12 5 12, TypeVar "A")
-                      , (srcSp 5 14 5 14, TypeVar "B")]
+                      (TypeName "Tree2", srcSp 5 6 5 10)
+                      [ (TypeVar "A", srcSp 5 12 5 12)
+                      , (TypeVar "B", srcSp 5 14 5 14)]
                       [ ConDef (srcSp 5 18 5 24)
-                          (srcSp 5 18 5 22, ConName "Empty")
-                          [SrcTyCon (srcSp 5 24 5 24, TypeName "B")]
+                          (ConName "Empty", srcSp 5 18 5 22)
+                          [SrcTyCon (TypeName "B", srcSp 5 24 5 24)]
                       , ConDef (srcSp 6 18 6 47)
-                          (srcSp 6 18 6 21, ConName "Node")
-                          [ SrcTyCon (srcSp 6 23 6 23, TypeName "A")
+                          (ConName "Node", srcSp 6 18 6 21)
+                          [ SrcTyCon (TypeName "A", srcSp 6 23 6 23)
                           , SrcTyParen (srcSp 6 25 6 35)
                               (SrcTyApp (srcSp 6 26 6 34)
                                  (SrcTyApp (srcSp 6 26 6 32)
-                                   (SrcTyCon (srcSp 6 26 6 30, TypeName "Tree2"))
-                                   (SrcTyCon (srcSp 6 32 6 32, TypeName "A")))
-                                 (SrcTyCon (srcSp 6 34 6 34, TypeName "B")))
+                                   (SrcTyCon (TypeName "Tree2", srcSp 6 26 6 30))
+                                   (SrcTyCon (TypeName "A", srcSp 6 32 6 32)))
+                                 (SrcTyCon (TypeName "B", srcSp 6 34 6 34)))
                           , SrcTyParen (srcSp 6 37 6 47)
                               (SrcTyApp (srcSp 6 38 6 46)
                                  (SrcTyApp (srcSp 6 38 6 44)
-                                    (SrcTyCon (srcSp 6 38 6 42, TypeName "Tree2"))
-                                    (SrcTyCon (srcSp 6 44 6 44, TypeName "A")))
-                                 (SrcTyCon (srcSp 6 46 6 46, TypeName "B")))]]]
+                                    (SrcTyCon (TypeName "Tree2", srcSp 6 38 6 42))
+                                    (SrcTyCon (TypeName "A", srcSp 6 44 6 44)))
+                                 (SrcTyCon (TypeName "B", srcSp 6 46 6 46)))]]]
                   []
       in successCase baseName ast
 
@@ -83,39 +83,39 @@ spec =
           ast = Program (srcSp 1 1 7 10)
                   []
                   [ FunDef (srcSp 1 1 3 28)
-                      (srcSp 1 1 1 1, FunName "f")
-                      (SrcTyCon (srcSp 1 5 1 8, TypeName "Unit"))
+                      (FunName "f", srcSp 1 1 1 1)
+                      (SrcTyCon (TypeName "Unit", srcSp 1 5 1 8))
                       [ FunEq (srcSp 2 1 2 27)
-                          (srcSp 2 1 2 1, FunName "f")
+                          (FunName "f", srcSp 2 1 2 1)
                           [ ConP (srcSp 2 3 2 6)
-                              (srcSp 2 3 2 6, ConName "True")
+                              (ConName "True", srcSp 2 3 2 6)
                               []
-                          , LitP (srcSp 2 11 2 11, IntLit 0)]
-                          (LitE (srcSp 2 23 2 26, UnitLit))
+                          , LitP (IntLit 0, srcSp 2 11 2 11)]
+                          (LitE (UnitLit, srcSp 2 23 2 26))
                       , FunEq (srcSp 3 1 3 27)
-                          (srcSp 3 1 3 1, FunName "f")
+                          (FunName "f", srcSp 3 1 3 1)
                           [ ParenP (srcSp 3 3 3 9)
                               (ConP (srcSp 3 4 3 8)
-                                 (srcSp 3 4 3 6, ConName "Con")
+                                 (ConName "Con", srcSp 3 4 3 6)
                                  [DefaultP $ srcSp 3 8 3 8])
                           , ParenP (srcSp 3 11 3 19)
                               (VarP (VarBinder (srcSp 3 12 3 18)
-                                 (srcSp 3 12 3 12, Var "n")
-                                 (SrcTyCon (srcSp 3 16 3 18, TypeName "Int"))))]
-                          (LitE (srcSp 3 23 3 26, UnitLit))]
+                                 (Var "n", srcSp 3 12 3 12)
+                                 (SrcTyCon (TypeName "Int", srcSp 3 16 3 18))))]
+                          (LitE (UnitLit, srcSp 3 23 3 26))]
                   , FunDef (srcSp 5 1 7 10)
-                      (srcSp 5 1 5 1, FunName "g")
+                      (FunName "g", srcSp 5 1 5 1)
                       (SrcTyArrow (srcSp 5 5 5 15)
-                         (SrcTyCon (srcSp 5 5 5 8, TypeName "Unit"))
-                         (SrcTyCon (srcSp 5 13 5 15, TypeName "Int")))
+                         (SrcTyCon (TypeName "Unit", srcSp 5 5 5 8))
+                         (SrcTyCon (TypeName "Int", srcSp 5 13 5 15)))
                       [ FunEq (srcSp 6 1 6 6)
-                          (srcSp 6 1 6 1, FunName "g")
+                          (FunName "g", srcSp 6 1 6 1)
                           []
                           (VarE (srcSp 6 5 6 5) (Var "x"))
                       , FunEq (srcSp 7 1 7 9)
-                          (srcSp 7 1 7 1, FunName "g")
+                          (FunName "g", srcSp 7 1 7 1)
                           []
-                          (LitE (srcSp 7 5 7 8, UnitLit))]]
+                          (LitE (UnitLit, srcSp 7 5 7 8))]]
       in successCase baseName ast
 
     it "parses data types and functions" $
@@ -124,24 +124,24 @@ spec =
           srcSp = mkSrcSpan fileName
           ast = Program (srcSp 1 1 6 16)
                   [ TypeDef (srcSp 1 1 1 12)
-                      (srcSp 1 6 1 7, TypeName "Id")
+                      (TypeName "Id", srcSp 1 6 1 7)
                       []
                       [ConDef (srcSp 1 11 1 12)
-                         (srcSp 1 11 1 12, ConName "Id")
+                         (ConName "Id", srcSp 1 11 1 12)
                          []]
                   , TypeDef (srcSp 6 1 6 16)
-                      (srcSp 6 6 6 6, TypeName "A")
-                      [(srcSp 6 8 6 8, TypeVar "T")]
+                      (TypeName "A", srcSp 6 6 6 6)
+                      [(TypeVar "T", srcSp 6 8 6 8)]
                       [ConDef (srcSp 6 12 6 16)
-                         (srcSp 6 12 6 14, ConName "MkA")
-                         [SrcTyCon (srcSp 6 16 6 16, TypeName "T")]]]
+                         (ConName "MkA", srcSp 6 12 6 14)
+                         [SrcTyCon (TypeName "T", srcSp 6 16 6 16)]]]
                   [ FunDef (srcSp 3 1 4 10)
-                      (srcSp 3 1 3 1, FunName "f")
-                      (SrcTyCon (srcSp 3 5 3 7, TypeName "Int"))
+                      (FunName "f", srcSp 3 1 3 1)
+                      (SrcTyCon (TypeName "Int", srcSp 3 5 3 7))
                       [FunEq (srcSp 4 1 4 9)
-                         (srcSp 4 1 4 1, FunName "f")
+                         (FunName "f", srcSp 4 1 4 1)
                          []
-                         (LitE (srcSp 4 5 4 8, UnitLit))]]
+                         (LitE (UnitLit, srcSp 4 5 4 8))]]
       in successCase baseName ast
 
     it "parses types" $
@@ -151,33 +151,33 @@ spec =
           ast = Program (srcSp 1 1 4 10)
                   []
                   [FunDef (srcSp 1 1 4 10)
-                     (srcSp 1 1 1 1, FunName "f")
+                     (FunName "f", srcSp 1 1 1 1)
                      (SrcTyForAll (srcSp 1 5 3 47)
-                        (srcSp 1 12 1 12, TypeVar "A")
+                        (TypeVar "A", srcSp 1 12 1 12)
                         (SrcTyArrow (srcSp 1 16 3 47)
                            (SrcTyParen (srcSp 1 16 1 23)
                               (SrcTyArrow (srcSp 1 17 1 22)
-                                 (SrcTyCon (srcSp 1 17 1 17, TypeName "A"))
-                                 (SrcTyCon (srcSp 1 22 1 22, TypeName "A"))))
+                                 (SrcTyCon (TypeName "A", srcSp 1 17 1 17))
+                                 (SrcTyCon (TypeName "A", srcSp 1 22 1 22))))
                            (SrcTyArrow (srcSp 2 16 3 47)
-                              (SrcTyCon (srcSp 2 16 2 18, TypeName "Int"))
+                              (SrcTyCon (TypeName "Int", srcSp 2 16 2 18))
                               (SrcTyParen (srcSp 3 16 3 47)
                                  (SrcTyArrow (srcSp 3 17 3 46)
                                     (SrcTyApp (srcSp 3 17 3 30)
                                        (SrcTyApp (srcSp 3 17 3 25)
-                                          (SrcTyCon (srcSp 3 17 3 21, TypeName "State"))
-                                          (SrcTyCon (srcSp 3 23 3 25, TypeName "Int")))
-                                       (SrcTyCon (srcSp 3 27 3 30, TypeName "Unit")))
+                                          (SrcTyCon (TypeName "State", srcSp 3 17 3 21))
+                                          (SrcTyCon (TypeName "Int", srcSp 3 23 3 25)))
+                                       (SrcTyCon (TypeName "Unit", srcSp 3 27 3 30)))
                                     (SrcTyApp (srcSp 3 35 3 46)
                                        (SrcTyParen (srcSp 3 35 3 42)
                                           (SrcTyApp (srcSp 3 36 3 41)
-                                             (SrcTyCon (srcSp 3 36 3 39, TypeName "Pair"))
-                                             (SrcTyCon (srcSp 3 41 3 41, TypeName "A"))))
-                                       (SrcTyCon (srcSp 3 44 3 46, TypeName "Int"))))))))
+                                             (SrcTyCon (TypeName "Pair", srcSp 3 36 3 39))
+                                             (SrcTyCon (TypeName "A", srcSp 3 41 3 41))))
+                                       (SrcTyCon (TypeName "Int", srcSp 3 44 3 46))))))))
                      [FunEq (srcSp 4 1 4 9)
-                        (srcSp 4 1 4 1, FunName "f")
+                        (FunName "f", srcSp 4 1 4 1)
                         []
-                        (LitE (srcSp 4 5 4 8, UnitLit))]]
+                        (LitE (UnitLit, srcSp 4 5 4 8))]]
       in successCase baseName ast
 
     it "parses lambda, application and literal expressions" $
@@ -187,52 +187,52 @@ spec =
           ast = Program (srcSp 1 1 5 35)
                   []
                   [ FunDef (srcSp 1 1 2 56)
-                      (srcSp 1 1 1 3, FunName "fun")
-                      (SrcTyCon (srcSp 1 7 1 10, TypeName "Unit"))
+                      (FunName "fun", srcSp 1 1 1 3)
+                      (SrcTyCon (TypeName "Unit", srcSp 1 7 1 10))
                       [FunEq (srcSp 2 1 2 55)
-                         (srcSp 2 1 2 3, FunName "fun")
+                         (FunName "fun", srcSp 2 1 2 3)
                          []
                          (BinOpE (srcSp 2 7 2 54)
-                            (srcSp 2 44 2 44, App)
+                            (App, srcSp 2 44 2 44)
                             (BinOpE (srcSp 2 7 2 43)
-                               (srcSp 2 36 2 36, App)
+                               (App, srcSp 2 36 2 36)
                                (ParenE (srcSp 2 7 2 35)
                                   (LambdaE (srcSp 2 8 2 34)
                                      [ VarBinder (srcSp 2 9 2 18)
-                                         (srcSp 2 9 2 9, Var "x")
-                                         (SrcTyCon (srcSp 2 13 2 18, TypeName "String"))
+                                         (Var "x", srcSp 2 9 2 9)
+                                         (SrcTyCon (TypeName "String", srcSp 2 13 2 18))
                                      , VarBinder (srcSp 2 20 2 27)
-                                         (srcSp 2 20 2 20, Var "y")
-                                         (SrcTyCon (srcSp 2 24 2 27, TypeName "Unit"))]
-                                     (LitE (srcSp 2 31 2 34, UnitLit))))
-                               (LitE (srcSp 2 37 2 43, StringLit "Hello")))
+                                         (Var "y", srcSp 2 20 2 20)
+                                         (SrcTyCon (TypeName "Unit", srcSp 2 24 2 27))]
+                                     (LitE (UnitLit, srcSp 2 31 2 34))))
+                               (LitE (StringLit "Hello", srcSp 2 37 2 43)))
                             (ParenE (srcSp 2 45 2 54)
                                (BinOpE (srcSp 2 46 2 53)
-                                  (srcSp 2 49 2 49, App)
+                                  (App, srcSp 2 49 2 49)
                                   (BinOpE (srcSp 2 46 2 48)
-                                     (srcSp 2 47 2 47, App)
+                                     (App, srcSp 2 47 2 47)
                                      (VarE (srcSp 2 46 2 46) (Var "h"))
-                                     (LitE (srcSp 2 48 2 48, IntLit 1)))
-                                  (LitE (srcSp 2 50 2 53, FloatLit 0.01 "0.01")))))]
+                                     (LitE (IntLit 1, srcSp 2 48 2 48)))
+                                  (LitE (FloatLit 0.01 "0.01", srcSp 2 50 2 53)))))]
                   , FunDef (srcSp 4 1 5 35)
-                      (srcSp 4 1 4 4, FunName "fun2")
-                      (SrcTyCon (srcSp 4 8 4 11, TypeName "Unit"))
+                      (FunName "fun2", srcSp 4 1 4 4)
+                      (SrcTyCon (TypeName "Unit", srcSp 4 8 4 11))
                       [FunEq (srcSp 5 1 5 34)
-                         (srcSp 5 1 5 4, FunName "fun2")
+                         (FunName "fun2", srcSp 5 1 5 4)
                          []
                          (BinOpE (srcSp 5 8 5 33)
-                            (srcSp 5 32 5 32, App)
+                            (App, srcSp 5 32 5 32)
                             (TypeAppE (srcSp 5 8 5 31)
                                (ParenE (srcSp 5 8 5 25)
                                   (TypeLambdaE (srcSp 5 9 5 24)
-                                     [(srcSp 5 11 5 11, TypeVar "T")]
+                                     [(TypeVar "T", srcSp 5 11 5 11)]
                                      (LambdaE (srcSp 5 15 5 24)
                                         [VarBinder (srcSp 5 16 5 20)
-                                           (srcSp 5 16 5 16, Var "x")
-                                           (SrcTyCon (srcSp 5 20 5 20, TypeName "T"))]
+                                           (Var "x", srcSp 5 16 5 16)
+                                           (SrcTyCon (TypeName "T", srcSp 5 20 5 20))]
                                         (VarE (srcSp 5 24 5 24) (Var "x")))))
-                                  (SrcTyCon (srcSp 5 28 5 30, TypeName "Int")))
-                            (LitE (srcSp 5 33 5 33, IntLit 1)))]]
+                                  (SrcTyCon (TypeName "Int", srcSp 5 28 5 30)))
+                            (LitE (IntLit 1, srcSp 5 33 5 33)))]]
       in successCase baseName ast
 
     it "parses case expressions and constructor names" $
@@ -242,35 +242,35 @@ spec =
           ast = Program (srcSp 1 1 6 5)
                   []
                   [FunDef (srcSp 1 1 6 5)
-                     (srcSp 1 1 1 3, FunName "fun")
-                     (SrcTyCon (srcSp 1 7 1 10, TypeName "Unit"))
+                     (FunName "fun", srcSp 1 1 1 3)
+                     (SrcTyCon (TypeName "Unit", srcSp 1 7 1 10))
                      [FunEq (srcSp 2 1 6 4)
-                        (srcSp 2 1 2 3, FunName "fun")
+                        (FunName "fun", srcSp 2 1 2 3)
                         []
                         (CaseE (srcSp 2 7 6 3)
-                           (LitE (srcSp 2 12 2 12, IntLit 0))
+                           (LitE (IntLit 0, srcSp 2 12 2 12))
                            [ CaseAlt (srcSp 3 3 3 13)
-                               (LitP (srcSp 3 5 3 5, IntLit 0))
-                               (ConNameE (srcSp 3 10 3 13, ConName "True"))
+                               (LitP (IntLit 0, srcSp 3 5 3 5))
+                               (ConNameE (ConName "True", srcSp 3 10 3 13))
                            , CaseAlt (srcSp 4 3 4 41)
                                (ConP (srcSp 4 5 4 33)
-                                  (srcSp 4 5 4 7, ConName "Con")
+                                  (ConName "Con", srcSp 4 5 4 7)
                                   [ ParenP (srcSp 4 9 4 17)
                                       (VarP (VarBinder (srcSp 4 10 4 16)
-                                         (srcSp 4 10 4 10, Var "x")
-                                         (SrcTyCon (srcSp 4 14 4 16, TypeName "Int"))))
+                                         (Var "x", srcSp 4 10 4 10)
+                                         (SrcTyCon (TypeName "Int", srcSp 4 14 4 16))))
                                   , DefaultP (srcSp 4 19 4 19)
                                   , ConP (srcSp 4 21 4 24)
-                                      (srcSp 4 21 4 24, ConName "True")
+                                      (ConName "True", srcSp 4 21 4 24)
                                       []
                                   , ParenP (srcSp 4 26 4 33)
                                       (ConP (srcSp 4 27 4 32)
-                                         (srcSp 4 27 4 30, ConName "Con2")
-                                         [LitP (srcSp 4 32 4 32, IntLit 0)])])
-                               (ConNameE (srcSp 4 38 4 41, ConName "True"))
+                                         (ConName "Con2", srcSp 4 27 4 30)
+                                         [LitP (IntLit 0, srcSp 4 32 4 32)])])
+                               (ConNameE (ConName "True", srcSp 4 38 4 41))
                            , CaseAlt (srcSp 5 3 5 14)
                                (DefaultP $ srcSp 5 5 5 5)
-                               (ConNameE (srcSp 5 10 5 14, ConName "False"))])]]
+                               (ConNameE (ConName "False", srcSp 5 10 5 14))])]]
       in successCase baseName ast
 
     it "parses binary operations" $
@@ -280,44 +280,44 @@ spec =
           ast = Program (srcSp 1 1 2 63)
                   []
                   [FunDef (srcSp 1 1 2 63)
-                     (srcSp 1 1 1 3, FunName "fun")
-                     (SrcTyCon (srcSp 1 7 1 9, TypeName "Int"))
+                     (FunName "fun", srcSp 1 1 1 3)
+                     (SrcTyCon (TypeName "Int", srcSp 1 7 1 9))
                      [FunEq (srcSp 2 1 2 62)
-                        (srcSp 2 1 2 3, FunName "fun")
+                        (FunName "fun", srcSp 2 1 2 3)
                         []
                         (TypeLambdaE (srcSp 2 7 2 61)
-                           [(srcSp 2 9 2 9, TypeVar "T")]
+                           [(TypeVar "T", srcSp 2 9 2 9)]
                            (LambdaE (srcSp 2 13 2 61)
                               [VarBinder (srcSp 2 14 2 18)
-                                 (srcSp 2 14 2 14, Var "x")
-                                 (SrcTyCon (srcSp 2 18 2 18, TypeName "T"))]
+                                 (Var "x", srcSp 2 14 2 14)
+                                 (SrcTyCon (TypeName "T", srcSp 2 18 2 18))]
                               (LambdaE (srcSp 2 22 2 61)
                                  [VarBinder (srcSp 2 23 2 27)
-                                    (srcSp 2 23 2 23, Var "y")
-                                    (SrcTyCon (srcSp 2 27 2 27, TypeName "T"))]
+                                    (Var "y", srcSp 2 23 2 23)
+                                    (SrcTyCon (TypeName "T", srcSp 2 27 2 27))]
                                  (BinOpE (srcSp 2 31 2 61)
-                                    (srcSp 2 51 2 51, Equal)
+                                    (Equal, srcSp 2 51 2 51)
                                     (BinOpE (srcSp 2 31 2 49)
-                                       (srcSp 2 37 2 37, Add)
+                                       (Add, srcSp 2 37 2 37)
                                        (BinOpE (srcSp 2 31 2 35)
-                                          (srcSp 2 33 2 33, Add)
-                                          (LitE (srcSp 2 31 2 31, IntLit 1))
-                                          (LitE (srcSp 2 35 2 35, IntLit 2)))
+                                          (Add, srcSp 2 33 2 33)
+                                          (LitE (IntLit 1, srcSp 2 31 2 31))
+                                          (LitE (IntLit 2, srcSp 2 35 2 35)))
                                        (BinOpE (srcSp 2 39 2 49)
-                                          (srcSp 2 47 2 47, Mul)
+                                          (Mul, srcSp 2 47 2 47)
                                           (ParenE (srcSp 2 39 2 45)
                                              (BinOpE (srcSp 2 40 2 44)
-                                                (srcSp 2 42 2 42, Add)
-                                                (LitE (srcSp 2 40 2 40, IntLit 3))
-                                                (LitE (srcSp 2 44 2 44, IntLit 4))))
-                                          (LitE (srcSp 2 49 2 49, IntLit 5))))
+                                                (Add, srcSp 2 42 2 42)
+                                                (LitE (IntLit 3, srcSp 2 40 2 40))
+                                                (LitE (IntLit 4, srcSp 2 44 2 44))))
+                                          (LitE (IntLit 5, srcSp 2 49 2 49))))
                                     (BinOpE (srcSp 2 53 2 61)
-                                       (srcSp 2 59 2 59, Mul)
+                                       (Mul, srcSp 2 59 2 59)
                                        (BinOpE (srcSp 2 53 2 57)
-                                          (srcSp 2 55 2 55, Mul)
-                                          (LitE (srcSp 2 53 2 53, IntLit 2))
-                                          (LitE (srcSp 2 57 2 57, IntLit 3)))
-                                       (LitE (srcSp 2 61 2 61, IntLit 4)))))))]]
+                                          (Mul, srcSp 2 55 2 55)
+                                          (LitE (IntLit 2, srcSp 2 53 2 53))
+                                          (LitE (IntLit 3, srcSp 2 57 2 57)))
+                                       (LitE (IntLit 4, srcSp 2 61 2 61)))))))]]
       in successCase baseName ast
 
     it "parses statements (do-expressions)" $
@@ -327,29 +327,29 @@ spec =
           ast = Program (srcSp 1 1 6 5)
                   []
                   [FunDef (srcSp 1 1 6 5)
-                     (srcSp 1 1 1 4, FunName "main")
+                     (FunName "main", srcSp 1 1 1 4)
                      (SrcTyApp (srcSp 1 8 1 14)
-                        (SrcTyCon (srcSp 1 8 1 9, TypeName "IO"))
-                        (SrcTyCon (srcSp 1 11 1 14, TypeName "Unit")))
+                        (SrcTyCon (TypeName "IO", srcSp 1 8 1 9))
+                        (SrcTyCon (TypeName "Unit", srcSp 1 11 1 14)))
                      [FunEq (srcSp 2 1 6 4)
-                        (srcSp 2 1 2 4, FunName "main")
+                        (FunName "main", srcSp 2 1 2 4)
                         []
                         (DoE (srcSp 2 8 6 3)
                            [ ExprS (srcSp 3 3 3 13)
                                (BinOpE (srcSp 3 3 3 12)
-                                  (srcSp 3 11 3 11, App)
+                                  (App, srcSp 3 11 3 11)
                                   (VarE (srcSp 3 3 3 10) (Var "printInt"))
-                                  (LitE (srcSp 3 12 3 12, IntLit 1)))
+                                  (LitE (IntLit 1, srcSp 3 12 3 12)))
                            , BindS (srcSp 4 3 4 25)
                                (VarBinder (srcSp 4 3 4 10)
-                                  (srcSp 4 3 4 3, Var "x")
-                                  (SrcTyCon (srcSp 4 7 4 10, TypeName "Unit")))
+                                  (Var "x", srcSp 4 3 4 3)
+                                  (SrcTyCon (TypeName "Unit", srcSp 4 7 4 10)))
                                (BinOpE (srcSp 4 15 4 24)
-                                  (srcSp 4 23 4 23, App)
+                                  (App, srcSp 4 23 4 23)
                                   (VarE (srcSp 4 15 4 22) (Var "printInt"))
-                                  (LitE (srcSp 4 24 4 24, IntLit 2)))
+                                  (LitE (IntLit 2, srcSp 4 24 4 24)))
                            , ReturnS (srcSp 5 3 5 16)
-                               (SrcTyCon (srcSp 5 11 5 12, TypeName "IO"))
+                               (SrcTyCon (TypeName "IO", srcSp 5 11 5 12))
                                (VarE (srcSp 5 15 5 15) (Var "x"))
                            ])]]
       in successCase baseName ast

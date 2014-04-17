@@ -48,28 +48,28 @@ tcErrorHeaderSpan = tcErrorHeader <+> text "at "
 
 instance Pretty TcError where
   prPrn (TypeAlreadyDefined srcTypeName) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcTypeName) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcTypeName) <> colon $+$
     nest indLvl (text "Type" <+> quotes (prPrn $ getTypeName srcTypeName) <+> text "is already defined")
 
   prPrn (TypeNotDefined srcTypeName) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcTypeName) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcTypeName) <> colon $+$
     nest indLvl (text "Type" <+> quotes (prPrn $ getTypeName srcTypeName) <+> text "is not defined")
 
   prPrn (TypeConIncorrectApp srcTypeName defKind useKind) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcTypeName) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcTypeName) <> colon $+$
     nest indLvl (text "Type constructor" <+> quotes (prPrn $ getTypeName srcTypeName) <+>
       text "has kind" <+> quotes (prPrn defKind) <> text ", but its usage assumes it has kind" <+> quotes (prPrn useKind))
 
   prPrn (ConAlreadyDefined srcConName) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcConName) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcConName) <> colon $+$
     nest indLvl (text "Data constructor" <+> quotes (prPrn $ getConName srcConName) <+> text "is already defined")
 
   prPrn (ConNotDefined srcConName) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcConName) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcConName) <> colon $+$
     nest indLvl (text "Data constructor" <+> quotes (prPrn $ getConName srcConName) <+> text "is not defined")
 
   prPrn (FunctionAlreadyDefined srcFunName) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcFunName) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcFunName) <> colon $+$
     nest indLvl (text "Function" <+> quotes (prPrn $ getFunName srcFunName) <+> text "is already defined")
 
   prPrn MainNotDefined = tcErrorHeader <> colon <+> text "Function 'main' is not defined"
@@ -84,29 +84,29 @@ instance Pretty TcError where
     nest indLvl (text "Type" <+> quotes (prPrn srcType) <+> text "is ill-formed")
 
   prPrn (TypeParamAlreadyDefined srcTypeVar) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcTypeVar) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcTypeVar) <> colon $+$
     nest indLvl (text "Type parameter" <+> quotes (prPrn $ getTypeVar srcTypeVar) <+> text "is already defined")
 
   prPrn (FunEqIncorrectName funEqSrcName funName) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 funEqSrcName) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan funEqSrcName) <> colon $+$
     nest indLvl (text "Function equation has the name" <+> quotes (prPrn $ getFunName funEqSrcName) <>
       text ", but it should be" <+> quotes (prPrn funName))
 
   prPrn (FunEqBodyIncorrectType srcBodyExpr funName funType bodyType) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcBodyExpr) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcBodyExpr) <> colon $+$
     nest indLvl (text "Function equation body of the function" <+> quotes (prPrn funName) <+>
       text "has to have type" <+> quotes (prPrn funType) <> text ", but it has type" <+> quotes (prPrn bodyType))
 
   prPrn (TypeVarApp srcTypeVar) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcTypeVar) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcTypeVar) <> colon $+$
     nest indLvl (text "Type variable" <+> quotes (prPrn $ getTypeVar srcTypeVar) <+> text "can not be applied (type variables have kind '*')")
 
   prPrn (TypeVarShadowsType srcTypeVar) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcTypeVar) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcTypeVar) <> colon $+$
     nest indLvl (text "Type variable" <+> quotes (prPrn $ getTypeVar srcTypeVar) <+> text "shadows existing type")
 
   prPrn (TypeVarShadowsTypeVar srcTypeVar) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcTypeVar) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcTypeVar) <> colon $+$
     nest indLvl (text "Type variable" <+> quotes (prPrn $ getTypeVar srcTypeVar) <+> text "shadows another type variable")
 
   prPrn (NotMonad srcType) =
@@ -114,12 +114,12 @@ instance Pretty TcError where
     nest indLvl (text "Type" <+> quotes (prPrn srcType) <+> text "is not a monad")
 
   prPrn (IncorrectFunArgType tyArgExpr expType actType) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 tyArgExpr) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan tyArgExpr) <> colon $+$
     nest indLvl (text "Incorrect type of the argument. The expected type is" <+> quotes (prPrn expType) <>
       text ", but it has type" <+> quotes (prPrn actType))
 
   prPrn (NotFunctionType funExpr actType) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 funExpr) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan funExpr) <> colon $+$
     nest indLvl (text "The expression needs to have a function type, but it has type" <+> quotes (prPrn actType))
 
   prPrn (VarNotBound var srcSpan) =
@@ -127,7 +127,7 @@ instance Pretty TcError where
     nest indLvl (text "Name" <+> quotes (prPrn var) <+> text "is not bound")
 
   prPrn (VarShadowing srcVar) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcVar) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcVar) <> colon $+$
     nest indLvl (text "Variable binding for" <+> quotes (prPrn $ getVar srcVar) <+> text "shadows an existing variable or function")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
