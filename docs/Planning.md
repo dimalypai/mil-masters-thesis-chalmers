@@ -134,11 +134,11 @@ Time plan
 * Design object-oriented programming language - 1 week (2014-02-24 - 2014-03-03)
 * Design functional programming language - 1 week (2014-03-03 - 2014-03-10)
 * Refine MIL - possible intermediate step
-* Build compiler - 8 weeks (2014-03-10 - 2014-06-05)
+* Build compiler - 8 weeks (2014-03-10 - 2014-05-05)
 * Refine MIL - possible intermediate step
-* Study and implement optimisations - 3 weeks (2014-06-05 - 2014-06-26)
+* Study and implement optimisations - 3 weeks (2014-05-05 - 2014-05-26)
 * Refine MIL - possible intermediate step
-* Final report writing - 4 weeks (2014-06-26 - 2014-07-01)
+* Final report writing - 4 weeks (2014-05-26 - 2014-07-01)
 
 Master's Thesis opposition:
 
