@@ -37,27 +37,27 @@ spec =
           srcSp = mkSrcSpan fileName
           ast = Program (srcSp 1 1 9 3)
                   [ ClassDef (srcSp 1 1 3 3)
-                      (srcSp 1 7 1 11, ClassName "Shape")
+                      (ClassName "Shape", srcSp 1 7 1 11)
                       Nothing
                       [FieldDecl (srcSp 2 3 2 18)
                          (Decl (srcSp 2 3 2 17)
                             (VarBinder (srcSp 2 3 2 17)
-                               (srcSp 2 3 2 3, Var "x")
+                               (Var "x", srcSp 2 3 2 3)
                                (SrcTyMutable (srcSp 2 7 2 17)
                                   (SrcTyInt $ srcSp 2 15 2 17)))
                             Nothing)
                          []]
                   , ClassDef (srcSp 5 1 9 3)
-                      (srcSp 5 7 5 12, ClassName "Circle")
-                      (Just (srcSp 5 16 5 20, ClassName "Shape"))
+                      (ClassName "Circle", srcSp 5 7 5 12)
+                      (Just (ClassName "Shape", srcSp 5 16 5 20))
                       [MethodDecl (srcSp 6 3 8 5)
                          (FunDef (srcSp 6 3 8 5)
-                            (srcSp 6 12 6 15, FunName "area")
+                            (FunName "area", srcSp 6 12 6 15)
                             (FunType (srcSp 6 19 6 21)
                                []
                                (SrcTyInt $ srcSp 6 19 6 21))
                             [ExprS (srcSp 7 5 7 6)
-                               (LitE (srcSp 7 5 7 5, IntLit 1))]
+                               (LitE (IntLit 1, srcSp 7 5 7 5))]
                             True)
                          []]]
                   []
@@ -70,13 +70,13 @@ spec =
           ast = Program (srcSp 1 1 7 3)
                   []
                   [ FunDef (srcSp 1 1 3 3)
-                      (srcSp 1 5 1 5, FunName "f")
+                      (FunName "f", srcSp 1 5 1 5)
                       (FunType (srcSp 1 9 1 56)
                          [ VarBinder (srcSp 1 9 1 17)
-                             (srcSp 1 10 1 10, Var "x")
+                             (Var "x", srcSp 1 10 1 10)
                              (SrcTyInt $ srcSp 1 14 1 16)
                          , VarBinder (srcSp 1 22 1 31)
-                             (srcSp 1 23 1 23, Var "y")
+                             (Var "y", srcSp 1 23 1 23)
                              (SrcTyBool $ srcSp 1 27 1 30)]
                          (SrcTyArrow (srcSp 1 36 1 56)
                             (SrcTyParen (srcSp 1 36 1 48)
@@ -85,15 +85,15 @@ spec =
                                  (SrcTyBool $ srcSp 1 44 1 47)))
                             (SrcTyUnit $ srcSp 1 53 1 56)))
                       [ExprS (srcSp 2 3 2 7)
-                         (LitE (srcSp 2 3 2 6, UnitLit))]
+                         (LitE (UnitLit, srcSp 2 3 2 6))]
                       False
                   , FunDef (srcSp 5 1 7 3)
-                      (srcSp 5 10 5 10, FunName "g")
+                      (FunName "g", srcSp 5 10 5 10)
                       (FunType (srcSp 5 14 5 16)
                          []
                          (SrcTyInt $ srcSp 5 14 5 16))
                       [ExprS (srcSp 6 3 6 4)
-                         (LitE (srcSp 6 3 6 3, IntLit 1))]
+                         (LitE (IntLit 1, srcSp 6 3 6 3))]
                       True]
       in successCase baseName ast
 
@@ -103,24 +103,24 @@ spec =
           srcSp = mkSrcSpan fileName
           ast = Program (srcSp 1 1 7 26)
                   [ ClassDef (srcSp 1 1 1 18)
-                      (srcSp 1 7 1 11, ClassName "Super")
+                      (ClassName "Super", srcSp 1 7 1 11)
                       Nothing
                       []
                   , ClassDef (srcSp 7 1 7 26)
-                      (srcSp 7 7 7 11, ClassName "Child")
-                      (Just (srcSp 7 15 7 19, ClassName "Super"))
+                      (ClassName "Child", srcSp 7 7 7 11)
+                      (Just (ClassName "Super", srcSp 7 15 7 19))
                       []]
                   [FunDef (srcSp 3 1 5 3)
-                     (srcSp 3 5 3 7, FunName "fun")
+                     (FunName "fun", srcSp 3 5 3 7)
                      (FunType (srcSp 3 11 3 34)
                         [VarBinder (srcSp 3 11 3 26)
-                           (srcSp 3 12 3 12, Var "f")
+                           (Var "f", srcSp 3 12 3 12)
                            (SrcTyArrow (srcSp 3 16 3 25)
                               (SrcTyInt $ srcSp 3 16 3 18)
                               (SrcTyInt $ srcSp 3 23 3 25))]
                         (SrcTyUnit $ srcSp 3 31 3 34))
                      [ExprS (srcSp 4 3 4 7)
-                        (LitE (srcSp 4 3 4 6, UnitLit))]
+                        (LitE (UnitLit, srcSp 4 3 4 6))]
                      False]
       in successCase baseName ast
 
@@ -131,7 +131,7 @@ spec =
           ast = Program (srcSp 1 1 6 3)
                   []
                   [FunDef (srcSp 1 1 6 3)
-                     (srcSp 1 5 1 7, FunName "fun")
+                     (FunName "fun", srcSp 1 5 1 7)
                      (FunType (srcSp 1 11 4 39)
                         []
                         (SrcTyArrow (srcSp 1 11 4 39)
@@ -155,7 +155,7 @@ spec =
                                        (SrcTyMaybe (srcSp 4 30 4 38)
                                           (SrcTyInt $ srcSp 4 36 4 38))))))))
                      [ExprS (srcSp 5 3 5 7)
-                        (LitE (srcSp 5 3 5 6, UnitLit))]
+                        (LitE (UnitLit, srcSp 5 3 5 6))]
                      False]
       in successCase baseName ast
 
@@ -166,38 +166,38 @@ spec =
           ast = Program (srcSp 1 1 6 3)
                   []
                   [FunDef (srcSp 1 1 6 3)
-                     (srcSp 1 5 1 7, FunName "fun")
+                     (FunName "fun", srcSp 1 5 1 7)
                      (FunType (srcSp 1 11 1 14)
                         []
                         (SrcTyUnit $ srcSp 1 11 1 14))
                      [ DeclS (srcSp 2 3 2 18)
                          (Decl (srcSp 2 3 2 17)
                             (VarBinder (srcSp 2 3 2 17)
-                               (srcSp 2 3 2 3, Var "x")
+                               (Var "x", srcSp 2 3 2 3)
                                (SrcTyMutable (srcSp 2 7 2 17)
                                   (SrcTyInt $ srcSp 2 15 2 17)))
                             Nothing)
                      , DeclS (srcSp 3 3 3 14)
                          (Decl (srcSp 3 3 3 13)
                             (VarBinder (srcSp 3 3 3 9)
-                               (srcSp 3 3 3 3, Var "y")
+                               (Var "y", srcSp 3 3 3 3)
                                (SrcTyInt $ srcSp 3 7 3 9))
                             (Just $ Init (srcSp 3 11 3 13)
-                               (srcSp 3 11 3 11, InitEqual)
-                               (LitE (srcSp 3 13 3 13, IntLit 1))))
+                               (InitEqual, srcSp 3 11 3 11)
+                               (LitE (IntLit 1, srcSp 3 13 3 13))))
                      , DeclS (srcSp 4 3 4 23)
                          (Decl (srcSp 4 3 4 22)
                             (VarBinder (srcSp 4 3 4 17)
-                               (srcSp 4 3 4 3, Var "z")
+                               (Var "z", srcSp 4 3 4 3)
                                (SrcTyMutable (srcSp 4 7 4 17)
                                   (SrcTyInt $ srcSp 4 15 4 17)))
                             (Just $ Init (srcSp 4 19 4 22)
-                               (srcSp 4 19 4 20, InitMut)
-                               (LitE (srcSp 4 22 4 22, IntLit 1))))
+                               (InitMut, srcSp 4 19 4 20)
+                               (LitE (IntLit 1, srcSp 4 22 4 22))))
                      , AssignS (srcSp 5 3 5 9)
-                         (srcSp 5 5 5 6, AssignMut)
-                         (srcSp 5 3 5 3, Var "x")
-                         (LitE (srcSp 5 8 5 8, IntLit 2))]
+                         (AssignMut, srcSp 5 5 5 6)
+                         (Var "x", srcSp 5 3 5 3)
+                         (LitE (IntLit 2, srcSp 5 8 5 8))]
                      False]
       in successCase baseName ast
 
@@ -208,17 +208,17 @@ spec =
           ast = Program (srcSp 1 1 8 3)
                   []
                   [FunDef (srcSp 1 1 8 3)
-                     (srcSp 1 5 1 7, FunName "fun")
+                     (FunName "fun", srcSp 1 5 1 7)
                      (FunType (srcSp 1 11 1 14)
                         []
                         (SrcTyUnit $ srcSp 1 11 1 14))
                      [ WhenS (srcSp 2 3 5 6)
                          (VarE (srcSp 2 8 2 8) (Var "b"))
                          [ExprS (srcSp 3 5 3 9)
-                            (LitE (srcSp 3 5 3 8, UnitLit))]
+                            (LitE (UnitLit, srcSp 3 5 3 8))]
                          []
                      , WhileS (srcSp 6 3 7 6)
-                         (LitE (srcSp 6 9 6 12, BoolLit True))
+                         (LitE (BoolLit True, srcSp 6 9 6 12))
                          []]
                      False]
       in successCase baseName ast
@@ -230,35 +230,35 @@ spec =
           ast = Program (srcSp 1 1 4 3)
                   []
                   [FunDef (srcSp 1 1 4 3)
-                     (srcSp 1 5 1 7, FunName "fun")
+                     (FunName "fun", srcSp 1 5 1 7)
                      (FunType (srcSp 1 11 1 14)
                         []
                         (SrcTyUnit $ srcSp 1 11 1 14))
                      [ ExprS (srcSp 2 3 2 34)
                          (BinOpE (srcSp 2 3 2 33)
-                            (srcSp 2 14 2 14, App)
+                            (App, srcSp 2 14 2 14)
                             (BinOpE (srcSp 2 3 2 13)
-                               (srcSp 2 9 2 9, App)
+                               (App, srcSp 2 9 2 9)
                                (BinOpE (srcSp 2 3 2 8)
-                                  (srcSp 2 4 2 4, App)
+                                  (App, srcSp 2 4 2 4)
                                   (VarE (srcSp 2 3 2 3) (Var "f"))
-                                  (LitE (srcSp 2 5 2 8, UnitLit)))
-                               (LitE (srcSp 2 10 2 13, BoolLit True)))
+                                  (LitE (UnitLit, srcSp 2 5 2 8)))
+                               (LitE (BoolLit True, srcSp 2 10 2 13)))
                             (DerefE (srcSp 2 15 2 33)
                                (ParenE (srcSp 2 16 2 33)
                                   (BinOpE (srcSp 2 17 2 32)
-                                     (srcSp 2 28 2 28, App)
+                                     (App, srcSp 2 28 2 28)
                                      (BinOpE (srcSp 2 17 2 27)
-                                        (srcSp 2 26 2 26, App)
+                                        (App, srcSp 2 26 2 26)
                                         (BinOpE (srcSp 2 17 2 25)
-                                           (srcSp 2 18 2 18, App)
+                                           (App, srcSp 2 18 2 18)
                                            (VarE (srcSp 2 17 2 17) (Var "h"))
-                                           (LitE (srcSp 2 19 2 25, StringLit "Hello")))
-                                        (LitE (srcSp 2 27 2 27, IntLit 1)))
-                                     (LitE (srcSp 2 29 2 32, FloatLit 0.01 "0.01"))))))
+                                           (LitE (StringLit "Hello", srcSp 2 19 2 25)))
+                                        (LitE (IntLit 1, srcSp 2 27 2 27)))
+                                     (LitE (FloatLit 0.01 "0.01", srcSp 2 29 2 32))))))
                      , ExprS (srcSp 3 3 3 15)
                          (JustE (srcSp 3 3 3 14)
-                            (LitE (srcSp 3 8 3 14, NothingLit)))]
+                            (LitE (NothingLit, srcSp 3 8 3 14)))]
                      False]
       in successCase baseName ast
 
@@ -269,37 +269,37 @@ spec =
           ast = Program (srcSp 1 1 5 3)
                   []
                   [FunDef (srcSp 1 1 5 3)
-                     (srcSp 1 5 1 7, FunName "fun")
+                     (FunName "fun", srcSp 1 5 1 7)
                      (FunType (srcSp 1 11 1 14)
                         []
                         (SrcTyUnit $ srcSp 1 11 1 14))
                      [ ExprS (srcSp 2 3 2 20)
                          (BinOpE (srcSp 2 3 2 19)
-                            (srcSp 2 18 2 18, App)
+                            (App, srcSp 2 18 2 18)
                             (MemberAccessE (srcSp 2 3 2 17)
                                (ParenE (srcSp 2 3 2 12)
                                   (BinOpE (srcSp 2 4 2 11)
-                                     (srcSp 2 10 2 10, App)
+                                     (App, srcSp 2 10 2 10)
                                      (MemberAccessE (srcSp 2 4 2 9)
                                         (VarE (srcSp 2 4 2 4) (Var "x"))
-                                        (srcSp 2 6 2 9, FunName "fun1"))
-                                     (LitE (srcSp 2 11 2 11, IntLit 1))))
-                               (srcSp 2 14 2 17, FunName "fun2"))
-                            (LitE (srcSp 2 19 2 19, IntLit 2)))
+                                        (FunName "fun1", srcSp 2 6 2 9))
+                                     (LitE (IntLit 1, srcSp 2 11 2 11))))
+                               (FunName "fun2", srcSp 2 14 2 17))
+                            (LitE (IntLit 2, srcSp 2 19 2 19)))
                      , ExprS (srcSp 3 3 3 17)
                          (BinOpE (srcSp 3 3 3 16)
-                            (srcSp 3 15 3 15, App)
+                            (App, srcSp 3 15 3 15)
                             (MemberAccessMaybeE (srcSp 3 3 3 14)
                                (VarE (srcSp 3 3 3 3) (Var "x"))
-                               (srcSp 3 7 3 14, FunName "maybeFun"))
-                            (LitE (srcSp 3 16 3 16, IntLit 1)))
+                               (FunName "maybeFun", srcSp 3 7 3 14))
+                            (LitE (IntLit 1, srcSp 3 16 3 16)))
                      , ExprS (srcSp 4 3 4 15)
                          (BinOpE (srcSp 4 3 4 14)
-                            (srcSp 4 13 4 13, App)
+                            (App, srcSp 4 13 4 13)
                             (ClassAccessE (srcSp 4 3 4 12)
-                               (srcSp 4 3 4 8, ClassName "Object")
-                               (srcSp 4 10 4 12, FunName "new"))
-                            (LitE (srcSp 4 14 4 14, IntLit 1)))]
+                               (ClassName "Object", srcSp 4 3 4 8)
+                               (FunName "new", srcSp 4 10 4 12))
+                            (LitE (IntLit 1, srcSp 4 14 4 14)))]
                      False]
       in successCase baseName ast
 
@@ -310,40 +310,40 @@ spec =
           ast = Program (srcSp 1 1 4 3)
                   []
                   [FunDef (srcSp 1 1 4 3)
-                     (srcSp 1 5 1 7, FunName "fun")
+                     (FunName "fun", srcSp 1 5 1 7)
                      (FunType (srcSp 1 11 1 14)
                         []
                         (SrcTyUnit $ srcSp 1 11 1 14))
                      [ ExprS (srcSp 2 3 2 34)
                          (BinOpE (srcSp 2 3 2 33)
-                            (srcSp 2 23 2 23, Equal)
+                            (Equal, srcSp 2 23 2 23)
                             (BinOpE (srcSp 2 3 2 21)
-                               (srcSp 2 9 2 9, Add)
+                               (Add, srcSp 2 9 2 9)
                                (BinOpE (srcSp 2 3 2 7)
-                                  (srcSp 2 5 2 5, Add)
-                                  (LitE (srcSp 2 3 2 3, IntLit 1))
-                                  (LitE (srcSp 2 7 2 7, IntLit 2)))
+                                  (Add, srcSp 2 5 2 5)
+                                  (LitE (IntLit 1, srcSp 2 3 2 3))
+                                  (LitE (IntLit 2, srcSp 2 7 2 7)))
                                (BinOpE (srcSp 2 11 2 21)
-                                  (srcSp 2 19 2 19, Mul)
+                                  (Mul, srcSp 2 19 2 19)
                                   (ParenE (srcSp 2 11 2 17)
                                      (BinOpE (srcSp 2 12 2 16)
-                                        (srcSp 2 14 2 14, Add)
-                                        (LitE (srcSp 2 12 2 12, IntLit 3))
-                                        (LitE (srcSp 2 16 2 16, IntLit 4))))
-                                  (LitE (srcSp 2 21 2 21, IntLit 5))))
+                                        (Add, srcSp 2 14 2 14)
+                                        (LitE (IntLit 3, srcSp 2 12 2 12))
+                                        (LitE (IntLit 4, srcSp 2 16 2 16))))
+                                  (LitE (IntLit 5, srcSp 2 21 2 21))))
                             (BinOpE (srcSp 2 25 2 33)
-                               (srcSp 2 31 2 31, Mul)
+                               (Mul, srcSp 2 31 2 31)
                                (BinOpE (srcSp 2 25 2 29)
-                                  (srcSp 2 27 2 27, Mul)
-                                  (LitE (srcSp 2 25 2 25, IntLit 2))
-                                  (LitE (srcSp 2 29 2 29, IntLit 3)))
-                               (LitE (srcSp 2 33 2 33, IntLit 4))))
+                                  (Mul, srcSp 2 27 2 27)
+                                  (LitE (IntLit 2, srcSp 2 25 2 25))
+                                  (LitE (IntLit 3, srcSp 2 29 2 29)))
+                               (LitE (IntLit 4, srcSp 2 33 2 33))))
                      , ExprS (srcSp 3 3 3 14)
                          (BinOpE (srcSp 3 3 3 13)
-                            (srcSp 3 5 3 6, NothingCoalesce)
+                            (NothingCoalesce, srcSp 3 5 3 6)
                             (VarE (srcSp 3 3 3 3) (Var "x"))
                             (BinOpE (srcSp 3 8 3 13)
-                               (srcSp 3 10 3 11, NothingCoalesce)
+                               (NothingCoalesce, srcSp 3 10 3 11)
                                (VarE (srcSp 3 8 3 8) (Var "y"))
                                (VarE (srcSp 3 13 3 13) (Var "z"))))]
                      False]

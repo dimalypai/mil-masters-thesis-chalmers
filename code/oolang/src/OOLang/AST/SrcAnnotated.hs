@@ -1,7 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
--- | Module containing instances of 'SrcAnnotated' and 'SrcAnnotated2' for
--- syntax tree nodes.
+-- | Module containing instances of 'SrcAnnotated' for syntax tree nodes.
 --
 -- Note: Instances are orphaned.
 module OOLang.AST.SrcAnnotated
@@ -11,32 +10,32 @@ module OOLang.AST.SrcAnnotated
 import OOLang.AST
 import OOLang.SrcAnnotated
 
-instance SrcAnnotated2 TopDef where
-  ann2 (TopClassDef cd) = ann2 cd
-  ann2 (TopFunDef fd)   = ann2 fd
+instance SrcAnnotated (TopDef v) where
+  ann (TopClassDef cd) = ann cd
+  ann (TopFunDef fd)   = ann fd
 
-instance SrcAnnotated2 ClassDef where
-  ann2 (ClassDef s _ _ _) = s
+instance SrcAnnotated (ClassDef v) where
+  ann (ClassDef s _ _ _) = s
 
-instance SrcAnnotated2 FunDef where
-  ann2 (FunDef s _ _ _ _) = s
+instance SrcAnnotated (FunDef v) where
+  ann (FunDef s _ _ _ _) = s
 
-instance SrcAnnotated2 Expr where
-  ann2 (LitE lit) = ann2 lit
-  ann2 (VarE s _) = s
-  ann2 (MemberAccessE s _ _) = s
-  ann2 (MemberAccessMaybeE s _ _) = s
-  ann2 (ClassAccessE s _ _) = s
-  ann2 (DerefE s _) = s
-  ann2 (BinOpE s _ _ _) = s
-  ann2 (JustE s _) = s
-  ann2 (ParenE s _) = s
+instance SrcAnnotated (Expr v) where
+  ann (LitE lit) = ann lit
+  ann (VarE s _) = s
+  ann (MemberAccessE s _ _) = s
+  ann (MemberAccessMaybeE s _ _) = s
+  ann (ClassAccessE s _ _) = s
+  ann (DerefE s _) = s
+  ann (BinOpE s _ _ _) = s
+  ann (JustE s _) = s
+  ann (ParenE s _) = s
 
 instance SrcAnnotated TypeS where
   ann (SrcTyUnit s) = s
   ann (SrcTyBool s) = s
   ann (SrcTyInt s) = s
-  ann (SrcTyClass cn) = ann2 cn
+  ann (SrcTyClass cn) = ann cn
   ann (SrcTyArrow s _ _) = s
   ann (SrcTyMaybe s _) = s
   ann (SrcTyMutable s _) = s
@@ -46,11 +45,11 @@ instance SrcAnnotated TypeS where
 instance SrcAnnotated FunType where
   ann (FunType s _ _) = s
 
-instance SrcAnnotated2 Declaration where
-  ann2 (Decl s _ _) = s
+instance SrcAnnotated (Declaration v) where
+  ann (Decl s _ _) = s
 
-instance SrcAnnotated2 Init where
-  ann2 (Init s _ _) = s
+instance SrcAnnotated (Init v) where
+  ann (Init s _ _) = s
 
 instance SrcAnnotated VarBinder where
   ann (VarBinder s _ _) = s

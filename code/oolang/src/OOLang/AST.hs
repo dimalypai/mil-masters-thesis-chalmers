@@ -2,12 +2,12 @@
 -- tree and some helper functions.
 --
 -- AST is parameterised. Some of the data types have only one type parameter s
--- (stands for source) and some have two - s and v (stands for variable). The
+-- (stands for source) and some have two - v and s (stands for variable). The
 -- reason is that variable occurences are parameterised and are represented
 -- differently at different stages. For more on this look at the 'Expr' and
 -- 'Stmt' data types (these are the only places where a field of type v is
 -- present). Thus, some of the data types eventually contain 'Expr' or 'Stmt'
--- (and therefore must have both s and v) and some of them don't (and have only
+-- (and therefore must have both v and s) and some of them don't (and have only
 -- s).
 --
 -- In general, sometimes there are two version of the data type, one of which
@@ -17,8 +17,11 @@
 --
 -- Some of the data types (which have several data constructors and/or
 -- recursive) have s fields wired-in, while others if possible have a type
--- synonym for a pair where the first component is s and the second is
--- unannotated data type. Look at most of the *Name data types.
+-- synonym for a pair where the first component is unannotated data type and
+-- the second is of type s. Look at most of the *Name data types.  Note: this
+-- order of v and s (as well as when used as type parameters) is chosen for
+-- convenience of working with 'SrcAnnotated' type class (so that s is the last
+-- type parameter).
 --
 -- For most of the data types there are type synonyms: Src and Ty versions.
 -- Src versions exist for all data types, Ty - only for data types with two
@@ -41,11 +44,11 @@ import OOLang.SrcSpan
 -- * list of function definitions
 --
 -- Note: on the source level these two may be in any order.
-data Program s v = Program s [ClassDef s v] [FunDef s v]
+data Program v s = Program s [ClassDef v s] [FunDef v s]
   deriving Show
 
-type SrcProgram = Program SrcSpan Var
-type TyProgram  = Program SrcSpan VarTy
+type SrcProgram = Program Var   SrcSpan
+type TyProgram  = Program VarTy SrcSpan
 
 -- | Class definition:
 --
@@ -56,11 +59,11 @@ type TyProgram  = Program SrcSpan VarTy
 -- * super class name (maybe)
 --
 -- * list of member declarations.
-data ClassDef s v = ClassDef s (ClassNameS s) (Maybe (ClassNameS s)) [MemberDecl s v]
+data ClassDef v s = ClassDef s (ClassNameS s) (Maybe (ClassNameS s)) [MemberDecl v s]
   deriving Show
 
-type SrcClassDef = ClassDef SrcSpan Var
-type TyClassDef  = ClassDef SrcSpan VarTy
+type SrcClassDef = ClassDef Var   SrcSpan
+type TyClassDef  = ClassDef VarTy SrcSpan
 
 -- | Function definition:
 --
@@ -73,36 +76,36 @@ type TyClassDef  = ClassDef SrcSpan VarTy
 -- * list of statements (body)
 --
 -- * is it marked as pure
-data FunDef s v = FunDef s (FunNameS s) (FunType s) [Stmt s v] Bool
+data FunDef v s = FunDef s (FunNameS s) (FunType s) [Stmt v s] Bool
   deriving Show
 
-type SrcFunDef = FunDef SrcSpan Var
-type TyFunDef  = FunDef SrcSpan VarTy
+type SrcFunDef = FunDef Var   SrcSpan
+type TyFunDef  = FunDef VarTy SrcSpan
 
 -- | Class member declaration. Either field or method.
 -- Field declaration is just a declaration with modifiers (syntactically).
 -- Method declaration is just a function with modifiers (syntactically).
-data MemberDecl s v = FieldDecl s (Declaration s v) [ModifierS s]
-                    | MethodDecl s (FunDef s v) [ModifierS s]
+data MemberDecl v s = FieldDecl s (Declaration v s) [ModifierS s]
+                    | MethodDecl s (FunDef v s) [ModifierS s]
   deriving Show
 
-type SrcMemberDecl = MemberDecl SrcSpan Var
-type TyMemberDecl  = MemberDecl SrcSpan VarTy
+type SrcMemberDecl = MemberDecl Var   SrcSpan
+type TyMemberDecl  = MemberDecl VarTy SrcSpan
 
-data Stmt s v = DeclS s (Declaration s v)
-              | ExprS s (Expr s v)
+data Stmt v s = DeclS s (Declaration v s)
+              | ExprS s (Expr v s)
                 -- | It uses type parameter v. We allow to assign only to
-                -- variables. Unfortunately we have to explicitly use (s, v)
+                -- variables. Unfortunately we have to explicitly use (v, s)
                 -- here instead of 'VarS' for example, because we abstract over
                 -- variables.
-              | AssignS s (AssignOpS s) (s, v) (Expr s v)
-              | WhileS s (Expr s v) [Stmt s v]
-              | WhenS s (Expr s v) [Stmt s v] [Stmt s v]
-              | ReturnS s (Expr s v)
+              | AssignS s (AssignOpS s) (v, s) (Expr v s)
+              | WhileS s (Expr v s) [Stmt v s]
+              | WhenS s (Expr v s) [Stmt v s] [Stmt v s]
+              | ReturnS s (Expr v s)
   deriving Show
 
-type SrcStmt = Stmt SrcSpan Var
-type TyStmt  = Stmt SrcSpan VarTy
+type SrcStmt = Stmt Var   SrcSpan
+type TyStmt  = Stmt VarTy SrcSpan
 
 -- | Expression representation.
 --
@@ -115,27 +118,27 @@ type TyStmt  = Stmt SrcSpan VarTy
 -- Function names are represented as 'VarE'.
 --
 -- 'ParenE' is used for better source spans and pretty printing.
-data Expr s v = LitE (LiteralS s)
+data Expr v s = LitE (LiteralS s)
               | VarE s v
-              | LambdaE s [VarBinder s] (Expr s v)
+              | LambdaE s [VarBinder s] (Expr v s)
                 -- | We restrict member access to only functions.
-              | MemberAccessE s (Expr s v) (FunNameS s)
-              | MemberAccessMaybeE s (Expr s v) (FunNameS s)
+              | MemberAccessE s (Expr v s) (FunNameS s)
+              | MemberAccessMaybeE s (Expr v s) (FunNameS s)
                 -- | Class access is just for new (constructor) right now.
               | ClassAccessE s (ClassNameS s) (FunNameS s)
               | ClassAccessStaticE s (ClassNameS s) (MemberNameS s)
-              | NewRefE s (Expr s v)
+              | NewRefE s (Expr v s)
                 -- | This operator produces a value of type A from a value of
                 -- type Ref A or Mutable A.
-              | DerefE s (Expr s v)
-              | BinOpE s (BinOpS s) (Expr s v) (Expr s v)
-              | IfThenElseE s (Expr s v) (Expr s v) (Expr s v)
-              | JustE s (Expr s v)
-              | ParenE s (Expr s v)
+              | DerefE s (Expr v s)
+              | BinOpE s (BinOpS s) (Expr v s) (Expr v s)
+              | IfThenElseE s (Expr v s) (Expr v s) (Expr v s)
+              | JustE s (Expr v s)
+              | ParenE s (Expr v s)
   deriving Show
 
-type SrcExpr = Expr SrcSpan Var
-type TyExpr  = Expr SrcSpan VarTy
+type SrcExpr = Expr Var   SrcSpan
+type TyExpr  = Expr VarTy SrcSpan
 
 -- | Literal constants.
 data Literal = UnitLit
@@ -146,7 +149,7 @@ data Literal = UnitLit
              | NothingLit
   deriving Show
 
-type LiteralS s = (s, Literal)
+type LiteralS s = (Literal, s)
 type SrcLiteral = LiteralS SrcSpan
 
 -- | Binary operators are factored out from 'Expr'.
@@ -164,7 +167,7 @@ data BinOp = App
            | GreaterEq
   deriving Show
 
-type BinOpS s = (s, BinOp)
+type BinOpS s = (BinOp, s)
 type SrcBinOp = BinOpS SrcSpan
 
 -- | Internal representation of types. What types really represent.
@@ -228,18 +231,18 @@ funTypeToType (FunType _ varBinders srcRetType) = funTypeToType' varBinders
 
 -- | Name (variable) declaration.
 -- Consists of var binder and an optional initialiser.
-data Declaration s v = Decl s (VarBinder s) (Maybe (Init s v))
+data Declaration v s = Decl s (VarBinder s) (Maybe (Init v s))
   deriving Show
 
-type SrcDeclaration = Declaration SrcSpan Var
-type TyDeclaration  = Declaration SrcSpan VarTy
+type SrcDeclaration = Declaration Var   SrcSpan
+type TyDeclaration  = Declaration VarTy SrcSpan
 
 -- | Initialiser expression. Uses different assignment operators.
-data Init s v = Init s (InitOpS s) (Expr s v)
+data Init v s = Init s (InitOpS s) (Expr v s)
   deriving Show
 
-type SrcInit = Init SrcSpan Var
-type TyInit  = Init SrcSpan VarTy
+type SrcInit = Init Var   SrcSpan
+type TyInit  = Init VarTy SrcSpan
 
 -- | Assignment operators are factored out.
 --
@@ -249,7 +252,7 @@ type TyInit  = Init SrcSpan VarTy
 data AssignOp = AssignMut | AssignRef
   deriving Show
 
-type AssignOpS s = (s, AssignOp)
+type AssignOpS s = (AssignOp, s)
 type SrcAssignOp = AssignOpS SrcSpan
 
 -- | Operators used in declaration statements.
@@ -262,14 +265,14 @@ type SrcAssignOp = AssignOpS SrcSpan
 data InitOp = InitEqual | InitMut | InitRef
   deriving Show
 
-type InitOpS s = (s, InitOp)
+type InitOpS s = (InitOp, s)
 type SrcInitOp = InitOpS SrcSpan
 
 -- | Modifiers are used in class member declarations.
 data Modifier = Public | Private | Static
   deriving Show
 
-type ModifierS s = (s, Modifier)
+type ModifierS s = (Modifier, s)
 type SrcModifier = ModifierS SrcSpan
 
 newtype Var = Var String
@@ -279,7 +282,7 @@ newtype Var = Var String
 newtype VarTy = VarTy (Var, Type)
   deriving Show
 
-type VarS s = (s, Var)
+type VarS s = (Var, s)
 type SrcVar = VarS SrcSpan
 
 -- | Var binder is a pair of variable name and a type (in their source representations).
@@ -298,42 +301,42 @@ setVarBinderAnn (VarBinder _ v t) s = VarBinder s v t
 newtype ClassName = ClassName String
   deriving (Show, Eq, Ord)
 
-type ClassNameS s = (s, ClassName)
+type ClassNameS s = (ClassName, s)
 type SrcClassName = ClassNameS SrcSpan
 
 getClassName :: ClassNameS s -> ClassName
-getClassName = snd
+getClassName = fst
 
 newtype FunName = FunName String
   deriving (Show, Eq, Ord)
 
-type FunNameS s = (s, FunName)
+type FunNameS s = (FunName, s)
 type SrcFunName = FunNameS SrcSpan
 
 getFunName :: FunNameS s -> FunName
-getFunName = snd
+getFunName = fst
 
 -- | Denotes class field or method name.
 newtype MemberName = MemberName String
   deriving Show
 
-type MemberNameS s = (s, MemberName)
+type MemberNameS s = (MemberName, s)
 type SrcMemberName = MemberNameS SrcSpan
 
 -- Parsing helpers
 
 -- | Used only in parsing to allow to mix class and function definitions and
 -- then have them reordered in the AST.
-data TopDef s v = TopClassDef { getClassDef :: ClassDef s v }
-                | TopFunDef   { getFunDef   :: FunDef s v   }
+data TopDef v s = TopClassDef { getClassDef :: ClassDef v s }
+                | TopFunDef   { getFunDef   :: FunDef v s   }
 
-type SrcTopDef = TopDef SrcSpan Var
+type SrcTopDef = TopDef Var SrcSpan
 
-isClassDef :: TopDef s v -> Bool
+isClassDef :: TopDef v s -> Bool
 isClassDef (TopClassDef _) = True
 isClassDef               _ = False
 
-isFunDef :: TopDef s v -> Bool
+isFunDef :: TopDef v s -> Bool
 isFunDef (TopFunDef _) = True
 isFunDef             _ = False
 

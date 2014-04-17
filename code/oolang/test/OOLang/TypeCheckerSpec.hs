@@ -38,15 +38,15 @@ spec =
           srcSp = mkSrcSpan fileName
           ast = Program (srcSp 1 1 5 18)
                   [ ClassDef (srcSp 3 1 3 14)
-                      (srcSp 3 7 3 7, ClassName "A")
+                      (ClassName "A", srcSp 3 7 3 7)
                       Nothing
                       []
                   , ClassDef (srcSp 5 1 5 18)
-                      (srcSp 5 7 5 7, ClassName "B")
-                      (Just (srcSp 5 11 5 11, ClassName "A"))
+                      (ClassName "B", srcSp 5 7 5 7)
+                      (Just (ClassName "A", srcSp 5 11 5 11))
                       []]
                   [FunDef (srcSp 1 1 1 28)
-                     (srcSp 1 5 1 8, FunName "main")
+                     (FunName "main", srcSp 1 5 1 8)
                      (FunType (srcSp 1 12 1 15)
                         []
                         (SrcTyUnit $ srcSp 1 12 1 15))

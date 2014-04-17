@@ -35,15 +35,15 @@ tcErrorHeaderSpan = tcErrorHeader <+> text "at "
 
 instance Pretty TcError where
   prPrn (ClassAlreadyDefined srcClassName) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcClassName) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcClassName) <> colon $+$
     nest indLvl (text "Class" <+> quotes (prPrn $ getClassName srcClassName) <+> text "is already defined")
 
   prPrn (ClassNotDefined srcClassName) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcClassName) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcClassName) <> colon $+$
     nest indLvl (text "Class" <+> quotes (prPrn $ getClassName srcClassName) <+> text "is not defined")
 
   prPrn (FunctionAlreadyDefined srcFunName) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcFunName) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcFunName) <> colon $+$
     nest indLvl (text "Function" <+> quotes (prPrn $ getFunName srcFunName) <+> text "is already defined")
 
   prPrn MainNotDefined = tcErrorHeader <> colon <+> text "Function 'main' is not defined"
@@ -54,7 +54,7 @@ instance Pretty TcError where
       text ", but it has type" <+> quotes (prPrn $ funTypeToType srcFunType))
 
   prPrn (MainPure srcFunName) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcFunName) <> colon $+$
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcFunName) <> colon $+$
     nest indLvl (text "Function 'main' is declared as pure")
 
   prPrn InheritanceCycle = tcErrorHeader <> colon <+> text "Inheritance cycle was detected"
