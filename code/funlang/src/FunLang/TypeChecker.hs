@@ -153,6 +153,7 @@ tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type)
 tcExpr srcExpr =
   case srcExpr of
     LitE srcLit -> return (LitE srcLit, typeOfLiteral $ getLiteral srcLit)
+
     ConNameE srcConName -> do
       let conName = getConName srcConName
       unlessM (isDataConDefined conName) $

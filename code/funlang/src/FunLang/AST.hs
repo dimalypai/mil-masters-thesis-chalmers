@@ -143,13 +143,13 @@ type SrcPattern = Pattern SrcSpan
 -- 'ParenE' is used for better source spans and pretty printing.
 data Expr s v = LitE (LiteralS s)
               | VarE s v
-              | LambdaE s [VarBinder s] (Expr s v)
-              | TypeLambdaE s [TypeVarS s] (Expr s v)
+              | LambdaE s [VarBinder s] (Expr s v)  -- ^ Not empty
+              | TypeLambdaE s [TypeVarS s] (Expr s v)  -- ^ Not empty
               | TypeAppE s (Expr s v) (TypeS s)
               | ConNameE (ConNameS s)
-              | CaseE s (Expr s v) [CaseAlt s v]
+              | CaseE s (Expr s v) [CaseAlt s v]  -- ^ Not empty
               | LetE s [(VarBinder s, Expr s v)] (Expr s v)
-              | DoE s [Stmt s v]
+              | DoE s [Stmt s v]  -- ^ Not empty
               | BinOpE s (BinOpS s) (Expr s v) (Expr s v)
               | ParenE s (Expr s v)
   deriving Show
