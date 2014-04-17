@@ -1,5 +1,10 @@
 -- | Type checking module. Most of the functions follow the AST structure.
 -- Built using the API from 'TypeCheckM'.
+--
+-- Type checking produces a type environment with information about global
+-- definitions and annotates local variable occurences with their types. So,
+-- when we say type checked and it is applicable to annotate something it also
+-- means `annotated`.
 module FunLang.TypeChecker
   ( typeCheck
   , typeCheckStage
@@ -35,6 +40,8 @@ typeCheckStage srcProgram typeEnv = runTypeCheckM (tcProgram srcProgram) typeEnv
 typeOf :: SrcExpr -> TypeEnv -> Either TcError Type
 typeOf srcExpr typeEnv = fmap (snd . fst) $ runTypeCheckM (tcExpr srcExpr) typeEnv
 
+-- | Entry point into the type checking of the program.
+-- Returns a type checked program.
 tcProgram :: SrcProgram -> TypeCheckM TyProgram
 tcProgram (Program s typeDefs funDefs) = do
   collectDefs typeDefs funDefs
@@ -125,7 +132,7 @@ tcConDef typeName typeVars (ConDef _ srcConName srcConFields) = do
   addDataCon srcConName conType typeName
 
 -- | Checks all function equations and their consistency (TODO).
--- Returns type checked and annotated function definition.
+-- Returns type checked function definition.
 tcFunDef :: SrcFunDef -> TypeCheckM TyFunDef
 tcFunDef (FunDef s srcFunName funSrcType srcFunEqs) = do
   let funName = getFunName srcFunName
@@ -137,7 +144,7 @@ tcFunDef (FunDef s srcFunName funSrcType srcFunEqs) = do
 -- Checks equation body.
 -- Checks that the type of the body is consistent with the specified function
 -- type.
--- Returns type checked and annotated function equation.
+-- Returns type checked function equation.
 tcFunEq :: FunName -> Type -> SrcFunEq -> TypeCheckM TyFunEq
 tcFunEq funName funType (FunEq s srcFunName patterns srcBodyExpr) = do
   when (getFunName srcFunName /= funName) $
@@ -147,8 +154,8 @@ tcFunEq funName funType (FunEq s srcFunName patterns srcBodyExpr) = do
     throwError $ FunEqBodyIncorrectType srcBodyExpr funName funType bodyType
   return $ FunEq s srcFunName [] tyBodyExpr
 
--- | Annotates variable occurences with their types.
--- Returns a type checked and annotated expression together with its type.
+-- | Expression type checking.
+-- Returns a type checked expression together with its type.
 tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type)
 tcExpr srcExpr =
   case srcExpr of
@@ -177,13 +184,8 @@ typeOfLiteral IntLit    {} = intType
 typeOfLiteral FloatLit  {} = floatType
 typeOfLiteral StringLit {} = stringType
 
--- | Returns a type of type checked and annotated expression.
--- Purely local process.
---typeOf :: TyExpr -> Type
---typeOf (LitE {}) = undefined
-
--- | Annotates variable occurences with their types.
--- Returns a type checked and annotated statement together with its type.
+-- | Statement type checking.
+-- Returns a type checked statement together with its type.
 tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type)
 tcStmt srcStmt =
   case srcStmt of
