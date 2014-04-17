@@ -1,0 +1,2 @@
+FunLang type checking error at ReturnIllKinded.fl:3,11-3,12:
+  Type constructor 'IO' has kind '* => *', but its usage assumes it has kind '* => * => *'

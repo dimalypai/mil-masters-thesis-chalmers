@@ -1,0 +1,2 @@
+FunLang type checking error at ReturnIncorrectExprType.fl:2,8-4,3:
+  Function equation body of the function 'main' has to have type 'IO Unit', but it has type 'IO Int'

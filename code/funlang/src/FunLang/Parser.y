@@ -237,10 +237,10 @@ stmt
       {% withFileName $ \fileName ->
            BindS (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $4] fileName)
                  $1 $3 }
-  | return expr ';'
+  | return '[' srctype ']' expr ';'
       {% withFileName $ \fileName ->
-           ReturnS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
-                   $2 }
+           ReturnS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $6] fileName)
+                   $3 $5 }
 
 varbinder :: { SrcVarBinder }
 varbinder

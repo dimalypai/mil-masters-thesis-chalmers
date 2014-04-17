@@ -29,6 +29,7 @@ data TcError =
   | TypeVarApp SrcTypeVar
   | TypeVarShadowsType SrcTypeVar
   | TypeVarShadowsTypeVar SrcTypeVar
+  | NotMonad SrcType
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -103,6 +104,10 @@ instance Pretty TcError where
   prPrn (TypeVarShadowsTypeVar srcTypeVar) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcTypeVar) <> colon $+$
     nest indLvl (text "Type variable" <+> quotes (prPrn $ getTypeVar srcTypeVar) <+> text "shadows another type variable")
+
+  prPrn (NotMonad srcType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
+    nest indLvl (text "Type" <+> quotes (prPrn srcType) <+> text "is not a monad")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

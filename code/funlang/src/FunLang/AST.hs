@@ -181,7 +181,7 @@ type TyCaseAlt  = CaseAlt SrcSpan VarTy
 -- 'ReturnS' is separate because we don't have type classes like in Haskell.
 data Stmt s v = ExprS s (Expr s v)
               | BindS s (VarBinder s) (Expr s v)
-              | ReturnS s (Expr s v)
+              | ReturnS s (TypeS s) (Expr s v)  -- ^ Annotated with monad.
   deriving Show
 
 type SrcStmt = Stmt SrcSpan Var
@@ -215,7 +215,7 @@ data Type = TyVar TypeVar  -- ^ Always of kind *
           | TyArrow Type Type
           | TyApp TypeName [Type]
           | TyForAll TypeVar Type
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 isTypeVar :: Type -> Bool
 isTypeVar (TyVar _) = True

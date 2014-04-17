@@ -1,5 +1,7 @@
 module FunLang.BuiltIn where
 
+import qualified Data.Set as Set
+
 import FunLang.AST
 
 -- Built-in types
@@ -27,4 +29,12 @@ stringType = mkSimpleType "String"
 
 ioType :: Type -> Type
 ioType t = TyApp (TypeName "IO") [t]
+
+-- Monads
+
+monadKind :: Kind
+monadKind = StarK :=>: StarK
+
+monadTypes :: Set.Set TypeName
+monadTypes = Set.fromList [ TypeName "IO" ]
 
