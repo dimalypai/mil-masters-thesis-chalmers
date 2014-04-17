@@ -12,7 +12,7 @@ instance Pretty Type where
   prPrn (TyVar typeVar) = prPrn typeVar
   prPrn (TyArrow t1 t2) = prPrn t1 <+> text "->" <+> prPrn t2  -- TODO: precedence
   prPrn (TyApp typeName args) = prPrn typeName <+> hsep (map prPrn args) -- TODO: precedence
-  prPrn (TyForAll typeVar t) = text "forall . " <> prPrn typeVar <+> prPrn t
+  prPrn (TyForAll typeVar t) = text "forall" <+> prPrn typeVar <+> text "." <+> prPrn t
 
 -- Since 'TypeS' is a source representation of types (how a user entered them),
 -- we don't need to do extra precedence and associativity handling during the
@@ -21,7 +21,7 @@ instance Pretty (TypeS s) where
   prPrn (SrcTyCon srcTypeName) = prPrn (getTypeName srcTypeName)
   prPrn (SrcTyApp _ st1 st2) = prPrn st1 <+> prPrn st2
   prPrn (SrcTyArrow _ st1 st2) = prPrn st1 <+> text "->" <+> prPrn st2
-  prPrn (SrcTyForAll _ srcTypeVar st) = text "forall . " <> prPrn (getTypeVar srcTypeVar) <+> prPrn st
+  prPrn (SrcTyForAll _ srcTypeVar st) = text "forall" <+> prPrn (getTypeVar srcTypeVar) <+> text "." <+> prPrn st
   prPrn (SrcTyParen _ st) = parens (prPrn st)
 
 instance Pretty Kind where
