@@ -6,23 +6,18 @@
 module FunLang.TypeChecker.TypeCheckM
   ( TypeCheckM
   , runTypeCheckM
+
   , TypeEnv
   , initTypeEnv
-  , mkTypeEnv
-  , DataTypeEnv
+
   , dtiKind
-  , dtiCons
-  , dtiSrcTypeName
   , getDataTypeInfo
-  , modifyDataTypeEnv
   , isTypeDefined
   , addType
-  , FunTypeEnv
+
   , ftiType
   , ftiSrcType
-  , ftiSrcFunName
   , getFunTypeInfo
-  , modifyFunTypeEnv
   , isFunctionDefined
   , addFunction
   , module Control.Monad.Error
@@ -58,9 +53,9 @@ newtype TypeEnv = TypeEnv { unTypeEnv :: (DataTypeEnv, DataConTypeEnv, FunTypeEn
 
 -- | Initial type environment.
 initTypeEnv :: TypeEnv
-initTypeEnv = TypeEnv ( Map.fromList $ map (second builtInDataTypeInfo) builtInDataTypes
-                      , Map.empty
-                      , Map.empty)
+initTypeEnv = mkTypeEnv (Map.fromList $ map (second builtInDataTypeInfo) builtInDataTypes)
+                        Map.empty
+                        Map.empty
 
 -- | Smart constructor for 'TypeEnv'.
 mkTypeEnv :: DataTypeEnv -> DataConTypeEnv -> FunTypeEnv -> TypeEnv
