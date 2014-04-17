@@ -167,6 +167,10 @@ tcExpr srcExpr =
       -- of the whole expression
       return (DoE s tyStmts, last stmtTypes)
 
+    ParenE s srcSubExpr -> do
+      (tySubExpr, exprType) <- tcExpr srcSubExpr
+      return (ParenE s tySubExpr, exprType)
+
 typeOfLiteral :: Literal -> Type
 typeOfLiteral UnitLit      = unitType
 typeOfLiteral IntLit    {} = intType

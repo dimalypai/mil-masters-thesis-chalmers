@@ -6,7 +6,7 @@ end;;
 type Pair A B = MkPair A B
 
 fun : Unit
-fun = unit;;
+fun = ((unit));;
 
 fun2 : forall A . forall B . A -> B -> Pair A B
 fun2 = MkPair;;
