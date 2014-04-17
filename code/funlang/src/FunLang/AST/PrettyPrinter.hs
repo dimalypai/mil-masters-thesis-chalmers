@@ -24,6 +24,10 @@ instance Pretty (TypeS s) where
   prPrn (SrcTyForAll _ srcTypeVar st) = text "forall . " <> prPrn (getTypeVar srcTypeVar) <+> prPrn st
   prPrn (SrcTyParen _ st) = parens (prPrn st)
 
+instance Pretty Kind where
+  prPrn StarK = text "*"
+  prPrn (k1 :=>: k2) = prPrn k1 <+> text "=>" <+> prPrn k2  -- TODO: parens
+
 instance Pretty TypeVar where
   prPrn (TypeVar typeVarStr) = text typeVarStr
 

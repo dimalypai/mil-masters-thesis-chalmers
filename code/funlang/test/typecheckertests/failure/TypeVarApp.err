@@ -1,0 +1,2 @@
+FunLang type checking error at TypeVarApp.fl:1,18-1,18:
+  Type variable 'A' can not be applied (type variables have kind '*')

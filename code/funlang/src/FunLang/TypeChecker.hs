@@ -67,10 +67,11 @@ collectTypeDef (TypeDef _ srcTypeName srcTypeVars _) = do
   whenM (isTypeDefined $ getTypeName srcTypeName) $
     throwError $ TypeAlreadyDefined srcTypeName
   let typeVars = map getTypeVar srcTypeVars
-  foldM_ (\tvs tv -> if tv `Set.member` tvs
-                       then throwError (OtherError "Type var dup")  -- TODO
-                       else return $ Set.insert tv tvs)
-         Set.empty typeVars
+  foldM_ (\tvs (tv, stv) ->
+            if tv `Set.member` tvs
+              then throwError $ TypeParamAlreadyDefined stv
+              else return $ Set.insert tv tvs)
+         Set.empty (zip typeVars srcTypeVars)
   let kind = mkKind (length srcTypeVars)
   addType srcTypeName kind
 
@@ -93,7 +94,7 @@ checkMain = do
   funTypeInfo <- getFunTypeInfo $ FunName "main"
   let mainType = ioType unitType
   when (ftiType funTypeInfo /= mainType) $
-    throwError $ MainWrongType (ftiSrcType funTypeInfo)
+    throwError $ MainIncorrectType (ftiSrcType funTypeInfo)
 
 -- | Checks data constructors and adds them to the environment together with
 -- their function types.
@@ -127,10 +128,10 @@ tcFunDef (FunDef s srcFunName funSrcType srcFunEqs) = do
 tcFunEq :: FunName -> Type -> SrcFunEq -> TypeCheckM TyFunEq
 tcFunEq funName funType (FunEq s srcFunName patterns srcBodyExpr) = do
   when (getFunName srcFunName /= funName) $
-    throwError $ OtherError "Wrong fun name in eq"  -- TODO
+    throwError $ FunEqIncorrectName srcFunName funName
   (tyBodyExpr, bodyType) <- tcExpr srcBodyExpr
   when (bodyType /= funType) $
-    throwError $ OtherError "Wrong type of body"  -- TODO
+    throwError $ FunEqBodyIncorrectType srcBodyExpr funName funType bodyType
   return $ FunEq s srcFunName [] tyBodyExpr
 
 -- | Annotates variable occurences with their types.
@@ -191,11 +192,11 @@ srcTypeToType = srcTypeToType' Set.empty StarK
       ifM (isTypeDefined typeName)
         (do dataTypeInfo <- getDataTypeInfo typeName
             when (dtiKind dataTypeInfo /= kind) $
-              throwError $ OtherError "Ill-kinded"  -- TODO
+              throwError $ TypeConIncorrectApp srcTypeName (dtiKind dataTypeInfo) kind
             return $ TyApp typeName [])
         (if typeVar `Set.member` typeVars
            then return $ TyVar typeVar
-           else throwError $ OtherError "TypeNotDefined srcTypeName")  -- TODO
+           else throwError $ TypeNotDefined srcTypeName)
 
     srcTypeToType' typeVars kind st@(SrcTyApp _ stl str) = handleTyApp st stl str kind []
       where handleTyApp stApp st1 st2 k args =
@@ -210,7 +211,7 @@ srcTypeToType = srcTypeToType' Set.empty StarK
                   -- left) in order for the type to be well-kinded.
                   tyConOrVar <- srcTypeToType' typeVars (StarK :=>: k) sTyCon
                   when (isTypeVar tyConOrVar) $
-                    throwError $ OtherError "Type vars are of kind *"  -- TODO
+                    throwError $ TypeVarApp (srcTypeNameToTypeVar srcTypeName)
                   let typeName = getTyAppTypeName tyConOrVar  -- should not fail
                   -- start from kind *, it is another type constructor (another application)
                   t2 <- srcTypeToType' typeVars StarK st2
@@ -233,9 +234,9 @@ srcTypeToType = srcTypeToType' Set.empty StarK
     srcTypeToType' typeVars kind (SrcTyForAll _ srcTypeVar st) = do
       let typeVar = getTypeVar srcTypeVar
       whenM (isTypeDefined $ typeVarToTypeName typeVar) $
-        throwError $ OtherError "Type var shadows existing type"  -- TODO
+        throwError $ TypeVarShadowsType srcTypeVar
       when (typeVar `Set.member` typeVars) $
-        throwError $ OtherError "Type var shadows existing type var"  -- TODO
+        throwError $ TypeVarShadowsTypeVar srcTypeVar
       let typeVars' = Set.insert typeVar typeVars
       t <- srcTypeToType' typeVars' kind st
       return $ TyForAll typeVar t

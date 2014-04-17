@@ -74,6 +74,36 @@ spec =
       it "given a function redefinition" $
         failureCase "FunRedefinition"
 
+      it "given a type definition which has diplicated names of type parameters" $
+        failureCase "TypeParamsDuplication"
+
+      it "given a type where type variable has the same name as already defined type" $
+        failureCase "TypeVarShadowsType"
+
+      it "given a type where type variable is redefined" $
+        failureCase "TypeVarShadowsTypeVar"
+
+      it "given a type which contains type variable application" $
+        failureCase "TypeVarApp"
+
+      it "given a type that uses undefined type" $
+        failureCase "TypeNotDefined"
+
+      it "given a type constructor which is applied to too few arguments" $
+        failureCase "TypeIncorrectKindLess"
+
+      it "given a type constructor which is applied to too many arguments" $
+        failureCase "TypeIncorrectKindMore"
+
+      it "given an ill-kinded type nested in another type" $
+        failureCase "TypeIncorrectKindNested"
+
+      it "given a function equation with different function name" $
+        failureCase "FunEqIncorrectName"
+
+      it "given a function equation with incorrect type" $
+        failureCase "FunEqBodyIncorrectType"
+
 -- Infrastructure
 
 -- | Takes a file base name and an expected AST and performs a test (by

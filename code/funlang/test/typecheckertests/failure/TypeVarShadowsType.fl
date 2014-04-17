@@ -1,0 +1,5 @@
+type A = MkA
+
+fun : forall A . A -> A
+fun = unit;;
+

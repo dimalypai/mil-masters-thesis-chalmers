@@ -1,0 +1,2 @@
+FunLang type checking error at FunEqIncorrectName.fl:2,1-2,5:
+  Function equation has the name 'main2', but it should be 'main'

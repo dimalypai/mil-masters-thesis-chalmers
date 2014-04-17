@@ -1,0 +1,5 @@
+type Pair A B = P
+
+fun : forall A . forall B . Pair A A -> A -> B -> Pair B B B
+fun = unit;;
+

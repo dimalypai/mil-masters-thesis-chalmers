@@ -1,0 +1,2 @@
+FunLang type checking error at TypeNotDefined.fl:1,7-1,7:
+  Type 'A' is not defined

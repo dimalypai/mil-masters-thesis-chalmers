@@ -1,0 +1,3 @@
+main : IO Unit
+main2 = unit;;
+

@@ -1,0 +1,2 @@
+FunLang type checking error at TypeVarShadowsType.fl:3,14-3,14:
+  Type variable 'A' shadows existing type

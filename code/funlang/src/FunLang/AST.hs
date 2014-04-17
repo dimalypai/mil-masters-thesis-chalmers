@@ -303,6 +303,9 @@ getTypeName = snd
 typeNameToTypeVar :: TypeName -> TypeVar
 typeNameToTypeVar (TypeName typeName) = TypeVar typeName
 
+srcTypeNameToTypeVar :: TypeNameS s -> TypeVarS s
+srcTypeNameToTypeVar (s, typeName) = (s, typeNameToTypeVar typeName)
+
 newtype ConName = ConName String
   deriving Show
 

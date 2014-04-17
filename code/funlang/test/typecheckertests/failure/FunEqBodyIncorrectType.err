@@ -1,0 +1,2 @@
+FunLang type checking error at FunEqBodyIncorrectType.fl:2,8-2,11:
+  Function equation body of the function 'main' has to have type 'IO Unit', but it has type 'Unit'
