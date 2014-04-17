@@ -127,7 +127,7 @@ tcConDef typeName typeVars (ConDef _ srcConName srcConFields) = do
     throwError $ ConAlreadyDefined srcConName
   conFields <- mapM (srcTypeToTypeWithTypeVars $ Set.fromList typeVars) srcConFields
   let conResultType = TyApp typeName (map TyVar typeVars)
-      conArrType = foldr (\t acc -> TyArrow t acc) conResultType conFields
+      conArrType = tyArrowFromList conResultType conFields
       conType = foldr (\tv acc -> TyForAll tv acc) conArrType typeVars
   addDataCon srcConName conType typeName
 
@@ -185,8 +185,8 @@ tcExpr srcExpr =
 
     BinOpE s srcBinOp srcExpr1 srcExpr2 -> do
       let op = getBinOp srcBinOp
-      (tyExpr1, tyExpr2, resType) <- tcBinOp op srcExpr1 srcExpr2
-      return (BinOpE s srcBinOp tyExpr1 tyExpr2, resType)
+      (tyExpr1, tyExpr2, resultType) <- tcBinOp op srcExpr1 srcExpr2
+      return (BinOpE s srcBinOp tyExpr1 tyExpr2, resultType)
 
     ParenE s srcSubExpr -> do
       (tySubExpr, exprType) <- tcExpr srcSubExpr
@@ -200,9 +200,9 @@ tcBinOp :: BinOp -> SrcExpr -> SrcExpr -> TypeCheckM (TyExpr, TyExpr, Type)
 tcBinOp op srcExpr1 srcExpr2 = do
   tyExpr1WithType@(tyExpr1, _) <- tcExpr srcExpr1
   tyExpr2WithType@(tyExpr2, _) <- tcExpr srcExpr2
-  resType <- case op of
+  resultType <- case op of
     App -> tcApp tyExpr1WithType tyExpr2WithType
-  return (tyExpr1, tyExpr2, resType)
+  return (tyExpr1, tyExpr2, resultType)
 
 -- | Type synonym for binary operation type checking functions.
 -- They take two pairs of type checked operands with their types and return a
@@ -213,10 +213,10 @@ type BinOpTc = (TyExpr, Type) -> (TyExpr, Type) -> TypeCheckM Type
 tcApp :: BinOpTc
 tcApp (tyExpr1, expr1Type) (tyExpr2, expr2Type) =
   case expr1Type of
-    TyArrow argType resType ->
+    TyArrow argType resultType ->
       if expr2Type /= argType
         then throwError $ IncorrectFunArgType tyExpr2 argType expr2Type
-        else return resType
+        else return resultType
     _ -> throwError $ NotFunctionType tyExpr1 expr1Type
 
 -- | Statement type checking.
@@ -343,4 +343,9 @@ srcTypeToTypeWithTypeVarsOfKind typeVars kind (SrcTyForAll _ srcTypeVar st) = do
 
 srcTypeToTypeWithTypeVarsOfKind typeVars kind (SrcTyParen _ st) =
   srcTypeToTypeWithTypeVarsOfKind typeVars kind st
+
+-- | Constructs an arrow type given a result type and a list of parameter
+-- types.
+tyArrowFromList :: Type -> [Type] -> Type
+tyArrowFromList resultType = foldr (\t acc -> TyArrow t acc) resultType
 
