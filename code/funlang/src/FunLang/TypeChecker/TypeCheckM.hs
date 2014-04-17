@@ -103,6 +103,8 @@ isTypeDefined typeName = do
 
 -- | Doesn't check if the type is already in the environment.
 -- Will overwrite it in this case.
+--
+-- Note: data constructors are not available at this point.
 addType :: SrcTypeName -> Kind -> TypeCheckM ()
 addType srcTypeName kind = do
   let typeName = getTypeName srcTypeName
@@ -136,8 +138,7 @@ type FunTypeEnv = Map.Map FunName FunTypeInfo
 
 data FunTypeInfo = FunTypeInfo
   {
-    -- | Internal representation of the function type. Becomes available after type
-    -- checking of the function is completed.
+    -- | Internal representation of the function type.
     ftiType       :: Type
     -- | Source representation of function type. Gets transformed into the
     -- internal representation as the type checking procedes. May be useful for
