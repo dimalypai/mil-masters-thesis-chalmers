@@ -2,7 +2,7 @@
 -- tree and some helper functions.
 --
 -- AST is parameterised. Some of the data types have only one type parameter s
--- (stands for source) and some have two - v and s (stands for variable). The
+-- (stands for source) and some have two - v (stands for variable) and s. The
 -- reason is that variable occurences are parameterised and are represented
 -- differently at different stages. For more on this look at the 'Expr' and
 -- 'Stmt' data types (these are the only places where a field of type v is
@@ -18,10 +18,10 @@
 -- Some of the data types (which have several data constructors and/or
 -- recursive) have s fields wired-in, while others if possible have a type
 -- synonym for a pair where the first component is unannotated data type and
--- the second is of type s. Look at most of the *Name data types.  Note: this
--- order of v and s (as well as when used as type parameters) is chosen for
--- convenience of working with 'SrcAnnotated' type class (so that s is the last
--- type parameter).
+-- the second one is of type s. Look at most of the *Name data types. Note:
+-- this order of v and s (as well as when used as type parameters) is chosen
+-- for convenience of working with 'SrcAnnotated' type class (so that s is the
+-- last type parameter).
 --
 -- For most of the data types there are type synonyms: Src and Ty versions.
 -- Src versions exist for all data types, Ty - only for data types with two
