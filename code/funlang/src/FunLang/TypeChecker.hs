@@ -161,6 +161,15 @@ tcExpr srcExpr =
   case srcExpr of
     LitE srcLit -> return (LitE srcLit, typeOfLiteral $ getLiteral srcLit)
 
+    VarE s var -> do
+      -- it can be both a local variable and a global function
+      let funName = varToFunName var
+      ifM (isFunctionDefined funName)
+        (do funTypeInfo <- getFunTypeInfo funName
+            let funType = ftiType funTypeInfo
+            return (VarE s (VarTy (var, funType)), funType))
+        (throwError $ VarNotBound var s)  -- TODO: variables
+
     ConNameE srcConName -> do
       let conName = getConName srcConName
       unlessM (isDataConDefined conName) $

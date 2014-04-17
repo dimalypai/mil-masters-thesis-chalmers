@@ -102,6 +102,9 @@ spec =
       it "given an application with incorrect argument type" $
         failureCase "AppIncorrectArgType"
 
+      it "given an unbound variable name" $
+        failureCase "VarNotBound"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

@@ -1,0 +1,2 @@
+FunLang type checking error at VarNotBound.fl:7,7-7,7:
+  Name 'x' is not bound

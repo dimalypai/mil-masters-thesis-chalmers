@@ -32,6 +32,7 @@ data TcError =
   | NotMonad SrcType
   | IncorrectFunArgType TyExpr Type Type
   | NotFunctionType TyExpr Type
+  | VarNotBound Var SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -119,6 +120,10 @@ instance Pretty TcError where
   prPrn (NotFunctionType funExpr actType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan2 funExpr) <> colon $+$
     nest indLvl (text "The expression needs to have a function type, but it has type" <+> quotes (prPrn actType))
+
+  prPrn (VarNotBound var srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Name" <+> quotes (prPrn var) <+> text "is not bound")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

@@ -28,6 +28,9 @@ instance Pretty Kind where
   prPrn StarK = text "*"
   prPrn (k1 :=>: k2) = prPrn k1 <+> text "=>" <+> prPrn k2  -- TODO: parens
 
+instance Pretty Var where
+  prPrn (Var varStr) = text varStr
+
 instance Pretty TypeVar where
   prPrn (TypeVar typeVarStr) = text typeVarStr
 

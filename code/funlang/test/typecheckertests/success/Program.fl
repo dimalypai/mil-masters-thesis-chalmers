@@ -16,3 +16,6 @@ type Fun = MkFun Int Unit
 app : Fun
 app = MkFun 1 unit;;
 
+fun4 : Unit
+fun4 = fun;;
+

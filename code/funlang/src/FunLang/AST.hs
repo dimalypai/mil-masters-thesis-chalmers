@@ -272,6 +272,9 @@ newtype Var = Var String
 type VarS s = (s, Var)
 type SrcVar = VarS SrcSpan
 
+varToFunName :: Var -> FunName
+varToFunName (Var varName) = FunName varName
+
 -- | Variable annotated with its type.
 newtype VarTy = VarTy (Var, Type)
   deriving Show
