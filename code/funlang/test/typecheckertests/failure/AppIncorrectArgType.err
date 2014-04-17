@@ -1,0 +1,2 @@
+FunLang type checking error at AppIncorrectArgType.fl:9,13-9,16:
+  Incorrect type of the argument. The expected type is 'Int', but it has type 'Unit'

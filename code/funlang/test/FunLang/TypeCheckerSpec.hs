@@ -96,6 +96,12 @@ spec =
       it "given a return statement with incorrect expression type" $
         failureCase "ReturnIncorrectExprType"
 
+      it "given an application with left-hand side which is not a function" $
+        failureCase "AppNotFunction"
+
+      it "given an application with incorrect argument type" $
+        failureCase "AppIncorrectArgType"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

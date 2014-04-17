@@ -1,0 +1,2 @@
+FunLang type checking error at AppNotFunction.fl:7,7-7,7:
+  The expression needs to have a function type, but it has type 'Int'

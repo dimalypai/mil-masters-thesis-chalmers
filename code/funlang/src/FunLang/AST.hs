@@ -204,6 +204,9 @@ data BinOp = App
 type BinOpS s = (s, BinOp)
 type SrcBinOp = BinOpS SrcSpan
 
+getBinOp :: BinOpS s -> BinOp
+getBinOp = snd
+
 -- | Internal representation of types. What types really represent.
 --
 -- Type constructors are fully applied. See also comment on 'Kind'.

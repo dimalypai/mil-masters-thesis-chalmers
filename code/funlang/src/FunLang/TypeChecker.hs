@@ -174,10 +174,41 @@ tcExpr srcExpr =
       -- of the whole expression
       return (DoE s tyStmts, last stmtTypes)
 
+    BinOpE s srcBinOp srcExpr1 srcExpr2 -> do
+      let op = getBinOp srcBinOp
+      (tyExpr1, tyExpr2, resType) <- tcBinOp op srcExpr1 srcExpr2
+      return (BinOpE s srcBinOp tyExpr1 tyExpr2, resType)
+
     ParenE s srcSubExpr -> do
       (tySubExpr, exprType) <- tcExpr srcSubExpr
       return (ParenE s tySubExpr, exprType)
 
+-- Binary operations type checking
+
+-- | Type checks a given binary operation. Takes operands.
+-- Returns a triple of type checked operands and a type of the result.
+tcBinOp :: BinOp -> SrcExpr -> SrcExpr -> TypeCheckM (TyExpr, TyExpr, Type)
+tcBinOp op srcExpr1 srcExpr2 = do
+  tyExpr1WithType@(tyExpr1, _) <- tcExpr srcExpr1
+  tyExpr2WithType@(tyExpr2, _) <- tcExpr srcExpr2
+  resType <- case op of
+    App -> tcApp tyExpr1WithType tyExpr2WithType
+  return (tyExpr1, tyExpr2, resType)
+
+-- | Type synonym for binary operation type checking functions.
+-- They take two pairs of type checked operands with their types and return a
+-- type of the result.
+type BinOpTc = (TyExpr, Type) -> (TyExpr, Type) -> TypeCheckM Type
+
+-- | Function application type checking.
+tcApp :: BinOpTc
+tcApp (tyExpr1, expr1Type) (tyExpr2, expr2Type) =
+  case expr1Type of
+    TyArrow argType resType ->
+      if expr2Type /= argType
+        then throwError $ IncorrectFunArgType tyExpr2 argType expr2Type
+        else return resType
+    _ -> throwError $ NotFunctionType tyExpr1 expr1Type
 
 -- | Statement type checking.
 -- Returns a type checked statement together with its type.

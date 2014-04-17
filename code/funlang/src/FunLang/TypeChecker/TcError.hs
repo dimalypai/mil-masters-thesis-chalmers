@@ -30,6 +30,8 @@ data TcError =
   | TypeVarShadowsType SrcTypeVar
   | TypeVarShadowsTypeVar SrcTypeVar
   | NotMonad SrcType
+  | IncorrectFunArgType TyExpr Type Type
+  | NotFunctionType TyExpr Type
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -108,6 +110,15 @@ instance Pretty TcError where
   prPrn (NotMonad srcType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
     nest indLvl (text "Type" <+> quotes (prPrn srcType) <+> text "is not a monad")
+
+  prPrn (IncorrectFunArgType tyArgExpr expType actType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan2 tyArgExpr) <> colon $+$
+    nest indLvl (text "Incorrect type of the argument. The expected type is" <+> quotes (prPrn expType) <>
+      text ", but it has type" <+> quotes (prPrn actType))
+
+  prPrn (NotFunctionType funExpr actType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan2 funExpr) <> colon $+$
+    nest indLvl (text "The expression needs to have a function type, but it has type" <+> quotes (prPrn actType))
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

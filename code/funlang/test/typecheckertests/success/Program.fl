@@ -11,3 +11,8 @@ fun = ((unit));;
 fun2 : forall A . forall B . A -> B -> Pair A B
 fun2 = MkPair;;
 
+type Fun = MkFun Int Unit
+
+app : Fun
+app = MkFun 1 unit;;
+

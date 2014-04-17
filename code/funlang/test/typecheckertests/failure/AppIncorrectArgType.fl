@@ -1,0 +1,10 @@
+main : IO Unit
+main = do
+  return [IO] unit;
+end;;
+
+type Fun = MkFun Int Unit
+
+app : Fun
+app = MkFun unit 1;;
+
