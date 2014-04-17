@@ -30,6 +30,12 @@ stringType = mkSimpleType "String"
 ioType :: Type -> Type
 ioType t = TyApp (TypeName "IO") [t]
 
+typeOfLiteral :: Literal -> Type
+typeOfLiteral UnitLit      = unitType
+typeOfLiteral IntLit    {} = intType
+typeOfLiteral FloatLit  {} = floatType
+typeOfLiteral StringLit {} = stringType
+
 -- Monads
 
 monadKind :: Kind

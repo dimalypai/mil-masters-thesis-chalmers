@@ -178,11 +178,6 @@ tcExpr srcExpr =
       (tySubExpr, exprType) <- tcExpr srcSubExpr
       return (ParenE s tySubExpr, exprType)
 
-typeOfLiteral :: Literal -> Type
-typeOfLiteral UnitLit      = unitType
-typeOfLiteral IntLit    {} = intType
-typeOfLiteral FloatLit  {} = floatType
-typeOfLiteral StringLit {} = stringType
 
 -- | Statement type checking.
 -- Returns a type checked statement together with its type.
