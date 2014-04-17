@@ -163,12 +163,32 @@ tcExpr srcExpr =
 
     VarE s var -> do
       -- it can be both a local variable and a global function
-      let funName = varToFunName var
-      ifM (isFunctionDefined funName)
-        (do funTypeInfo <- getFunTypeInfo funName
-            let funType = ftiType funTypeInfo
-            return (VarE s (VarTy (var, funType)), funType))
-        (throwError $ VarNotBound var s)  -- TODO: variables
+      unlessM (isVarBound var) $
+        throwError $ VarNotBound var s
+      varType <- getVarType var
+      return (VarE s (VarTy (var, varType)), varType)
+
+    LambdaE s varBinders srcBodyExpr -> do
+      -- collect variables bound by the lambda together with their types
+      (localTypeEnv, revParamTypes) <-
+        foldM (\(localTyEnv, revTyList) vb -> do
+            let var = getVar (getBinderVar vb)
+            isBound <- isVarBound var
+            -- it is important to check in both places, since localTyEnv
+            -- is not queried by 'isVarBound', see `LambdaParamsDup` test case
+            when (isBound || isVarInLocalEnv var localTyEnv) $
+              throwError $ VarShadowing (getBinderVar vb)
+            varType <- srcTypeToType (getBinderType vb)
+            return $ (addLocalVar var varType localTyEnv, varType : revTyList))
+          (emptyLocalTypeEnv, []) varBinders
+
+      -- extend local type environment with variables introduced by the lambda
+      -- this is safe, since we ensure above that all variable and function names are distinct
+      -- perform the type checking of the body in this extended environment
+      (tyBodyExpr, bodyType) <- locallyWithEnv localTypeEnv (tcExpr srcBodyExpr)
+      let paramTypes = reverse revParamTypes
+      let lambdaType = tyArrowFromList bodyType paramTypes
+      return (LambdaE s varBinders tyBodyExpr, lambdaType)
 
     ConNameE srcConName -> do
       let conName = getConName srcConName

@@ -19,3 +19,24 @@ app = MkFun 1 unit;;
 fun4 : Unit
 fun4 = fun;;
 
+lamFun : Int -> Unit -> String
+lamFun = \x : Int y : Unit . "Hello";;
+
+lamFun2 : Int -> Unit -> String
+lamFun2 = \x : Int . \y : Unit . "Hello2";;
+
+lamApp1 : Unit -> String
+lamApp1 = lamFun 1;;
+
+lamApp2 : String
+lamApp2 = lamApp1 unit;;
+
+lamApp3 : Unit -> String
+lamApp3 = lamFun2 1;;
+
+lamApp4 : String
+lamApp4 = lamFun2 1 unit;;
+
+lamFun3 : Unit -> Unit
+lamFun3 = (\x : Unit -> Unit . x) (\x : Unit . x);;
+

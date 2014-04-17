@@ -1,0 +1,2 @@
+FunLang type checking error at LambdaTypeNotDefined.fl:7,12-7,12:
+  Type 'T' is not defined

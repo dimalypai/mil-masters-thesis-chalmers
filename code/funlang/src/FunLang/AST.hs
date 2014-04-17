@@ -267,10 +267,13 @@ mkKind 0 = StarK
 mkKind n = StarK :=>: mkKind (n - 1)
 
 newtype Var = Var String
-  deriving Show
+  deriving (Show, Eq, Ord)
 
 type VarS s = (s, Var)
 type SrcVar = VarS SrcSpan
+
+getVar :: VarS s -> Var
+getVar = snd
 
 varToFunName :: Var -> FunName
 varToFunName (Var varName) = FunName varName
@@ -284,6 +287,12 @@ data VarBinder s = VarBinder s (VarS s) (TypeS s)
   deriving Show
 
 type SrcVarBinder = VarBinder SrcSpan
+
+getBinderVar :: VarBinder s -> VarS s
+getBinderVar (VarBinder _ srcVar _) = srcVar
+
+getBinderType :: VarBinder s -> TypeS s
+getBinderType (VarBinder s _ srcType) = srcType
 
 newtype TypeVar = TypeVar String
   deriving (Show, Eq, Ord)

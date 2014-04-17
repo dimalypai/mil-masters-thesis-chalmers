@@ -105,6 +105,27 @@ spec =
       it "given an unbound variable name" $
         failureCase "VarNotBound"
 
+      it "given a function body with lambda of incorrect type" $
+        failureCase "LambdaIncorrectType"
+
+      it "given an application of lambda to the argument of incorrect type" $
+        failureCase "LambdaAppIncorrectType"
+
+      it "given a lambda expression with duplicated parameter names" $
+        failureCase "LambdaParamsDup"
+
+      it "given a lambda expression which shadows an existing function" $
+        failureCase "VarShadowsFun"
+
+      it "given nested lambda expressions with the same parameter names" $
+        failureCase "NestedLambdasVarShadowing"
+
+      it "given a lambda expression with a binding that references type which is not in scope" $
+        failureCase "LambdaTypeNotDefined"
+
+      it "given a lambda expression and a free variable with the same name as lambda parameter" $
+        failureCase "LambdaParamFreeVarName"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

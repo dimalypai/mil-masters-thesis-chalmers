@@ -1,0 +1,8 @@
+main : IO Unit
+main = do
+  return [IO] unit;
+end;;
+
+fun : Unit
+fun = (\x : Int . unit) "string";;
+

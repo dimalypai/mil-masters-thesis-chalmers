@@ -1,0 +1,2 @@
+FunLang type checking error at LambdaParamsDup.fl:7,17-7,17:
+  Variable binding for 'x' shadows an existing variable or function

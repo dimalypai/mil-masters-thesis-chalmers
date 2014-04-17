@@ -33,6 +33,7 @@ data TcError =
   | IncorrectFunArgType TyExpr Type Type
   | NotFunctionType TyExpr Type
   | VarNotBound Var SrcSpan
+  | VarShadowing SrcVar
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -124,6 +125,10 @@ instance Pretty TcError where
   prPrn (VarNotBound var srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Name" <+> quotes (prPrn var) <+> text "is not bound")
+
+  prPrn (VarShadowing srcVar) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan2 srcVar) <> colon $+$
+    nest indLvl (text "Variable binding for" <+> quotes (prPrn $ getVar srcVar) <+> text "shadows an existing variable or function")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

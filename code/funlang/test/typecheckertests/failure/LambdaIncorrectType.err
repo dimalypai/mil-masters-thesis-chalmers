@@ -1,0 +1,2 @@
+FunLang type checking error at LambdaIncorrectType.fl:7,7-7,19:
+  Function equation body of the function 'fun' has to have type 'Int -> Unit', but it has type 'Unit -> Int'

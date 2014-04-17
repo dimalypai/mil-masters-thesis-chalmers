@@ -25,12 +25,20 @@ module FunLang.TypeChecker.TypeCheckM
   , getFunTypeInfo
   , isFunctionDefined
   , addFunction
+
+  , emptyLocalTypeEnv
+  , isVarBound
+  , isVarInLocalEnv
+  , getVarType
+  , addLocalVar
+  , locallyWithEnv
+
   , module Control.Monad.Error
   ) where
 
 import Control.Monad.Error
 import Control.Monad.State
-import Control.Monad.Identity
+import Control.Monad.Reader
 import Control.Applicative
 import qualified Data.Map as Map
 import Data.Maybe (fromJust)
@@ -40,15 +48,15 @@ import FunLang.AST
 import FunLang.TypeChecker.TcError
 import FunLang.BuiltIn
 
--- | Type checking monad. Uses 'StateT' for type environment and 'ErrorT' for
--- error handling.
-newtype TypeCheckM a = TC { runTC :: StateT TypeEnv (ErrorT TcError Identity) a }
-  deriving (Monad, MonadState TypeEnv, MonadError TcError, Functor, Applicative)
+-- | Type checking monad. Uses 'StateT' for type environment, 'ErrorT' for
+-- error handling and 'Reader' for local type environment.
+newtype TypeCheckM a = TC { runTC :: StateT TypeEnv (ErrorT TcError (Reader LocalTypeEnv)) a }
+  deriving (Monad, MonadState TypeEnv, MonadError TcError, MonadReader LocalTypeEnv, Functor, Applicative)
 
 -- | Main entry point to the type checking monad.
 -- Get a type checking computation and a type environment to begin with.
 runTypeCheckM :: TypeCheckM a -> TypeEnv -> Either TcError (a, TypeEnv)
-runTypeCheckM tcm typeEnv = runIdentity $
+runTypeCheckM tcm typeEnv = runReaderFrom emptyLocalTypeEnv $
                             runErrorT $
                             runStateTFrom typeEnv $
                             runTC tcm
@@ -204,9 +212,53 @@ addFunction srcFunName funType funSrcType = do
   let funName = getFunName srcFunName
   modifyFunTypeEnv $ Map.insert funName (FunTypeInfo funType funSrcType srcFunName)
 
+-- | Local type environment (inside functions, lambdas etc.)
+type LocalTypeEnv = Map.Map Var Type
+
+-- | Empty local type environment.
+emptyLocalTypeEnv :: LocalTypeEnv
+emptyLocalTypeEnv = Map.empty
+
+-- | Check whether a variable is in scope. It can be either local variable name
+-- or a function name.
+isVarBound :: Var -> TypeCheckM Bool
+isVarBound var = do
+  isLocalVar <- asks (Map.member var)
+  isFunction <- isFunctionDefined (varToFunName var)
+  return (isLocalVar || isFunction)
+
+-- | Pure function for querying local type environment.
+isVarInLocalEnv :: Var -> LocalTypeEnv -> Bool
+isVarInLocalEnv = Map.member
+
+-- | Returns variable type. First looks for locals and then for functions.
+--
+-- Note: Unsafe. Should be used only after check that the variable is bound.
+getVarType :: Var -> TypeCheckM Type
+getVarType var = do
+  mVarType <- asks (Map.lookup var)
+  case mVarType of
+    Just varType -> return varType
+    Nothing -> do
+      funTypeInfo <- getFunTypeInfo (varToFunName var)
+      return $ ftiType funTypeInfo
+
+-- | Extends local type environment. Pure (meaning, not a 'TypeCheckM' function).
+addLocalVar :: Var -> Type -> LocalTypeEnv -> LocalTypeEnv
+addLocalVar = Map.insert
+
+-- | Takes a separate local type environment and merges it with what is already
+-- in the local type environment. Should be safe, since we don't allow shadowing.
+locallyWithEnv :: LocalTypeEnv -> TypeCheckM a -> TypeCheckM a
+locallyWithEnv localTypeEnv = local (Map.union localTypeEnv)
+
 -- Utils
 
 -- | Convenient version of 'runStateT' with the arguments flipped.
 runStateTFrom :: Monad m => s -> StateT s m a -> m (a, s)
 runStateTFrom = flip runStateT
+
+-- | Convenient version of 'runReader' with the arguments flipped.
+runReaderFrom :: r -> Reader r a -> a
+runReaderFrom = flip runReader
 
