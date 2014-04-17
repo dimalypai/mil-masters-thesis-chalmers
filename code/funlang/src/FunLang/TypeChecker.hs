@@ -3,6 +3,7 @@
 module FunLang.TypeChecker
   ( typeCheck
   , typeCheckStage
+  , typeOf
   , TypeEnv
   , initTypeEnv
   , TcError
@@ -28,6 +29,11 @@ typeCheck srcProgram = runTypeCheckM (tcProgram srcProgram) initTypeEnv
 -- In the case of success returns a typed program and a type environment.
 typeCheckStage :: SrcProgram -> TypeEnv -> Either TcError (TyProgram, TypeEnv)
 typeCheckStage srcProgram typeEnv = runTypeCheckM (tcProgram srcProgram) typeEnv
+
+-- | Type checks a given source expression in a given type environment.
+-- In the case of success - returns its type.
+typeOf :: SrcExpr -> TypeEnv -> Either TcError Type
+typeOf srcExpr typeEnv = fmap (snd . fst) $ runTypeCheckM (tcExpr srcExpr) typeEnv
 
 tcProgram :: SrcProgram -> TypeCheckM TyProgram
 tcProgram (Program s typeDefs funDefs) = do
@@ -151,8 +157,8 @@ typeOfLiteral StringLit {} = stringType
 
 -- | Returns a type of type checked and annotated expression.
 -- Purely local process.
-typeOf :: TyExpr -> Type
-typeOf (LitE {}) = undefined
+--typeOf :: TyExpr -> Type
+--typeOf (LitE {}) = undefined
 
 -- | Annotates variable occurences with their types.
 -- Returns a type checked and annotated statement together with its type.

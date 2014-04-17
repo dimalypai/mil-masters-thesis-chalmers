@@ -4,6 +4,7 @@
 module FunLang.Parser
   ( parse
   , parseFunLang
+  , parseExpr
   , ParseError
   , prPrint
   ) where
@@ -19,7 +20,8 @@ import FunLang.Parser.ParseError
 
 }
 
-%name      funLang
+%name      parseProgram  program
+%name      parseExprToks expr
 %tokentype { TokenWithSpan }
 %error     { parseError }
 %monad     { ParseM }
@@ -321,15 +323,22 @@ newtype ParseM a = ParseM { runParse :: ErrorT ParseError (Reader FileName) a }
 type FileName = String
 
 -- | Main parsing function provided by Happy.
-funLang :: [TokenWithSpan] -> ParseM SrcProgram
+parseProgram :: [TokenWithSpan] -> ParseM SrcProgram
+
+-- | Expression parsing function provided by Happy.
+parseExprToks :: [TokenWithSpan] -> ParseM SrcExpr
 
 -- | One of the entry points to the Parser. Works on list of tokens.
 parse :: FileName -> [TokenWithSpan] -> Either ParseError SrcProgram
-parse fileName toks = runReader (runErrorT $ runParse $ funLang toks) fileName
+parse fileName toks = runReader (runErrorT $ runParse $ parseProgram toks) fileName
 
 -- | One of the entry points to the Parser. Works on program text.
 parseFunLang :: FileName -> String -> Either ParseError SrcProgram
 parseFunLang fileName input = parse fileName (lexer input)
+
+-- | One of the entry points to the Parser. Parses expression. Works on list of tokens.
+parseExpr :: FileName -> [TokenWithSpan] -> Either ParseError SrcExpr
+parseExpr fileName toks = runReader (runErrorT $ runParse $ parseExprToks toks) fileName
 
 -- | Generates a general parsing error with a source position of the token where the error occured.
 parseError :: [TokenWithSpan] -> ParseM a
