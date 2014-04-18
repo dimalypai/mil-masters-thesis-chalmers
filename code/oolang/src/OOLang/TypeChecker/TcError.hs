@@ -18,7 +18,7 @@ data TcError =
   | ClassNotDefined SrcClassName
   | FunctionAlreadyDefined SrcFunName
   | MainNotDefined
-  | MainWrongType SrcFunType
+  | MainIncorrectType SrcFunType Type
   | MainPure SrcFunName
   | InheritanceCycle
   | OtherError String  -- ^ Contains error message.
@@ -48,10 +48,10 @@ instance Pretty TcError where
 
   prPrn MainNotDefined = tcErrorHeader <> colon <+> text "Function 'main' is not defined"
 
-  prPrn (MainWrongType srcFunType) =
+  prPrn (MainIncorrectType srcFunType funType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcFunType) <> colon $+$
     nest indLvl (text "Function 'main' has to have type" <+> quotes (prPrn TyUnit) <>
-      text ", but it has type" <+> quotes (prPrn $ funTypeToType srcFunType))
+      text ", but it has type" <+> quotes (prPrn funType))
 
   prPrn (MainPure srcFunName) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcFunName) <> colon $+$

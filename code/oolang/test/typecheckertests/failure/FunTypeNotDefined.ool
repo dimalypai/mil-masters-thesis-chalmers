@@ -1,0 +1,4 @@
+def main : Unit => unit; end
+
+def fun : A => unit; end
+

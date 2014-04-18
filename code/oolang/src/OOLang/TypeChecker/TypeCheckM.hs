@@ -1,6 +1,8 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 -- | Module containing type checking monad and API for building a type checker.
+-- This module mostly is for working with type environment (querying, adding).
+-- Nothing smart should happen here.
 module OOLang.TypeChecker.TypeCheckM
   ( TypeCheckM
   , runTypeCheckM
@@ -31,6 +33,8 @@ import Control.Monad.Error
 import Control.Monad.State
 import Control.Monad.Identity
 import Control.Applicative
+-- 'first' and 'second' are used just to transform components of a pair
+import Control.Arrow (first, second)
 import qualified Data.Map as Map
 import Data.Maybe (fromJust)
 
@@ -39,16 +43,29 @@ import OOLang.TypeChecker.TcError
 
 -- | Type checking monad. Uses 'StateT' for type environment and 'ErrorT' for
 -- error handling.
-newtype TypeCheckM a = TC { runTC :: StateT TypeEnv (ErrorT TcError Identity) a }
-  deriving (Monad, MonadState TypeEnv, MonadError TcError, Functor, Applicative)
+newtype TypeCheckM a = TC { runTC :: StateT TypeCheckMState (ErrorT TcError Identity) a }
+  deriving (Monad, MonadState TypeCheckMState, MonadError TcError, Functor, Applicative)
+
+type TypeCheckMState = (TypeEnv, LocalTypeEnv)
 
 -- | Main entry point to the type checking monad.
 -- Get a type checking computation and a type environment to begin with.
 runTypeCheckM :: TypeCheckM a -> TypeEnv -> Either TcError (a, TypeEnv)
-runTypeCheckM tcm typeEnv = runIdentity $
+runTypeCheckM tcm typeEnv = fmap dropLocalTypeEnv $
+                            runIdentity $
                             runErrorT $
-                            runStateTFrom typeEnv $
+                            runStateTFrom (typeEnv, emptyLocalTypeEnv) $
                             runTC tcm
+
+getTypeEnv :: TypeCheckMState -> TypeEnv
+getTypeEnv = fst
+
+getLocalTypeEnv :: TypeCheckMState -> LocalTypeEnv
+getLocalTypeEnv = snd
+
+dropLocalTypeEnv :: (a, (TypeEnv, LocalTypeEnv))
+                 -> (a, TypeEnv)
+dropLocalTypeEnv = second getTypeEnv
 
 -- | Type environment.
 newtype TypeEnv = TypeEnv { unTypeEnv :: (ClassTypeEnv, FunTypeEnv) }
@@ -75,7 +92,7 @@ data ClassTypeInfo = ClassTypeInfo
 
 -- | 'ClassTypeEnv' getter.
 getClassTypeEnv :: TypeCheckM ClassTypeEnv
-getClassTypeEnv = gets (fst . unTypeEnv)
+getClassTypeEnv = gets (fst . unTypeEnv . getTypeEnv)
 
 -- | Get class type environment as an associative list.
 getClassesAssoc :: TypeCheckM [(ClassName, ClassTypeInfo)]
@@ -85,7 +102,7 @@ getClassesAssoc = fmap Map.assocs getClassTypeEnv
 modifyClassTypeEnv :: (ClassTypeEnv -> ClassTypeEnv) -> TypeCheckM ()
 modifyClassTypeEnv f = do
   (classTypeEnv, funTypeEnv) <- (,) <$> getClassTypeEnv <*> getFunTypeEnv
-  put $ mkTypeEnv (f classTypeEnv) funTypeEnv
+  modify $ first (const $ mkTypeEnv (f classTypeEnv) funTypeEnv)
 
 isClassDefined :: ClassName -> TypeCheckM Bool
 isClassDefined className = do
@@ -123,13 +140,13 @@ data FunTypeInfo = FunTypeInfo
 
 -- | 'FunTypeEnv' getter.
 getFunTypeEnv :: TypeCheckM FunTypeEnv
-getFunTypeEnv = gets (snd . unTypeEnv)
+getFunTypeEnv = gets (snd . unTypeEnv . getTypeEnv)
 
 -- | Modification function for 'FunTypeEnv'.
 modifyFunTypeEnv :: (FunTypeEnv -> FunTypeEnv) -> TypeCheckM ()
 modifyFunTypeEnv f = do
   (classTypeEnv, funTypeEnv) <- (,) <$> getClassTypeEnv <*> getFunTypeEnv
-  put $ mkTypeEnv classTypeEnv (f funTypeEnv)
+  modify $ first (const $ mkTypeEnv classTypeEnv (f funTypeEnv))
 
 isFunctionDefined :: FunName -> TypeCheckM Bool
 isFunctionDefined funName = do
@@ -138,11 +155,10 @@ isFunctionDefined funName = do
 
 -- | Doesn't check if the function is already in the environment.
 -- Will overwrite it in this case.
-addFunction :: SrcFunName -> SrcFunType -> Bool -> TypeCheckM ()
-addFunction srcFunName srcFunType isPure = do
+addFunction :: SrcFunName -> Type -> Bool -> SrcFunType -> TypeCheckM ()
+addFunction srcFunName funType isPure srcFunType = do
   let funName = getFunName srcFunName
-      funcType = funTypeToType srcFunType
-  modifyFunTypeEnv $ Map.insert funName (FunTypeInfo funcType isPure srcFunName srcFunType)
+  modifyFunTypeEnv $ Map.insert funName (FunTypeInfo funType isPure srcFunName srcFunType)
 
 -- | Returns all information about the function from the environment.
 --
@@ -151,6 +167,14 @@ getFunTypeInfo :: FunName -> TypeCheckM FunTypeInfo
 getFunTypeInfo funName = do
   funTypeEnv <- getFunTypeEnv
   return $ fromJust $ Map.lookup funName funTypeEnv  -- fromJust may fail
+
+-- Local type environment
+
+-- | Local variables, parameters etc. and their types.
+type LocalTypeEnv = Map.Map Var Type
+
+emptyLocalTypeEnv :: LocalTypeEnv
+emptyLocalTypeEnv = Map.empty
 
 -- Utils
 

@@ -1,5 +1,10 @@
 -- | Type checking module. Most of the functions follow the AST structure.
 -- Built using the API from 'TypeCheckM'.
+--
+-- Type checking produces a type environment with information about global
+-- definitions and annotates local variable occurences with their types. So,
+-- when we say type checked and it is applicable to annotate something it also
+-- means `annotated`.
 module OOLang.TypeChecker
   ( typeCheck
   , typeCheckStage
@@ -11,6 +16,7 @@ module OOLang.TypeChecker
 
 import qualified Data.Set as Set
 import Data.Maybe (isJust, fromJust)
+import Control.Applicative ((<$>), (<*>))
 
 import OOLang.AST
 import OOLang.TypeChecker.TypeCheckM
@@ -29,11 +35,14 @@ typeCheck srcProgram = runTypeCheckM (tcProgram srcProgram) initTypeEnv
 typeCheckStage :: SrcProgram -> TypeEnv -> Either TcError (TyProgram, TypeEnv)
 typeCheckStage srcProgram typeEnv = runTypeCheckM (tcProgram srcProgram) typeEnv
 
+-- | Entry point into the type checking of the program.
+-- Returns a type checked program.
 tcProgram :: SrcProgram -> TypeCheckM TyProgram
 tcProgram (Program s classDefs funDefs) = do
   collectDefs classDefs funDefs
+  -- Class names and function types (but not parameter names) have been checked.
   -- Now first information about definitions is in the environment:
-  -- + class names and their super classes
+  -- + class names and their super classes (not checked)
   -- + function names and their types and purity indicators
   checkMain
   checkInheritance
@@ -50,27 +59,36 @@ tcProgram (Program s classDefs funDefs) = do
 -- * class names and possibly their super classes
 --
 -- * function names and their types and purity indicators
+--
+-- It also does checking of function types. But it does not check super
+-- classes and function parameter names.
 collectDefs :: [SrcClassDef] -> [SrcFunDef] -> TypeCheckM ()
 collectDefs classDefs funDefs = do
+  -- It is essential that we collect classes before functions, because function
+  -- types may mention defined classes.
   mapM_ collectClassDef classDefs
   mapM_ collectFunDef funDefs
 
--- | Checks if the class was already defined.
--- If yes - throws an error, otherwise - adds the class to the environment.
+-- | Checks if the class is already defined.
+-- Adds the class (and its super class if it has one) to the environment.
+-- Super class is not checked (whether it is defined).
 collectClassDef :: SrcClassDef -> TypeCheckM ()
 collectClassDef (ClassDef _ srcClassName mSuperSrcClassName _) = do
   whenM (isClassDefined $ getClassName srcClassName) $
     throwError $ ClassAlreadyDefined srcClassName
   addClass srcClassName mSuperSrcClassName
 
--- | Checks if the function was already defined.
--- If yes - throws an error, otherwise - adds the function to the environment.
+-- | Checks if the function is already defined.
+-- Checks that the specified function type is correct (used types are defined).
+-- Does not check parameter names.
 -- Performs a function type transformation.
+-- Adds the function, its type and purity indicator to the environment.
 collectFunDef :: SrcFunDef -> TypeCheckM ()
 collectFunDef (FunDef _ srcFunName srcFunType _ isPure) = do
   whenM (isFunctionDefined $ getFunName srcFunName) $
     throwError $ FunctionAlreadyDefined srcFunName
-  addFunction srcFunName srcFunType isPure
+  funType <- srcFunTypeToType srcFunType
+  addFunction srcFunName funType isPure srcFunType
 
 -- | Program needs to have an entry point: `main : Unit`.
 checkMain :: TypeCheckM ()
@@ -79,7 +97,7 @@ checkMain = do
     throwError MainNotDefined
   funTypeInfo <- getFunTypeInfo $ FunName "main"
   when (ftiType funTypeInfo /= TyUnit) $
-    throwError $ MainWrongType (ftiSrcFunType funTypeInfo)
+    throwError $ MainIncorrectType (ftiSrcFunType funTypeInfo) (ftiType funTypeInfo)
   when (ftiIsPure funTypeInfo) $
     throwError $ MainPure (ftiSrcFunName funTypeInfo)
 
@@ -127,11 +145,61 @@ traverseHierarchy className marked onStack = do
                else return (marked', onStack)  -- remove current class name from the stack
     else return (marked', onStack)  -- remove current class name from the stack
 
+-- | Checks all class members (in two passes) and adds them to the environment.
+-- Returns type checked class definition.
 tcClassDef :: SrcClassDef -> TypeCheckM TyClassDef
-tcClassDef (ClassDef s srcClassName mSuperSrcClassName members) = do
-  return $ ClassDef s srcClassName mSuperSrcClassName []
+tcClassDef (ClassDef s srcClassName mSuperSrcClassName srcMembers) = do
+  return $ ClassDef s srcClassName mSuperSrcClassName []  -- TODO
 
+-- | Checks that all parameter names are distinct. Their types are already
+-- checked and the function type is transformed. Adds parameters to the local
+-- environment.
+-- Checks function body (statements).
+-- Checks that the actual return type is consistent with the specified return type.
+-- Checks that the function is pure (if it is declared as such).
+-- Returns type checked function definition.
 tcFunDef :: SrcFunDef -> TypeCheckM TyFunDef
-tcFunDef (FunDef s srcFunName srcFunType stmts isPure) = do
-  return $ FunDef s srcFunName srcFunType [] isPure
+tcFunDef (FunDef s srcFunName srcFunType srcStmts isPure) = do
+  return $ FunDef s srcFunName srcFunType [] isPure  -- TODO
+
+-- | Statement type checking.
+-- Returns a type checked statement together with its type.
+tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type)
+tcStmt = undefined
+
+-- | Expression type checking.
+-- Returns a type checked expression together with its type.
+tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type)
+tcExpr = undefined
+
+-- Type transformations
+
+-- | Converts a source representation of type to an internal one.
+-- Checks that all types are defined.
+srcTypeToType :: SrcType -> TypeCheckM Type
+srcTypeToType (SrcTyUnit _) = return TyUnit
+srcTypeToType (SrcTyBool _) = return TyBool
+srcTypeToType (SrcTyInt  _) = return TyInt
+srcTypeToType (SrcTyClass srcClassName) = do
+  let className = getClassName srcClassName
+  unlessM (isClassDefined className) $
+    throwError $ ClassNotDefined srcClassName
+  return $ TyClass className
+srcTypeToType (SrcTyArrow _ st1 st2) =
+  TyArrow <$> srcTypeToType st1 <*> srcTypeToType st2
+
+-- | Transforms function type which has variable binders and return type to one
+-- big internal type (right associative type arrow without parameter names).
+-- Checks that all used types are defined.
+-- Does not check parameter names.
+srcFunTypeToType :: SrcFunType -> TypeCheckM Type
+srcFunTypeToType (FunType _ varBinders srcRetType) = do
+  retType <- srcTypeToType srcRetType
+  paramTypes <- mapM (srcTypeToType . getVarBinderType) varBinders
+  return $ tyArrowFromList retType paramTypes
+
+-- | Constructs an arrow type given a result type and a list of parameter
+-- types.
+tyArrowFromList :: Type -> [Type] -> Type
+tyArrowFromList resultType = foldr (\t acc -> TyArrow t acc) resultType
 

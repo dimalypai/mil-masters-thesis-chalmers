@@ -1,5 +1,9 @@
 def main : Unit => unit; end
 
+def fun : {a : A} -> {b : A -> B} -> Int =>
+  1;
+end
+
 class A => end
 
 class B < A => end
