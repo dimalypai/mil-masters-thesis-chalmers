@@ -9,7 +9,6 @@ module OOLang.TypeChecker
   , prPrint
   ) where
 
-import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Data.Maybe (isJust, fromJust)
 
@@ -88,7 +87,7 @@ checkMain = do
 -- inheritance.
 checkInheritance :: TypeCheckM ()
 checkInheritance = do
-  classTypeEnv <- getClassTypeEnv
+  classesAssoc <- getClassesAssoc
   -- running DFS from each vertex (class name)
   -- See comment on 'traverseHierarchy'
   foldM_ (\(marked, onStack) (className, classTypeInfo) -> do
@@ -102,7 +101,7 @@ checkInheritance = do
       if Set.notMember className marked
         then traverseHierarchy className marked onStack
         else return (marked, onStack)
-    ) (Set.empty, Set.empty) (Map.assocs classTypeEnv)
+    ) (Set.empty, Set.empty) classesAssoc
 
 -- | 'traverseHierarchy' is basically a DFS function.  It takes a vertex (class
 -- name), a set of marked vertices and a set of vertices which are currently on

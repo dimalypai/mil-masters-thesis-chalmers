@@ -4,28 +4,26 @@
 module OOLang.TypeChecker.TypeCheckM
   ( TypeCheckM
   , runTypeCheckM
+
   , TypeEnv
   , initTypeEnv
-  , mkTypeEnv
-  , ClassTypeEnv
+
   , ctiMSuperClassName
   , ctiSrcClassName
   , ctiMSuperSrcClassName
-  , getClassTypeEnv
-  , modifyClassTypeEnv
+  , getClassesAssoc
   , isClassDefined
   , addClass
   , getSuperClass
-  , FunTypeEnv
+
   , ftiType
   , ftiIsPure
   , ftiSrcFunName
   , ftiSrcFunType
-  , getFunTypeEnv
-  , modifyFunTypeEnv
   , isFunctionDefined
   , addFunction
   , getFunTypeInfo
+
   , module Control.Monad.Error
   ) where
 
@@ -57,7 +55,7 @@ newtype TypeEnv = TypeEnv { unTypeEnv :: (ClassTypeEnv, FunTypeEnv) }
 
 -- | Initial type environment.
 initTypeEnv :: TypeEnv
-initTypeEnv = TypeEnv (Map.empty, Map.empty)
+initTypeEnv = mkTypeEnv Map.empty Map.empty
 
 -- | Smart constructor for 'TypeEnv'.
 mkTypeEnv :: ClassTypeEnv -> FunTypeEnv -> TypeEnv
@@ -78,6 +76,10 @@ data ClassTypeInfo = ClassTypeInfo
 -- | 'ClassTypeEnv' getter.
 getClassTypeEnv :: TypeCheckM ClassTypeEnv
 getClassTypeEnv = gets (fst . unTypeEnv)
+
+-- | Get class type environment as an associative list.
+getClassesAssoc :: TypeCheckM [(ClassName, ClassTypeInfo)]
+getClassesAssoc = fmap Map.assocs getClassTypeEnv
 
 -- | Modification function for 'ClassTypeEnv'.
 modifyClassTypeEnv :: (ClassTypeEnv -> ClassTypeEnv) -> TypeCheckM ()
