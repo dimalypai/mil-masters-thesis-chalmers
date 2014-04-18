@@ -80,6 +80,15 @@ interactive flags typeEnv revProgramStrs = do
       let processCommand cmd | Just fileName <- stripPrefix ":save " cmd =
           -- `:save` takes a file name and saves a current list of programs to the file
             writeFile fileName ((intercalate "\n\n" $ reverse revProgramStrs) ++ "\n")
+                             | Just strExpr <- stripPrefix ":t " cmd =
+          -- `:t` takes an expression and returns its type (things defined
+          -- with `:define` are in scope)
+            do case lexer strExpr |> parseExpr "ooli" of
+                 Left parseErr -> putStrLn (prPrint parseErr)
+                 Right srcExpr ->
+                   case typeOf srcExpr typeEnv of
+                     Left tcErr -> putStrLn (prPrint tcErr)
+                     Right exprType -> putStrLn ({-prPrint srcExpr ++ " : " ++ -}prPrint exprType)
           processCommand _ = putStrLn "Wrong command"
       processCommand command
   interactive flags typeEnv revProgramStrs

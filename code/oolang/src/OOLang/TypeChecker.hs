@@ -8,6 +8,7 @@
 module OOLang.TypeChecker
   ( typeCheck
   , typeCheckStage
+  , typeOf
   , TypeEnv
   , initTypeEnv
   , TcError
@@ -36,6 +37,12 @@ typeCheck srcProgram = runTypeCheckM (tcProgram srcProgram) initTypeEnv
 -- In the case of success returns a typed program and a type environment.
 typeCheckStage :: SrcProgram -> TypeEnv -> Either TcError (TyProgram, TypeEnv)
 typeCheckStage srcProgram typeEnv = runTypeCheckM (tcProgram srcProgram) typeEnv
+
+-- | Type checks a given source expression in a given type environment.
+-- In the case of success - returns its type.
+typeOf :: SrcExpr -> TypeEnv -> Either TcError Type
+typeOf srcExpr typeEnv = getExprType <$> runTypeCheckM (tcExpr srcExpr) typeEnv
+  where getExprType = (\(_,t,_) -> t) . fst
 
 -- | Entry point into the type checking of the program.
 -- Returns a type checked program.
