@@ -11,7 +11,6 @@ builtInDataTypes =
   [ (TypeName "Unit",   StarK)
   , (TypeName "Int",    StarK)
   , (TypeName "Float",  StarK)
-  , (TypeName "String", StarK)
   , (TypeName "IO",     StarK :=>: StarK)
   ]
 
