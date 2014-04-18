@@ -50,6 +50,7 @@ import OOLang.Parser.ParseError
   while     { $$@(KW_While,     _) }
   -- Keywords for types
   Bool    { $$@(KW_TyBool,    _) }
+  Float   { $$@(KW_TyFloat,   _) }
   Int     { $$@(KW_TyInt,     _) }
   Maybe   { $$@(KW_TyMaybe,   _) }
   Mutable { $$@(KW_TyMutable, _) }
@@ -308,9 +309,10 @@ maybearrtype
                       $3 }
 
 atomtype :: { SrcType }
-atomtype : Unit    {% withFileName $ \fileName -> SrcTyUnit $ mkTokSrcSpan $1 fileName }
-         | Bool    {% withFileName $ \fileName -> SrcTyBool $ mkTokSrcSpan $1 fileName }
-         | Int     {% withFileName $ \fileName -> SrcTyInt  $ mkTokSrcSpan $1 fileName }
+atomtype : Unit    {% withFileName $ \fileName -> SrcTyUnit  $ mkTokSrcSpan $1 fileName }
+         | Bool    {% withFileName $ \fileName -> SrcTyBool  $ mkTokSrcSpan $1 fileName }
+         | Int     {% withFileName $ \fileName -> SrcTyInt   $ mkTokSrcSpan $1 fileName }
+         | Float   {% withFileName $ \fileName -> SrcTyFloat $ mkTokSrcSpan $1 fileName }
          | upperId {% withFileName $ \fileName -> SrcTyClass ( ClassName $ getTokId $1
                                                              , mkTokSrcSpan $1 fileName ) }
 

@@ -174,6 +174,10 @@ type SrcBinOp = BinOpS SrcSpan
 data Type = TyUnit
           | TyBool
           | TyInt
+          | TyFloat
+            -- | Strings are not first class citizens.
+            -- They can only be used as literals.
+          | TyString
           | TyClass ClassName
           | TyArrow Type Type
           | TyMaybe Type
@@ -187,6 +191,7 @@ data Type = TyUnit
 data TypeS s = SrcTyUnit s
              | SrcTyBool s
              | SrcTyInt s
+             | SrcTyFloat s
              | SrcTyClass (ClassNameS s)
              | SrcTyArrow s (TypeS s) (TypeS s)
              | SrcTyMaybe s (TypeS s)

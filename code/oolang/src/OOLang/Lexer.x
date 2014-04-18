@@ -71,6 +71,7 @@ tokens :-
 
   -- Keywords for types
   Bool    { \p s -> (KW_TyBool,    posn p s) }
+  Float   { \p s -> (KW_TyFloat,   posn p s) }
   Int     { \p s -> (KW_TyInt,     posn p s) }
   Maybe   { \p s -> (KW_TyMaybe,   posn p s) }
   Mutable { \p s -> (KW_TyMutable, posn p s) }
@@ -152,6 +153,7 @@ data Token =
   | KW_While
   -- Keywords for types
   | KW_TyBool
+  | KW_TyFloat
   | KW_TyInt
   | KW_TyMaybe
   | KW_TyMutable
@@ -228,6 +230,7 @@ instance Show Token where
   show KW_While     = "while"
   -- Keywords for types
   show KW_TyBool    = "Bool"
+  show KW_TyFloat   = "Float"
   show KW_TyInt     = "Int"
   show KW_TyMaybe   = "Maybe"
   show KW_TyMutable = "Mutable"

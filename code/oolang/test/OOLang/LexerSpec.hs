@@ -28,12 +28,12 @@ spec =
         (lexer "class def do else end false if just nothing \
               \ otherwise private public pure ref return \
               \ static then true unit when while \
-              \ Int Maybe Mutable Ref Unit")
+              \ Bool Float Int Maybe Mutable Ref Unit")
         `shouldBe`
       [ KW_Class, KW_Def, KW_Do, KW_Else, KW_End, KW_False, KW_If, KW_Just, KW_Nothing
       , KW_Otherwise, KW_Private, KW_Public, KW_Pure, KW_Ref, KW_Return
       , KW_Static, KW_Then, KW_True, KW_Unit, KW_When, KW_While
-      , KW_TyInt, KW_TyMaybe, KW_TyMutable, KW_TyRef, KW_TyUnit
+      , KW_TyBool, KW_TyFloat, KW_TyInt, KW_TyMaybe, KW_TyMutable, KW_TyRef, KW_TyUnit
       ]
 
     it "recognises all symbols correctly" $
@@ -74,7 +74,7 @@ spec =
         (lexer "class def do else end false if just nothing \
               \ otherwise private public pure ref return \
               \ static then true unit when while \
-              \ Int Maybe Mutable Ref Unit \
+              \ Bool Float Int Maybe Mutable Ref Unit \
               \ =  :  +  -  *  /  %  <  >  <=  >=  /= \
               \ =>  ->  \\  .  ::  ?  ??  <-  :=  ! \
               \ &&  ||  (  )  ; \
@@ -84,7 +84,7 @@ spec =
       "class def do else end false if just nothing\
      \ otherwise private public pure ref return\
      \ static then true unit when while\
-     \ Int Maybe Mutable Ref Unit\
+     \ Bool Float Int Maybe Mutable Ref Unit\
      \ = : + - * / % < > <= >= /=\
      \ => -> \\ . :: ? ?? <- := !\
      \ && || ( ) ;\
