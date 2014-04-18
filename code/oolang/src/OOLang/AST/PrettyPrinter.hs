@@ -12,6 +12,9 @@ instance Pretty Type where
   prPrn TyUnit = text "Unit"
   prPrn TyInt  = text "Int"
 
+instance Pretty Var where
+  prPrn (Var varStr) = text varStr
+
 instance Pretty ClassName where
   prPrn (ClassName classNameStr) = text classNameStr
 

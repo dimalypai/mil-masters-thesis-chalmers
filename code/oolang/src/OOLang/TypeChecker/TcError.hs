@@ -21,6 +21,8 @@ data TcError =
   | MainIncorrectType SrcFunType Type
   | MainPure SrcFunName
   | InheritanceCycle
+  | VarShadowing SrcVar
+  | FunctionNotPure SrcFunName SrcStmt
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -58,6 +60,15 @@ instance Pretty TcError where
     nest indLvl (text "Function 'main' is declared as pure")
 
   prPrn InheritanceCycle = tcErrorHeader <> colon <+> text "Inheritance cycle was detected"
+
+  prPrn (VarShadowing srcVar) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcVar) <> colon $+$
+    nest indLvl (text "Variable binding for" <+> quotes (prPrn $ getVar srcVar) <+> text "shadows an existing variable or function")
+
+  prPrn (FunctionNotPure srcFunName srcStmt) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
+    nest indLvl (text "Function" <+> quotes (prPrn $ getFunName srcFunName) <+>
+      text "is declared as pure, but it contains impure statement")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

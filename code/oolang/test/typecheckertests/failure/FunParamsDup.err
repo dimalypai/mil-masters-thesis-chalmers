@@ -1,0 +1,2 @@
+OOLang type checking error at FunParamsDup.ool:3,25-3,25:
+  Variable binding for 'n' shadows an existing variable or function

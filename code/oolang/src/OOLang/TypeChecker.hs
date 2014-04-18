@@ -16,11 +16,13 @@ module OOLang.TypeChecker
 
 import qualified Data.Set as Set
 import Data.Maybe (isJust, fromJust)
+import Data.List (find)
 import Control.Applicative ((<$>), (<*>))
 
 import OOLang.AST
 import OOLang.TypeChecker.TypeCheckM
 import OOLang.TypeChecker.TcError
+import OOLang.BuiltIn
 import OOLang.Utils
 
 -- | Main batch entry point to the TypeChecker.
@@ -160,17 +162,45 @@ tcClassDef (ClassDef s srcClassName mSuperSrcClassName srcMembers) = do
 -- Returns type checked function definition.
 tcFunDef :: SrcFunDef -> TypeCheckM TyFunDef
 tcFunDef (FunDef s srcFunName srcFunType srcStmts isPure) = do
-  return $ FunDef s srcFunName srcFunType [] isPure  -- TODO
+  -- collect function parameters and check for variable shadowing
+  let varBinders = getFunParams srcFunType
+  localTypeEnv <- foldM (\localTyEnv vb -> do
+      let var = getVar (getBinderVar vb)
+      isBound <- isVarBound var
+      -- it is important to check in both places, since localTyEnv
+      -- is not queried by 'isVarBound', see `FunParamsDup` test case
+      when (isBound || isVarInLocalEnv var localTyEnv) $
+        throwError $ VarShadowing (getBinderVar vb)
+      varType <- srcTypeToType (getBinderType vb)
+      return $ addLocalVar var varType localTyEnv)
+    emptyLocalTypeEnv varBinders
+
+  (tyStmts, stmtTypes, stmtsPure) <-
+    unzip3 <$> locallyWithEnv localTypeEnv (mapM tcStmt srcStmts)
+  -- TODO: return type
+
+  when (isPure) $ do
+    let mFirstImpureStmt = snd <$> find (not . fst) (zip stmtsPure srcStmts)
+    case mFirstImpureStmt of
+      Just firstImpureStmt -> throwError $ FunctionNotPure srcFunName firstImpureStmt
+      Nothing -> return ()
+  return $ FunDef s srcFunName srcFunType tyStmts isPure
 
 -- | Statement type checking.
--- Returns a type checked statement together with its type.
-tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type)
-tcStmt = undefined
+-- Returns a type checked statement together with its type and purity indicator.
+tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type, Bool)
+tcStmt srcStmt =
+  case srcStmt of
+    ExprS s srcExpr -> do
+      (tyExpr, exprType, exprPure) <- tcExpr srcExpr
+      return (ExprS s tyExpr, exprType, exprPure)
 
 -- | Expression type checking.
--- Returns a type checked expression together with its type.
-tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type)
-tcExpr = undefined
+-- Returns a type checked expression together with its type and purity indicator.
+tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type, Bool)
+tcExpr srcExpr =
+  case srcExpr of
+    LitE srcLit -> return (LitE srcLit, typeOfLiteral $ getLiteral srcLit, True)
 
 -- Type transformations
 
@@ -195,7 +225,7 @@ srcTypeToType (SrcTyArrow _ st1 st2) =
 srcFunTypeToType :: SrcFunType -> TypeCheckM Type
 srcFunTypeToType (FunType _ varBinders srcRetType) = do
   retType <- srcTypeToType srcRetType
-  paramTypes <- mapM (srcTypeToType . getVarBinderType) varBinders
+  paramTypes <- mapM (srcTypeToType . getBinderType) varBinders
   return $ tyArrowFromList retType paramTypes
 
 -- | Constructs an arrow type given a result type and a list of parameter

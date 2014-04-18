@@ -1,6 +1,6 @@
 def main : Unit => unit; end
 
-def fun : {a : A} -> {b : A -> B} -> Int =>
+def pure fun : {a : A} -> {b : A -> B} -> Int =>
   1;
 end
 

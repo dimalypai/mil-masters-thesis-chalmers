@@ -62,6 +62,12 @@ spec =
       it "given a function type which uses undefined type" $
         failureCase "FunTypeNotDefined"
 
+      it "given a function with parameter names duplication" $
+        failureCase "FunParamsDup"
+
+      it "given a function with parameter name which shadows an existing name" $
+        failureCase "FunParamShadows"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

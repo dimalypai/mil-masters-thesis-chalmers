@@ -152,6 +152,9 @@ data Literal = UnitLit
 type LiteralS s = (Literal, s)
 type SrcLiteral = LiteralS SrcSpan
 
+getLiteral :: LiteralS s -> Literal
+getLiteral = fst
+
 -- | Binary operators are factored out from 'Expr'.
 data BinOp = App
            | NothingCoalesce
@@ -217,6 +220,9 @@ data FunType s = FunType s [VarBinder s] (TypeS s)
 
 type SrcFunType = FunType SrcSpan
 
+getFunParams :: FunType s -> [VarBinder s]
+getFunParams (FunType _ varBinders _) = varBinders
+
 -- | Name (variable) declaration.
 -- Consists of var binder and an optional initialiser.
 data Declaration v s = Decl s (VarBinder s) (Maybe (Init v s))
@@ -264,14 +270,20 @@ type ModifierS s = (Modifier, s)
 type SrcModifier = ModifierS SrcSpan
 
 newtype Var = Var String
-  deriving Show
+  deriving (Show, Eq, Ord)
+
+type VarS s = (Var, s)
+type SrcVar = VarS SrcSpan
+
+getVar :: VarS s -> Var
+getVar = fst
+
+varToFunName :: Var -> FunName
+varToFunName (Var varName) = FunName varName
 
 -- | Variable annotated with its type.
 newtype VarTy = VarTy (Var, Type)
   deriving Show
-
-type VarS s = (Var, s)
-type SrcVar = VarS SrcSpan
 
 -- | Var binder is a pair of variable name and a type (in their source representations).
 -- Used in function parameters.
@@ -280,8 +292,11 @@ data VarBinder s = VarBinder s (VarS s) (TypeS s)
 
 type SrcVarBinder = VarBinder SrcSpan
 
-getVarBinderType :: VarBinder s -> TypeS s
-getVarBinderType (VarBinder _ _ vbType) = vbType
+getBinderVar :: VarBinder s -> VarS s
+getBinderVar (VarBinder _ srcVar _ ) = srcVar
+
+getBinderType :: VarBinder s -> TypeS s
+getBinderType (VarBinder _ _ srcType) = srcType
 
 setVarBinderAnn :: VarBinder s -> s -> VarBinder s
 setVarBinderAnn (VarBinder _ v t) s = VarBinder s v t

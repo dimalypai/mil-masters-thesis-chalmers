@@ -26,6 +26,12 @@ module OOLang.TypeChecker.TypeCheckM
   , addFunction
   , getFunTypeInfo
 
+  , emptyLocalTypeEnv
+  , isVarBound
+  , isVarInLocalEnv
+  , addLocalVar
+  , locallyWithEnv
+
   , module Control.Monad.Error
   ) where
 
@@ -62,6 +68,12 @@ getTypeEnv = fst
 
 getLocalTypeEnv :: TypeCheckMState -> LocalTypeEnv
 getLocalTypeEnv = snd
+
+modifyTypeEnv :: (TypeEnv -> TypeEnv) -> TypeCheckM ()
+modifyTypeEnv = modify . first
+
+modifyLocalTypeEnv :: (LocalTypeEnv -> LocalTypeEnv) -> TypeCheckM ()
+modifyLocalTypeEnv = modify . second
 
 dropLocalTypeEnv :: (a, (TypeEnv, LocalTypeEnv))
                  -> (a, TypeEnv)
@@ -102,7 +114,7 @@ getClassesAssoc = fmap Map.assocs getClassTypeEnv
 modifyClassTypeEnv :: (ClassTypeEnv -> ClassTypeEnv) -> TypeCheckM ()
 modifyClassTypeEnv f = do
   (classTypeEnv, funTypeEnv) <- (,) <$> getClassTypeEnv <*> getFunTypeEnv
-  modify $ first (const $ mkTypeEnv (f classTypeEnv) funTypeEnv)
+  modifyTypeEnv (const $ mkTypeEnv (f classTypeEnv) funTypeEnv)
 
 isClassDefined :: ClassName -> TypeCheckM Bool
 isClassDefined className = do
@@ -146,7 +158,7 @@ getFunTypeEnv = gets (snd . unTypeEnv . getTypeEnv)
 modifyFunTypeEnv :: (FunTypeEnv -> FunTypeEnv) -> TypeCheckM ()
 modifyFunTypeEnv f = do
   (classTypeEnv, funTypeEnv) <- (,) <$> getClassTypeEnv <*> getFunTypeEnv
-  modify $ first (const $ mkTypeEnv classTypeEnv (f funTypeEnv))
+  modifyTypeEnv (const $ mkTypeEnv classTypeEnv (f funTypeEnv))
 
 isFunctionDefined :: FunName -> TypeCheckM Bool
 isFunctionDefined funName = do
@@ -175,6 +187,34 @@ type LocalTypeEnv = Map.Map Var Type
 
 emptyLocalTypeEnv :: LocalTypeEnv
 emptyLocalTypeEnv = Map.empty
+
+-- | Check whether a variable is in scope. It can be either local variable name
+-- or a function name.
+isVarBound :: Var -> TypeCheckM Bool
+isVarBound var = do
+  isLocalVar <- gets (Map.member var . getLocalTypeEnv)
+  isFunction <- isFunctionDefined (varToFunName var)
+  return (isLocalVar || isFunction)
+
+-- | Pure function for querying local type environment.
+isVarInLocalEnv :: Var -> LocalTypeEnv -> Bool
+isVarInLocalEnv var = Map.member var
+
+-- | Extends local type environment. Pure (meaning, not a 'TypeCheckM' function).
+addLocalVar :: Var -> Type -> LocalTypeEnv -> LocalTypeEnv
+addLocalVar = Map.insert
+
+-- | Takes a separate local type environment and merges it with what is already
+-- in the local type environment and performs a given computation in this new
+-- environment. Then restores the local environment.
+-- Should be safe, since we don't allow shadowing.
+locallyWithEnv :: LocalTypeEnv -> TypeCheckM a -> TypeCheckM a
+locallyWithEnv localTypeEnv tcm = do
+  currentLocalTypeEnv <- gets getLocalTypeEnv
+  modifyLocalTypeEnv (Map.union localTypeEnv)
+  a <- tcm
+  modifyLocalTypeEnv (const currentLocalTypeEnv)
+  return a
 
 -- Utils
 
