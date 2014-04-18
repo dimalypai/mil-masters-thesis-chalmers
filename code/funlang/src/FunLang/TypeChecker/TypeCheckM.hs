@@ -248,7 +248,9 @@ addLocalVar :: Var -> Type -> LocalTypeEnv -> LocalTypeEnv
 addLocalVar = Map.insert
 
 -- | Takes a separate local type environment and merges it with what is already
--- in the local type environment. Should be safe, since we don't allow shadowing.
+-- in the local type environment and performs a given computation in this new
+-- environment. Then restores the local environment.
+-- Should be safe, since we don't allow shadowing.
 locallyWithEnv :: LocalTypeEnv -> TypeCheckM a -> TypeCheckM a
 locallyWithEnv localTypeEnv = local (Map.union localTypeEnv)
 
