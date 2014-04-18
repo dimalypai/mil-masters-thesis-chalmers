@@ -73,7 +73,7 @@ type TyClassDef  = ClassDef VarTy SrcSpan
 --
 -- * function type
 --
--- * list of statements (body)
+-- * list of statements (body) - not empty
 --
 -- * is it marked as pure
 data FunDef v s = FunDef s (FunNameS s) (FunType s) [Stmt v s] Bool
@@ -120,7 +120,7 @@ type TyStmt  = Stmt VarTy SrcSpan
 -- 'ParenE' is used for better source spans and pretty printing.
 data Expr v s = LitE (LiteralS s)
               | VarE s v
-              | LambdaE s [VarBinder s] (Expr v s)
+              | LambdaE s [VarBinder s] (Expr v s)  -- ^ Not empty.
                 -- | We restrict member access to only functions.
               | MemberAccessE s (Expr v s) (FunNameS s)
               | MemberAccessMaybeE s (Expr v s) (FunNameS s)
