@@ -23,6 +23,7 @@ data TcError =
   | InheritanceCycle
   | VarShadowing SrcVar
   | FunctionNotPure SrcFunName SrcStmt
+  | FunIncorrectReturnType SrcFunName SrcStmt Type Type
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -69,6 +70,12 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
     nest indLvl (text "Function" <+> quotes (prPrn $ getFunName srcFunName) <+>
       text "is declared as pure, but it contains impure statement")
+
+  prPrn (FunIncorrectReturnType srcFunName srcStmt expType actType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
+    nest indLvl (text "Function" <+> quotes (prPrn $ getFunName srcFunName) <+>
+      text "has to return a value of type" <+> quotes (prPrn expType) <>
+      text ", but it returns a value of type" <+> quotes (prPrn actType))
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

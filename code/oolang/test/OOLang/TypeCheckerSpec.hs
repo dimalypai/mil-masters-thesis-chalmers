@@ -68,6 +68,9 @@ spec =
       it "given a function with parameter name which shadows an existing name" $
         failureCase "FunParamShadows"
 
+      it "given a function with incorrect type of the last expression (statement)" $
+        failureCase "FunIncorrectReturnType"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

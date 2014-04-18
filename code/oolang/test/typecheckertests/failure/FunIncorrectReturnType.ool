@@ -1,0 +1,2 @@
+def main : Unit => 1; end
+

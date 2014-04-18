@@ -223,6 +223,9 @@ type SrcFunType = FunType SrcSpan
 getFunParams :: FunType s -> [VarBinder s]
 getFunParams (FunType _ varBinders _) = varBinders
 
+getFunReturnType :: FunType s -> TypeS s
+getFunReturnType (FunType _ _ retType) = retType
+
 -- | Name (variable) declaration.
 -- Consists of var binder and an optional initialiser.
 data Declaration v s = Decl s (VarBinder s) (Maybe (Init v s))

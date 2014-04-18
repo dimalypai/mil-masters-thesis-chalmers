@@ -1,0 +1,2 @@
+OOLang type checking error at FunIncorrectReturnType.ool:1,20-1,21:
+  Function 'main' has to return a value of type 'Unit', but it returns a value of type 'Int'

@@ -184,7 +184,13 @@ tcFunDef (FunDef s srcFunName srcFunType srcStmts isPure) = do
 
   (tyStmts, stmtTypes, stmtsPure) <-
     unzip3 <$> locallyWithEnv localTypeEnv (mapM tcStmt srcStmts)
-  -- TODO: return type
+
+  retType <- srcTypeToType $ getFunReturnType srcFunType
+  -- There is at least one statement, the value of the last one (and hence the
+  -- type) is what function returns.
+  let lastStmtType = last stmtTypes
+  when (lastStmtType /= retType) $
+    throwError $ FunIncorrectReturnType srcFunName (last srcStmts) retType lastStmtType
 
   when (isPure) $ do
     let mFirstImpureStmt = snd <$> find (not . fst) (zip stmtsPure srcStmts)
