@@ -74,9 +74,7 @@ type TyClassDef  = ClassDef VarTy SrcSpan
 -- * function type
 --
 -- * list of statements (body) - not empty
---
--- * is it marked as pure
-data FunDef v s = FunDef s (FunNameS s) (FunType s) [Stmt v s] Bool
+data FunDef v s = FunDef s (FunNameS s) (FunType s) [Stmt v s]
   deriving Show
 
 type SrcFunDef = FunDef Var   SrcSpan
@@ -183,6 +181,7 @@ data Type = TyUnit
           | TyString
           | TyClass ClassName
           | TyArrow Type Type
+          | TyPure Type
           | TyMaybe Type
           | TyMutable Type
           | TyRef Type
@@ -197,6 +196,7 @@ data TypeS s = SrcTyUnit s
              | SrcTyFloat s
              | SrcTyClass (ClassNameS s)
              | SrcTyArrow s (TypeS s) (TypeS s)
+             | SrcTyPure s (TypeS s)
              | SrcTyMaybe s (TypeS s)
              | SrcTyMutable s (TypeS s)
              | SrcTyRef s (TypeS s)

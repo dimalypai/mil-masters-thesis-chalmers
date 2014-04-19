@@ -1,2 +1,2 @@
-def pure main : Unit => unit; end
+def main : Pure Unit => unit; end
 

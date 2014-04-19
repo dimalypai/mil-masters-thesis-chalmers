@@ -2,7 +2,7 @@ def f : {x : Int} -> {y : Bool} -> (Int -> Bool) -> Unit =>
   unit;
 end
 
-def pure g : Int =>
+def g : Pure Int =>
   1;
 end
 

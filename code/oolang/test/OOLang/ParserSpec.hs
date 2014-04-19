@@ -52,13 +52,13 @@ spec =
                       (Just (ClassName "Shape", srcSp 5 16 5 20))
                       [MethodDecl (srcSp 6 3 8 5)
                          (FunDef (srcSp 6 3 8 5)
-                            (FunName "area", srcSp 6 12 6 15)
-                            (FunType (srcSp 6 19 6 21)
+                            (FunName "area", srcSp 6 7 6 10)
+                            (FunType (srcSp 6 14 6 21)
                                []
-                               (SrcTyInt $ srcSp 6 19 6 21))
+                               (SrcTyPure (srcSp 6 14 6 21)
+                                  (SrcTyInt $ srcSp 6 19 6 21)))
                             [ExprS (srcSp 7 5 7 6)
-                               (LitE (IntLit 1, srcSp 7 5 7 5))]
-                            True)
+                               (LitE (IntLit 1, srcSp 7 5 7 5))])
                          []]]
                   []
       in successCase baseName ast
@@ -86,15 +86,14 @@ spec =
                             (SrcTyUnit $ srcSp 1 53 1 56)))
                       [ExprS (srcSp 2 3 2 7)
                          (LitE (UnitLit, srcSp 2 3 2 6))]
-                      False
                   , FunDef (srcSp 5 1 7 3)
-                      (FunName "g", srcSp 5 10 5 10)
-                      (FunType (srcSp 5 14 5 16)
+                      (FunName "g", srcSp 5 5 5 5)
+                      (FunType (srcSp 5 9 5 16)
                          []
-                         (SrcTyInt $ srcSp 5 14 5 16))
+                         (SrcTyPure (srcSp 5 9 5 16)
+                            (SrcTyInt $ srcSp 5 14 5 16)))
                       [ExprS (srcSp 6 3 6 4)
-                         (LitE (IntLit 1, srcSp 6 3 6 3))]
-                      True]
+                         (LitE (IntLit 1, srcSp 6 3 6 3))]]
       in successCase baseName ast
 
     it "parses class and function definitions together" $
@@ -120,8 +119,7 @@ spec =
                               (SrcTyInt $ srcSp 3 23 3 25))]
                         (SrcTyUnit $ srcSp 3 31 3 34))
                      [ExprS (srcSp 4 3 4 7)
-                        (LitE (UnitLit, srcSp 4 3 4 6))]
-                     False]
+                        (LitE (UnitLit, srcSp 4 3 4 6))]]
       in successCase baseName ast
 
     it "parses types" $
@@ -140,13 +138,15 @@ spec =
                                 (SrcTyInt $ srcSp 1 12 1 14)
                                 (SrcTyInt $ srcSp 1 19 1 21)))
                            (SrcTyArrow (srcSp 2 11 4 39)
-                              (SrcTyMutable (srcSp 2 11 2 40)
-                                 (SrcTyParen (srcSp 2 19 2 40)
-                                    (SrcTyMaybe (srcSp 2 20 2 39)
-                                       (SrcTyParen (srcSp 2 26 2 39)
-                                          (SrcTyArrow (srcSp 2 27 2 38)
-                                             (SrcTyBool $ srcSp 2 27 2 30)
-                                             (SrcTyBool $ srcSp 2 35 2 38))))))
+                              (SrcTyMutable (srcSp 2 11 2 47)
+                                 (SrcTyParen (srcSp 2 19 2 47)
+                                    (SrcTyMaybe (srcSp 2 20 2 46)
+                                       (SrcTyParen (srcSp 2 26 2 46)
+                                          (SrcTyPure (srcSp 2 27 2 45)
+                                             (SrcTyParen (srcSp 2 32 2 45)
+                                                (SrcTyArrow (srcSp 2 33 2 44)
+                                                   (SrcTyBool $ srcSp 2 33 2 36)
+                                                   (SrcTyBool $ srcSp 2 41 2 44))))))))
                               (SrcTyArrow (srcSp 3 11 4 39)
                                  (SrcTyRef (srcSp 3 11 3 18)
                                     (SrcTyBool $ srcSp 3 15 3 18))
@@ -158,8 +158,7 @@ spec =
                                           (SrcTyMaybe (srcSp 4 30 4 38)
                                              (SrcTyInt $ srcSp 4 36 4 38)))))))))
                      [ExprS (srcSp 5 3 5 7)
-                        (LitE (UnitLit, srcSp 5 3 5 6))]
-                     False]
+                        (LitE (UnitLit, srcSp 5 3 5 6))]]
       in successCase baseName ast
 
     it "parses declaration and assignment statements" $
@@ -200,8 +199,7 @@ spec =
                      , AssignS (srcSp 5 3 5 9)
                          (AssignMut, srcSp 5 5 5 6)
                          (Var "x", srcSp 5 3 5 3)
-                         (LitE (IntLit 2, srcSp 5 8 5 8))]
-                     False]
+                         (LitE (IntLit 2, srcSp 5 8 5 8))]]
       in successCase baseName ast
 
     it "parses control flow statements" $
@@ -222,8 +220,7 @@ spec =
                          []
                      , WhileS (srcSp 6 3 7 6)
                          (LitE (BoolLit True, srcSp 6 9 6 12))
-                         []]
-                     False]
+                         []]]
       in successCase baseName ast
 
     it "parses expressions" $
@@ -261,8 +258,7 @@ spec =
                                      (LitE (FloatLit 0.01 "0.01", srcSp 2 29 2 32))))))
                      , ExprS (srcSp 3 3 3 15)
                          (JustE (srcSp 3 3 3 14)
-                            (LitE (NothingLit, srcSp 3 8 3 14)))]
-                     False]
+                            (LitE (NothingLit, srcSp 3 8 3 14)))]]
       in successCase baseName ast
 
     it "parses class expressions" $
@@ -302,8 +298,7 @@ spec =
                             (ClassAccessE (srcSp 4 3 4 12)
                                (ClassName "Object", srcSp 4 3 4 8)
                                (FunName "new", srcSp 4 10 4 12))
-                            (LitE (IntLit 1, srcSp 4 14 4 14)))]
-                     False]
+                            (LitE (IntLit 1, srcSp 4 14 4 14)))]]
       in successCase baseName ast
 
     it "parses binary operations" $
@@ -348,8 +343,7 @@ spec =
                             (BinOpE (srcSp 3 8 3 13)
                                (NothingCoalesce, srcSp 3 10 3 11)
                                (VarE (srcSp 3 8 3 8) (Var "y"))
-                               (VarE (srcSp 3 13 3 13) (Var "z"))))]
-                     False]
+                               (VarE (srcSp 3 13 3 13) (Var "z"))))]]
       in successCase baseName ast
 
     -- Failure

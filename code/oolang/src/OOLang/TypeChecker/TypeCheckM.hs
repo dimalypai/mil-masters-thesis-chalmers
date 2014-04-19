@@ -19,7 +19,6 @@ module OOLang.TypeChecker.TypeCheckM
   , getSuperClass
 
   , ftiType
-  , ftiIsPure
   , ftiSrcFunName
   , ftiSrcFunType
   , isFunctionDefined
@@ -145,7 +144,6 @@ type FunTypeEnv = Map.Map FunName FunTypeInfo
 -- Some of the fields are kept just for error messages.
 data FunTypeInfo = FunTypeInfo
   { ftiType       :: Type        -- ^ Function type.
-  , ftiIsPure     :: Bool        -- ^ Purity indicator.
   , ftiSrcFunName :: SrcFunName  -- ^ Source name. For error messages.
   , ftiSrcFunType :: SrcFunType  -- ^ Source type. For error messages.
   }
@@ -167,10 +165,10 @@ isFunctionDefined funName = do
 
 -- | Doesn't check if the function is already in the environment.
 -- Will overwrite it in this case.
-addFunction :: SrcFunName -> Type -> Bool -> SrcFunType -> TypeCheckM ()
-addFunction srcFunName funType isPure srcFunType = do
+addFunction :: SrcFunName -> Type ->SrcFunType -> TypeCheckM ()
+addFunction srcFunName funType srcFunType = do
   let funName = getFunName srcFunName
-  modifyFunTypeEnv $ Map.insert funName (FunTypeInfo funType isPure srcFunName srcFunType)
+  modifyFunTypeEnv $ Map.insert funName (FunTypeInfo funType srcFunName srcFunType)
 
 -- | Returns all information about the function from the environment.
 --

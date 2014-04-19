@@ -59,7 +59,6 @@ tokens :-
   otherwise { \p s -> (KW_Otherwise, posn p s) }
   private   { \p s -> (KW_Private,   posn p s) }
   public    { \p s -> (KW_Public,    posn p s) }
-  pure      { \p s -> (KW_Pure,      posn p s) }
   ref       { \p s -> (KW_Ref,       posn p s) }
   return    { \p s -> (KW_Return,    posn p s) }
   static    { \p s -> (KW_Static,    posn p s) }
@@ -75,6 +74,7 @@ tokens :-
   Int     { \p s -> (KW_TyInt,     posn p s) }
   Maybe   { \p s -> (KW_TyMaybe,   posn p s) }
   Mutable { \p s -> (KW_TyMutable, posn p s) }
+  Pure    { \p s -> (KW_TyPure,    posn p s) }
   Ref     { \p s -> (KW_TyRef,     posn p s) }
   Unit    { \p s -> (KW_TyUnit,    posn p s) }
 
@@ -142,7 +142,6 @@ data Token =
   | KW_Otherwise
   | KW_Private
   | KW_Public
-  | KW_Pure
   | KW_Ref
   | KW_Return
   | KW_Static
@@ -157,6 +156,7 @@ data Token =
   | KW_TyInt
   | KW_TyMaybe
   | KW_TyMutable
+  | KW_TyPure
   | KW_TyRef
   | KW_TyUnit
   -- Symbols
@@ -219,7 +219,6 @@ instance Show Token where
   show KW_Otherwise = "otherwise"
   show KW_Private   = "private"
   show KW_Public    = "public"
-  show KW_Pure      = "pure"
   show KW_Ref       = "ref"
   show KW_Return    = "return"
   show KW_Static    = "static"
@@ -234,6 +233,7 @@ instance Show Token where
   show KW_TyInt     = "Int"
   show KW_TyMaybe   = "Maybe"
   show KW_TyMutable = "Mutable"
+  show KW_TyPure    = "Pure"
   show KW_TyRef     = "Ref"
   show KW_TyUnit    = "Unit"
   -- Symbols

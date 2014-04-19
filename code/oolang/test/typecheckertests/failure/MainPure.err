@@ -1,2 +1,2 @@
-OOLang type checking error at MainPure.ool:1,10-1,13:
-  Function 'main' is declared as pure
+OOLang type checking error at MainPure.ool:1,12-1,20:
+  Function 'main' has to have type 'Unit', but it has type 'Pure Unit'

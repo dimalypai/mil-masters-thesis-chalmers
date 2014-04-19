@@ -11,6 +11,7 @@ import OOLang.PrettyPrinter
 instance Pretty Type where
   prPrn TyUnit = text "Unit"
   prPrn TyInt  = text "Int"
+  prPrn (TyPure t) = text "Pure" <+> prPrn t  -- TODO: parens
 
 instance Pretty Var where
   prPrn (Var varStr) = text varStr

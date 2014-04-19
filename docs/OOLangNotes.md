@@ -22,3 +22,18 @@ Effects:
 * IO: built-in functions.
 * Error: division, throw.
 
+Purity: first we had optional pure modifier, but it turns out that there are
+some problems with this. When you have a value (variable) of some type, for
+example, Unit, it may be just unit literal or an enormous side-effecting
+computation. When passing stuff through variables (parameters) we loose purity
+information (and we have higher-order functions, so this is easy). The idea now
+is to try to handle this with Impure type constructor, then anything can be
+annotated with it and purity is then assumed by default. Or maybe have Pure
+type construtor instead. This approach will be easier and more uniform in
+general and should be easier even for implementation (less ad-hoc treatment).
+
+Pure A is a subtype of A? + impure by default. Should be less noise and more
+traditional?
+If everything is pure by default, we can't pass impure stuff instead of pure
+and there is no way to do pure from impure.
+

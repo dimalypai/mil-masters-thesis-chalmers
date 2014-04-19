@@ -42,7 +42,7 @@ typeCheckStage srcProgram typeEnv = runTypeCheckM (tcProgram srcProgram) typeEnv
 -- In the case of success - returns its type.
 typeOf :: SrcExpr -> TypeEnv -> Either TcError Type
 typeOf srcExpr typeEnv = getExprType <$> runTypeCheckM (tcExpr srcExpr) typeEnv
-  where getExprType = (\(_,t,_) -> t) . fst
+  where getExprType = snd . fst
 
 -- | Entry point into the type checking of the program.
 -- Returns a type checked program.
@@ -52,7 +52,7 @@ tcProgram (Program s classDefs funDefs) = do
   -- Class names and function types (but not parameter names) have been checked.
   -- Now first information about definitions is in the environment:
   -- + class names and their super classes (not checked)
-  -- + function names and their types and purity indicators
+  -- + function names and their types
   checkMain
   checkInheritance
   tyClassDefs <- mapM tcClassDef classDefs
@@ -67,7 +67,7 @@ tcProgram (Program s classDefs funDefs) = do
 --
 -- * class names and possibly their super classes
 --
--- * function names and their types and purity indicators
+-- * function names and their types
 --
 -- It also does checking of function types. But it does not check super
 -- classes and function parameter names.
@@ -91,13 +91,13 @@ collectClassDef (ClassDef _ srcClassName mSuperSrcClassName _) = do
 -- Checks that the specified function type is correct (used types are defined).
 -- Does not check parameter names.
 -- Performs a function type transformation.
--- Adds the function, its type and purity indicator to the environment.
+-- Adds the function and its type to the environment.
 collectFunDef :: SrcFunDef -> TypeCheckM ()
-collectFunDef (FunDef _ srcFunName srcFunType _ isPure) = do
+collectFunDef (FunDef _ srcFunName srcFunType _) = do
   whenM (isFunctionDefined $ getFunName srcFunName) $
     throwError $ FunctionAlreadyDefined srcFunName
   funType <- srcFunTypeToType srcFunType
-  addFunction srcFunName funType isPure srcFunType
+  addFunction srcFunName funType srcFunType
 
 -- | Program needs to have an entry point: `main : Unit`.
 checkMain :: TypeCheckM ()
@@ -107,8 +107,6 @@ checkMain = do
   funTypeInfo <- getFunTypeInfo $ FunName "main"
   when (ftiType funTypeInfo /= TyUnit) $
     throwError $ MainIncorrectType (ftiSrcFunType funTypeInfo) (ftiType funTypeInfo)
-  when (ftiIsPure funTypeInfo) $
-    throwError $ MainPure (ftiSrcFunName funTypeInfo)
 
 -- | Checks that all super classes are defined and that there are no cycles in
 -- inheritance.
@@ -168,7 +166,7 @@ tcClassDef (ClassDef s srcClassName mSuperSrcClassName srcMembers) = do
 -- Checks that the function is pure (if it is declared as such).
 -- Returns type checked function definition.
 tcFunDef :: SrcFunDef -> TypeCheckM TyFunDef
-tcFunDef (FunDef s srcFunName srcFunType srcStmts isPure) = do
+tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
   -- collect function parameters and check for variable shadowing
   let varBinders = getFunParams srcFunType
   localTypeEnv <- foldM (\localTyEnv vb -> do
@@ -182,38 +180,50 @@ tcFunDef (FunDef s srcFunName srcFunType srcStmts isPure) = do
       return $ addLocalVar var varType localTyEnv)
     emptyLocalTypeEnv varBinders
 
-  (tyStmts, stmtTypes, stmtsPure) <-
-    unzip3 <$> locallyWithEnv localTypeEnv (mapM tcStmt srcStmts)
+  (tyStmts, stmtTypes) <-
+    unzip <$> locallyWithEnv localTypeEnv (mapM tcStmt srcStmts)
 
   retType <- srcTypeToType $ getFunReturnType srcFunType
   -- There is at least one statement, the value of the last one (and hence the
   -- type) is what function returns.
   let lastStmtType = last stmtTypes
-  when (lastStmtType /= retType) $
+  unless (lastStmtType `isSubTypeOf` retType) $
     throwError $ FunIncorrectReturnType srcFunName (last srcStmts) retType lastStmtType
 
+  -- TODO: purity check
+  {-
   when (isPure) $ do
     let mFirstImpureStmt = snd <$> find (not . fst) (zip stmtsPure srcStmts)
     case mFirstImpureStmt of
       Just firstImpureStmt -> throwError $ FunctionNotPure srcFunName firstImpureStmt
       Nothing -> return ()
-  return $ FunDef s srcFunName srcFunType tyStmts isPure
+  -}
+  return $ FunDef s srcFunName srcFunType tyStmts
 
 -- | Statement type checking.
--- Returns a type checked statement together with its type and purity indicator.
-tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type, Bool)
+-- Returns a type checked statement together with its type.
+tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type)
 tcStmt srcStmt =
   case srcStmt of
     ExprS s srcExpr -> do
-      (tyExpr, exprType, exprPure) <- tcExpr srcExpr
-      return (ExprS s tyExpr, exprType, exprPure)
+      (tyExpr, exprType) <- tcExpr srcExpr
+      return (ExprS s tyExpr, exprType)
 
 -- | Expression type checking.
--- Returns a type checked expression together with its type and purity indicator.
-tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type, Bool)
+-- Returns a type checked expression together with its type.
+tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type)
 tcExpr srcExpr =
   case srcExpr of
-    LitE srcLit -> return (LitE srcLit, typeOfLiteral $ getLiteral srcLit, True)
+    LitE srcLit -> return (LitE srcLit, typeOfLiteral $ getLiteral srcLit)
+
+-- | Subtyping relation.
+-- It is reflexive (type is a subtype of itself).
+-- Pure A `isSubTypeOf` B iff A `isSubTypeOf` B.
+isSubTypeOf :: Type -> Type -> Bool
+t1 `isSubTypeOf` t2 = t1 == t2 || pureSubType
+  where pureSubType = case t1 of
+                        TyPure pt1 -> pt1 `isSubTypeOf` t2
+                        _ -> False
 
 -- Type transformations
 
@@ -230,6 +240,8 @@ srcTypeToType (SrcTyClass srcClassName) = do
   return $ TyClass className
 srcTypeToType (SrcTyArrow _ st1 st2) =
   TyArrow <$> srcTypeToType st1 <*> srcTypeToType st2
+srcTypeToType (SrcTyPure _ t) =
+  TyPure <$> srcTypeToType t
 
 -- | Transforms function type which has variable binders and return type to one
 -- big internal type (right associative type arrow without parameter names).

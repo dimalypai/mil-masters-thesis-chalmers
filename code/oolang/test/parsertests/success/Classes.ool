@@ -3,7 +3,7 @@ class Shape =>
 end
 
 class Circle < Shape =>
-  def pure area : Int =>
+  def area : Pure Int =>
     1;
   end
 end

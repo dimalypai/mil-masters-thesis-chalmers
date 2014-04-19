@@ -26,14 +26,14 @@ spec =
     it "recognises all keywords correctly" $
       map getToken
         (lexer "class def do else end false if just nothing \
-              \ otherwise private public pure ref return \
+              \ otherwise private public ref return \
               \ static then true unit when while \
-              \ Bool Float Int Maybe Mutable Ref Unit")
+              \ Bool Float Int Maybe Mutable Pure Ref Unit")
         `shouldBe`
       [ KW_Class, KW_Def, KW_Do, KW_Else, KW_End, KW_False, KW_If, KW_Just, KW_Nothing
-      , KW_Otherwise, KW_Private, KW_Public, KW_Pure, KW_Ref, KW_Return
+      , KW_Otherwise, KW_Private, KW_Public, KW_Ref, KW_Return
       , KW_Static, KW_Then, KW_True, KW_Unit, KW_When, KW_While
-      , KW_TyBool, KW_TyFloat, KW_TyInt, KW_TyMaybe, KW_TyMutable, KW_TyRef, KW_TyUnit
+      , KW_TyBool, KW_TyFloat, KW_TyInt, KW_TyMaybe, KW_TyMutable, KW_TyPure, KW_TyRef, KW_TyUnit
       ]
 
     it "recognises all symbols correctly" $
@@ -72,9 +72,9 @@ spec =
     it "shows tokens correctly" $
       intercalate " " (map (show . getToken)
         (lexer "class def do else end false if just nothing \
-              \ otherwise private public pure ref return \
+              \ otherwise private public ref return \
               \ static then true unit when while \
-              \ Bool Float Int Maybe Mutable Ref Unit \
+              \ Bool Float Int Maybe Mutable Pure Ref Unit \
               \ =  :  +  -  *  /  %  <  >  <=  >=  /= \
               \ =>  ->  \\  .  ::  ?  ??  <-  :=  ! \
               \ &&  ||  (  )  ; \
@@ -82,9 +82,9 @@ spec =
               \ x C var123 Shape"))
         `shouldBe`
       "class def do else end false if just nothing\
-     \ otherwise private public pure ref return\
+     \ otherwise private public ref return\
      \ static then true unit when while\
-     \ Bool Float Int Maybe Mutable Ref Unit\
+     \ Bool Float Int Maybe Mutable Pure Ref Unit\
      \ = : + - * / % < > <= >= /=\
      \ => -> \\ . :: ? ?? <- := !\
      \ && || ( ) ;\

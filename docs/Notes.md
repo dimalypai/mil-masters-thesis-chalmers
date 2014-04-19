@@ -213,3 +213,8 @@ Meeting 2014-04-14
 * type argument for monadic operations (get, put etc.) adds anything on the right of Monad (append).
 * Monad inference: probably no. Just use monad laws with lifts.
 
+General thoughts. Week 11
+=========================
+
+* OOLang design: purity, pure modifier versus Pure or Impure type.
+

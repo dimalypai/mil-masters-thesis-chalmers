@@ -18,7 +18,7 @@ instance SrcAnnotated (ClassDef v) where
   ann (ClassDef s _ _ _) = s
 
 instance SrcAnnotated (FunDef v) where
-  ann (FunDef s _ _ _ _) = s
+  ann (FunDef s _ _ _ ) = s
 
 instance SrcAnnotated (Stmt v) where
   ann (ExprS s _) = s
@@ -40,6 +40,7 @@ instance SrcAnnotated TypeS where
   ann (SrcTyInt s) = s
   ann (SrcTyClass cn) = ann cn
   ann (SrcTyArrow s _ _) = s
+  ann (SrcTyPure s _) = s
   ann (SrcTyMaybe s _) = s
   ann (SrcTyMutable s _) = s
   ann (SrcTyRef s _) = s

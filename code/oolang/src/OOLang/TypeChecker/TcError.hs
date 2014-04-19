@@ -19,7 +19,6 @@ data TcError =
   | FunctionAlreadyDefined SrcFunName
   | MainNotDefined
   | MainIncorrectType SrcFunType Type
-  | MainPure SrcFunName
   | InheritanceCycle
   | VarShadowing SrcVar
   | FunctionNotPure SrcFunName SrcStmt
@@ -55,10 +54,6 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcFunType) <> colon $+$
     nest indLvl (text "Function 'main' has to have type" <+> quotes (prPrn TyUnit) <>
       text ", but it has type" <+> quotes (prPrn funType))
-
-  prPrn (MainPure srcFunName) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan srcFunName) <> colon $+$
-    nest indLvl (text "Function 'main' is declared as pure")
 
   prPrn InheritanceCycle = tcErrorHeader <> colon <+> text "Inheritance cycle was detected"
 

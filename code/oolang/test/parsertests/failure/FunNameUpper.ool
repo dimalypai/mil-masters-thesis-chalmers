@@ -1,1 +1,1 @@
-def pure Fun : Unit => unit; end
+def Fun : Unit => unit; end

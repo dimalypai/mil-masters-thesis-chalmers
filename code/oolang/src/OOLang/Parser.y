@@ -41,7 +41,6 @@ import OOLang.Parser.ParseError
   otherwise { $$@(KW_Otherwise, _) }
   private   { $$@(KW_Private,   _) }
   public    { $$@(KW_Public,    _) }
-  pure      { $$@(KW_Pure,      _) }
   ref       { $$@(KW_Ref,       _) }
   return    { $$@(KW_Return,    _) }
   static    { $$@(KW_Static,    _) }
@@ -56,6 +55,7 @@ import OOLang.Parser.ParseError
   Int     { $$@(KW_TyInt,     _) }
   Maybe   { $$@(KW_TyMaybe,   _) }
   Mutable { $$@(KW_TyMutable, _) }
+  Pure    { $$@(KW_TyPure,    _) }
   Ref     { $$@(KW_TyRef,     _) }
   Unit    { $$@(KW_TyUnit,    _) }
   -- Symbols
@@ -142,11 +142,11 @@ memberdecl : decl ';' {% withFileName $ \fileName ->
 
 fundef :: { SrcFunDef }
 fundef
-  : def optb(pure) lowerId ':' funtype '=>' list1(stmt) end
+  : def lowerId ':' funtype '=>' list1(stmt) end
       {% withFileName $ \fileName ->
-           FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $8] fileName)
-                  (FunName $ getTokId $3, mkTokSrcSpan $3 fileName)
-                  $5 $7 $2 }
+           FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $7] fileName)
+                  (FunName $ getTokId $2, mkTokSrcSpan $2 fileName)
+                  $4 $6 }
 
 stmt :: { SrcStmt }
 stmt
@@ -262,21 +262,23 @@ initop :: { SrcInitOp }
 initop : '=' {% withFileName $ \fileName -> (InitEqual, mkTokSrcSpan $1 fileName) }
        | '<-' {% withFileName $ \fileName -> (InitMut, mkTokSrcSpan $1 fileName) }
 
--- Ref and Mutable may be only the outermost type, but then they can contain
--- anything inside (Maybe, functions, atomic types, nesting of Maybes etc.).
--- This is done to keep things simple and moreover, Ref and Mutable nesting doesn't
+-- Ref and Mutable can be the outermost type and then they can contain
+-- anything inside (Pure (with Ref and Mutable nested), Maybe, functions, atomic
+-- types, nesting of Maybes etc.).
+-- This is done to keep things simple and moreover, direct Ref and Mutable nesting doesn't
 -- make so much sense (if we think about normal variables in OO-languages, for example).
 type :: { SrcType }
-type : maybearrtype { $1 }
-     | atomtoptype  { $1 }
-     | Mutable atommaybearrtype
+type : atomtoptype  { $1 }
+     | maybearrpuretype { $1 }
+     | Mutable atommaybearrpuretype
          {% withFileName $ \fileName ->
               SrcTyMutable (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
                            $2 }
-     | Ref atommaybearrtype
+     | Ref atommaybearrpuretype
          {% withFileName $ \fileName ->
               SrcTyRef (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
                        $2 }
+
 atomtoptype :: { SrcType }
 atomtoptype
   : atomtype { $1 }
@@ -285,13 +287,13 @@ atomtoptype
            SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                       $2 }
 
--- We allow arbitrary nesting of Maybe types, but they cannot contain Ref and
--- Mutable types inside. This is done because Maybe denotes an immutable type
+-- We allow arbitrary nesting of Maybe types, but they can contain Ref and
+-- Mutable types inside only via Pure. This is done because Maybe denotes an immutable type
 -- and having anything mutable or a reference inside either violates this
 -- notion (with Ref, for example) or is just rather useless (with Mutable).
-maybearrtype :: { SrcType }
-maybearrtype
-  : Maybe atommaybearrtype
+maybearrpuretype :: { SrcType }
+maybearrpuretype
+  : Maybe atommaybearrpuretype
       {% withFileName $ \fileName ->
            SrcTyMaybe (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
                       $2 }
@@ -300,11 +302,15 @@ maybearrtype
            SrcTyArrow (combineSrcSpans [getSrcSpan $1, getSrcSpan $3] fileName)
                       $1
                       $3 }
+  | Pure atomtoptype
+      {% withFileName $ \fileName ->
+           SrcTyPure (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
+                     $2 }
 
-atommaybearrtype :: { SrcType }
-atommaybearrtype
+atommaybearrpuretype :: { SrcType }
+atommaybearrpuretype
   : atomtype { $1 }
-  | '(' maybearrtype ')'
+  | '(' maybearrpuretype ')'
       {% withFileName $ \fileName ->
            SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                       $2 }
