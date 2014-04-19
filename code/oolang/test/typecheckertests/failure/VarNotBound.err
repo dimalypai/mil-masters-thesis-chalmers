@@ -1,0 +1,2 @@
+OOLang type checking error at VarNotBound.ool:2,3-2,3:
+  Name 'x' is not bound

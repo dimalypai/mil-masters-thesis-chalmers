@@ -4,6 +4,14 @@ def fun : {a : A} -> {b : A -> B} -> Pure Int =>
   1;
 end
 
+def fun2 : {a : Pure Int} -> Pure Int =>
+  a;
+end
+
+def fun3 : Unit =>
+  main;
+end
+
 class A => end
 
 class B < A => end

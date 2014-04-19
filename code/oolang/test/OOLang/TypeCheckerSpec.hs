@@ -71,6 +71,9 @@ spec =
       it "given a function with incorrect type of the last expression (statement)" $
         failureCase "FunIncorrectReturnType"
 
+      it "given a function with usage of unbound variable" $
+        failureCase "VarNotBound"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

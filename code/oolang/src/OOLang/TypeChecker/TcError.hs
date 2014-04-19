@@ -8,7 +8,7 @@ import Control.Monad.Error
 
 import OOLang.AST
 import OOLang.AST.PrettyPrinter
-import OOLang.SrcSpan()
+import OOLang.SrcSpan
 import OOLang.AST.SrcAnnotated
 import OOLang.PrettyPrinter
 
@@ -21,6 +21,7 @@ data TcError =
   | MainIncorrectType SrcFunType Type
   | InheritanceCycle
   | VarShadowing SrcVar
+  | VarNotBound Var SrcSpan
   | FunctionNotPure SrcFunName SrcStmt
   | FunIncorrectReturnType SrcFunName SrcStmt Type Type
   | OtherError String  -- ^ Contains error message.
@@ -60,6 +61,10 @@ instance Pretty TcError where
   prPrn (VarShadowing srcVar) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcVar) <> colon $+$
     nest indLvl (text "Variable binding for" <+> quotes (prPrn $ getVar srcVar) <+> text "shadows an existing variable or function")
+
+  prPrn (VarNotBound var srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Name" <+> quotes (prPrn var) <+> text "is not bound")
 
   prPrn (FunctionNotPure srcFunName srcStmt) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$

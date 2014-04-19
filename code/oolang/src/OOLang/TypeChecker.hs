@@ -216,6 +216,13 @@ tcExpr srcExpr =
   case srcExpr of
     LitE srcLit -> return (LitE srcLit, typeOfLiteral $ getLiteral srcLit)
 
+    VarE s var -> do
+      -- it can be both a local variable and a global function
+      unlessM (isVarBound var) $
+        throwError $ VarNotBound var s
+      varType <- getVarType var
+      return (VarE s (VarTy (var, varType)), varType)
+
 -- | Subtyping relation.
 -- It is reflexive (type is a subtype of itself).
 -- Pure A `isSubTypeOf` B iff A `isSubTypeOf` B.

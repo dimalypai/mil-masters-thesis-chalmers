@@ -28,6 +28,7 @@ module OOLang.TypeChecker.TypeCheckM
   , emptyLocalTypeEnv
   , isVarBound
   , isVarInLocalEnv
+  , getVarType
   , addLocalVar
   , locallyWithEnv
 
@@ -197,6 +198,18 @@ isVarBound var = do
 -- | Pure function for querying local type environment.
 isVarInLocalEnv :: Var -> LocalTypeEnv -> Bool
 isVarInLocalEnv var = Map.member var
+
+-- | Returns variable type. First looks for locals and then for functions.
+--
+-- Note: Unsafe. Should be used only after check that the variable is bound.
+getVarType :: Var -> TypeCheckM Type
+getVarType var = do
+  mVarType <- gets (Map.lookup var . getLocalTypeEnv)
+  case mVarType of
+    Just varType -> return varType
+    Nothing -> do
+      funTypeInfo <- getFunTypeInfo (varToFunName var)
+      return $ ftiType funTypeInfo
 
 -- | Extends local type environment. Pure (meaning, not a 'TypeCheckM' function).
 addLocalVar :: Var -> Type -> LocalTypeEnv -> LocalTypeEnv
