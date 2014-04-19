@@ -268,27 +268,22 @@ initop : '=' {% withFileName $ \fileName -> (InitEqual, mkTokSrcSpan $1 fileName
 -- make so much sense (if we think about normal variables in OO-languages, for example).
 type :: { SrcType }
 type : maybearrtype { $1 }
-     | atomtype     { $1 }
-     | Mutable '(' maybearrtype ')'
-         {% withFileName $ \fileName ->
-              SrcTyMutable (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
-                           $3 }
-     | Ref '(' maybearrtype ')'
-         {% withFileName $ \fileName ->
-              SrcTyRef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
-                       $3 }
-     | Mutable atomtype
+     | atomtoptype  { $1 }
+     | Mutable atommaybearrtype
          {% withFileName $ \fileName ->
               SrcTyMutable (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
                            $2 }
-     | Ref atomtype
+     | Ref atommaybearrtype
          {% withFileName $ \fileName ->
               SrcTyRef (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
                        $2 }
-     | '(' type ')'
-         {% withFileName $ \fileName ->
-              SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
-                         $2 }
+atomtoptype :: { SrcType }
+atomtoptype
+  : atomtype { $1 }
+  | '(' type ')'
+      {% withFileName $ \fileName ->
+           SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+                      $2 }
 
 -- We allow arbitrary nesting of Maybe types, but they cannot contain Ref and
 -- Mutable types inside. This is done because Maybe denotes an immutable type
@@ -296,7 +291,7 @@ type : maybearrtype { $1 }
 -- notion (with Ref, for example) or is just rather useless (with Mutable).
 maybearrtype :: { SrcType }
 maybearrtype
-  : Maybe atomtype
+  : Maybe atommaybearrtype
       {% withFileName $ \fileName ->
            SrcTyMaybe (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
                       $2 }
@@ -305,10 +300,14 @@ maybearrtype
            SrcTyArrow (combineSrcSpans [getSrcSpan $1, getSrcSpan $3] fileName)
                       $1
                       $3 }
-  | Maybe '(' maybearrtype ')'
+
+atommaybearrtype :: { SrcType }
+atommaybearrtype
+  : atomtype { $1 }
+  | '(' maybearrtype ')'
       {% withFileName $ \fileName ->
-           SrcTyMaybe (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
-                      $3 }
+           SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+                      $2 }
 
 atomtype :: { SrcType }
 atomtype : Unit    {% withFileName $ \fileName -> SrcTyUnit  $ mkTokSrcSpan $1 fileName }
