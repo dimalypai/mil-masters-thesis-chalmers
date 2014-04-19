@@ -216,5 +216,8 @@ Meeting 2014-04-14
 General thoughts. Week 11
 =========================
 
-* OOLang design: purity, pure modifier versus Pure or Impure type.
+* OOLang design:
+  + pure modifier versus Pure or Impure type
+  + references and purity
+  + types nesting (parsing, type checking)
 

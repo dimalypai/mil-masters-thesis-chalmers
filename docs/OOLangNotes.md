@@ -37,3 +37,36 @@ traditional?
 If everything is pure by default, we can't pass impure stuff instead of pure
 and there is no way to do pure from impure.
 
+References and purity: We take a conservative approach and treat anything which is
+reference related as impure. It could be less conservative by treating
+reference reads and writes impure, but declarations and passing as parameters
+as pure, but let's just treat references uniformly, it should be simpler.
+
+What does it mean to reference a pure value: Ref (Pure Int)? Is it different
+from Ref Int? It makes perfect sense for lazy language (if we reference a
+computation), but if we reference a value computed by an impure computation or
+just a literal. And then, are Mutable (Pure Int) and Mutable Int or Maybe (Pure
+Int) and Maybe Int different? Again, since we are in a strict language, when we
+have something of atomic type, like main : Unit, which is impure and pass it as
+an argument, we pass a value, not a computation, and this value, which main
+returned (unit) is pure (so, the reasoning above about enormous side-effecting
+computation is incorrect for strict language). Maybe we should allow Pure only
+on the top level and of type arrows, for example, or, on the far right of type
+arrow (the latter seems more correct, since we don't deliver a function
+impurely, but rather have an impure function which delivers a value of some
+type)? But with this approach we don't know if f : Int is pure or impure. So it
+must be f : Pure Int if it is pure. But for the parameters it doesn't really
+make sense being Pure Unit. So, only return type of the function and far right
+of arrow?
+
+What about function returning Mutable value or taking Mutable value as an
+argument, this doesn't make too much sense.  Reference - yes, but mutable
+variable which is treated by value - no.
+
+Complicated type nesting. Parse generally and then let the type checker do the job.
+Restrictions on well-formed types:
+* variable declarations: nothing specific
+* function parameters: Mutable and Pure are not allowed
+* function return type: Mutable is not allowed
+* Ref and Mutable on the top level (nested only via function arrows)
+
