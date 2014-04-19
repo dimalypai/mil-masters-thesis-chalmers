@@ -221,6 +221,10 @@ tcExpr srcExpr =
       varType <- getVarType var
       return (VarE s (VarTy (var, varType)), varType)
 
+    ParenE s srcSubExpr -> do
+      (tySubExpr, exprType) <- tcExpr srcSubExpr
+      return (ParenE s tySubExpr, exprType)
+
 -- | Subtyping relation.
 -- It is reflexive (type is a subtype of itself).
 -- Pure A `isSubTypeOf` B iff A `isSubTypeOf` B.
