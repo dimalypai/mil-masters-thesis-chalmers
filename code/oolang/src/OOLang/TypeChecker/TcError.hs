@@ -24,6 +24,8 @@ data TcError =
   | VarNotBound Var SrcSpan
   | FunctionNotPure SrcFunName TyStmt
   | FunIncorrectReturnType SrcFunName TyStmt Type Type
+  | IncorrectFunArgType TyExpr Type Type
+  | NotFunctionType TyExpr Type
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -76,6 +78,15 @@ instance Pretty TcError where
     nest indLvl (text "Function" <+> quotes (prPrn $ getFunName srcFunName) <+>
       text "has to return a value of type" <+> quotes (prPrn expType) <>
       text ", but it returns a value of type" <+> quotes (prPrn actType))
+
+  prPrn (IncorrectFunArgType tyArgExpr expType actType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan tyArgExpr) <> colon $+$
+    nest indLvl (text "Incorrect type of the argument. The expected type is" <+> quotes (prPrn expType) <>
+      text ", but it has type" <+> quotes (prPrn actType))
+
+  prPrn (NotFunctionType funExpr actType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan funExpr) <> colon $+$
+    nest indLvl (text "The expression needs to have a function type, but it has type" <+> quotes (prPrn actType))
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

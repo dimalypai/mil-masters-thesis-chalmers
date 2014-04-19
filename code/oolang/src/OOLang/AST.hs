@@ -171,6 +171,9 @@ data BinOp = App
 type BinOpS s = (BinOp, s)
 type SrcBinOp = BinOpS SrcSpan
 
+getBinOp :: BinOpS s -> BinOp
+getBinOp = fst
+
 -- | Internal representation of types. What types really represent.
 data Type = TyUnit
           | TyBool

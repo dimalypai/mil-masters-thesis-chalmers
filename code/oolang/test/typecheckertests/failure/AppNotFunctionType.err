@@ -1,0 +1,2 @@
+OOLang type checking error at AppNotFunctionType.ool:2,3-2,6:
+  The expression needs to have a function type, but it has type 'Unit'

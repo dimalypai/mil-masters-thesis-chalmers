@@ -9,8 +9,9 @@ import OOLang.AST
 import OOLang.PrettyPrinter
 
 instance Pretty Type where
-  prPrn TyUnit = text "Unit"
-  prPrn TyInt  = text "Int"
+  prPrn TyUnit  = text "Unit"
+  prPrn TyInt   = text "Int"
+  prPrn TyFloat = text "Float"
   prPrn (TyPure t) = text "Pure" <+> prPrn t  -- TODO: parens
 
 instance Pretty Var where

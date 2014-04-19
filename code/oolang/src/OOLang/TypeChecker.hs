@@ -221,9 +221,41 @@ tcExpr srcExpr =
       varType <- getVarType var
       return (VarE s (VarTy (var, varType)), varType)
 
+    BinOpE s srcBinOp srcExpr1 srcExpr2 -> do
+      let op = getBinOp srcBinOp
+      (tyExpr1, tyExpr2, resultType) <- tcBinOp op srcExpr1 srcExpr2
+      return (BinOpE s srcBinOp tyExpr1 tyExpr2, resultType)
+
     ParenE s srcSubExpr -> do
       (tySubExpr, exprType) <- tcExpr srcSubExpr
       return (ParenE s tySubExpr, exprType)
+
+-- Binary operations type checking
+
+-- | Type checks a given binary operation. Takes operands.
+-- Returns a triple of type checked operands and a type of the result.
+tcBinOp :: BinOp -> SrcExpr -> SrcExpr -> TypeCheckM (TyExpr, TyExpr, Type)
+tcBinOp op srcExpr1 srcExpr2 = do
+  tyExpr1WithType@(tyExpr1, _) <- tcExpr srcExpr1
+  tyExpr2WithType@(tyExpr2, _) <- tcExpr srcExpr2
+  resultType <- case op of
+    App -> tcApp tyExpr1WithType tyExpr2WithType
+  return (tyExpr1, tyExpr2, resultType)
+
+-- | Type synonym for binary operation type checking functions.
+-- They take two pairs of type checked operands with their types and return a
+-- type of the result.
+type BinOpTc = (TyExpr, Type) -> (TyExpr, Type) -> TypeCheckM Type
+
+-- | Function application type checking.
+tcApp :: BinOpTc
+tcApp (tyExpr1, expr1Type) (tyExpr2, expr2Type) =
+  case expr1Type of
+    TyArrow argType resultType ->
+      if not (expr2Type `isSubTypeOf` argType)
+        then throwError $ IncorrectFunArgType tyExpr2 argType expr2Type
+        else return resultType
+    _ -> throwError $ NotFunctionType tyExpr1 expr1Type
 
 -- | Subtyping relation.
 -- It is reflexive (type is a subtype of itself).
@@ -239,9 +271,10 @@ t1 `isSubTypeOf` t2 = t1 == t2 || pureSubType
 -- | Converts a source representation of type to an internal one.
 -- Checks that all types are defined.
 srcTypeToType :: SrcType -> TypeCheckM Type
-srcTypeToType (SrcTyUnit _) = return TyUnit
-srcTypeToType (SrcTyBool _) = return TyBool
-srcTypeToType (SrcTyInt  _) = return TyInt
+srcTypeToType (SrcTyUnit  _) = return TyUnit
+srcTypeToType (SrcTyBool  _) = return TyBool
+srcTypeToType (SrcTyInt   _) = return TyInt
+srcTypeToType (SrcTyFloat _) = return TyFloat
 srcTypeToType (SrcTyClass srcClassName) = do
   let className = getClassName srcClassName
   unlessM (isClassDefined className) $
@@ -251,6 +284,7 @@ srcTypeToType (SrcTyArrow _ st1 st2) =
   TyArrow <$> srcTypeToType st1 <*> srcTypeToType st2
 srcTypeToType (SrcTyPure _ t) =
   TyPure <$> srcTypeToType t
+srcTypeToType (SrcTyParen _ t) = srcTypeToType t
 
 -- | Transforms function type which has variable binders and return type to one
 -- big internal type (right associative type arrow without parameter names).

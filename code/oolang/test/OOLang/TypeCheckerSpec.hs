@@ -77,6 +77,15 @@ spec =
       it "given a function with Pure return type and impure statement" $
         failureCase "PureFunImpureStmt"
 
+      it "given an application with left-hand side which is not a function" $
+        failureCase "AppNotFunction"
+
+      it "given an application with left-hand side which has not a function type" $
+        failureCase "AppNotFunctionType"
+
+      it "given an application with incorrect argument type" $
+        failureCase "AppIncorrectArgType"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.
