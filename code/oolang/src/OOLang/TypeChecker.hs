@@ -188,16 +188,14 @@ tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
   -- type) is what function returns.
   let lastStmtType = last stmtTypes
   unless (lastStmtType `isSubTypeOf` retType) $
-    throwError $ FunIncorrectReturnType srcFunName (last srcStmts) retType lastStmtType
+    throwError $ FunIncorrectReturnType srcFunName (last tyStmts) retType lastStmtType
 
-  -- TODO: purity check
-  {-
-  when (isPure) $ do
-    let mFirstImpureStmt = snd <$> find (not . fst) (zip stmtsPure srcStmts)
+  when (isPure retType) $ do
+    let mFirstImpureStmt = snd <$> find (not . isPure . fst) (zip stmtTypes tyStmts)
     case mFirstImpureStmt of
       Just firstImpureStmt -> throwError $ FunctionNotPure srcFunName firstImpureStmt
       Nothing -> return ()
-  -}
+
   return $ FunDef s srcFunName srcFunType tyStmts
 
 -- | Statement type checking.

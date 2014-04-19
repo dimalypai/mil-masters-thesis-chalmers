@@ -22,8 +22,8 @@ data TcError =
   | InheritanceCycle
   | VarShadowing SrcVar
   | VarNotBound Var SrcSpan
-  | FunctionNotPure SrcFunName SrcStmt
-  | FunIncorrectReturnType SrcFunName SrcStmt Type Type
+  | FunctionNotPure SrcFunName TyStmt
+  | FunIncorrectReturnType SrcFunName TyStmt Type Type
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -66,13 +66,13 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Name" <+> quotes (prPrn var) <+> text "is not bound")
 
-  prPrn (FunctionNotPure srcFunName srcStmt) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
+  prPrn (FunctionNotPure srcFunName tyStmt) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan tyStmt) <> colon $+$
     nest indLvl (text "Function" <+> quotes (prPrn $ getFunName srcFunName) <+>
-      text "is declared as pure, but it contains impure statement")
+      text "has Pure return type, but it contains an impure statement")
 
-  prPrn (FunIncorrectReturnType srcFunName srcStmt expType actType) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
+  prPrn (FunIncorrectReturnType srcFunName tyStmt expType actType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan tyStmt) <> colon $+$
     nest indLvl (text "Function" <+> quotes (prPrn $ getFunName srcFunName) <+>
       text "has to return a value of type" <+> quotes (prPrn expType) <>
       text ", but it returns a value of type" <+> quotes (prPrn actType))

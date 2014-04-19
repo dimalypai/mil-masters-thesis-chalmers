@@ -187,6 +187,10 @@ data Type = TyUnit
           | TyRef Type
   deriving (Show, Eq)
 
+isPure :: Type -> Bool
+isPure (TyPure _) = True
+isPure          _ = False
+
 -- | Source representation of types. How a user entered them.
 --
 -- 'SrcTyParen' is used for better source spans and pretty printing.

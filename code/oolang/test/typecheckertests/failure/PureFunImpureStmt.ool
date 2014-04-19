@@ -1,0 +1,7 @@
+def main : Unit => unit; end
+
+def fun : Pure Int =>
+  main;
+  1;
+end
+

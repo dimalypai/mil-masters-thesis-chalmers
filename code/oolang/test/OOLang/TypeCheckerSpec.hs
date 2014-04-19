@@ -74,6 +74,9 @@ spec =
       it "given a function with usage of unbound variable" $
         failureCase "VarNotBound"
 
+      it "given a function with Pure return type and impure statement" $
+        failureCase "PureFunImpureStmt"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.
