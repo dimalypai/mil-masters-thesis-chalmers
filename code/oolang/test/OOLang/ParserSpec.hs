@@ -396,12 +396,6 @@ spec =
       it "given a variable binder with unbalanced curlies" $
         failureCase "VarBinderUnbalancedCurlies"
 
-      it "given a nested Ref type" $
-        failureCase "NestedRefType"
-
-      it "given a wrong nesting of Maybe and Mutable types" $
-        failureCase "WrongMaybeMutableNesting"
-
       it "given an unparenthesised Mutable nesting" $
         failureCase "UnparenthesisedMutable"
 

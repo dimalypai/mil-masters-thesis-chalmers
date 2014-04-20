@@ -1,0 +1,2 @@
+OOLang type checking error at TyArrowMutableParam.ool:3,15-3,25:
+  Function parameter can not have Mutable type

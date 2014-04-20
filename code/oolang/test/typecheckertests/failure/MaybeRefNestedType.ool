@@ -1,0 +1,6 @@
+def main : Unit => unit; end
+
+def f : {a : (Maybe (Ref Int))} -> Unit =>
+  unit;
+end
+

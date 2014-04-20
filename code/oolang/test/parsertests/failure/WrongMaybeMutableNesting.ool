@@ -1,3 +1,0 @@
-def fun : Maybe (Mutable Int) =>
-  unit;
-end

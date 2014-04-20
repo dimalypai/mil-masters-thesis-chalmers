@@ -1,0 +1,2 @@
+OOLang type checking error at MaybeRefNestedType.ool:3,15-3,29:
+  Incorrect nesting of Maybe/Mutable/Ref types

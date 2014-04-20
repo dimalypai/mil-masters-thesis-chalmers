@@ -175,6 +175,7 @@ getBinOp :: BinOpS s -> BinOp
 getBinOp = fst
 
 -- | Internal representation of types. What types really represent.
+-- For invariants see type transformations in the TypeChecker.
 data Type = TyUnit
           | TyBool
           | TyInt

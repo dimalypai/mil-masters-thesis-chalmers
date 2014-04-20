@@ -1,0 +1,2 @@
+OOLang type checking error at TyArrowMutableReturnType.ool:3,22-3,32:
+  Function can not have Mutable return type

@@ -86,6 +86,39 @@ spec =
       it "given an application with incorrect argument type" $
         failureCase "AppIncorrectArgType"
 
+      it "given a function definition with Pure parameter" $
+        failureCase "FunDefPureParam"
+
+      it "given a function definition with Mutable parameter" $
+        failureCase "FunDefMutableParam"
+
+      it "given a function definition with Mutable return type" $
+        failureCase "FunDefMutableReturnType"
+
+      it "given an arrow type with Pure parameter" $
+        failureCase "TyArrowPureParam"
+
+      it "given an arrow type with Mutable parameter" $
+        failureCase "TyArrowMutableParam"
+
+      it "given an arrow type with Mutable return type" $
+        failureCase "TyArrowMutableReturnType"
+
+      it "given a Pure type inside another type" $
+        failureCase "PureNestedInType"
+
+      it "given a Maybe type with nested Ref type" $
+        failureCase "MaybeRefNestedType"
+
+      it "given a Maybe type with nested Mutable type" $
+        failureCase "MaybeMutableNestedType"
+
+      it "given a Ref type with nested Ref type" $
+        failureCase "RefRefNestedType"
+
+      it "given a Ref type with nested Mutable type" $
+        failureCase "RefMutableNestedType"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

@@ -1,0 +1,6 @@
+def main : Unit => unit; end
+
+def f : {g : (Mutable Int) -> Unit} -> Unit =>
+  unit;
+end
+

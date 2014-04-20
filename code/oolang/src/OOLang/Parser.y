@@ -262,66 +262,44 @@ initop :: { SrcInitOp }
 initop : '=' {% withFileName $ \fileName -> (InitEqual, mkTokSrcSpan $1 fileName) }
        | '<-' {% withFileName $ \fileName -> (InitMut, mkTokSrcSpan $1 fileName) }
 
--- Ref and Mutable can be the outermost type and then they can contain
--- anything inside (Pure (with Ref and Mutable nested), Maybe, functions, atomic
--- types, nesting of Maybes etc.).
--- This is done to keep things simple and moreover, direct Ref and Mutable nesting doesn't
--- make so much sense (if we think about normal variables in OO-languages, for example).
+-- For simplicity we parse much more generally than it is allowed by the language.
 type :: { SrcType }
-type : atomtoptype  { $1 }
-     | maybearrpuretype { $1 }
-     | Mutable atommaybearrpuretype
-         {% withFileName $ \fileName ->
-              SrcTyMutable (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
-                           $2 }
-     | Ref atommaybearrpuretype
-         {% withFileName $ \fileName ->
-              SrcTyRef (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
-                       $2 }
-
-atomtoptype :: { SrcType }
-atomtoptype
-  : atomtype { $1 }
-  | '(' type ')'
-      {% withFileName $ \fileName ->
-           SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
-                      $2 }
-
--- We allow arbitrary nesting of Maybe types, but they can contain Ref and
--- Mutable types inside only via Pure. This is done because Maybe denotes an immutable type
--- and having anything mutable or a reference inside either violates this
--- notion (with Ref, for example) or is just rather useless (with Mutable).
-maybearrpuretype :: { SrcType }
-maybearrpuretype
-  : Maybe atommaybearrpuretype
-      {% withFileName $ \fileName ->
-           SrcTyMaybe (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
-                      $2 }
+type
+  : atomtype  { $1 }
   | type '->' type
       {% withFileName $ \fileName ->
            SrcTyArrow (combineSrcSpans [getSrcSpan $1, getSrcSpan $3] fileName)
                       $1
                       $3 }
-  | Pure atomtoptype
+  | Pure atomtype
       {% withFileName $ \fileName ->
            SrcTyPure (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
                      $2 }
+  | Maybe atomtype
+      {% withFileName $ \fileName ->
+           SrcTyMaybe (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
+                      $2 }
+  | Mutable atomtype
+      {% withFileName $ \fileName ->
+           SrcTyMutable (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
+                        $2 }
+  | Ref atomtype
+      {% withFileName $ \fileName ->
+           SrcTyRef (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
+                    $2 }
 
-atommaybearrpuretype :: { SrcType }
-atommaybearrpuretype
-  : atomtype { $1 }
-  | '(' maybearrpuretype ')'
+atomtype :: { SrcType }
+atomtype
+  : Unit    {% withFileName $ \fileName -> SrcTyUnit  $ mkTokSrcSpan $1 fileName }
+  | Bool    {% withFileName $ \fileName -> SrcTyBool  $ mkTokSrcSpan $1 fileName }
+  | Int     {% withFileName $ \fileName -> SrcTyInt   $ mkTokSrcSpan $1 fileName }
+  | Float   {% withFileName $ \fileName -> SrcTyFloat $ mkTokSrcSpan $1 fileName }
+  | upperId {% withFileName $ \fileName -> SrcTyClass ( ClassName $ getTokId $1
+                                                      , mkTokSrcSpan $1 fileName ) }
+  | '(' type ')'
       {% withFileName $ \fileName ->
            SrcTyParen (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                       $2 }
-
-atomtype :: { SrcType }
-atomtype : Unit    {% withFileName $ \fileName -> SrcTyUnit  $ mkTokSrcSpan $1 fileName }
-         | Bool    {% withFileName $ \fileName -> SrcTyBool  $ mkTokSrcSpan $1 fileName }
-         | Int     {% withFileName $ \fileName -> SrcTyInt   $ mkTokSrcSpan $1 fileName }
-         | Float   {% withFileName $ \fileName -> SrcTyFloat $ mkTokSrcSpan $1 fileName }
-         | upperId {% withFileName $ \fileName -> SrcTyClass ( ClassName $ getTokId $1
-                                                             , mkTokSrcSpan $1 fileName ) }
 
 varbinder :: { SrcVarBinder }
 varbinder

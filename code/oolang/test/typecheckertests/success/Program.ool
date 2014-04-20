@@ -8,7 +8,7 @@ def fun : {a : A} -> {b : A -> B} -> Pure Int =>
   ((1));
 end
 
-def fun2 : {a : Pure Int} -> Pure Int =>
+def fun2 : {a : Int} -> Pure Int =>
   a;
 end
 

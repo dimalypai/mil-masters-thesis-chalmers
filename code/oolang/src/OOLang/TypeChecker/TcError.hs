@@ -26,6 +26,11 @@ data TcError =
   | FunIncorrectReturnType SrcFunName TyStmt Type Type
   | IncorrectFunArgType TyExpr Type Type
   | NotFunctionType TyExpr Type
+  | PureValue SrcType
+  | MutableOrRefNested SrcType
+  | PureFunParam SrcType
+  | MutableFunParam SrcType
+  | MutableFunReturnType SrcType
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -87,6 +92,26 @@ instance Pretty TcError where
   prPrn (NotFunctionType funExpr actType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan funExpr) <> colon $+$
     nest indLvl (text "The expression needs to have a function type, but it has type" <+> quotes (prPrn actType))
+
+  prPrn (PureValue srcType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
+    nest indLvl (text "Pure type can be used only in the return type of a function")
+
+  prPrn (MutableOrRefNested srcType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
+    nest indLvl (text "Incorrect nesting of Maybe/Mutable/Ref types")
+
+  prPrn (PureFunParam srcType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
+    nest indLvl (text "Function parameter can not have Pure type")
+
+  prPrn (MutableFunParam srcType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
+    nest indLvl (text "Function parameter can not have Mutable type")
+
+  prPrn (MutableFunReturnType srcType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
+    nest indLvl (text "Function can not have Mutable return type")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 
