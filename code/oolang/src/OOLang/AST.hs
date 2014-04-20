@@ -195,6 +195,43 @@ isPure :: Type -> Bool
 isPure (TyPure _) = True
 isPure          _ = False
 
+isAtomicType :: Type -> Bool
+isAtomicType TyArrow   {} = False
+isAtomicType TyPure    {} = False
+isAtomicType TyMaybe   {} = False
+isAtomicType TyMutable {} = False
+isAtomicType TyRef     {} = False
+isAtomicType            _ = True
+
+getTypePrec :: Type -> Int
+getTypePrec TyUnit       = 3
+getTypePrec TyBool       = 3
+getTypePrec TyInt        = 3
+getTypePrec TyFloat      = 3
+getTypePrec TyString     = 3
+getTypePrec TyClass   {} = 3
+getTypePrec TyArrow   {} = 1
+getTypePrec TyPure    {} = 2
+getTypePrec TyMaybe   {} = 2
+getTypePrec TyMutable {} = 2
+getTypePrec TyRef     {} = 2
+
+-- | Returns whether the first type operator has a lower precedence than the
+-- second one. Convenient to use in infix form.
+--
+-- Note: It is reflexive: t `typeHasLowerPrec` t ==> True
+typeHasLowerPrec :: Type -> Type -> Bool
+typeHasLowerPrec t1 t2 = getTypePrec t1 <= getTypePrec t2
+
+-- | Returns whether the first type operator has a lower precedence than the
+-- second one. Convenient to use in infix form.
+-- This version can be used with associative type operators, for example:
+-- arrow, type application. See "MIL.AST.PrettyPrinter".
+--
+-- Note: It is *not* reflexive: t `typeHasLowerPrecAssoc` t ==> False
+typeHasLowerPrecAssoc :: Type -> Type -> Bool
+typeHasLowerPrecAssoc t1 t2 = getTypePrec t1 < getTypePrec t2
+
 -- | Source representation of types. How a user entered them.
 --
 -- 'SrcTyParen' is used for better source spans and pretty printing.

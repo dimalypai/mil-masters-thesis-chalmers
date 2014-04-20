@@ -12,6 +12,12 @@ import Text.PrettyPrint
 class Pretty a where
   prPrn :: a -> Doc
 
+-- | Pretty-printing function that adds parentheses around depending on the
+-- flag value. Convenient when dealing with precedences.
+prPrnParens :: Pretty a => Bool -> a -> Doc
+prPrnParens True  = parens . prPrn
+prPrnParens False = prPrn
+
 -- | Top-level pretty-printing function.
 prPrint :: Pretty a => a -> String
 prPrint = render . prPrn
