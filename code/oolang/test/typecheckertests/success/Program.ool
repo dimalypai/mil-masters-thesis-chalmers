@@ -4,30 +4,38 @@ class A => end
 
 class B < A => end
 
+# Class params, pure, int literal, parens
 def fun : {a : A} -> {b : A -> B} -> Pure Int =>
   ((1));
 end
 
+# Param reference, pure, the same param name as in fun
 def fun2 : {a : Int} -> Pure Int =>
   a;
 end
 
+# Global function without params reference, impure
 def fun3 : Unit =>
   main;
 end
 
+# Function for applications, pure
 def fun4 : {a : Int} -> {b : Float} -> Pure Unit =>
   unit;
 end
 
+# Partial application of fun4, pure
 def fun5 : Float -> Pure Unit =>
   fun4 1;
 end
 
+# Final application of fun4 via fun5, pure
 def fun6 : Pure Unit =>
   fun5 0.01;
 end
 
+# Application of fun4 at once, nested pure application
+# Declared as impure, but it is pure
 def fun7 : Unit =>
   fun4 (fun2 1) 0.01;
 end
