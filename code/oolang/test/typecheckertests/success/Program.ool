@@ -10,34 +10,34 @@ def fun : {a : A} -> {b : A -> B} -> Pure Int =>
 end
 
 # Param reference, pure, the same param name as in fun
-def fun2 : {a : Int} -> Pure Int =>
+def paramRefPure : {a : Int} -> Pure Int =>
   a;
 end
 
-# Global function without params reference, impure
-def fun3 : Unit =>
+# Calling global function without params, impure
+def mainCall : Unit =>
   main;
 end
 
 # Function for applications, pure
-def fun4 : {a : Int} -> {b : Float} -> Pure Unit =>
+def curryFun : {a : Int} -> {b : Float} -> Pure Unit =>
   unit;
 end
 
-# Partial application of fun4, pure
-def fun5 : Float -> Pure Unit =>
-  fun4 1;
+# Partial application of curryFun, pure
+def curryFunPartialApp : Float -> Pure Unit =>
+  curryFun 1;
 end
 
-# Final application of fun4 via fun5, pure
-def fun6 : Pure Unit =>
-  fun5 0.01;
+# Final application of curryFun via curryFunPartialApp, pure
+def curryFunFinalApp : Pure Unit =>
+  curryFunPartialApp 0.01;
 end
 
-# Application of fun4 at once, nested pure application
+# Application of curryFun at once, nested pure application
 # Declared as impure, but it is pure
-def fun7 : Unit =>
-  fun4 (fun2 1) 0.01;
+def curryFunAtOnce : Unit =>
+  curryFun (paramRefPure 1) 0.01;
 end
 
 # Pure function as parameter, pure
@@ -71,6 +71,6 @@ end
 # and then calls pure function
 def purePartialAppGlobalImpure : Pure Unit =>
   globalImpure 1;
-  fun6;
+  curryFunFinalApp;
 end
 
