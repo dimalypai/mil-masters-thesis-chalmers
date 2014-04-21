@@ -149,5 +149,6 @@ Planned attending of Master's presentations:
 * 2014-04-28 - "Information Flow in Databases for Free", Daniel Schoepe
 * 2012-05-22 - "Implementing incremental and parallel parsing", Tobias Olausson
 
-# References
+\bibliographystyle{plain}
+\bibliography{Proposal}
 

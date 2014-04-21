@@ -1,6 +1,11 @@
 all: planning notes langs
 planning: Planning.md
-	pandoc --variable mainfont=Palatino --variable fontsize=12pt Planning.md --latex-engine=xelatex -o Planning.pdf
+	pandoc --variable mainfont=Palatino --variable fontsize=12pt --latex-engine=xelatex --parse-raw -t latex -s Planning.md > Planning.tex
+	xelatex Planning.tex
+	bibtex  Planning.aux
+	xelatex Planning.tex
+	xelatex Planning.tex
+	rm -f Planning.aux Planning.bbl Planning.blg Planning.log Planning.out Planning.tex
 notes: Notes.md
 	pandoc --variable mainfont=Palatino --variable fontsize=12pt --variable geometry:margin=1in Notes.md --latex-engine=xelatex -o Notes.pdf
 mil: MILNotes.md MIL.md
