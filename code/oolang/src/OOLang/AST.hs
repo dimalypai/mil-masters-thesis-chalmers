@@ -327,6 +327,9 @@ data InitOp = InitEqual | InitMut | InitRef
 type InitOpS s = (InitOp, s)
 type SrcInitOp = InitOpS SrcSpan
 
+getInitOp :: InitOpS s -> InitOp
+getInitOp = fst
+
 -- | Modifiers are used in class member declarations.
 data Modifier = Public | Private | Static
   deriving Show

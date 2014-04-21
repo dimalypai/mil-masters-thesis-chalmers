@@ -1,0 +1,2 @@
+OOLang type checking error at DeclShadowsFunParam.ool:4,3-4,3:
+  Variable binding for 'a' shadows an existing variable or function

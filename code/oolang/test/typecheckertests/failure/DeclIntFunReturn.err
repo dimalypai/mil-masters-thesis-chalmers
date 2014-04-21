@@ -1,0 +1,2 @@
+OOLang type checking error at DeclIntFunReturn.ool:4,3-4,14:
+  Function 'fun' has to return a value of type 'Int', but it returns a value of type 'Unit'

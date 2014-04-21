@@ -74,3 +74,21 @@ def purePartialAppGlobalImpure : Pure Unit =>
   curryFunFinalApp;
 end
 
+def immutablePureDecl : Pure Unit =>
+  x : Int = 1;
+  y : Int;
+end
+
+def mutablePureDecl : Pure Unit =>
+  x : Mutable Int <- 1;
+  y : Mutable Int;
+end
+
+def immutableImpureDecl : Unit =>
+  x : Unit = main;
+end
+
+def mutableImpureDecl : Unit =>
+  x : Mutable Unit <- main;
+end
+

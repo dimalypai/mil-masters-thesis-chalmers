@@ -1,0 +1,2 @@
+OOLang type checking error at DeclShadowsLocalVar.ool:5,3-5,3:
+  Variable binding for 'a' shadows an existing variable or function

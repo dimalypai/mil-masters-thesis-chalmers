@@ -1,0 +1,10 @@
+def main : Unit => unit; end
+
+def impure : Int =>
+  1;
+end
+
+def fun : Pure Unit =>
+  x : Int = impure;
+end
+

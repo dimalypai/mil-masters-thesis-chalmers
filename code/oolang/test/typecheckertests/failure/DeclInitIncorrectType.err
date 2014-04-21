@@ -1,0 +1,2 @@
+OOLang type checking error at DeclInitIncorrectType.ool:4,11-4,16:
+  Incorrect type of initialisation expression. The expected type is 'Int', but it has type 'Float'

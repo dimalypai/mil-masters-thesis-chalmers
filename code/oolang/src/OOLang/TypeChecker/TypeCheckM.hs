@@ -30,6 +30,7 @@ module OOLang.TypeChecker.TypeCheckM
   , isVarInLocalEnv
   , getVarType
   , addLocalVar
+  , addLocalVarM
   , locallyWithEnv
 
   , module Control.Monad.Error
@@ -214,6 +215,13 @@ getVarType var = do
 -- | Extends local type environment. Pure (meaning, not a 'TypeCheckM' function).
 addLocalVar :: Var -> Type -> LocalTypeEnv -> LocalTypeEnv
 addLocalVar = Map.insert
+
+-- | Monadic function for adding variables to the local environment.
+-- Doesn't check if the variable is already in the environment.
+-- Will overwrite it in this case.
+addLocalVarM :: Var -> Type -> TypeCheckM ()
+addLocalVarM var varType =
+  modifyLocalTypeEnv $ Map.insert var varType
 
 -- | Takes a separate local type environment and merges it with what is already
 -- in the local type environment and performs a given computation in this new

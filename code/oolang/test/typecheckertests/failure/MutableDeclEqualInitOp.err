@@ -1,0 +1,2 @@
+OOLang type checking error at MutableDeclEqualInitOp.ool:4,19-4,21:
+  Incorrect type of initialisation expression. The expected type is 'Mutable Int', but it has type 'Int'

@@ -203,9 +203,53 @@ tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
 tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type, Bool)
 tcStmt srcStmt =
   case srcStmt of
+    DeclS s srcDecl -> do
+      (tyDecl, declType, declPure) <- tcDecl srcDecl
+      return (DeclS s tyDecl, declType, declPure)
+
     ExprS s srcExpr -> do
       (tyExpr, exprType, exprPure) <- tcExpr srcExpr
       return (ExprS s tyExpr, exprType, exprPure)
+
+-- Note [Purity of declarations]:
+--
+-- Conservatively, mark reference declaration with initialisation expression as
+-- impure (they can be passed somewhere out of the local control), mutable and
+-- immutable variable declarations (since they are handled by value) and
+-- reference declarations without initialisation - as pure.
+-- In order for declaration to be pure, its initialisation expression must be
+-- pure.
+
+tcDecl :: SrcDeclaration -> TypeCheckM (TyDeclaration, Type, Bool)
+tcDecl (Decl s varBinder mSrcInit) = do
+  let var = getVar $ getBinderVar varBinder
+  whenM (isVarBound var) $
+    throwError $ VarShadowing (getBinderVar varBinder)
+  varType <- srcTypeToType (getBinderType varBinder)
+  addLocalVarM var varType
+  -- See Note [Purity of declarations]
+  case mSrcInit of
+    Just srcInit -> do
+      (tyInit, initType, initPure) <- tcInit srcInit
+      unless (initType `isSubTypeOf` varType) $
+        throwError $ DeclInitIncorrectType srcInit varType initType
+      return $ (Decl s varBinder (Just tyInit), TyUnit, initPure)
+    Nothing -> return (Decl s varBinder Nothing, TyUnit, True)
+
+tcInit :: SrcInit -> TypeCheckM (TyInit, Type, Bool)
+tcInit (Init s srcInitOp srcExpr) = do
+  (tyExpr, exprType, exprPure) <- tcExpr srcExpr
+  -- See Note [Purity of declarations]
+  let initOp = getInitOp srcInitOp
+  let initPure = case initOp of
+                   InitRef -> False
+                   _       -> True
+  -- if we have a mutable variable declaration of type Mutable A,
+  -- its init expression is of type A, so we need to add TyMutable
+  let exprType' = case initOp of
+                    InitMut -> TyMutable exprType
+                    _       -> exprType
+  return $ (Init s srcInitOp tyExpr, exprType', initPure && exprPure)
 
 -- | Expression type checking.
 -- Returns a type checked expression together with its type and purity indicator.

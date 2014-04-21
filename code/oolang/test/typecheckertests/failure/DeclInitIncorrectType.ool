@@ -1,0 +1,6 @@
+def main : Unit => unit; end
+
+def fun : Unit =>
+  a : Int = 0.01;
+end
+

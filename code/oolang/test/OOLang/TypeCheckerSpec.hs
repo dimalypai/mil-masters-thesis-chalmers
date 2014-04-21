@@ -119,11 +119,46 @@ spec =
       it "given a Maybe type with nested Mutable type" $
         failureCase "MaybeMutableNestedType"
 
+      it "given a Mutable type with nested Ref type" $
+        failureCase "MutableRefNestedType"
+
+      it "given a Mutable type with nested Mutable type" $
+        failureCase "MutableMutableNestedType"
+
       it "given a Ref type with nested Ref type" $
         failureCase "RefRefNestedType"
 
       it "given a Ref type with nested Mutable type" $
         failureCase "RefMutableNestedType"
+
+      it "given a declaration that shadows a global function" $
+        failureCase "DeclShadowsFun"
+
+      it "given a declaration that shadows a function parameter" $
+        failureCase "DeclShadowsFunParam"
+
+      it "given a declaration that shadows a local variable" $
+        failureCase "DeclShadowsLocalVar"
+
+      it "given a declaration that uses undefined type" $
+        failureCase "DeclUndefinedType"
+
+      it "given a declaration with incorrect init type" $
+        failureCase "DeclInitIncorrectType"
+
+      it "given a declaration of immutable variable with mutable init operator" $
+        failureCase "ImmutableDeclMutInitOp"
+
+      it "given a declaration of mutable variable with immutable init operator" $
+        failureCase "MutableDeclEqualInitOp"
+
+      it "given a declaration as a last statement of integer returning function" $
+        failureCase "DeclIntFunReturn"
+
+      it "given an impure declaration inside a Pure function" $
+        failureCase "PureFunImpureDecl"
+
+      -- TODO: add tests for references
 
 -- Infrastructure
 

@@ -31,6 +31,7 @@ data TcError =
   | PureFunParam SrcType
   | MutableFunParam SrcType
   | MutableFunReturnType SrcType
+  | DeclInitIncorrectType SrcInit Type Type
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -112,6 +113,11 @@ instance Pretty TcError where
   prPrn (MutableFunReturnType srcType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
     nest indLvl (text "Function can not have Mutable return type")
+
+  prPrn (DeclInitIncorrectType srcInit expType actType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcInit) <> colon $+$
+    nest indLvl (text "Incorrect type of initialisation expression. The expected type is" <+> quotes (prPrn expType) <>
+      text ", but it has type" <+> quotes (prPrn actType))
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

@@ -1,0 +1,2 @@
+OOLang type checking error at DeclUndefinedType.ool:4,7-4,7:
+  Class 'A' is not defined
