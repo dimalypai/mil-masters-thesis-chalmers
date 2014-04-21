@@ -15,7 +15,7 @@ module OOLang.AST.PrettyPrinter (prPrint) where
 
 import OOLang.AST
 import OOLang.PrettyPrinter
- 
+
 -- See Note [Precedences and associativity]
 instance Pretty Type where
   prPrn TyUnit   = text "Unit"
