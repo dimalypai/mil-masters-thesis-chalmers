@@ -1,7 +1,11 @@
 def main : Unit => unit; end
 
-def fun : Pure Int =>
+def fun : Float -> Pure Int =>
   main;
+  fun2 1;
+end
+
+def fun2 : {a : Int} -> {b : Float} -> Pure Int =>
   1;
 end
 

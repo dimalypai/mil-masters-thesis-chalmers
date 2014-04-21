@@ -42,7 +42,7 @@ typeCheckStage srcProgram typeEnv = runTypeCheckM (tcProgram srcProgram) typeEnv
 -- In the case of success - returns its type.
 typeOf :: SrcExpr -> TypeEnv -> Either TcError Type
 typeOf srcExpr typeEnv = getExprType <$> runTypeCheckM (tcExpr srcExpr) typeEnv
-  where getExprType = snd . fst
+  where getExprType = (\(_,t,_) -> t) . fst
 
 -- | Entry point into the type checking of the program.
 -- Returns a type checked program.
@@ -180,8 +180,8 @@ tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
       return $ addLocalVar var varType localTyEnv)
     emptyLocalTypeEnv varBinders
 
-  (tyStmts, stmtTypes) <-
-    unzip <$> locallyWithEnv localTypeEnv (mapM tcStmt srcStmts)
+  (tyStmts, stmtTypes, stmtsPure) <-
+    unzip3 <$> locallyWithEnv localTypeEnv (mapM tcStmt srcStmts)
 
   retType <- srcFunReturnTypeToType $ getFunReturnType srcFunType
   -- There is at least one statement, the value of the last one (and hence the
@@ -190,8 +190,8 @@ tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
   unless (lastStmtType `isSubTypeOf` retType) $
     throwError $ FunIncorrectReturnType srcFunName (last tyStmts) retType lastStmtType
 
-  when (isPure retType) $ do
-    let mFirstImpureStmt = snd <$> find (not . isPure . fst) (zip stmtTypes tyStmts)
+  when (isPureFunType retType) $ do
+    let mFirstImpureStmt = snd <$> find (not . fst) (zip stmtsPure tyStmts)
     case mFirstImpureStmt of
       Just firstImpureStmt -> throwError $ FunctionNotPure srcFunName firstImpureStmt
       Nothing -> return ()
@@ -199,72 +199,102 @@ tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
   return $ FunDef s srcFunName srcFunType tyStmts
 
 -- | Statement type checking.
--- Returns a type checked statement together with its type.
-tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type)
+-- Returns a type checked statement together with its type and purity indicator.
+tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type, Bool)
 tcStmt srcStmt =
   case srcStmt of
     ExprS s srcExpr -> do
-      (tyExpr, exprType) <- tcExpr srcExpr
-      return (ExprS s tyExpr, exprType)
+      (tyExpr, exprType, exprPure) <- tcExpr srcExpr
+      return (ExprS s tyExpr, exprType, exprPure)
 
 -- | Expression type checking.
--- Returns a type checked expression together with its type.
-tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type)
+-- Returns a type checked expression together with its type and purity indicator.
+tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type, Bool)
 tcExpr srcExpr =
   case srcExpr of
-    LitE srcLit -> return (LitE srcLit, typeOfLiteral $ getLiteral srcLit)
+    LitE srcLit -> return (LitE srcLit, typeOfLiteral $ getLiteral srcLit, True)
 
     VarE s var -> do
       -- it can be both a local variable and a global function
       unlessM (isVarBound var) $
         throwError $ VarNotBound var s
       varType <- getVarType var
-      return (VarE s (VarTy (var, varType)), varType)
+      isPure <- ifM (isFunctionDefined $ varToFunName var)
+                  -- if it is a global function and it does not take any arguments,
+                  -- then in order to be pure, it must have Pure type
+                  -- if it *does* take arguments, then it is pure, since here
+                  -- we just reference its name and don't run the computation,
+                  -- it will be checked when it is fully applied
+                  (if isValueType varType && not (isPureFunType varType)
+                     then return False
+                     else return True)
+                  -- if it is a local variable, then it is always pure, since
+                  -- if it has value type, it has been computed already (we are
+                  -- in a strict language)
+                  -- if it is a function, then we again only reference its
+                  -- name, and its purity should be checked when fully applied
+                  (return True)
+      return (VarE s (VarTy (var, varType)), varType, isPure)
 
     BinOpE s srcBinOp srcExpr1 srcExpr2 -> do
       let op = getBinOp srcBinOp
-      (tyExpr1, tyExpr2, resultType) <- tcBinOp op srcExpr1 srcExpr2
-      return (BinOpE s srcBinOp tyExpr1 tyExpr2, resultType)
+      (tyExpr1, tyExpr2, resultType, resultPure) <- tcBinOp op srcExpr1 srcExpr2
+      return (BinOpE s srcBinOp tyExpr1 tyExpr2, resultType, resultPure)
 
     ParenE s srcSubExpr -> do
-      (tySubExpr, exprType) <- tcExpr srcSubExpr
-      return (ParenE s tySubExpr, exprType)
+      (tySubExpr, exprType, exprPure) <- tcExpr srcSubExpr
+      return (ParenE s tySubExpr, exprType, exprPure)
 
 -- Binary operations type checking
 
 -- | Type checks a given binary operation. Takes operands.
--- Returns a triple of type checked operands and a type of the result.
-tcBinOp :: BinOp -> SrcExpr -> SrcExpr -> TypeCheckM (TyExpr, TyExpr, Type)
+-- Returns type checked operands, a type of the result and its purity indicator.
+tcBinOp :: BinOp -> SrcExpr -> SrcExpr -> TypeCheckM (TyExpr, TyExpr, Type, Bool)
 tcBinOp op srcExpr1 srcExpr2 = do
-  tyExpr1WithType@(tyExpr1, _) <- tcExpr srcExpr1
-  tyExpr2WithType@(tyExpr2, _) <- tcExpr srcExpr2
-  resultType <- case op of
-    App -> tcApp tyExpr1WithType tyExpr2WithType
-  return (tyExpr1, tyExpr2, resultType)
+  tyExpr1TypePure@(tyExpr1, _, _) <- tcExpr srcExpr1
+  tyExpr2TypePure@(tyExpr2, _, _) <- tcExpr srcExpr2
+  (resultType, resultPure) <- case op of
+    App -> tcApp tyExpr1TypePure tyExpr2TypePure
+  return (tyExpr1, tyExpr2, resultType, resultPure)
 
 -- | Type synonym for binary operation type checking functions.
--- They take two pairs of type checked operands with their types and return a
--- type of the result.
-type BinOpTc = (TyExpr, Type) -> (TyExpr, Type) -> TypeCheckM Type
+-- They take two triples of type checked operands with their types and purity
+-- indicators and return a type of the result together with its purity
+-- indicator.
+type BinOpTc = (TyExpr, Type, Bool) -> (TyExpr, Type, Bool) -> TypeCheckM (Type, Bool)
 
 -- | Function application type checking.
 tcApp :: BinOpTc
-tcApp (tyExpr1, expr1Type) (tyExpr2, expr2Type) =
+tcApp (tyExpr1, expr1Type, _) (tyExpr2, expr2Type, expr2Pure) =
   case expr1Type of
     TyArrow argType resultType ->
       if not (expr2Type `isSubTypeOf` argType)
         then throwError $ IncorrectFunArgType tyExpr2 argType expr2Type
-        else return resultType
+        else do
+          -- function performs side effects only when fully applied, so
+          -- if it does not take more arguments, then we check for purity,
+          -- otherwise - postpone this check
+          let expr1Pure = if isValueType resultType && not (isPureFunType resultType)
+                            then False
+                            else True
+          -- application is pure iff both operands are pure
+          return (resultType, expr1Pure && expr2Pure)
     _ -> throwError $ NotFunctionType tyExpr1 expr1Type
 
 -- | Subtyping relation.
--- It is reflexive (type is a subtype of itself).
--- Pure A `isSubTypeOf` B iff A `isSubTypeOf` B.
+-- * It is reflexive (type is a subtype of itself).
+-- * Pure A `isSubTypeOf` B iff A `isSubTypeOf` B.
+-- * B `isSubTypeOf` Pure A iff A `isSubTypeOf` B - this is OK for local
+-- things, since value types denote values in this context, and values are
+-- pure. This does not hold for global functions, for example main : Unit.
 isSubTypeOf :: Type -> Type -> Bool
-t1 `isSubTypeOf` t2 = t1 == t2 || pureSubType
-  where pureSubType = case t1 of
-                        TyPure pt1 -> pt1 `isSubTypeOf` t2
-                        _ -> False
+t1 `isSubTypeOf` t2 = t1 == t2 || pureSubType1 || pureSubType2
+  where pureSubType1 = case t1 of
+                         TyPure pt1 -> pt1 `isSubTypeOf` t2
+                         _ -> False
+        pureSubType2 = case t2 of
+                         TyPure pt2 -> pt2 `isSubTypeOf` t1
+                         _ -> False
 
 -- Type transformations
 

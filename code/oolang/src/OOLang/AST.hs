@@ -191,9 +191,26 @@ data Type = TyUnit
           | TyRef Type
   deriving (Show, Eq)
 
-isPure :: Type -> Bool
-isPure (TyPure _) = True
-isPure          _ = False
+-- | Entity of this type is either an already computed value or a global
+-- function without arguments.
+--
+-- For example, function parameter of type Unit has value type (it can be only
+-- unit value, since we are in a strict language) and global function main :
+-- Unit has value type, but it denotes a computation returning unit, not an
+-- already computed value.
+isValueType :: Type -> Bool
+isValueType TyArrow {} = False
+isValueType _ = True
+
+-- | It can be either a function which has type, for example Pure Int (it
+-- doesn't have arguments and purely computes a value of type Int) or a
+-- function with arguments like Int -> Float -> Pure Int, which takes arguments
+-- and its return type signals that it is a pure function that delivers and
+-- integer value.
+isPureFunType :: Type -> Bool
+isPureFunType (TyPure _) = True
+isPureFunType (TyArrow _ t2) = isPureFunType t2
+isPureFunType _ = False
 
 isAtomicType :: Type -> Bool
 isAtomicType TyArrow   {} = False

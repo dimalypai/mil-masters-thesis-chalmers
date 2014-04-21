@@ -1,2 +1,2 @@
 OOLang type checking error at AppNotFunction.ool:2,3-2,3:
-  The expression needs to have a function type, but it has type 'Pure Int'
+  The expression needs to have a function type, but it has type 'Int'

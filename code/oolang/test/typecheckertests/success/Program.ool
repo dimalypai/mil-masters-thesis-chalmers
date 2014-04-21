@@ -40,3 +40,37 @@ def fun7 : Unit =>
   fun4 (fun2 1) 0.01;
 end
 
+# Pure function as parameter, pure
+def pureFunPureParam : {f : Int -> Float -> Pure Unit} -> Pure Unit =>
+  f 1 0.01;
+end
+
+# Impure function as parameter, partial application as return value, impure
+def impureFunPartialAppReturn : {f : Int -> Float -> Unit} -> Float -> Unit =>
+  f 1;
+end
+
+# Impure function as parameter, partial application, pure
+def impureFunPartialAppPure : {f : Int -> Float -> Unit} -> Pure Int =>
+  f 1;
+  1;
+end
+
+# Impure function as parameter, full application, impure
+def impureFunParamFullApp : {f : Int -> Float -> Unit} -> Int =>
+  f 1 0.01;
+  1;
+end
+
+# Impure function to be referenced globally from pure
+def globalImpure : {a : Int} -> {b : Float} -> Unit =>
+  unit;
+end
+
+# Pure function that partially applies global impure function
+# and then calls pure function
+def purePartialAppGlobalImpure : Pure Unit =>
+  globalImpure 1;
+  fun6;
+end
+

@@ -77,6 +77,9 @@ spec =
       it "given a function with Pure return type and impure statement" $
         failureCase "PureFunImpureStmt"
 
+      it "given a function with Pure return type and impure statement (local function)" $
+        failureCase "PureFunImpureStmtLocal"
+
       it "given an application with left-hand side which is not a function" $
         failureCase "AppNotFunction"
 
@@ -85,6 +88,9 @@ spec =
 
       it "given an application with incorrect argument type" $
         failureCase "AppIncorrectArgType"
+
+      it "given an application with impure argument" $
+        failureCase "AppImpureArg"
 
       it "given a function definition with Pure parameter" $
         failureCase "FunDefPureParam"
