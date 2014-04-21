@@ -322,15 +322,15 @@ srcTypeToType st@(SrcTyPure {}) = throwError $ PureValue st
 srcTypeToType stM@(SrcTyMaybe _ st) =
   if isMutableOrRefNested st
     then throwError $ MutableOrRefNested stM
-    else srcTypeToType st
+    else TyMaybe <$> srcTypeToType st
 srcTypeToType stM@(SrcTyMutable _ st) =
   if isMutableOrRefNested st
     then throwError $ MutableOrRefNested stM
-    else srcTypeToType st
+    else TyMutable <$> srcTypeToType st
 srcTypeToType stR@(SrcTyRef _ st) =
   if isMutableOrRefNested st
     then throwError $ MutableOrRefNested stR
-    else srcTypeToType st
+    else TyRef <$> srcTypeToType st
 srcTypeToType (SrcTyParen _ st) = srcTypeToType st
 
 -- | Traverses a source type and checks if there are Mutable of Ref types nested.
