@@ -284,16 +284,16 @@ tcApp (tyExpr1, expr1Type, _) (tyExpr2, expr2Type, expr2Pure) =
 -- | Subtyping relation.
 -- * It is reflexive (type is a subtype of itself).
 -- * Pure A `isSubTypeOf` B iff A `isSubTypeOf` B.
--- * B `isSubTypeOf` Pure A iff A `isSubTypeOf` B - this is OK for local
--- things, since value types denote values in this context, and values are
--- pure. This does not hold for global functions, for example main : Unit.
+-- * A `isSubTypeOf` Pure B iff A `isSubTypeOf` B.
+--
+-- Note: this can't be used for purity checking.
 isSubTypeOf :: Type -> Type -> Bool
 t1 `isSubTypeOf` t2 = t1 == t2 || pureSubType1 || pureSubType2
   where pureSubType1 = case t1 of
                          TyPure pt1 -> pt1 `isSubTypeOf` t2
                          _ -> False
         pureSubType2 = case t2 of
-                         TyPure pt2 -> pt2 `isSubTypeOf` t1
+                         TyPure pt2 -> t1 `isSubTypeOf` pt2
                          _ -> False
 
 -- Type transformations
