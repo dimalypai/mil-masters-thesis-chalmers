@@ -258,7 +258,10 @@ tcDecl (Decl s varBinder mSrcInit) srcDeclStmt = do
       unless (initType `isSubTypeOf` varType) $
         throwError $ DeclInitIncorrectType srcInit (getUnderType varType) initType
       return $ (Decl s varBinder (Just tyInit), TyUnit, initPure)
-    Nothing -> return (Decl s varBinder Nothing, TyUnit, True)
+    Nothing -> do
+      when (isImmutableType varType) $
+        throwError $ ImmutableVarNotInit var srcDeclStmt
+      return (Decl s varBinder Nothing, TyUnit, True)
 
 tcInit :: SrcInit -> TypeCheckM (TyInit, Type, Bool)
 tcInit (Init s srcInitOp srcExpr) = do

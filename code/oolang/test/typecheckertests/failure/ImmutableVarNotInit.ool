@@ -1,7 +1,6 @@
 def main : Unit => unit; end
 
 def fun : Pure Unit =>
-  x : Int = 0;
-  x <- 1;
+  x : Int;
 end
 

@@ -170,6 +170,9 @@ spec =
       it "given a mutable variable assignment as a last statement of integer returning function" $
         failureCase "AssignIntFunReturn"
 
+      it "given an uninitialised immutable variable" $
+        failureCase "ImmutableVarNotInit"
+
       -- TODO: add tests for references
 
 -- Infrastructure

@@ -1,0 +1,2 @@
+OOLang type checking error at ImmutableVarNotInit.ool:4,3-4,10:
+  Immutable variable 'x' is not initialised
