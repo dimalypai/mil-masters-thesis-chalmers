@@ -60,7 +60,7 @@ instance Pretty Expr where
     prPrnParens (e2 `exprHasLowerPrecAssoc` e) e2
   prPrn (LetE varBind e1 e2) =
     text "let" <+> prPrn varBind <+> text "<-" <+> prPrn e1 <+> text "in" <+> prPrn e2
-  prPrn (ReturnE e m) = text "return" <+> prPrn e
+  prPrn (ReturnE m e) = text "return" <+> brackets (prPrn m) <+> prPrn e
 
 instance Pretty Literal where
   prPrn UnitLit    = text "unit"

@@ -76,7 +76,7 @@ data Expr = LitE Literal
           | DerefE Expr
           | AssignRefE Expr Expr
           | LetE VarBinder Expr Expr
-          | ReturnE Expr TypeM
+          | ReturnE TypeM Expr
           | LiftE Expr TypeM TypeM
           | LetRecE [(VarBinder, Expr)] Expr
           | CaseE Expr [CaseAlt]
@@ -85,6 +85,9 @@ data Expr = LitE Literal
 -- | Literal constants.
 data Literal = UnitLit
              | IntLit Int
+             | FloatLit Double
+               -- | Can be used only as global constants. Not first class.
+             | StringLit String
   deriving Show
 
 newtype CaseAlt = CaseAlt (Pattern, Expr)
