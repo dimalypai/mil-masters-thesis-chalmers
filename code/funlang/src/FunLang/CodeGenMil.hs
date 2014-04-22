@@ -54,11 +54,11 @@ codeGenExpr (VarE _ varTy) = MIL.VarE $ MIL.VarBinder (var, milVarType)
 codeGenExpr (DoE _ [ReturnS _ monadSrcType tyExpr]) =
   MIL.ReturnE (monadMil monadSrcType) (codeGenExpr tyExpr)
 
--- TODO: string literals
 literalMil :: Literal -> MIL.Literal
 literalMil UnitLit        = MIL.UnitLit
 literalMil (IntLit i)     = MIL.IntLit i
 literalMil (FloatLit f _) = MIL.FloatLit f
+literalMil (StringLit s)  = MIL.StringLit s
 
 typeMil :: Type -> MIL.Type
 typeMil (TyVar typeVar) = MIL.TyVar $ typeVarMil typeVar
