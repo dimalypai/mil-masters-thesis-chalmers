@@ -105,6 +105,9 @@ data FunEq v s = FunEq s (FunNameS s) [Pattern s] (Expr v s)
 type SrcFunEq = FunEq Var   SrcSpan
 type TyFunEq  = FunEq VarTy SrcSpan
 
+getFunEqBody :: FunEq v s -> Expr v s
+getFunEqBody (FunEq _ _ _ bodyExpr) = bodyExpr
+
 -- | Patterns.
 data Pattern s =
     -- | Literal pattern (constant).
@@ -284,6 +287,12 @@ varToFunName (Var varName) = FunName varName
 -- | Variable annotated with its type.
 newtype VarTy = VarTy (Var, Type)
   deriving Show
+
+getVarTyVar :: VarTy -> Var
+getVarTyVar (VarTy (var, _)) = var
+
+getVarTyType :: VarTy -> Type
+getVarTyType (VarTy (_, varType)) = varType
 
 -- | Var binder is a pair of variable name and a type (in their source representations).
 data VarBinder s = VarBinder s (VarS s) (TypeS s)

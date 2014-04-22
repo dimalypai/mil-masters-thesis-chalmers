@@ -35,6 +35,7 @@ executable flc
                      , mtl
                      , filepath
                      , containers
+                     , mil
   hs-source-dirs:      src
   build-tools:         alex
                      , happy
