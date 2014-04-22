@@ -204,12 +204,25 @@ tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type, Bool)
 tcStmt srcStmt =
   case srcStmt of
     DeclS s srcDecl -> do
-      (tyDecl, declType, declPure) <- tcDecl srcDecl
+      (tyDecl, declType, declPure) <- tcDecl srcDecl srcStmt
       return (DeclS s tyDecl, declType, declPure)
 
     ExprS s srcExpr -> do
       (tyExpr, exprType, exprPure) <- tcExpr srcExpr
       return (ExprS s tyExpr, exprType, exprPure)
+
+    AssignS s srcAssignOp (var, varS) srcExpr -> do
+      unlessM (isVarBound var) $
+        throwError $ VarNotBound var varS
+      (tyExpr, exprType, exprPure) <- tcExpr srcExpr
+      varType <- getVarType var
+      case getAssignOp srcAssignOp of
+        AssignMut -> do
+          unless (isMutableType varType) $
+            throwError $ IncorrectMutableOpUsage srcStmt
+          unless (exprType `isSubTypeOf` varType) $
+            throwError $ AssignIncorrectType tyExpr (getUnderType varType) exprType
+      return (AssignS s srcAssignOp (VarTy (var, varType), varS) tyExpr, TyUnit, exprPure)
 
 -- Note [Purity of declarations]:
 --
@@ -220,8 +233,11 @@ tcStmt srcStmt =
 -- In order for declaration to be pure, its initialisation expression must be
 -- pure.
 
-tcDecl :: SrcDeclaration -> TypeCheckM (TyDeclaration, Type, Bool)
-tcDecl (Decl s varBinder mSrcInit) = do
+-- | Declaration type checking. Takes a declaration source statement for error
+-- messages. Returns a type checked declaration with its type and purity
+-- indicator.
+tcDecl :: SrcDeclaration -> SrcStmt -> TypeCheckM (TyDeclaration, Type, Bool)
+tcDecl (Decl s varBinder mSrcInit) srcDeclStmt = do
   let var = getVar $ getBinderVar varBinder
   whenM (isVarBound var) $
     throwError $ VarShadowing (getBinderVar varBinder)
@@ -231,8 +247,16 @@ tcDecl (Decl s varBinder mSrcInit) = do
   case mSrcInit of
     Just srcInit -> do
       (tyInit, initType, initPure) <- tcInit srcInit
+      let initOp = getInitOp $ getInitOpS srcInit
+      case initOp of
+        InitEqual ->
+          unless (isImmutableType varType) $
+            throwError $ IncorrectImmutableOpUsage srcDeclStmt
+        InitMut ->
+          unless (isMutableType varType) $
+            throwError $ IncorrectMutableOpUsage srcDeclStmt
       unless (initType `isSubTypeOf` varType) $
-        throwError $ DeclInitIncorrectType srcInit varType initType
+        throwError $ DeclInitIncorrectType srcInit (getUnderType varType) initType
       return $ (Decl s varBinder (Just tyInit), TyUnit, initPure)
     Nothing -> return (Decl s varBinder Nothing, TyUnit, True)
 
@@ -244,12 +268,7 @@ tcInit (Init s srcInitOp srcExpr) = do
   let initPure = case initOp of
                    InitRef -> False
                    _       -> True
-  -- if we have a mutable variable declaration of type Mutable A,
-  -- its init expression is of type A, so we need to add TyMutable
-  let exprType' = case initOp of
-                    InitMut -> TyMutable exprType
-                    _       -> exprType
-  return $ (Init s srcInitOp tyExpr, exprType', initPure && exprPure)
+  return $ (Init s srcInitOp tyExpr, exprType, initPure && exprPure)
 
 -- | Expression type checking.
 -- Returns a type checked expression together with its type and purity indicator.
@@ -327,18 +346,46 @@ tcApp (tyExpr1, expr1Type, _) (tyExpr2, expr2Type, expr2Pure) =
 
 -- | Subtyping relation.
 -- * It is reflexive (type is a subtype of itself).
+--
 -- * Pure A `isSubTypeOf` B iff A `isSubTypeOf` B.
+--
 -- * A `isSubTypeOf` Pure B iff A `isSubTypeOf` B.
+--
+-- * Pure A `isSubTypeOf` Pure B iff A `isSubTypeOf` B
+--
+-- Mutables are treated by value, so they can be used in the same places as
+-- ordinary types, except for special declaration and assignment operators
+-- usage. And this gives us:
+--
+-- * Mutable A `isSubTypeOf` B iff A `isSubTypeOf` B
+--
+-- * A `isSubTypeOf` Mutable B iff A `isSubTypeOf` B
+--
+-- * Mutable A `isSubTypeOf` Mutable B iff A `isSubTypeOf` B
 --
 -- Note: this can't be used for purity checking.
 isSubTypeOf :: Type -> Type -> Bool
-t1 `isSubTypeOf` t2 = t1 == t2 || pureSubType1 || pureSubType2
+t1 `isSubTypeOf` t2 = t1 == t2
+                   || pureSubType1 || pureSubType2  || pureSubType3
+                   || mutableSubType1 || mutableSubType2 || mutableSubType3
   where pureSubType1 = case t1 of
                          TyPure pt1 -> pt1 `isSubTypeOf` t2
                          _ -> False
         pureSubType2 = case t2 of
                          TyPure pt2 -> t1 `isSubTypeOf` pt2
                          _ -> False
+        pureSubType3 = case (t1, t2) of
+                         (TyPure pt1, TyPure pt2) -> pt1 `isSubTypeOf` pt2
+                         _ -> False
+        mutableSubType1 = case t1 of
+                            TyMutable pt1 -> pt1 `isSubTypeOf` t2
+                            _ -> False
+        mutableSubType2 = case t2 of
+                            TyMutable pt2 -> t1 `isSubTypeOf` pt2
+                            _ -> False
+        mutableSubType3 = case (t1, t2) of
+                            (TyMutable pt1, TyMutable pt2) -> pt1 `isSubTypeOf` pt2
+                            _ -> False
 
 -- Type transformations
 

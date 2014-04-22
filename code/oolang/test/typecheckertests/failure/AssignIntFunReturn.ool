@@ -1,0 +1,7 @@
+def main : Unit => unit; end
+
+def fun : Pure Int =>
+  x : Mutable Int;
+  x <- 1;
+end
+

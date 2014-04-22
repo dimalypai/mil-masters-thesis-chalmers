@@ -1,0 +1,2 @@
+OOLang type checking error at AssignMutIncorrectType.ool:5,8-5,11:
+  Incorrect type of assignable expression. The expected type is 'Int', but it has type 'Float'

@@ -1,0 +1,2 @@
+OOLang type checking error at PureFunImpureAssignMut.ool:5,3-5,12:
+  Function 'fun' has Pure return type, but it contains an impure statement

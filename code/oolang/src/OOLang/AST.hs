@@ -127,7 +127,7 @@ data Expr v s = LitE (LiteralS s)
               | ClassAccessStaticE s (ClassNameS s) (MemberNameS s)
               | NewRefE s (Expr v s)
                 -- | This operator produces a value of type A from a value of
-                -- type Ref A or Mutable A.
+                -- type Ref A.
               | DerefE s (Expr v s)
               | BinOpE s (BinOpS s) (Expr v s) (Expr v s)
               | IfThenElseE s (Expr v s) (Expr v s) (Expr v s)
@@ -211,6 +211,26 @@ isPureFunType :: Type -> Bool
 isPureFunType (TyPure _) = True
 isPureFunType (TyArrow _ t2) = isPureFunType t2
 isPureFunType _ = False
+
+isMutableType :: Type -> Bool
+isMutableType TyMutable {} = True
+isMutableType            _ = False
+
+-- | By immutable type we mean anything else than Mutable and Ref.
+--
+-- Note: 'isMutable' means only Mutable, not Ref.
+isImmutableType :: Type -> Bool
+isImmutableType TyMutable {} = False
+isImmutableType TyRef     {} = False
+isImmutableType            _ = True
+
+-- | Returns an underlying type. For Mutable A it is A, for everything else it
+-- is just the type itself. Used with assignment type checking.
+-- Mutable is more modifier-like than a type-like, comparing to Ref, for
+-- example, that's why we have this special treatment.
+getUnderType :: Type -> Type
+getUnderType (TyMutable t) = t
+getUnderType            t  = t
 
 isAtomicType :: Type -> Bool
 isAtomicType TyArrow   {} = False
@@ -303,6 +323,9 @@ data Init v s = Init s (InitOpS s) (Expr v s)
 type SrcInit = Init Var   SrcSpan
 type TyInit  = Init VarTy SrcSpan
 
+getInitOpS :: Init v s -> InitOpS s
+getInitOpS (Init _ initOpS _) = initOpS
+
 -- | Assignment operators are factored out.
 --
 -- * Mutable (<-) is for Mutable.
@@ -313,6 +336,9 @@ data AssignOp = AssignMut | AssignRef
 
 type AssignOpS s = (AssignOp, s)
 type SrcAssignOp = AssignOpS SrcSpan
+
+getAssignOp :: AssignOpS s -> AssignOp
+getAssignOp = fst
 
 -- | Operators used in declaration statements.
 --

@@ -23,6 +23,7 @@ instance SrcAnnotated (FunDef v) where
 instance SrcAnnotated (Stmt v) where
   ann (DeclS s _) = s
   ann (ExprS s _) = s
+  ann (AssignS s _ _ _) = s
 
 instance SrcAnnotated (Expr v) where
   ann (LitE lit) = ann lit

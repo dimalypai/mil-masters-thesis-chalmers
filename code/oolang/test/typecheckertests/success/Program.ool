@@ -77,11 +77,13 @@ end
 def immutablePureDecl : Pure Unit =>
   x : Int = 1;
   y : Int;
+  z : Int = x;
 end
 
 def mutablePureDecl : Pure Unit =>
   x : Mutable Int <- 1;
   y : Mutable Int;
+  z : Mutable Int <- x;
 end
 
 def immutableImpureDecl : Unit =>
@@ -90,5 +92,27 @@ end
 
 def mutableImpureDecl : Unit =>
   x : Mutable Unit <- main;
+end
+
+# Mix of mutable and immutable declarations
+def mutableImmutableDecl : Pure Unit =>
+  x : Int = 1;
+  y : Mutable Int <- x;
+  z : Int = y;
+end
+
+# Different pure assignments
+def pureAssign : Pure Unit =>
+  x : Mutable Int;
+  x <- 1;
+  y : Int = 2;
+  x <- y;
+  x <- x;
+  x <- paramRefPure 1;
+end
+
+def impureAssign : Unit =>
+  x : Mutable Unit;
+  x <- main;
 end
 

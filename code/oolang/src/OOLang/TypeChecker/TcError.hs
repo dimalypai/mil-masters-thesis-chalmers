@@ -32,6 +32,9 @@ data TcError =
   | MutableFunParam SrcType
   | MutableFunReturnType SrcType
   | DeclInitIncorrectType SrcInit Type Type
+  | AssignIncorrectType TyExpr Type Type
+  | IncorrectImmutableOpUsage SrcStmt
+  | IncorrectMutableOpUsage SrcStmt
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -118,6 +121,19 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcInit) <> colon $+$
     nest indLvl (text "Incorrect type of initialisation expression. The expected type is" <+> quotes (prPrn expType) <>
       text ", but it has type" <+> quotes (prPrn actType))
+
+  prPrn (AssignIncorrectType tyExpr expType actType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan tyExpr) <> colon $+$
+    nest indLvl (text "Incorrect type of assignable expression. The expected type is" <+> quotes (prPrn expType) <>
+      text ", but it has type" <+> quotes (prPrn actType))
+
+  prPrn (IncorrectImmutableOpUsage srcStmt) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
+    nest indLvl (text "Incorrect usage of '=' operator. It can be used only with immutable (default) variables")
+
+  prPrn (IncorrectMutableOpUsage srcStmt) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
+    nest indLvl (text "Incorrect usage of '<-' operator. It can be used only with Mutable variables")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

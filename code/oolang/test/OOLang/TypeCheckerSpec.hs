@@ -158,6 +158,18 @@ spec =
       it "given an impure declaration inside a Pure function" $
         failureCase "PureFunImpureDecl"
 
+      it "given a mutable variable assignment to an immutable variable" $
+        failureCase "AssignMutImmutableVar"
+
+      it "given a mutable variable assignment with incorrect type" $
+        failureCase "AssignMutIncorrectType"
+
+      it "given an impure mutable variable assignment inside a Pure function" $
+        failureCase "PureFunImpureAssignMut"
+
+      it "given a mutable variable assignment as a last statement of integer returning function" $
+        failureCase "AssignIntFunReturn"
+
       -- TODO: add tests for references
 
 -- Infrastructure

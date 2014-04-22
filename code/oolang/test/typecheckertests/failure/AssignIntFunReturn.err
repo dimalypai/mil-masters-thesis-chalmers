@@ -1,0 +1,2 @@
+OOLang type checking error at AssignIntFunReturn.ool:5,3-5,9:
+  Function 'fun' has to return a value of type 'Pure Int', but it returns a value of type 'Unit'
