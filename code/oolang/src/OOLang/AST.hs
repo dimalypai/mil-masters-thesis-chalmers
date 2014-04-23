@@ -263,7 +263,7 @@ typeHasLowerPrec t1 t2 = getTypePrec t1 <= getTypePrec t2
 -- | Returns whether the first type operator has a lower precedence than the
 -- second one. Convenient to use in infix form.
 -- This version can be used with associative type operators, for example:
--- arrow, type application. See "MIL.AST.PrettyPrinter".
+-- arrow, type application. See "OOLang.AST.PrettyPrinter".
 --
 -- Note: It is *not* reflexive: t `typeHasLowerPrecAssoc` t ==> False
 typeHasLowerPrecAssoc :: Type -> Type -> Bool
