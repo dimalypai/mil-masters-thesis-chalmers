@@ -18,6 +18,7 @@ module FunLang.TypeChecker
 import qualified Data.Set as Set
 
 import FunLang.AST
+import FunLang.AST.Helpers
 import FunLang.TypeChecker.TypeCheckM
 import FunLang.TypeChecker.TcError
 import FunLang.BuiltIn

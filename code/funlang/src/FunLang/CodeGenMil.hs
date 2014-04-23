@@ -6,6 +6,7 @@ module FunLang.CodeGenMil
   ) where
 
 import FunLang.AST
+import FunLang.AST.Helpers
 import qualified MIL.AST as MIL
 
 import Data.List (foldl')

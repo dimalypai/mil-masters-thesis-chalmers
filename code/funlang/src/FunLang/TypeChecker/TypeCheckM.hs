@@ -45,6 +45,7 @@ import Data.Maybe (fromJust)
 import Control.Arrow (second)
 
 import FunLang.AST
+import FunLang.AST.Helpers
 import FunLang.TypeChecker.TcError
 import FunLang.BuiltIn
 

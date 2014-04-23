@@ -14,6 +14,7 @@
 module FunLang.AST.PrettyPrinter (prPrint) where
 
 import FunLang.AST
+import FunLang.AST.Helpers
 import FunLang.PrettyPrinter
 
 -- See Note [Precedences and associativity]

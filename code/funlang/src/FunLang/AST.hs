@@ -105,9 +105,6 @@ data FunEq v s = FunEq s (FunNameS s) [Pattern s] (Expr v s)
 type SrcFunEq = FunEq Var   SrcSpan
 type TyFunEq  = FunEq VarTy SrcSpan
 
-getFunEqBody :: FunEq v s -> Expr v s
-getFunEqBody (FunEq _ _ _ bodyExpr) = bodyExpr
-
 -- | Patterns.
 data Pattern s =
     -- | Literal pattern (constant).
@@ -173,9 +170,6 @@ data Literal = UnitLit
 type LiteralS s = (Literal, s)
 type SrcLiteral = LiteralS SrcSpan
 
-getLiteral :: LiteralS s -> Literal
-getLiteral = fst
-
 data CaseAlt v s = CaseAlt s (Pattern s) (Expr v s)
   deriving Show
 
@@ -210,9 +204,6 @@ data BinOp = App
 type BinOpS s = (BinOp, s)
 type SrcBinOp = BinOpS SrcSpan
 
-getBinOp :: BinOpS s -> BinOp
-getBinOp = fst
-
 -- | Internal representation of types. What types really represent.
 --
 -- Type constructors are fully applied. See also comment on 'Kind'.
@@ -225,47 +216,6 @@ data Type = TyVar TypeVar  -- ^ Always of kind *
           | TyApp TypeName [Type]
           | TyForAll TypeVar Type
   deriving (Show, Eq, Ord)
-
-isTypeVar :: Type -> Bool
-isTypeVar (TyVar _) = True
-isTypeVar         _ = False
-
--- | Unsafe.
-getTyAppTypeName :: Type -> TypeName
-getTyAppTypeName (TyApp typeName _) = typeName
-getTyAppTypeName _ = error "getTyAppTypeName: not a type application"
-
-isAtomicType :: Type -> Bool
-isAtomicType TyArrow   {} = False
-isAtomicType (TyApp _ []) = True
-isAtomicType TyApp     {} = False
-isAtomicType TyForAll  {} = False
-isAtomicType            _ = True
-
-getTypePrec :: Type -> Int
-getTypePrec TyVar    {} = 4
-getTypePrec TyArrow  {} = 2
-getTypePrec TyApp    {} = 3
-getTypePrec TyForAll {} = 1
-
--- | Returns whether the first type operator has a lower precedence than the
--- second one. Convenient to use in infix form.
---
--- Note: It is reflexive: t `typeHasLowerPrec` t ==> True
-typeHasLowerPrec :: Type -> Type -> Bool
-typeHasLowerPrec t1 t2 = getTypePrec t1 <= getTypePrec t2
-
--- | Returns whether the first type operator has a lower precedence than the
--- second one. Convenient to use in infix form.
--- This version can be used with associative type operators, for example:
--- arrow, type application. See "FunLang.AST.PrettyPrinter".
---
--- Note: It is *not* reflexive: t `typeHasLowerPrecAssoc` t ==> False
-typeHasLowerPrecAssoc :: Type -> Type -> Bool
-typeHasLowerPrecAssoc t1 t2 = getTypePrec t1 < getTypePrec t2
-
-mkSimpleType :: String -> Type
-mkSimpleType typeName = TyApp (TypeName typeName) []
 
 -- | Source representation of types. How a user entered them.
 --
@@ -296,33 +246,15 @@ data Kind = StarK
           | Kind :=>: Kind
   deriving (Show, Eq)
 
--- | Constructs a kind from an integer that denotes the number of parameters of
--- a type constructor
-mkKind :: Int -> Kind
-mkKind 0 = StarK
-mkKind n = StarK :=>: mkKind (n - 1)
-
 newtype Var = Var String
   deriving (Show, Eq, Ord)
 
 type VarS s = (Var, s)
 type SrcVar = VarS SrcSpan
 
-getVar :: VarS s -> Var
-getVar = fst
-
-varToFunName :: Var -> FunName
-varToFunName (Var varName) = FunName varName
-
 -- | Variable annotated with its type.
 newtype VarTy = VarTy (Var, Type)
   deriving Show
-
-getVarTyVar :: VarTy -> Var
-getVarTyVar (VarTy (var, _)) = var
-
-getVarTyType :: VarTy -> Type
-getVarTyType (VarTy (_, varType)) = varType
 
 -- | Var binder is a pair of variable name and a type (in their source representations).
 data VarBinder s = VarBinder s (VarS s) (TypeS s)
@@ -330,23 +262,11 @@ data VarBinder s = VarBinder s (VarS s) (TypeS s)
 
 type SrcVarBinder = VarBinder SrcSpan
 
-getBinderVar :: VarBinder s -> VarS s
-getBinderVar (VarBinder _ srcVar _) = srcVar
-
-getBinderType :: VarBinder s -> TypeS s
-getBinderType (VarBinder _ _ srcType) = srcType
-
 newtype TypeVar = TypeVar String
   deriving (Show, Eq, Ord)
 
 type TypeVarS s = (TypeVar, s)
 type SrcTypeVar = TypeVarS SrcSpan
-
-getTypeVar :: TypeVarS s -> TypeVar
-getTypeVar = fst
-
-typeVarToTypeName :: TypeVar -> TypeName
-typeVarToTypeName (TypeVar typeVar) = TypeName typeVar
 
 newtype TypeName = TypeName String
   deriving (Show, Eq, Ord)
@@ -354,32 +274,17 @@ newtype TypeName = TypeName String
 type TypeNameS s = (TypeName, s)
 type SrcTypeName = TypeNameS SrcSpan
 
-getTypeName :: TypeNameS s -> TypeName
-getTypeName = fst
-
-typeNameToTypeVar :: TypeName -> TypeVar
-typeNameToTypeVar (TypeName typeName) = TypeVar typeName
-
-srcTypeNameToTypeVar :: TypeNameS s -> TypeVarS s
-srcTypeNameToTypeVar (typeName, s) = (typeNameToTypeVar typeName, s)
-
 newtype ConName = ConName String
   deriving (Show, Eq, Ord)
 
 type ConNameS s = (ConName, s)
 type SrcConName = ConNameS SrcSpan
 
-getConName :: ConNameS s -> ConName
-getConName = fst
-
 newtype FunName = FunName String
   deriving (Show, Eq, Ord)
 
 type FunNameS s = (FunName, s)
 type SrcFunName = FunNameS SrcSpan
-
-getFunName :: FunNameS s -> FunName
-getFunName = fst
 
 -- Parsing helpers
 
@@ -389,12 +294,4 @@ data TopDef v s = TopTypeDef { getTypeDef :: TypeDef s   }
                 | TopFunDef  { getFunDef  :: FunDef  v s }
 
 type SrcTopDef = TopDef Var SrcSpan
-
-isTypeDef :: TopDef v s -> Bool
-isTypeDef (TopTypeDef _) = True
-isTypeDef              _ = False
-
-isFunDef :: TopDef v s -> Bool
-isFunDef (TopFunDef _) = True
-isFunDef             _ = False
 

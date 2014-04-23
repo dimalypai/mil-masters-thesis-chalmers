@@ -14,6 +14,7 @@ import Control.Monad.Reader
 
 import FunLang.Lexer as Lex
 import FunLang.AST as AST
+import FunLang.AST.Helpers
 import FunLang.AST.SrcAnnotated
 import FunLang.SrcSpan
 import FunLang.Parser.ParseError

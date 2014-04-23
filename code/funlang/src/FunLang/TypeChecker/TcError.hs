@@ -7,9 +7,10 @@ module FunLang.TypeChecker.TcError
 import Control.Monad.Error
 
 import FunLang.AST
-import FunLang.SrcSpan
+import FunLang.AST.Helpers
 import FunLang.AST.SrcAnnotated
 import FunLang.AST.PrettyPrinter()
+import FunLang.SrcSpan
 import FunLang.PrettyPrinter
 
 -- | Data type containing all possible type checking errors and 'OtherError'.

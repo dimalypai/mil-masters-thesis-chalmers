@@ -3,6 +3,7 @@ module FunLang.BuiltIn where
 import qualified Data.Set as Set
 
 import FunLang.AST
+import FunLang.AST.Helpers
 
 -- Built-in types
 
