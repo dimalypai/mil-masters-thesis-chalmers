@@ -97,7 +97,7 @@ instance Pretty TcError where
 
   prPrn (NotFunctionType funExpr actType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan funExpr) <> colon $+$
-    nest indLvl (text "The expression needs to have a function type, but it has type" <+> quotes (prPrn actType))
+    nest indLvl (text "The expression has to have a function type, but it has type" <+> quotes (prPrn actType))
 
   prPrn (PureValue srcType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
