@@ -235,6 +235,35 @@ getTyAppTypeName :: Type -> TypeName
 getTyAppTypeName (TyApp typeName _) = typeName
 getTyAppTypeName _ = error "getTyAppTypeName: not a type application"
 
+isAtomicType :: Type -> Bool
+isAtomicType TyArrow   {} = False
+isAtomicType (TyApp _ []) = True
+isAtomicType TyApp     {} = False
+isAtomicType TyForAll  {} = False
+isAtomicType            _ = True
+
+getTypePrec :: Type -> Int
+getTypePrec TyVar    {} = 4
+getTypePrec TyArrow  {} = 2
+getTypePrec TyApp    {} = 3
+getTypePrec TyForAll {} = 1
+
+-- | Returns whether the first type operator has a lower precedence than the
+-- second one. Convenient to use in infix form.
+--
+-- Note: It is reflexive: t `typeHasLowerPrec` t ==> True
+typeHasLowerPrec :: Type -> Type -> Bool
+typeHasLowerPrec t1 t2 = getTypePrec t1 <= getTypePrec t2
+
+-- | Returns whether the first type operator has a lower precedence than the
+-- second one. Convenient to use in infix form.
+-- This version can be used with associative type operators, for example:
+-- arrow, type application. See "FunLang.AST.PrettyPrinter".
+--
+-- Note: It is *not* reflexive: t `typeHasLowerPrecAssoc` t ==> False
+typeHasLowerPrecAssoc :: Type -> Type -> Bool
+typeHasLowerPrecAssoc t1 t2 = getTypePrec t1 < getTypePrec t2
+
 mkSimpleType :: String -> Type
 mkSimpleType typeName = TyApp (TypeName typeName) []
 
