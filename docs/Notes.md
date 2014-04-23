@@ -221,3 +221,26 @@ General thoughts. Week 11
   + references and purity
   + types nesting (parsing, type checking)
 
+Meeting 2014-04-22
+==================
+
+* Daan Leijen, Microsoft Research: Koka language
+* Effect: functions in references:
+  f <- newRef (\() -> ())
+  f := \() -> !f()
+  (!f) ()
+* Non-termination with type recursion:
+  data A = A (A -> ())
+  foo (A f) = f (A f)
+* OO assignments: references for both? stack vs heap question?
+    + Ref is compiled to references, ordinary types and Mutable are compiled to
+      just value, they are source language type system feature.
+* Mutable for non-primitive types: having no restrictions (like storing
+  functions) leads to difficulties (like closures are heap allocated)
+* Running monadic computations in FunLang: built-in functions, ideally - a way
+  to compose monads
+* FunLang: have a monad stack like in Tolmach rather than disjoint built-in
+  monads as a way to "combine" monads
+* SSA effects: IO, State, Lift
+* Exceptions implementation in LLVM
+
