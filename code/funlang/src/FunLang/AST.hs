@@ -233,6 +233,7 @@ isTypeVar         _ = False
 -- | Unsafe.
 getTyAppTypeName :: Type -> TypeName
 getTyAppTypeName (TyApp typeName _) = typeName
+getTyAppTypeName _ = error "getTyAppTypeName: not a type application"
 
 mkSimpleType :: String -> Type
 mkSimpleType typeName = TyApp (TypeName typeName) []
@@ -304,7 +305,7 @@ getBinderVar :: VarBinder s -> VarS s
 getBinderVar (VarBinder _ srcVar _) = srcVar
 
 getBinderType :: VarBinder s -> TypeS s
-getBinderType (VarBinder s _ srcType) = srcType
+getBinderType (VarBinder _ _ srcType) = srcType
 
 newtype TypeVar = TypeVar String
   deriving (Show, Eq, Ord)
