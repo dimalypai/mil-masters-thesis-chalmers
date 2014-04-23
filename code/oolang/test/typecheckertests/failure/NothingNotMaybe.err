@@ -1,0 +1,2 @@
+OOLang type checking error at NothingNotMaybe.ool:4,12-4,14:
+  'nothing' literal has to have Maybe type, but it has type 'Int'

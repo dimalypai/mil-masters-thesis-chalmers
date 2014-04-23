@@ -89,10 +89,12 @@ import OOLang.Parser.ParseError
   '&&' { $$@(And, _) }
   '||' { $$@(Or,  _) }
 
-  '(' { $$@(OpenParen,  _) }
-  ')' { $$@(CloseParen, _) }
-  '{' { $$@(OpenCurly,  _) }
-  '}' { $$@(CloseCurly, _) }
+  '(' { $$@(OpenParen,   _) }
+  ')' { $$@(CloseParen,  _) }
+  '{' { $$@(OpenCurly,   _) }
+  '}' { $$@(CloseCurly,  _) }
+  '[' { $$@(OpenSquare,  _) }
+  ']' { $$@(CloseSquare, _) }
 
   ';' { $$@(SemiColon, _) }
 
@@ -229,19 +231,20 @@ atomexpr
 literal :: { SrcLiteral }
 literal
   : unit {% withFileName $ \fileName ->
-              (UnitLit, mkTokSrcSpan $1 fileName) }
+              UnitLit (mkTokSrcSpan $1 fileName) }
   | false {% withFileName $ \fileName ->
-               (AST.BoolLit False, mkTokSrcSpan $1 fileName) }
+               AST.BoolLit (mkTokSrcSpan $1 fileName) False }
   | true {% withFileName $ \fileName ->
-              (AST.BoolLit True, mkTokSrcSpan $1 fileName) }
+              AST.BoolLit (mkTokSrcSpan $1 fileName) True }
   | intLit {% withFileName $ \fileName ->
-                (AST.IntLit $ getIntLitValue $1, mkTokSrcSpan $1 fileName) }
+                AST.IntLit (mkTokSrcSpan $1 fileName) (getIntLitValue $1) }
   | floatLit {% withFileName $ \fileName ->
-                  (AST.FloatLit (getFloatLitValue $1) (getFloatLitString $1), mkTokSrcSpan $1 fileName) }
+                  AST.FloatLit (mkTokSrcSpan $1 fileName) (getFloatLitValue $1) (getFloatLitString $1) }
   | stringLit {% withFileName $ \fileName ->
-                   (AST.StringLit $ getStringLitValue $1, mkTokSrcSpan $1 fileName) }
-  | nothing {% withFileName $ \fileName ->
-                 (NothingLit, mkTokSrcSpan $1 fileName) }
+                   AST.StringLit (mkTokSrcSpan $1 fileName) (getStringLitValue $1) }
+  | nothing '[' type ']'
+      {% withFileName $ \fileName ->
+           NothingLit (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName) $3 }
 
 assignop :: { SrcAssignOp }
 assignop : '<-' {% withFileName $ \fileName -> (AssignMut, mkTokSrcSpan $1 fileName) }

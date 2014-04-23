@@ -23,7 +23,6 @@ import Control.Applicative ((<$>), (<*>))
 import OOLang.AST
 import OOLang.TypeChecker.TypeCheckM
 import OOLang.TypeChecker.TcError
-import OOLang.BuiltIn
 import OOLang.Utils
 
 -- | Main batch entry point to the TypeChecker.
@@ -278,7 +277,9 @@ tcInit (Init s srcInitOp srcExpr) = do
 tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type, Bool)
 tcExpr srcExpr =
   case srcExpr of
-    LitE srcLit -> return (LitE srcLit, typeOfLiteral $ getLiteral srcLit, True)
+    LitE srcLit -> do
+      litType <- typeOfLiteral srcLit
+      return (LitE srcLit, litType, True)
 
     VarE s var -> do
       -- it can be both a local variable and a global function
@@ -310,6 +311,18 @@ tcExpr srcExpr =
     ParenE s srcSubExpr -> do
       (tySubExpr, exprType, exprPure) <- tcExpr srcSubExpr
       return (ParenE s tySubExpr, exprType, exprPure)
+
+typeOfLiteral :: SrcLiteral -> TypeCheckM Type
+typeOfLiteral UnitLit    {}     = return TyUnit
+typeOfLiteral (BoolLit   {})    = return TyBool
+typeOfLiteral (IntLit    {})    = return TyInt
+typeOfLiteral (FloatLit  {})    = return TyFloat
+typeOfLiteral (StringLit {})    = return TyString
+typeOfLiteral (NothingLit _ st) = do
+  nothingType <- srcTypeToType st
+  unless (isMaybeType nothingType) $
+    throwError $ IncorrectNothingType st
+  return nothingType
 
 -- Binary operations type checking
 

@@ -1,0 +1,6 @@
+def main : Unit => unit; end
+
+def fun : Pure Unit =>
+  nothing [Int];
+end
+

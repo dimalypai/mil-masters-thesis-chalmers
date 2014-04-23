@@ -36,6 +36,7 @@ data TcError =
   | IncorrectImmutableOpUsage SrcStmt
   | IncorrectMutableOpUsage SrcStmt
   | ImmutableVarNotInit Var SrcStmt
+  | IncorrectNothingType SrcType
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -139,6 +140,10 @@ instance Pretty TcError where
   prPrn (ImmutableVarNotInit var srcStmt) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
     nest indLvl (text "Immutable variable" <+> quotes (prPrn var) <+> text "is not initialised")
+
+  prPrn (IncorrectNothingType srcType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
+    nest indLvl (text "'nothing' literal has to have Maybe type, but it has type" <+> quotes (prPrn srcType))
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

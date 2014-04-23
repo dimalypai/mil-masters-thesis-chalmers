@@ -36,6 +36,14 @@ instance SrcAnnotated (Expr v) where
   ann (JustE s _) = s
   ann (ParenE s _) = s
 
+instance SrcAnnotated Literal where
+  ann (UnitLit s) = s
+  ann (BoolLit s _) = s
+  ann (IntLit s _) = s
+  ann (FloatLit s _ _) = s
+  ann (StringLit s _) = s
+  ann (NothingLit s _) = s
+
 instance SrcAnnotated TypeS where
   ann (SrcTyUnit s) = s
   ann (SrcTyBool s) = s

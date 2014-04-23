@@ -58,7 +58,7 @@ spec =
                                (SrcTyPure (srcSp 6 14 6 21)
                                   (SrcTyInt $ srcSp 6 19 6 21)))
                             [ExprS (srcSp 7 5 7 6)
-                               (LitE (IntLit 1, srcSp 7 5 7 5))])
+                               (LitE (IntLit (srcSp 7 5 7 5) 1))])
                          []]]
                   []
       in successCase baseName ast
@@ -85,7 +85,7 @@ spec =
                                  (SrcTyBool $ srcSp 1 44 1 47)))
                             (SrcTyUnit $ srcSp 1 53 1 56)))
                       [ExprS (srcSp 2 3 2 7)
-                         (LitE (UnitLit, srcSp 2 3 2 6))]
+                         (LitE (UnitLit $ srcSp 2 3 2 6))]
                   , FunDef (srcSp 5 1 7 3)
                       (FunName "g", srcSp 5 5 5 5)
                       (FunType (srcSp 5 9 5 16)
@@ -93,7 +93,7 @@ spec =
                          (SrcTyPure (srcSp 5 9 5 16)
                             (SrcTyInt $ srcSp 5 14 5 16)))
                       [ExprS (srcSp 6 3 6 4)
-                         (LitE (IntLit 1, srcSp 6 3 6 3))]]
+                         (LitE (IntLit (srcSp 6 3 6 3) 1))]]
       in successCase baseName ast
 
     it "parses class and function definitions together" $
@@ -119,7 +119,7 @@ spec =
                               (SrcTyInt $ srcSp 3 23 3 25))]
                         (SrcTyUnit $ srcSp 3 31 3 34))
                      [ExprS (srcSp 4 3 4 7)
-                        (LitE (UnitLit, srcSp 4 3 4 6))]]
+                        (LitE (UnitLit $ srcSp 4 3 4 6))]]
       in successCase baseName ast
 
     it "parses types" $
@@ -158,7 +158,7 @@ spec =
                                           (SrcTyMaybe (srcSp 4 30 4 38)
                                              (SrcTyInt $ srcSp 4 36 4 38)))))))))
                      [ExprS (srcSp 5 3 5 7)
-                        (LitE (UnitLit, srcSp 5 3 5 6))]]
+                        (LitE (UnitLit $ srcSp 5 3 5 6))]]
       in successCase baseName ast
 
     it "parses declaration and assignment statements" $
@@ -186,7 +186,7 @@ spec =
                                (SrcTyInt $ srcSp 3 7 3 9))
                             (Just $ Init (srcSp 3 11 3 13)
                                (InitEqual, srcSp 3 11 3 11)
-                               (LitE (IntLit 1, srcSp 3 13 3 13))))
+                               (LitE (IntLit (srcSp 3 13 3 13) 1))))
                      , DeclS (srcSp 4 3 4 23)
                          (Decl (srcSp 4 3 4 22)
                             (VarBinder (srcSp 4 3 4 17)
@@ -195,11 +195,11 @@ spec =
                                   (SrcTyInt $ srcSp 4 15 4 17)))
                             (Just $ Init (srcSp 4 19 4 22)
                                (InitMut, srcSp 4 19 4 20)
-                               (LitE (IntLit 1, srcSp 4 22 4 22))))
+                               (LitE (IntLit (srcSp 4 22 4 22) 1))))
                      , AssignS (srcSp 5 3 5 9)
                          (AssignMut, srcSp 5 5 5 6)
                          (Var "x", srcSp 5 3 5 3)
-                         (LitE (IntLit 2, srcSp 5 8 5 8))]]
+                         (LitE (IntLit (srcSp 5 8 5 8) 2))]]
       in successCase baseName ast
 
     it "parses control flow statements" $
@@ -216,10 +216,10 @@ spec =
                      [ WhenS (srcSp 2 3 5 6)
                          (VarE (srcSp 2 8 2 8) (Var "b"))
                          [ExprS (srcSp 3 5 3 9)
-                            (LitE (UnitLit, srcSp 3 5 3 8))]
+                            (LitE (UnitLit $ srcSp 3 5 3 8))]
                          []
                      , WhileS (srcSp 6 3 7 6)
-                         (LitE (BoolLit True, srcSp 6 9 6 12))
+                         (LitE (BoolLit (srcSp 6 9 6 12) True))
                          []]]
       in successCase baseName ast
 
@@ -242,8 +242,8 @@ spec =
                                (BinOpE (srcSp 2 3 2 8)
                                   (App, srcSp 2 4 2 4)
                                   (VarE (srcSp 2 3 2 3) (Var "f"))
-                                  (LitE (UnitLit, srcSp 2 5 2 8)))
-                               (LitE (BoolLit True, srcSp 2 10 2 13)))
+                                  (LitE (UnitLit $ srcSp 2 5 2 8)))
+                               (LitE (BoolLit (srcSp 2 10 2 13) True)))
                             (DerefE (srcSp 2 15 2 33)
                                (ParenE (srcSp 2 16 2 33)
                                   (BinOpE (srcSp 2 17 2 32)
@@ -253,12 +253,14 @@ spec =
                                         (BinOpE (srcSp 2 17 2 25)
                                            (App, srcSp 2 18 2 18)
                                            (VarE (srcSp 2 17 2 17) (Var "h"))
-                                           (LitE (StringLit "Hello", srcSp 2 19 2 25)))
-                                        (LitE (IntLit 1, srcSp 2 27 2 27)))
-                                     (LitE (FloatLit 0.01 "0.01", srcSp 2 29 2 32))))))
-                     , ExprS (srcSp 3 3 3 15)
-                         (JustE (srcSp 3 3 3 14)
-                            (LitE (NothingLit, srcSp 3 8 3 14)))]]
+                                           (LitE (StringLit (srcSp 2 19 2 25) "Hello")))
+                                        (LitE (IntLit (srcSp 2 27 2 27) 1)))
+                                     (LitE (FloatLit (srcSp 2 29 2 32) 0.01 "0.01"))))))
+                     , ExprS (srcSp 3 3 3 28)
+                         (JustE (srcSp 3 3 3 27)
+                            (LitE (NothingLit (srcSp 3 8 3 27)
+                               (SrcTyMaybe (srcSp 3 17 3 26)
+                                  (SrcTyUnit $ srcSp 3 23 3 26)))))]]
       in successCase baseName ast
 
     it "parses class expressions" $
@@ -282,23 +284,23 @@ spec =
                                      (MemberAccessE (srcSp 2 4 2 9)
                                         (VarE (srcSp 2 4 2 4) (Var "x"))
                                         (FunName "fun1", srcSp 2 6 2 9))
-                                     (LitE (IntLit 1, srcSp 2 11 2 11))))
+                                     (LitE (IntLit (srcSp 2 11 2 11) 1))))
                                (FunName "fun2", srcSp 2 14 2 17))
-                            (LitE (IntLit 2, srcSp 2 19 2 19)))
+                            (LitE (IntLit (srcSp 2 19 2 19) 2)))
                      , ExprS (srcSp 3 3 3 17)
                          (BinOpE (srcSp 3 3 3 16)
                             (App, srcSp 3 15 3 15)
                             (MemberAccessMaybeE (srcSp 3 3 3 14)
                                (VarE (srcSp 3 3 3 3) (Var "x"))
                                (FunName "maybeFun", srcSp 3 7 3 14))
-                            (LitE (IntLit 1, srcSp 3 16 3 16)))
+                            (LitE (IntLit (srcSp 3 16 3 16) 1)))
                      , ExprS (srcSp 4 3 4 15)
                          (BinOpE (srcSp 4 3 4 14)
                             (App, srcSp 4 13 4 13)
                             (ClassAccessE (srcSp 4 3 4 12)
                                (ClassName "Object", srcSp 4 3 4 8)
                                (FunName "new", srcSp 4 10 4 12))
-                            (LitE (IntLit 1, srcSp 4 14 4 14)))]]
+                            (LitE (IntLit (srcSp 4 14 4 14) 1)))]]
       in successCase baseName ast
 
     it "parses binary operations" $
@@ -319,23 +321,23 @@ spec =
                                (Add, srcSp 2 9 2 9)
                                (BinOpE (srcSp 2 3 2 7)
                                   (Add, srcSp 2 5 2 5)
-                                  (LitE (IntLit 1, srcSp 2 3 2 3))
-                                  (LitE (IntLit 2, srcSp 2 7 2 7)))
+                                  (LitE (IntLit (srcSp 2 3 2 3) 1))
+                                  (LitE (IntLit (srcSp 2 7 2 7) 2)))
                                (BinOpE (srcSp 2 11 2 21)
                                   (Mul, srcSp 2 19 2 19)
                                   (ParenE (srcSp 2 11 2 17)
                                      (BinOpE (srcSp 2 12 2 16)
                                         (Add, srcSp 2 14 2 14)
-                                        (LitE (IntLit 3, srcSp 2 12 2 12))
-                                        (LitE (IntLit 4, srcSp 2 16 2 16))))
-                                  (LitE (IntLit 5, srcSp 2 21 2 21))))
+                                        (LitE (IntLit (srcSp 2 12 2 12) 3))
+                                        (LitE (IntLit (srcSp 2 16 2 16) 4))))
+                                  (LitE (IntLit (srcSp 2 21 2 21) 5))))
                             (BinOpE (srcSp 2 25 2 33)
                                (Mul, srcSp 2 31 2 31)
                                (BinOpE (srcSp 2 25 2 29)
                                   (Mul, srcSp 2 27 2 27)
-                                  (LitE (IntLit 2, srcSp 2 25 2 25))
-                                  (LitE (IntLit 3, srcSp 2 29 2 29)))
-                               (LitE (IntLit 4, srcSp 2 33 2 33))))
+                                  (LitE (IntLit (srcSp 2 25 2 25) 2))
+                                  (LitE (IntLit (srcSp 2 29 2 29) 3)))
+                               (LitE (IntLit (srcSp 2 33 2 33) 4))))
                      , ExprS (srcSp 3 3 3 14)
                          (BinOpE (srcSp 3 3 3 13)
                             (NothingCoalesce, srcSp 3 5 3 6)

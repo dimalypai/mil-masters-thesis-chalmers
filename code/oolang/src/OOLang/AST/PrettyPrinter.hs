@@ -33,6 +33,22 @@ instance Pretty Type where
   prPrn (TyMutable t) = text "Mutable" <+> prPrnParens (not $ isAtomicType t) t
   prPrn (TyRef     t) = text "Ref"     <+> prPrnParens (not $ isAtomicType t) t
 
+-- Since 'TypeS' is a source representation of types (how a user entered them),
+-- we don't need to do extra precedence and associativity handling during the
+-- pretty printing. We just print it as it is. Thanks to 'SrcTyParen'.
+instance Pretty (TypeS s) where
+  prPrn (SrcTyUnit  _) = text "Unit"
+  prPrn (SrcTyBool  _) = text "Bool"
+  prPrn (SrcTyInt   _) = text "Int"
+  prPrn (SrcTyFloat _) = text "Float"
+  prPrn (SrcTyClass srcClassName) = prPrn (getClassName srcClassName)
+  prPrn (SrcTyArrow _ st1 st2) = prPrn st1 <+> text "->" <+> prPrn st2
+  prPrn (SrcTyPure    _ st) = text "Pure" <+> prPrn st
+  prPrn (SrcTyMaybe   _ st) = text "Maybe" <+> prPrn st
+  prPrn (SrcTyMutable _ st) = text "Mutable" <+> prPrn st
+  prPrn (SrcTyRef     _ st) = text "Ref" <+> prPrn st
+  prPrn (SrcTyParen   _ st) = parens (prPrn st)
+
 instance Pretty Var where
   prPrn (Var varStr) = text varStr
 

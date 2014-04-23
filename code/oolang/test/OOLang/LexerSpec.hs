@@ -40,12 +40,12 @@ spec =
       map getToken
         (lexer "=  :  +  -  *  /  %  <  >  <=  >=  /= \
               \ =>  ->  \\  .  ::  ?  ??  <-  :=  ! \
-              \ &&  ||  (  )  ;")
+              \ &&  ||  (  )  {  }  [  ]  ;")
         `shouldBe`
       [ Equal, Colon, Plus, Minus, Star, Slash, Percent, Less, Greater
       , LessEq, GreaterEq, NotEq, FatArrow, Arrow, Lambda, Dot, DoubleColon
       , Question, DoubleQuestion, LeftArrow, ColonEq, Bang
-      , And, Or, OpenParen, CloseParen, SemiColon
+      , And, Or, OpenParen, CloseParen, OpenCurly, CloseCurly, OpenSquare, CloseSquare, SemiColon
       ]
 
     it "recognises all literals correctly" $
@@ -77,7 +77,7 @@ spec =
               \ Bool Float Int Maybe Mutable Pure Ref Unit \
               \ =  :  +  -  *  /  %  <  >  <=  >=  /= \
               \ =>  ->  \\  .  ::  ?  ??  <-  :=  ! \
-              \ &&  ||  (  )  ; \
+              \ &&  ||  (  )  {  }  [  ]  ; \
               \ 1 0.1 1.0e-2 1e-2 \"str\" \
               \ x C var123 Shape"))
         `shouldBe`
@@ -87,7 +87,7 @@ spec =
      \ Bool Float Int Maybe Mutable Pure Ref Unit\
      \ = : + - * / % < > <= >= /=\
      \ => -> \\ . :: ? ?? <- := !\
-     \ && || ( ) ;\
+     \ && || ( ) { } [ ] ;\
      \ 1 0.1 1.0e-2 1e-2 \"str\"\
      \ x C var123 Shape"
 

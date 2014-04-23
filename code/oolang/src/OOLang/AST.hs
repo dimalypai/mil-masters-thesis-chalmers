@@ -116,7 +116,7 @@ type TyStmt  = Stmt VarTy SrcSpan
 -- Function names are represented as 'VarE'.
 --
 -- 'ParenE' is used for better source spans and pretty printing.
-data Expr v s = LitE (LiteralS s)
+data Expr v s = LitE (Literal s)
               | VarE s v
               | LambdaE s [VarBinder s] (Expr v s)  -- ^ Not empty.
                 -- | We restrict member access to only functions.
@@ -139,19 +139,15 @@ type SrcExpr = Expr Var   SrcSpan
 type TyExpr  = Expr VarTy SrcSpan
 
 -- | Literal constants.
-data Literal = UnitLit
-             | BoolLit Bool
-             | IntLit Int
-             | FloatLit Double String  -- ^ The user string (for displaying).
-             | StringLit String
-             | NothingLit
+data Literal s = UnitLit s
+               | BoolLit s Bool
+               | IntLit s Int
+               | FloatLit s Double String  -- ^ The user string (for displaying).
+               | StringLit s String
+               | NothingLit s (TypeS s)
   deriving Show
 
-type LiteralS s = (Literal, s)
-type SrcLiteral = LiteralS SrcSpan
-
-getLiteral :: LiteralS s -> Literal
-getLiteral = fst
+type SrcLiteral = Literal SrcSpan
 
 -- | Binary operators are factored out from 'Expr'.
 data BinOp = App
@@ -223,6 +219,10 @@ isImmutableType :: Type -> Bool
 isImmutableType TyMutable {} = False
 isImmutableType TyRef     {} = False
 isImmutableType            _ = True
+
+isMaybeType :: Type -> Bool
+isMaybeType TyMaybe {} = True
+isMaybeType          _ = False
 
 -- | Returns an underlying type. For Mutable A it is A, for everything else it
 -- is just the type itself. Used with assignment type checking.

@@ -115,3 +115,7 @@ def impureAssign : Unit =>
   x <- main;
 end
 
+def nothingLit : Pure (Maybe Unit) =>
+  nothing [Maybe Unit];
+end
+

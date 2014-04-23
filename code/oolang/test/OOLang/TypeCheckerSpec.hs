@@ -173,6 +173,9 @@ spec =
       it "given an uninitialised immutable variable" $
         failureCase "ImmutableVarNotInit"
 
+      it "given a nothing literal annotated with non-Maybe type" $
+        failureCase "NothingNotMaybe"
+
       -- TODO: add tests for references
 
 -- Infrastructure
