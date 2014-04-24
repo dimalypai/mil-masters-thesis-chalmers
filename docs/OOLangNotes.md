@@ -70,3 +70,15 @@ Restrictions on well-formed types:
 * function return type: Mutable is not allowed
 * Ref and Mutable on the top level (nested only via function arrows)
 
+self reference inside classes. What type should it have? It seems that just
+C, so it is not Mutable and not a reference (which could be assigned to).
+Should we allow shadowing with class members? Should we allow referencing
+class members inside only with self? We can allow shadowing (class members
+can have the same names as global things), but allow only self referencing
+of members inside.
+
+While we don't have visibility modifiers, should fields be private
+(protected) and methods public?
+
+Don't allow mutually recursive field declarations (in init expressions).
+
