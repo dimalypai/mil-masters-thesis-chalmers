@@ -1,0 +1,2 @@
+FunLang type checking error at TypeLambdaShadowsType.fl:9,10-9,10:
+  Type variable 'T' shadows existing type

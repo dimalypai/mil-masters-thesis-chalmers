@@ -1,0 +1,2 @@
+FunLang type checking error at TypeLambdaIncorrectType.fl:7,7-7,28:
+  Function equation body of the function 'fun' has to have type 'forall A . A -> A', but it has type 'forall A . forall B . B -> B'

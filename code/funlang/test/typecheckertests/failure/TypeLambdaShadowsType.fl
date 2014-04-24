@@ -1,0 +1,10 @@
+main : IO Unit
+main = do
+  return [IO] unit;
+end;;
+
+type T = MkT
+
+fun : Int -> Int
+fun = (/\T . \x : T . x) [Int];;
+

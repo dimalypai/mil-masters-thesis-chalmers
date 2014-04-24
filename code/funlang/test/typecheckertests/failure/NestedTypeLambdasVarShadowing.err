@@ -1,0 +1,2 @@
+FunLang type checking error at NestedTypeLambdasVarShadowing.fl:7,16-7,16:
+  Type variable 'A' shadows another type variable

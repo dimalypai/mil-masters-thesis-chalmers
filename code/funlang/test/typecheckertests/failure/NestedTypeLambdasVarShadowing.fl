@@ -1,0 +1,8 @@
+main : IO Unit
+main = do
+  return [IO] unit;
+end;;
+
+fun : Int -> Int
+fun = (/\A . /\A . \x : A . x) [Int] [Int];;
+

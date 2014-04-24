@@ -35,6 +35,7 @@ data TcError =
   | NotFunctionType TyExpr Type
   | VarNotBound Var SrcSpan
   | VarShadowing SrcVar
+  | NotForallTypeApp Type SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -130,6 +131,10 @@ instance Pretty TcError where
   prPrn (VarShadowing srcVar) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcVar) <> colon $+$
     nest indLvl (text "Variable binding for" <+> quotes (prPrn $ getVar srcVar) <+> text "shadows an existing variable or function")
+
+  prPrn (NotForallTypeApp appType srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "The expression needs to have a polymorphic (forall) type, but it has type" <+> quotes (prPrn appType))
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

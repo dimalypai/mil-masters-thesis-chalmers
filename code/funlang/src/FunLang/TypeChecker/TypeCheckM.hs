@@ -28,9 +28,12 @@ module FunLang.TypeChecker.TypeCheckM
 
   , emptyLocalTypeEnv
   , isVarBound
+  , isTypeVarBound
   , isVarInLocalEnv
+  , isTypeVarInLocalEnv
   , getVarType
   , addLocalVar
+  , addLocalTypeVar
   , locallyWithEnv
 
   , module Control.Monad.Error
@@ -41,8 +44,10 @@ import Control.Monad.State
 import Control.Monad.Reader
 import Control.Applicative
 import qualified Data.Map as Map
+import qualified Data.Set as Set
 import Data.Maybe (fromJust)
-import Control.Arrow (second)
+-- 'first' and 'second' are used just to transform components of a pair
+import Control.Arrow (first, second)
 
 import FunLang.AST
 import FunLang.AST.Helpers
@@ -213,47 +218,81 @@ addFunction srcFunName funType funSrcType = do
   let funName = getFunName srcFunName
   modifyFunTypeEnv $ Map.insert funName (FunTypeInfo funType funSrcType srcFunName)
 
--- | Local type environment (inside functions, lambdas etc.)
-type LocalTypeEnv = Map.Map Var Type
+-- | Local type environment (inside functions, lambdas etc.).
+-- Consists of variables with their types and a set of type variables (from
+-- type lambdas) in scope.
+type LocalTypeEnv = (Map.Map Var Type, Set.Set TypeVar)
+
+type LocalVars = Map.Map Var Type
+
+type LocalTypeVars = Set.Set TypeVar
+
+getLocalVars :: LocalTypeEnv -> LocalVars
+getLocalVars = fst
+
+getLocalTypeVars :: LocalTypeEnv -> LocalTypeVars
+getLocalTypeVars = snd
+
+modifyLocalVars :: (LocalVars -> LocalVars) -> (LocalTypeEnv -> LocalTypeEnv)
+modifyLocalVars = first
+
+modifyLocalTypeVars :: (LocalTypeVars -> LocalTypeVars) -> (LocalTypeEnv -> LocalTypeEnv)
+modifyLocalTypeVars = second
 
 -- | Empty local type environment.
 emptyLocalTypeEnv :: LocalTypeEnv
-emptyLocalTypeEnv = Map.empty
+emptyLocalTypeEnv = (Map.empty, Set.empty)
 
 -- | Check whether a variable is in scope. It can be either local variable name
 -- or a function name.
 isVarBound :: Var -> TypeCheckM Bool
 isVarBound var = do
-  isLocalVar <- asks (Map.member var)
+  isLocalVar <- asks (Map.member var . getLocalVars)
   isFunction <- isFunctionDefined (varToFunName var)
   return (isLocalVar || isFunction)
 
--- | Pure function for querying local type environment.
+-- | Check whether a type variable is in scope.
+isTypeVarBound :: TypeVar -> TypeCheckM Bool
+isTypeVarBound typeVar = asks (Set.member typeVar . getLocalTypeVars)
+
+-- | Pure function for querying variables in local type environment.
 isVarInLocalEnv :: Var -> LocalTypeEnv -> Bool
-isVarInLocalEnv = Map.member
+isVarInLocalEnv var = Map.member var . getLocalVars
+
+-- | Pure function for querying type variables in local type environment.
+isTypeVarInLocalEnv :: TypeVar -> LocalTypeEnv -> Bool
+isTypeVarInLocalEnv typeVar = Set.member typeVar . getLocalTypeVars
 
 -- | Returns variable type. First looks for locals and then for functions.
 --
 -- Note: Unsafe. Should be used only after check that the variable is bound.
 getVarType :: Var -> TypeCheckM Type
 getVarType var = do
-  mVarType <- asks (Map.lookup var)
+  mVarType <- asks (Map.lookup var . getLocalVars)
   case mVarType of
     Just varType -> return varType
     Nothing -> do
       funTypeInfo <- getFunTypeInfo (varToFunName var)
       return $ ftiType funTypeInfo
 
--- | Extends local type environment. Pure (meaning, not a 'TypeCheckM' function).
+-- | Extends local type environment (variables part).
+-- Pure (meaning, not a 'TypeCheckM' function).
 addLocalVar :: Var -> Type -> LocalTypeEnv -> LocalTypeEnv
-addLocalVar = Map.insert
+addLocalVar var varType = modifyLocalVars (Map.insert var varType)
+
+-- | Extends local type environment (type variables part).
+-- Pure (meaning, not a 'TypeCheckM' function).
+addLocalTypeVar :: TypeVar -> LocalTypeEnv -> LocalTypeEnv
+addLocalTypeVar typeVar = modifyLocalTypeVars (Set.insert typeVar)
 
 -- | Takes a separate local type environment and merges it with what is already
 -- in the local type environment and performs a given computation in this new
 -- environment. Then restores the local environment.
 -- Should be safe, since we don't allow shadowing.
 locallyWithEnv :: LocalTypeEnv -> TypeCheckM a -> TypeCheckM a
-locallyWithEnv localTypeEnv = local (Map.union localTypeEnv)
+locallyWithEnv localTypeEnv =
+  local (\(vars, typeVars) -> ( Map.union (getLocalVars localTypeEnv) vars
+                              , Set.union (getLocalTypeVars localTypeEnv) typeVars))
 
 -- Utils
 
