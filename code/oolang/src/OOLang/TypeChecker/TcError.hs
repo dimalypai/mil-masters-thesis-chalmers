@@ -7,6 +7,7 @@ module OOLang.TypeChecker.TcError
 import Control.Monad.Error
 
 import OOLang.AST
+import OOLang.AST.Helpers
 import OOLang.AST.PrettyPrinter
 import OOLang.SrcSpan
 import OOLang.AST.SrcAnnotated

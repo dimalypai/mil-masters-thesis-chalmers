@@ -14,6 +14,7 @@
 module OOLang.AST.PrettyPrinter (prPrint) where
 
 import OOLang.AST
+import OOLang.AST.Helpers
 import OOLang.PrettyPrinter
 
 -- See Note [Precedences and associativity]

@@ -21,6 +21,7 @@ import Data.List (find)
 import Control.Applicative ((<$>), (<*>))
 
 import OOLang.AST
+import OOLang.AST.Helpers
 import OOLang.SrcAnnotated
 import OOLang.TypeChecker.TypeCheckM
 import OOLang.TypeChecker.TcError

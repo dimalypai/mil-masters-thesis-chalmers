@@ -15,6 +15,7 @@ import Data.Maybe (maybeToList)
 
 import OOLang.Lexer as Lex
 import OOLang.AST as AST
+import OOLang.AST.Helpers
 import OOLang.AST.SrcAnnotated
 import OOLang.SrcSpan
 import OOLang.Parser.ParseError

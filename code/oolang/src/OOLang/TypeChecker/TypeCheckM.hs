@@ -51,6 +51,7 @@ import qualified Data.Map as Map
 import Data.Maybe (fromJust)
 
 import OOLang.AST
+import OOLang.AST.Helpers
 import OOLang.TypeChecker.TcError
 
 -- | Type checking monad. Uses 'StateT' for type environment and 'ErrorT' for

@@ -102,13 +102,6 @@ data MethodDecl v s = MethodDecl s (FunDef v s) [ModifierS s]
 type SrcMethodDecl = MethodDecl Var   SrcSpan
 type TyMethodDecl  = MethodDecl VarTy SrcSpan
 
--- | Implementation is stolen from 'Data.List.partition'. This is a specialised
--- version of it.
-partitionClassMembers :: [MemberDecl v s] -> ([FieldDecl v s], [MethodDecl v s])
-partitionClassMembers = foldr selectClassMember ([], [])
-  where selectClassMember member ~(fs, ms) | FieldMemberDecl fd  <- member = (fd:fs, ms)
-                                           | MethodMemberDecl md <- member = (fs, md:ms)
-
 data Stmt v s = DeclS s (Declaration v s)
               | ExprS s (Expr v s)
                 -- | It uses type parameter v. We allow to assign only to
@@ -186,9 +179,6 @@ data BinOp = App
 type BinOpS s = (BinOp, s)
 type SrcBinOp = BinOpS SrcSpan
 
-getBinOp :: BinOpS s -> BinOp
-getBinOp = fst
-
 -- | Internal representation of types. What types really represent.
 -- For invariants see type transformations in the TypeChecker.
 data Type = TyUnit
@@ -205,96 +195,6 @@ data Type = TyUnit
           | TyMutable Type
           | TyRef Type
   deriving (Show, Eq)
-
--- | Entity of this type is either an already computed value or a global
--- function without arguments.
---
--- For example, function parameter of type Unit has value type (it can be only
--- unit value, since we are in a strict language) and global function main :
--- Unit has value type, but it denotes a computation returning unit, not an
--- already computed value.
-isValueType :: Type -> Bool
-isValueType TyArrow {} = False
-isValueType _ = True
-
--- | It can be either a function which has type, for example Pure Int (it
--- doesn't have arguments and purely computes a value of type Int) or a
--- function with arguments like Int -> Float -> Pure Int, which takes arguments
--- and its return type signals that it is a pure function that delivers and
--- integer value.
-isPureFunType :: Type -> Bool
-isPureFunType (TyPure _) = True
-isPureFunType (TyArrow _ t2) = isPureFunType t2
-isPureFunType _ = False
-
-isMutableType :: Type -> Bool
-isMutableType TyMutable {} = True
-isMutableType            _ = False
-
--- | By immutable type we mean anything else than Mutable and Ref.
---
--- Note: 'isMutable' means only Mutable, not Ref.
-isImmutableType :: Type -> Bool
-isImmutableType TyMutable {} = False
-isImmutableType TyRef     {} = False
-isImmutableType            _ = True
-
-isMaybeType :: Type -> Bool
-isMaybeType TyMaybe {} = True
-isMaybeType          _ = False
-
--- | Checks whether it is Maybe, Mutable Maybe or Ref Maybe type.
--- Variables of these types can be uninitialised and have Nothing as a value.
-hasMaybeType :: Type -> Bool
-hasMaybeType TyMaybe {} = True
-hasMaybeType (TyMutable (TyMaybe {})) = True
-hasMaybeType (TyRef     (TyMaybe {})) = True
-hasMaybeType _ = False
-
--- | Returns an underlying type. For Mutable A it is A, for everything else it
--- is just the type itself. Used with assignment type checking.
--- Mutable is more modifier-like than a type-like, comparing to Ref, for
--- example, that's why we have this special treatment.
-getUnderType :: Type -> Type
-getUnderType (TyMutable t) = t
-getUnderType            t  = t
-
-isAtomicType :: Type -> Bool
-isAtomicType TyArrow   {} = False
-isAtomicType TyPure    {} = False
-isAtomicType TyMaybe   {} = False
-isAtomicType TyMutable {} = False
-isAtomicType TyRef     {} = False
-isAtomicType            _ = True
-
-getTypePrec :: Type -> Int
-getTypePrec TyUnit       = 3
-getTypePrec TyBool       = 3
-getTypePrec TyInt        = 3
-getTypePrec TyFloat      = 3
-getTypePrec TyString     = 3
-getTypePrec TyClass   {} = 3
-getTypePrec TyArrow   {} = 1
-getTypePrec TyPure    {} = 2
-getTypePrec TyMaybe   {} = 2
-getTypePrec TyMutable {} = 2
-getTypePrec TyRef     {} = 2
-
--- | Returns whether the first type operator has a lower precedence than the
--- second one. Convenient to use in infix form.
---
--- Note: It is reflexive: t `typeHasLowerPrec` t ==> True
-typeHasLowerPrec :: Type -> Type -> Bool
-typeHasLowerPrec t1 t2 = getTypePrec t1 <= getTypePrec t2
-
--- | Returns whether the first type operator has a lower precedence than the
--- second one. Convenient to use in infix form.
--- This version can be used with associative type operators, for example:
--- arrow, type application. See "OOLang.AST.PrettyPrinter".
---
--- Note: It is *not* reflexive: t `typeHasLowerPrecAssoc` t ==> False
-typeHasLowerPrecAssoc :: Type -> Type -> Bool
-typeHasLowerPrecAssoc t1 t2 = getTypePrec t1 < getTypePrec t2
 
 -- | Source representation of types. How a user entered them.
 --
@@ -329,12 +229,6 @@ data FunType s = FunType s [VarBinder s] (TypeS s)
 
 type SrcFunType = FunType SrcSpan
 
-getFunParams :: FunType s -> [VarBinder s]
-getFunParams (FunType _ varBinders _) = varBinders
-
-getFunReturnType :: FunType s -> TypeS s
-getFunReturnType (FunType _ _ retType) = retType
-
 -- | Name (variable) declaration.
 -- Consists of var binder and an optional initialiser.
 data Declaration v s = Decl s (VarBinder s) (Maybe (Init v s))
@@ -350,9 +244,6 @@ data Init v s = Init s (InitOpS s) (Expr v s)
 type SrcInit = Init Var   SrcSpan
 type TyInit  = Init VarTy SrcSpan
 
-getInitOpS :: Init v s -> InitOpS s
-getInitOpS (Init _ initOpS _) = initOpS
-
 -- | Assignment operators are factored out.
 --
 -- * Mutable (<-) is for Mutable.
@@ -363,9 +254,6 @@ data AssignOp = AssignMut | AssignRef
 
 type AssignOpS s = (AssignOp, s)
 type SrcAssignOp = AssignOpS SrcSpan
-
-getAssignOp :: AssignOpS s -> AssignOp
-getAssignOp = fst
 
 -- | Operators used in declaration statements.
 --
@@ -380,9 +268,6 @@ data InitOp = InitEqual | InitMut | InitRef
 type InitOpS s = (InitOp, s)
 type SrcInitOp = InitOpS SrcSpan
 
-getInitOp :: InitOpS s -> InitOp
-getInitOp = fst
-
 -- | Modifiers are used in class member declarations.
 data Modifier = Public | Private | Static
   deriving Show
@@ -396,12 +281,6 @@ newtype Var = Var String
 type VarS s = (Var, s)
 type SrcVar = VarS SrcSpan
 
-getVar :: VarS s -> Var
-getVar = fst
-
-varToFunName :: Var -> FunName
-varToFunName (Var varName) = FunName varName
-
 -- | Variable annotated with its type.
 newtype VarTy = VarTy (Var, Type)
   deriving Show
@@ -413,32 +292,17 @@ data VarBinder s = VarBinder s (VarS s) (TypeS s)
 
 type SrcVarBinder = VarBinder SrcSpan
 
-getBinderVar :: VarBinder s -> VarS s
-getBinderVar (VarBinder _ srcVar _ ) = srcVar
-
-getBinderType :: VarBinder s -> TypeS s
-getBinderType (VarBinder _ _ srcType) = srcType
-
-setVarBinderAnn :: VarBinder s -> s -> VarBinder s
-setVarBinderAnn (VarBinder _ v t) s = VarBinder s v t
-
 newtype ClassName = ClassName String
   deriving (Show, Eq, Ord)
 
 type ClassNameS s = (ClassName, s)
 type SrcClassName = ClassNameS SrcSpan
 
-getClassName :: ClassNameS s -> ClassName
-getClassName = fst
-
 newtype FunName = FunName String
   deriving (Show, Eq, Ord)
 
 type FunNameS s = (FunName, s)
 type SrcFunName = FunNameS SrcSpan
-
-getFunName :: FunNameS s -> FunName
-getFunName = fst
 
 -- | Denotes class field or method name.
 newtype MemberName = MemberName String
@@ -447,19 +311,7 @@ newtype MemberName = MemberName String
 type MemberNameS s = (MemberName, s)
 type SrcMemberName = MemberNameS SrcSpan
 
-memberNameToVar :: MemberName -> Var
-memberNameToVar (MemberName nameStr) = Var nameStr
-
-memberNameToFunName :: MemberName -> FunName
-memberNameToFunName (MemberName nameStr) = FunName nameStr
-
-varToMemberName :: Var -> MemberName
-varToMemberName (Var nameStr) = MemberName nameStr
-
-funNameToMemberName :: FunName -> MemberName
-funNameToMemberName (FunName nameStr) = MemberName nameStr
-
--- Parsing helpers
+-- * Parsing helpers
 
 -- | Used only in parsing to allow to mix class and function definitions and
 -- then have them reordered in the AST.
@@ -467,12 +319,4 @@ data TopDef v s = TopClassDef { getClassDef :: ClassDef v s }
                 | TopFunDef   { getFunDef   :: FunDef v s   }
 
 type SrcTopDef = TopDef Var SrcSpan
-
-isClassDef :: TopDef v s -> Bool
-isClassDef (TopClassDef _) = True
-isClassDef               _ = False
-
-isFunDef :: TopDef v s -> Bool
-isFunDef (TopFunDef _) = True
-isFunDef             _ = False
 
