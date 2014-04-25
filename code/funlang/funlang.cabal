@@ -15,8 +15,11 @@ cabal-version:       >= 1.10
 executable flc
   main-is:             Main.hs
   other-modules:       FunLang.AST
+                       FunLang.AST.Helpers
                        FunLang.AST.PrettyPrinter
                        FunLang.AST.SrcAnnotated
+                       FunLang.BuiltIn
+                       FunLang.CodeGenMil
                        FunLang.Lexer
                        FunLang.Parser
                        FunLang.Parser.ParseError
@@ -24,6 +27,7 @@ executable flc
                        FunLang.SrcAnnotated
                        FunLang.SrcSpan
                        FunLang.TypeChecker
+                       FunLang.TypeChecker.Helpers
                        FunLang.TypeChecker.TcError
                        FunLang.TypeChecker.TypeCheckM
                        FunLang.Utils
