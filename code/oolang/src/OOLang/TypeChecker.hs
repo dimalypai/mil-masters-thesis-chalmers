@@ -409,8 +409,8 @@ tcDecl (Decl s varBinder mSrcInit) srcDeclStmt = do
         throwError $ DeclInitIncorrectType srcInit (getUnderType varType) initType
       return $ (Decl s varBinder (Just tyInit), TyUnit, initPure)
     Nothing -> do
-      when (isImmutableType varType) $
-        throwError $ ImmutableVarNotInit var srcDeclStmt
+      unless (hasMaybeType varType) $
+        throwError $ NonMaybeVarNotInit var (getSrcSpan srcDeclStmt)
       return (Decl s varBinder Nothing, TyUnit, True)
 
 tcInit :: SrcInit -> TypeCheckM (TyInit, Type, Bool)

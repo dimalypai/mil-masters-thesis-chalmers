@@ -1,0 +1,2 @@
+OOLang type checking error at NonMaybeVarNotInit.ool:4,3-4,18:
+  Variable/field 'x' with non-Maybe type is not initialised

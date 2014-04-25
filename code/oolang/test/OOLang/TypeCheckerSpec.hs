@@ -172,8 +172,8 @@ spec =
       it "given a mutable variable assignment as a last statement of integer returning function" $
         failureCase "AssignIntFunReturn"
 
-      it "given an uninitialised immutable variable" $
-        failureCase "ImmutableVarNotInit"
+      it "given an uninitialised variable of non-Maybe type" $
+        failureCase "NonMaybeVarNotInit"
 
       it "given a nothing literal annotated with non-Maybe type" $
         failureCase "NothingNotMaybe"

@@ -35,7 +35,6 @@ data TcError =
   | AssignIncorrectType TyExpr Type Type
   | IncorrectImmutableOpUsage SrcSpan
   | IncorrectMutableOpUsage SrcSpan
-  | ImmutableVarNotInit Var SrcStmt
   | NonMaybeVarNotInit Var SrcSpan
   | IncorrectNothingType SrcType
   | SelfMemberName SrcSpan
@@ -141,10 +140,6 @@ instance Pretty TcError where
   prPrn (IncorrectMutableOpUsage srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Incorrect usage of '<-' operator. It can be used only with Mutable variables/fields")
-
-  prPrn (ImmutableVarNotInit var srcStmt) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
-    nest indLvl (text "Immutable variable" <+> quotes (prPrn var) <+> text "is not initialised")
 
   prPrn (NonMaybeVarNotInit var srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$

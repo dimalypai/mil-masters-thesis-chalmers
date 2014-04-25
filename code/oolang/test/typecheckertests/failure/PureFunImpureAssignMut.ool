@@ -1,7 +1,7 @@
 def main : Unit => unit; end
 
 def fun : Pure Unit =>
-  x : Mutable Unit;
+  x : Mutable Unit <- unit;
   x <- main;
 end
 
