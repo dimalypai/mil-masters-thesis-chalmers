@@ -58,3 +58,6 @@ instance Pretty ClassName where
 instance Pretty FunName where
   prPrn (FunName funNameStr) = text funNameStr
 
+instance Pretty MemberName where
+  prPrn (MemberName memberNameStr) = text memberNameStr
+

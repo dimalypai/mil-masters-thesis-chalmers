@@ -1,0 +1,2 @@
+OOLang type checking error at BaseSuperRef.ool:4,18-4,22:
+  Name 'super' is not bound

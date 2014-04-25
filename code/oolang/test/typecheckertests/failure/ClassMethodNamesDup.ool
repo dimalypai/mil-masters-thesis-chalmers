@@ -1,0 +1,12 @@
+def main : Unit => unit; end
+
+class C =>
+  def method : Pure Unit =>
+    unit;
+  end
+
+  def method : Pure Int =>
+    1;
+  end
+end
+

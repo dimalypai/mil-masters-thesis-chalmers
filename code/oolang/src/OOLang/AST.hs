@@ -80,15 +80,34 @@ data FunDef v s = FunDef s (FunNameS s) (FunType s) [Stmt v s]
 type SrcFunDef = FunDef Var   SrcSpan
 type TyFunDef  = FunDef VarTy SrcSpan
 
--- | Class member declaration. Either field or method.
--- Field declaration is just a declaration with modifiers (syntactically).
--- Method declaration is just a function with modifiers (syntactically).
-data MemberDecl v s = FieldDecl s (Declaration v s) [ModifierS s]
-                    | MethodDecl s (FunDef v s) [ModifierS s]
+-- | Class member declaration. Either a field or a method.
+data MemberDecl v s = FieldMemberDecl (FieldDecl v s)
+                    | MethodMemberDecl (MethodDecl v s)
   deriving Show
 
 type SrcMemberDecl = MemberDecl Var   SrcSpan
 type TyMemberDecl  = MemberDecl VarTy SrcSpan
+
+-- | Field declaration is just a declaration with modifiers (syntactically).
+data FieldDecl v s = FieldDecl s (Declaration v s) [ModifierS s]
+  deriving Show
+
+type SrcFieldDecl = FieldDecl Var   SrcSpan
+type TyFieldDecl  = FieldDecl VarTy SrcSpan
+
+-- | Method declaration is just a function with modifiers (syntactically).
+data MethodDecl v s = MethodDecl s (FunDef v s) [ModifierS s]
+  deriving Show
+
+type SrcMethodDecl = MethodDecl Var   SrcSpan
+type TyMethodDecl  = MethodDecl VarTy SrcSpan
+
+-- | Implementation is stolen from 'Data.List.partition'. This is a specialised
+-- version of it.
+partitionClassMembers :: [MemberDecl v s] -> ([FieldDecl v s], [MethodDecl v s])
+partitionClassMembers = foldr selectClassMember ([], [])
+  where selectClassMember member ~(fs, ms) | FieldMemberDecl fd  <- member = (fd:fs, ms)
+                                           | MethodMemberDecl md <- member = (fs, md:ms)
 
 data Stmt v s = DeclS s (Declaration v s)
               | ExprS s (Expr v s)
@@ -223,6 +242,14 @@ isImmutableType            _ = True
 isMaybeType :: Type -> Bool
 isMaybeType TyMaybe {} = True
 isMaybeType          _ = False
+
+-- | Checks whether it is Maybe, Mutable Maybe or Ref Maybe type.
+-- Variables of these types can be uninitialised and have Nothing as a value.
+hasMaybeType :: Type -> Bool
+hasMaybeType TyMaybe {} = True
+hasMaybeType (TyMutable (TyMaybe {})) = True
+hasMaybeType (TyRef     (TyMaybe {})) = True
+hasMaybeType _ = False
 
 -- | Returns an underlying type. For Mutable A it is A, for everything else it
 -- is just the type itself. Used with assignment type checking.
@@ -419,6 +446,18 @@ newtype MemberName = MemberName String
 
 type MemberNameS s = (MemberName, s)
 type SrcMemberName = MemberNameS SrcSpan
+
+memberNameToVar :: MemberName -> Var
+memberNameToVar (MemberName nameStr) = Var nameStr
+
+memberNameToFunName :: MemberName -> FunName
+memberNameToFunName (MemberName nameStr) = FunName nameStr
+
+varToMemberName :: Var -> MemberName
+varToMemberName (Var nameStr) = MemberName nameStr
+
+funNameToMemberName :: FunName -> MemberName
+funNameToMemberName (FunName nameStr) = MemberName nameStr
 
 -- Parsing helpers
 

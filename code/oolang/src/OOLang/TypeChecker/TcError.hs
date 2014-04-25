@@ -33,10 +33,15 @@ data TcError =
   | MutableFunReturnType SrcType
   | DeclInitIncorrectType SrcInit Type Type
   | AssignIncorrectType TyExpr Type Type
-  | IncorrectImmutableOpUsage SrcStmt
-  | IncorrectMutableOpUsage SrcStmt
+  | IncorrectImmutableOpUsage SrcSpan
+  | IncorrectMutableOpUsage SrcSpan
   | ImmutableVarNotInit Var SrcStmt
+  | NonMaybeVarNotInit Var SrcSpan
   | IncorrectNothingType SrcType
+  | SelfMemberName SrcSpan
+  | SuperMemberName SrcSpan
+  | FieldInitNotPure Var SrcSpan
+  | MemberAlreadyDefined MemberName SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -129,21 +134,41 @@ instance Pretty TcError where
     nest indLvl (text "Incorrect type of assignable expression. The expected type is" <+> quotes (prPrn expType) <>
       text ", but it has type" <+> quotes (prPrn actType))
 
-  prPrn (IncorrectImmutableOpUsage srcStmt) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
-    nest indLvl (text "Incorrect usage of '=' operator. It can be used only with immutable (default) variables")
+  prPrn (IncorrectImmutableOpUsage srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Incorrect usage of '=' operator. It can be used only with immutable (default) variables/fields")
 
-  prPrn (IncorrectMutableOpUsage srcStmt) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
-    nest indLvl (text "Incorrect usage of '<-' operator. It can be used only with Mutable variables")
+  prPrn (IncorrectMutableOpUsage srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Incorrect usage of '<-' operator. It can be used only with Mutable variables/fields")
 
   prPrn (ImmutableVarNotInit var srcStmt) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcStmt) <> colon $+$
     nest indLvl (text "Immutable variable" <+> quotes (prPrn var) <+> text "is not initialised")
 
+  prPrn (NonMaybeVarNotInit var srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Variable/field" <+> quotes (prPrn var) <+> text "with non-Maybe type is not initialised")
+
   prPrn (IncorrectNothingType srcType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
     nest indLvl (text "'nothing' literal has to have Maybe type, but it has type" <+> quotes (prPrn srcType))
+
+  prPrn (SelfMemberName srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Class member can not use a special name 'self'")
+
+  prPrn (SuperMemberName srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Class member can not use a special name 'super'")
+
+  prPrn (FieldInitNotPure fieldName srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Initialisation expression of the field" <+> quotes (prPrn fieldName) <+> text "is not pure")
+
+  prPrn (MemberAlreadyDefined memberName srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Class member with the name" <+> quotes (prPrn memberName) <+> text "is already defined")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

@@ -1,0 +1,6 @@
+def main : Unit => unit; end
+
+class Base =>
+  field : Base = super;
+end
+

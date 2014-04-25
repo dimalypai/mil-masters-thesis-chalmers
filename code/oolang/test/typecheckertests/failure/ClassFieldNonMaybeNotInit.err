@@ -1,0 +1,2 @@
+OOLang type checking error at ClassFieldNonMaybeNotInit.ool:4,3-4,22:
+  Variable/field 'field' with non-Maybe type is not initialised

@@ -1,0 +1,10 @@
+def main : Unit => unit; end
+
+class C =>
+  field : Int = 1;
+
+  def field : Pure Int =>
+    1;
+  end
+end
+

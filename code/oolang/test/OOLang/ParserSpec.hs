@@ -39,27 +39,29 @@ spec =
                   [ ClassDef (srcSp 1 1 3 3)
                       (ClassName "Shape", srcSp 1 7 1 11)
                       Nothing
-                      [FieldDecl (srcSp 2 3 2 18)
-                         (Decl (srcSp 2 3 2 17)
-                            (VarBinder (srcSp 2 3 2 17)
-                               (Var "x", srcSp 2 3 2 3)
-                               (SrcTyMutable (srcSp 2 7 2 17)
-                                  (SrcTyInt $ srcSp 2 15 2 17)))
-                            Nothing)
-                         []]
+                      [FieldMemberDecl $
+                         FieldDecl (srcSp 2 3 2 18)
+                           (Decl (srcSp 2 3 2 17)
+                              (VarBinder (srcSp 2 3 2 17)
+                                 (Var "x", srcSp 2 3 2 3)
+                                 (SrcTyMutable (srcSp 2 7 2 17)
+                                    (SrcTyInt $ srcSp 2 15 2 17)))
+                              Nothing)
+                           []]
                   , ClassDef (srcSp 5 1 9 3)
                       (ClassName "Circle", srcSp 5 7 5 12)
                       (Just (ClassName "Shape", srcSp 5 16 5 20))
-                      [MethodDecl (srcSp 6 3 8 5)
-                         (FunDef (srcSp 6 3 8 5)
-                            (FunName "area", srcSp 6 7 6 10)
-                            (FunType (srcSp 6 14 6 21)
-                               []
-                               (SrcTyPure (srcSp 6 14 6 21)
-                                  (SrcTyInt $ srcSp 6 19 6 21)))
-                            [ExprS (srcSp 7 5 7 6)
-                               (LitE (IntLit (srcSp 7 5 7 5) 1))])
-                         []]]
+                      [MethodMemberDecl $
+                         MethodDecl (srcSp 6 3 8 5)
+                           (FunDef (srcSp 6 3 8 5)
+                              (FunName "area", srcSp 6 7 6 10)
+                              (FunType (srcSp 6 14 6 21)
+                                 []
+                                 (SrcTyPure (srcSp 6 14 6 21)
+                                    (SrcTyInt $ srcSp 6 19 6 21)))
+                              [ExprS (srcSp 7 5 7 6)
+                                 (LitE (IntLit (srcSp 7 5 7 5) 1))])
+                           []]]
                   []
       in successCase baseName ast
 

@@ -1,0 +1,2 @@
+OOLang type checking error at ClassFieldMethodSameNameFieldFirst.ool:6,7-6,11:
+  Class member with the name 'field' is already defined

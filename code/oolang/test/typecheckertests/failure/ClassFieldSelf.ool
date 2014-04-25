@@ -1,0 +1,6 @@
+def main : Unit => unit; end
+
+class C =>
+  self : Int = 1;
+end
+

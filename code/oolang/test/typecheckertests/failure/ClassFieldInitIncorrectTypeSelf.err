@@ -1,0 +1,2 @@
+OOLang type checking error at ClassFieldInitIncorrectTypeSelf.ool:4,15-4,20:
+  Incorrect type of initialisation expression. The expected type is 'Int', but it has type 'C'

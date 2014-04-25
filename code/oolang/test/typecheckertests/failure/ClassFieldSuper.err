@@ -1,0 +1,2 @@
+OOLang type checking error at ClassFieldSuper.ool:4,3-4,7:
+  Class member can not use a special name 'super'

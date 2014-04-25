@@ -1,0 +1,12 @@
+def main : Unit => unit; end
+
+class Super =>
+  def method : Pure Int =>
+    1;
+  end
+end
+
+class Child < Super =>
+  method : Int = 1;
+end
+

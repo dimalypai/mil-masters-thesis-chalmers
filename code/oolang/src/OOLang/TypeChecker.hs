@@ -21,6 +21,7 @@ import Data.List (find)
 import Control.Applicative ((<$>), (<*>))
 
 import OOLang.AST
+import OOLang.SrcAnnotated
 import OOLang.TypeChecker.TypeCheckM
 import OOLang.TypeChecker.TcError
 import OOLang.Utils
@@ -48,9 +49,12 @@ typeOf srcExpr typeEnv = getExprType <$> runTypeCheckM (tcExpr srcExpr) typeEnv
 tcProgram :: SrcProgram -> TypeCheckM TyProgram
 tcProgram (Program s classDefs funDefs) = do
   collectDefs classDefs funDefs
-  -- Class names and function types (but not parameter names) have been checked.
+  -- Class names, function/method names and types (but *not* parameter names)
+  -- and class field names and types (but *not* initialisers) have been
+  -- checked.
   -- Now first information about definitions is in the environment:
-  -- + class names and their super classes (not checked)
+  -- + class names, super classes (*not* checked), field and method names and
+  -- types
   -- + function names and their types
   checkMain
   checkInheritance
@@ -58,18 +62,20 @@ tcProgram (Program s classDefs funDefs) = do
   tyFunDefs <- mapM tcFunDef funDefs
   return $ Program s tyClassDefs tyFunDefs
 
--- | In order to be able to handle (mutually) recursive definitions, we need to
--- do an additional first pass to collect function signatures and class names
--- (together with super classes).
+-- | In order to be able to handle (mutually) recursive definitions and forward
+-- references to super class members, we need to do an additional first pass to
+-- collect function signatures, class names, super classes and class members.
 --
 -- It collects:
 --
--- * class names and possibly their super classes
+-- * class names, their super classes and members (field and method names and
+-- types)
 --
 -- * function names and their types
 --
--- It also does checking of function types. But it does not check super
--- classes and function parameter names.
+-- It also does checking of function names and types, class field and method
+-- names and types. But it does *not* check super classes, function/method
+-- parameter names and field initialisers.
 collectDefs :: [SrcClassDef] -> [SrcFunDef] -> TypeCheckM ()
 collectDefs classDefs funDefs = do
   -- It is essential that we collect classes before functions, because function
@@ -78,18 +84,79 @@ collectDefs classDefs funDefs = do
   mapM_ collectFunDef funDefs
 
 -- | Checks if the class is already defined.
--- Adds the class (and its super class if it has one) to the environment.
--- Super class is not checked (whether it is defined).
+-- Adds the class, its super class if it has one, field and method names and
+-- types to the environment.
+-- Field and method names and types are checked. Types are transformed.
+-- Method parameter names and bodies and field initialisers are *not* checked.
+-- Super class is *not* checked (whether it is defined).
 collectClassDef :: SrcClassDef -> TypeCheckM ()
-collectClassDef (ClassDef _ srcClassName mSuperSrcClassName _) = do
-  whenM (isClassDefined $ getClassName srcClassName) $
+collectClassDef (ClassDef _ srcClassName mSuperSrcClassName srcMembers) = do
+  let className = getClassName srcClassName
+  whenM (isClassDefined className) $
     throwError $ ClassAlreadyDefined srcClassName
   addClass srcClassName mSuperSrcClassName
+  -- it is important that we add class to the environment first
+  collectClassMembers className srcMembers
+
+-- | Checks that all types of fields and methods are correct and defined.
+-- Checks that field and method names are distinct. Checks that there are no
+-- methods with the same name and different types (we don't allow overloading).
+-- Transforms types to their internal representation.
+-- Does *not* check method parameter names, method bodies and field
+-- initialisers.
+collectClassMembers :: ClassName -> [SrcMemberDecl] -> TypeCheckM ()
+collectClassMembers className srcMembers = do
+  let (srcFieldDecls, srcMethodDecls) = partitionClassMembers srcMembers
+  mapM_ (collectClassField className) srcFieldDecls
+  mapM_ (collectClassMethod className) srcMethodDecls
+
+-- | Checks if a member with the same name is already defined in this hierarchy
+-- (we don't allow field overriding/hiding).
+-- Checks that the field doesn't have a name `self` and `super`.
+-- Class fields can shadow global function names because we reference class
+-- members with `self` or `super`.
+-- Checks that the specified field type is correct (used types are defined).
+collectClassField :: ClassName -> SrcFieldDecl -> TypeCheckM ()
+collectClassField className (FieldDecl _ (Decl _ varBinder _) _) = do
+  let fieldName = getVar (getBinderVar varBinder)
+  let fieldNameSrcSpan = getSrcSpan (getBinderVar varBinder)
+  when (fieldName == Var "self") $
+    throwError $ SelfMemberName fieldNameSrcSpan
+  when (fieldName == Var "super") $
+    throwError $ SuperMemberName fieldNameSrcSpan
+  let memberName = varToMemberName fieldName
+  whenM (isClassMemberDefined className memberName) $
+    throwError $ MemberAlreadyDefined memberName fieldNameSrcSpan
+  fieldType <- srcTypeToType (getBinderType varBinder)
+  addClassField className fieldName fieldType
+
+-- | Checks if a field with the same name is already defined.
+-- Checks if a method with the same name and different type is already
+-- defined in this hierarchy (we don't allow overloading/hiding).
+-- Checks that the method doesn't have a name `self` and `super`.
+-- Class methods can shadow global function names because we reference class
+-- members with `self` or `super`.
+-- Checks that the specified method type is correct (used types are defined).
+-- Performs a method type transformation.
+collectClassMethod :: ClassName -> SrcMethodDecl -> TypeCheckM ()
+collectClassMethod className (MethodDecl _ (FunDef _ srcFunName srcFunType _) _) = do
+  let methodName = getFunName srcFunName
+  let methodNameSrcSpan = getSrcSpan srcFunName
+  when (methodName == FunName "self") $
+    throwError $ SelfMemberName methodNameSrcSpan
+  when (methodName == FunName "super") $
+    throwError $ SuperMemberName methodNameSrcSpan
+  methodType <- srcFunTypeToType srcFunType
+  let memberName = funNameToMemberName methodName
+  whenM (isClassMemberDefined className memberName) $ do
+    unlessM (isClassMethodOverride className methodName methodType) $
+      throwError $ MemberAlreadyDefined memberName methodNameSrcSpan
+  addClassMethod className methodName methodType
 
 -- | Checks if the function is already defined.
 -- Checks that the specified function type is correct (used types are defined).
--- Does not check parameter names.
 -- Performs a function type transformation.
+-- Does *not* check parameter names.
 -- Adds the function and its type to the environment.
 collectFunDef :: SrcFunDef -> TypeCheckM ()
 collectFunDef (FunDef _ srcFunName srcFunType _) = do
@@ -151,13 +218,97 @@ traverseHierarchy className marked onStack = do
                else return (marked', onStack)  -- remove current class name from the stack
     else return (marked', onStack)  -- remove current class name from the stack
 
--- | Checks all class members (in two passes) and adds them to the environment.
+-- | Checks class definition.
+-- Class members (types of fields and methods) have already been added to the
+-- class type environment. Method parameter names and field initialisers have
+-- *not* been checked.
+-- Adds `self` and `super` (if it has a super class) to the local environment
+-- and runs member checking in this environment.
 -- Returns type checked class definition.
 tcClassDef :: SrcClassDef -> TypeCheckM TyClassDef
 tcClassDef (ClassDef s srcClassName mSuperSrcClassName srcMembers) = do
-  return $ ClassDef s srcClassName mSuperSrcClassName []  -- TODO
+  let className = getClassName srcClassName
+  let localTypeEnvSelf = addLocalVar (Var "self") (TyClass className)
+                           emptyLocalTypeEnv
+  let localTypeEnv = case mSuperSrcClassName of
+                       Nothing -> localTypeEnvSelf
+                       Just superSrcClassName ->
+                         addLocalVar (Var "super") (TyClass $ getClassName superSrcClassName)
+                           localTypeEnvSelf
+  tyMembers <- locallyWithEnv localTypeEnv (tcClassMembers className srcMembers)
+  return $ ClassDef s srcClassName mSuperSrcClassName tyMembers
 
--- | Checks that all parameter names are distinct. Their types are already
+-- | Checks all class members.
+-- First it checks all class field initialisers (we don't allow mutual
+-- recursion for them as well as referencing class methods, but they can use
+-- backward references to other fields via `self` or super class fields via
+-- `super`).
+-- Then it checks method parameter names and bodies.
+tcClassMembers :: ClassName -> [SrcMemberDecl] -> TypeCheckM [TyMemberDecl]
+tcClassMembers className srcMembers = do
+  let (srcFieldDecls, srcMethodDecls) = partitionClassMembers srcMembers
+  tyFieldDecls <- mapM (tcClassField className) srcFieldDecls
+  tyMethodDecls <- mapM (tcClassMethod className) srcMethodDecls
+  return (map FieldMemberDecl tyFieldDecls ++ map MethodMemberDecl tyMethodDecls)
+
+-- | Checks class field initialiser.
+-- Its type and name are already checked.
+-- Class field initialisers have to be pure.
+-- Class fields are checked in the same local environment as function bodies
+-- but with `self` and possible `super` variables in scope.
+-- Class fields can use backward references to other fields via `self` or super
+-- class fields via `super`, but mutual recursion and referencing class methods
+-- is *not* allowed.
+tcClassField :: ClassName -> SrcFieldDecl -> TypeCheckM TyFieldDecl
+tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit) _) = do
+  let fieldName = getVar (getBinderVar varBinder)
+  fieldType <- getClassFieldType className fieldName
+  mTyInit <-
+    case mSrcInit of
+      Just srcInit -> do
+        (tyInit, initType, initPure) <- tcInit srcInit
+        unless initPure $
+          throwError $ FieldInitNotPure fieldName fs
+        let initOp = getInitOp $ getInitOpS srcInit
+        case initOp of
+          InitEqual ->
+            unless (isImmutableType fieldType) $
+              throwError $ IncorrectImmutableOpUsage fs
+          InitMut ->
+            unless (isMutableType fieldType) $
+              throwError $ IncorrectMutableOpUsage fs
+        unless (initType `isSubTypeOf` fieldType) $
+          throwError $ DeclInitIncorrectType srcInit fieldType initType
+        return $ Just tyInit
+      Nothing -> do
+        unless (hasMaybeType fieldType) $
+          throwError $ NonMaybeVarNotInit fieldName fs
+        return Nothing
+  let tyDecl = Decl ds varBinder mTyInit
+  return $ FieldDecl fs tyDecl []
+
+-- | Checks class method declaration.
+-- Its name and type are already in the class environment.
+-- Checks that all parameter names are distinct. Their types are already
+-- checked and the method type is transformed. Adds parameters to the local
+-- environment.
+-- Checks method body (statements).
+-- Checks that the actual return type is consistent with the specified return type.
+-- Checks that the method is pure (if it is declared as such).
+-- Class methods are checked in the same local environment as function bodies
+-- but with `self` and possible `super` variables in scope.
+-- Class methods' parameter names can shadow class fields
+-- (for the same reason), but they can *not* shadow global function names.
+tcClassMethod :: ClassName -> SrcMethodDecl -> TypeCheckM TyMethodDecl
+tcClassMethod className (MethodDecl s srcFunDef _) = do
+  -- TODO?
+  -- different mutable treatment
+  tyFunDef <- tcFunDef srcFunDef
+  return $ MethodDecl s tyFunDef []
+
+-- | Checks function definition.
+-- Its name and type are already in the environment.
+-- Checks that all parameter names are distinct. Their types are already
 -- checked and the function type is transformed. Adds parameters to the local
 -- environment.
 -- Checks function body (statements).
@@ -218,7 +369,7 @@ tcStmt srcStmt =
       case getAssignOp srcAssignOp of
         AssignMut -> do
           unless (isMutableType varType) $
-            throwError $ IncorrectMutableOpUsage srcStmt
+            throwError $ IncorrectMutableOpUsage (getSrcSpan srcStmt)
           unless (exprType `isSubTypeOf` varType) $
             throwError $ AssignIncorrectType tyExpr (getUnderType varType) exprType
       return (AssignS s srcAssignOp (VarTy (var, varType), varS) tyExpr, TyUnit, exprPure)
@@ -250,10 +401,10 @@ tcDecl (Decl s varBinder mSrcInit) srcDeclStmt = do
       case initOp of
         InitEqual ->
           unless (isImmutableType varType) $
-            throwError $ IncorrectImmutableOpUsage srcDeclStmt
+            throwError $ IncorrectImmutableOpUsage (getSrcSpan srcDeclStmt)
         InitMut ->
           unless (isMutableType varType) $
-            throwError $ IncorrectMutableOpUsage srcDeclStmt
+            throwError $ IncorrectMutableOpUsage (getSrcSpan srcDeclStmt)
       unless (initType `isSubTypeOf` varType) $
         throwError $ DeclInitIncorrectType srcInit (getUnderType varType) initType
       return $ (Decl s varBinder (Just tyInit), TyUnit, initPure)
@@ -455,7 +606,7 @@ isMutableOrRefNested                 _ = False
 -- * parameter types are well-formed ('srcFunParamTypeToType')
 -- * return type is well-formed ('srcFunReturnTypeToType')
 -- * general rules ('srcTypeToType')
--- Does not check parameter names.
+-- Does *not* check parameter names.
 srcFunTypeToType :: SrcFunType -> TypeCheckM Type
 srcFunTypeToType (FunType _ varBinders srcRetType) = do
   retType <- srcFunReturnTypeToType srcRetType

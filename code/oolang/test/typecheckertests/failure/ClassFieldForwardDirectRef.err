@@ -1,0 +1,2 @@
+OOLang type checking error at ClassFieldForwardDirectRef.ool:4,18-4,23:
+  Name 'field2' is not bound

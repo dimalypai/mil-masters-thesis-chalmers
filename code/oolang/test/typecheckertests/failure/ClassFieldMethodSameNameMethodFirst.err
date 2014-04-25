@@ -1,0 +1,2 @@
+OOLang type checking error at ClassFieldMethodSameNameMethodFirst.ool:4,7-4,12:
+  Class member with the name 'method' is already defined

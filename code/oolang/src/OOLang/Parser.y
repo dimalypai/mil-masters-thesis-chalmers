@@ -137,10 +137,12 @@ classdef
 
 memberdecl :: { SrcMemberDecl }
 memberdecl : decl ';' {% withFileName $ \fileName ->
-                           FieldDecl (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $2] fileName)
-                                     $1 [] }
-           | fundef { MethodDecl (getSrcSpan $1)
-                                 $1 [] }
+                           FieldMemberDecl $
+                             FieldDecl (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $2] fileName)
+                                       $1 [] }
+           | fundef { MethodMemberDecl $
+                        MethodDecl (getSrcSpan $1)
+                                   $1 [] }
 
 fundef :: { SrcFunDef }
 fundef

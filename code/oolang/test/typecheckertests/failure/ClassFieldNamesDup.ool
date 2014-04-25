@@ -1,0 +1,7 @@
+def main : Unit => unit; end
+
+class C =>
+  field : Int = 1;
+  field : Bool = true;
+end
+

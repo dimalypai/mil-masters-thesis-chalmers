@@ -15,7 +15,12 @@ module OOLang.TypeChecker.TypeCheckM
   , ctiMSuperSrcClassName
   , getClassesAssoc
   , isClassDefined
+  , isClassMemberDefined
+  , isClassMethodOverride
   , addClass
+  , addClassField
+  , addClassMethod
+  , getClassFieldType
   , getSuperClass
 
   , ftiType
@@ -98,9 +103,11 @@ type ClassTypeEnv = Map.Map ClassName ClassTypeInfo
 -- | All the information about classes that we store in the type environment.
 -- Some of the fields are kept just for error messages.
 data ClassTypeInfo = ClassTypeInfo
-  { ctiMSuperClassName    :: Maybe ClassName     -- ^ Name of the super class, if it has one.
-  , ctiSrcClassName       :: SrcClassName        -- ^ Source name. For error messages.
-  , ctiMSuperSrcClassName :: Maybe SrcClassName  -- ^ Super class source name. For error messages.
+  { ctiMSuperClassName    :: Maybe ClassName       -- ^ Name of the super class, if it has one.
+  , ctiClassFields        :: Map.Map Var Type      -- ^ Class fields environment.
+  , ctiClassMethods       :: Map.Map FunName Type  -- ^ Class methods environment.
+  , ctiSrcClassName       :: SrcClassName          -- ^ Source name. For error messages.
+  , ctiMSuperSrcClassName :: Maybe SrcClassName    -- ^ Super class source name. For error messages.
   }
 
 -- | 'ClassTypeEnv' getter.
@@ -117,10 +124,66 @@ modifyClassTypeEnv f = do
   (classTypeEnv, funTypeEnv) <- (,) <$> getClassTypeEnv <*> getFunTypeEnv
   modifyTypeEnv (const $ mkTypeEnv (f classTypeEnv) funTypeEnv)
 
+modifyClassTypeInfo :: ClassName -> (ClassTypeInfo -> ClassTypeInfo) -> TypeCheckM ()
+modifyClassTypeInfo className f = do
+  classTypeInfo <- getClassTypeInfo className
+  -- overwrite with the modified ClassTypeInfo
+  modifyClassTypeEnv (Map.insert className (f classTypeInfo))
+
 isClassDefined :: ClassName -> TypeCheckM Bool
 isClassDefined className = do
   classTypeEnv <- getClassTypeEnv
   return $ Map.member className classTypeEnv
+
+isClassMemberDefined :: ClassName -> MemberName -> TypeCheckM Bool
+isClassMemberDefined className memberName = do
+  let fieldName = memberNameToVar memberName
+      methodName = memberNameToFunName memberName
+  isField <- isClassFieldDefined className fieldName
+  isMethod <- isClassMethodDefined className methodName
+  return (isField || isMethod)
+
+-- | Looks for a field in the whole class hierarchy.
+isClassFieldDefined :: ClassName -> Var -> TypeCheckM Bool
+isClassFieldDefined className fieldName = do
+  classTypeInfo <- getClassTypeInfo className
+  if Map.member fieldName (ctiClassFields classTypeInfo)
+    then return True
+    else case ctiMSuperClassName classTypeInfo of
+           Nothing -> return False
+           Just superClassName -> isClassFieldDefined superClassName fieldName
+
+-- | Looks for a method in the whole class hierarchy.
+isClassMethodDefined :: ClassName -> FunName -> TypeCheckM Bool
+isClassMethodDefined className methodName = do
+  classTypeInfo <- getClassTypeInfo className
+  if Map.member methodName (ctiClassMethods classTypeInfo)
+    then return True
+    else case ctiMSuperClassName classTypeInfo of
+           Nothing -> return False
+           Just superClassName -> isClassMethodDefined superClassName methodName
+
+-- | Checks whether there is a method with a given name and type in on of the
+-- super classes (does *not* check a given class).
+isClassMethodOverride :: ClassName -> FunName -> Type -> TypeCheckM Bool
+isClassMethodOverride className methodName methodType = do
+  mSuperClassName <- getSuperClass className
+  case mSuperClassName of
+    Nothing -> return False
+    Just superClassName -> hasClassMethodOfType superClassName methodName methodType
+
+-- | Checks whether there is a method with a given name and type in on of the
+-- classes in the hierarchy (starts from a given class).
+hasClassMethodOfType :: ClassName -> FunName -> Type -> TypeCheckM Bool
+hasClassMethodOfType className methodName methodType = do
+  classTypeInfo <- getClassTypeInfo className
+  case Map.lookup methodName (ctiClassMethods classTypeInfo) of
+    Just methodType' -> return (methodType == methodType')
+    Nothing -> do
+      mSuperClassName <- getSuperClass className
+      case mSuperClassName of
+        Nothing -> return False
+        Just superClassName -> hasClassMethodOfType superClassName methodName methodType
 
 -- | Doesn't check if the class is already in the environment.
 -- Will overwrite it in this case.
@@ -128,7 +191,37 @@ addClass :: SrcClassName -> Maybe SrcClassName -> TypeCheckM ()
 addClass srcClassName mSuperSrcClassName = do
   let className = getClassName srcClassName
       mSuperClassName = getClassName <$> mSuperSrcClassName
-  modifyClassTypeEnv $ Map.insert className (ClassTypeInfo mSuperClassName srcClassName mSuperSrcClassName)
+  modifyClassTypeEnv $
+    Map.insert className (ClassTypeInfo mSuperClassName
+                                        Map.empty
+                                        Map.empty
+                                        srcClassName
+                                        mSuperSrcClassName)
+
+-- | Doesn't check if the field is already in the environment.
+-- Will overwrite it in this case.
+addClassField :: ClassName -> Var -> Type -> TypeCheckM ()
+addClassField className fieldName fieldType = do
+  modifyClassTypeInfo className (\classTypeInfo ->
+    -- overwrite with the modified class fields mapping
+    classTypeInfo { ctiClassFields = Map.insert fieldName fieldType (ctiClassFields classTypeInfo) })
+
+-- | Doesn't check if the method is already in the environment.
+-- Will overwrite it in this case.
+addClassMethod :: ClassName -> FunName -> Type -> TypeCheckM ()
+addClassMethod className methodName methodType = do
+  modifyClassTypeInfo className (\classTypeInfo ->
+    -- overwrite with the modified class methods mapping
+    classTypeInfo { ctiClassMethods = Map.insert methodName methodType (ctiClassMethods classTypeInfo) })
+
+-- | Returns a type of the class field.
+--
+-- Note: Unsafe. Should be used only after check that the field is defined.
+-- | TODO: Inheritance
+getClassFieldType :: ClassName -> Var -> TypeCheckM Type
+getClassFieldType className fieldName = do
+  classTypeInfo <- getClassTypeInfo className
+  return $ fromJust $ Map.lookup fieldName (ctiClassFields classTypeInfo)  -- fromJust may fail
 
 -- | Returns a super class of the given class if it has one.
 --
@@ -137,6 +230,14 @@ getSuperClass :: ClassName -> TypeCheckM (Maybe ClassName)
 getSuperClass className = do
   classTypeEnv <- getClassTypeEnv
   return $ ctiMSuperClassName $ fromJust $ Map.lookup className classTypeEnv  -- fromJust may fail
+
+-- | Returns all information about the class from the environment.
+--
+-- Note: Unsafe. Should be used only after check that class is defined.
+getClassTypeInfo :: ClassName -> TypeCheckM ClassTypeInfo
+getClassTypeInfo className = do
+  classTypeEnv <- getClassTypeEnv
+  return $ fromJust $ Map.lookup className classTypeEnv  -- fromJust may fail
 
 -- Function type environment
 

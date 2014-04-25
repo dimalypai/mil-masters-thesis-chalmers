@@ -1,0 +1,2 @@
+OOLang type checking error at ClassMethodNamesDupSuper.ool:10,7-10,12:
+  Class member with the name 'method' is already defined

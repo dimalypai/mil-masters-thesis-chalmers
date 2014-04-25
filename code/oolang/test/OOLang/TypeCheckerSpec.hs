@@ -152,6 +152,8 @@ spec =
       it "given a declaration of mutable variable with immutable init operator" $
         failureCase "MutableDeclEqualInitOp"
 
+      -- TODO: add tests for references
+
       it "given a declaration as a last statement of integer returning function" $
         failureCase "DeclIntFunReturn"
 
@@ -175,6 +177,75 @@ spec =
 
       it "given a nothing literal annotated with non-Maybe type" $
         failureCase "NothingNotMaybe"
+
+      it "given a class field with the name `self`" $
+        failureCase "ClassFieldSelf"
+
+      it "given a class method with the name `self`" $
+        failureCase "ClassMethodSelf"
+
+      it "given a class field with the name `super`" $
+        failureCase "ClassFieldSuper"
+
+      it "given a class method with the name `super`" $
+        failureCase "ClassMethodSuper"
+
+      it "given a class field names duplication in the same class" $
+        failureCase "ClassFieldNamesDup"
+
+      it "given a class field names duplication with the super class" $
+        failureCase "ClassFieldNamesDupSuper"
+
+      it "given a class method names duplication (overloading) in the same class" $
+        failureCase "ClassMethodNamesDup"
+
+      it "given a class method names duplication (overloading) with the super class" $
+        failureCase "ClassMethodNamesDupSuper"
+
+      it "given a class field and a method with the same name (field is first)" $
+        failureCase "ClassFieldMethodSameNameFieldFirst"
+
+      it "given a class field and a method with the same name (method is first)" $
+        failureCase "ClassFieldMethodSameNameMethodFirst"
+
+      it "given a class field and a method with the same name (field is in the super class)" $
+        failureCase "ClassFieldMethodSameNameFieldSuper"
+
+      it "given a class field and a method with the same name (method is in the super class)" $
+        failureCase "ClassFieldMethodSameNameMethodSuper"
+
+      it "given a class field that uses undefined type" $
+        failureCase "ClassFieldUndefinedType"
+
+      it "given an impure class field initialiser" $
+        failureCase "ClassFieldImpureInit"
+
+      it "given a class field initialiser which forward references another field (directly)" $
+        failureCase "ClassFieldForwardDirectRef"
+
+      it "given a class field with incorrect initialiser type (`self`)" $
+        failureCase "ClassFieldInitIncorrectTypeSelf"
+
+      it "given a class field with incorrect initialiser type (`super`)" $
+        failureCase "ClassFieldInitIncorrectTypeSuper"
+
+      it "given an uninitialised class field of non-Maybe type" $
+        failureCase "ClassFieldNonMaybeNotInit"
+
+      it "given an immutable class field with mutable init operator" $
+        failureCase "ImmutableClassFieldMutInitOp"
+
+      it "given a mutable class field with immutable init operator" $
+        failureCase "MutableClassFieldEqualInitOp"
+
+      it "given an assignment to `self`" $
+        failureCase "ClassSelfAssign"
+
+      it "given an assignment to `super`" $
+        failureCase "ClassSuperAssign"
+
+      it "given a `super` reference from a base class" $
+        failureCase "BaseSuperRef"
 
       -- TODO: add tests for references
 

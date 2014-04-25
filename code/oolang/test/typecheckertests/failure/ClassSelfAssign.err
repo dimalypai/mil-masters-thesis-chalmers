@@ -1,2 +1,2 @@
-OOLang type checking error at AssignMutImmutableVar.ool:5,3-5,9:
+OOLang type checking error at ClassSelfAssign.ool:5,5-5,17:
   Incorrect usage of '<-' operator. It can be used only with Mutable variables/fields

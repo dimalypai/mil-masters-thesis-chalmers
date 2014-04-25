@@ -1,0 +1,2 @@
+OOLang type checking error at ClassFieldNamesDupSuper.ool:8,3-8,7:
+  Class member with the name 'field' is already defined

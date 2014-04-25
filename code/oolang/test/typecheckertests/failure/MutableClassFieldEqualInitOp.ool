@@ -1,0 +1,6 @@
+def main : Unit => unit; end
+
+class C =>
+  field : Mutable Int = 1;
+end
+
