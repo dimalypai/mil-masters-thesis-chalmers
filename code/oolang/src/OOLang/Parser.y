@@ -216,12 +216,12 @@ atomexpr
       {% withFileName $ \fileName ->
            MemberAccessE (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $3] fileName)
                          $1
-                         (FunName $ getTokId $3, mkTokSrcSpan $3 fileName) }
+                         (MemberName $ getTokId $3, mkTokSrcSpan $3 fileName) }
   | atomexpr '?' lowerId
       {% withFileName $ \fileName ->
            MemberAccessMaybeE (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $3] fileName)
                               $1
-                              (FunName $ getTokId $3, mkTokSrcSpan $3 fileName) }
+                              (MemberName $ getTokId $3, mkTokSrcSpan $3 fileName) }
   | upperId '.' lowerId
       {% withFileName $ \fileName ->
            ClassAccessE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)

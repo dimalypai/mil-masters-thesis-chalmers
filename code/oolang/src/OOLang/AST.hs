@@ -131,9 +131,8 @@ type TyStmt  = Stmt VarTy SrcSpan
 data Expr v s = LitE (Literal s)
               | VarE s v
               | LambdaE s [VarBinder s] (Expr v s)  -- ^ Not empty.
-                -- | We restrict member access to only functions.
-              | MemberAccessE s (Expr v s) (FunNameS s)
-              | MemberAccessMaybeE s (Expr v s) (FunNameS s)
+              | MemberAccessE s (Expr v s) (MemberNameS s)
+              | MemberAccessMaybeE s (Expr v s) (MemberNameS s)
                 -- | Class access is just for new (constructor) right now.
               | ClassAccessE s (ClassNameS s) (FunNameS s)
               | ClassAccessStaticE s (ClassNameS s) (MemberNameS s)
