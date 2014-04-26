@@ -129,11 +129,19 @@ fundef
                   $3 $4 }
 
 funeq :: { SrcFunEq }
-funeq : lowerId list(atompattern) '=' expr ';'
+funeq : lowerId list(atompattern) '=' funeqbody ';'
   {% withFileName $ \fileName ->
        FunEq (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $5] fileName)
              (FunName $ getTokId $1, mkTokSrcSpan $1 fileName)
              $2 $4 }
+
+funeqbody :: { SrcExpr }
+funeqbody
+  : expr { $1 }
+  | do list1(stmt) end
+      {% withFileName $ \fileName ->
+           DoE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
+               $2 }
 
 expr :: { SrcExpr }
 expr
@@ -150,10 +158,6 @@ expr
       {% withFileName $ \fileName ->
            CaseE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $5] fileName)
                  $2 $4 }
-  | do list1(stmt) end
-      {% withFileName $ \fileName ->
-           DoE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
-               $2 }
   | expr '+' expr  {% binOp $1 $2 $3 Add }
   | expr '-' expr  {% binOp $1 $2 $3 Sub }
   | expr '*' expr  {% binOp $1 $2 $3 Mul }

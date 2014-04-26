@@ -20,3 +20,11 @@ Effects:
 * Monadic stuff (with built-ins).
 * Lift: explicit recursion, mutual recursion.
 
+Monads:
+* Should do block be an expression or a special case of function equation body?
+  If it is an expression, how do we know in which monad it is operating?
+* Do we really need annotation on return? Can we pass the monad from the
+  signature to the type checking routine? The same problem is with expressions,
+  we need to keep the monad in which we are currently operating.
+* Do we need an explicit or implicit lift?
+

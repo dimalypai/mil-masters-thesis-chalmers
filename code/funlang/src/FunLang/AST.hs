@@ -141,8 +141,6 @@ type SrcPattern = Pattern SrcSpan
 -- definitions both for convenience and to be able to handle mutually recursive
 -- definitions.
 --
--- 'DoE' represents simplified Haskell do-blocks for built-in monads.
---
 -- 'ParenE' is used for better source spans and pretty printing.
 data Expr v s = LitE (LiteralS s)
               | VarE s v
@@ -152,7 +150,11 @@ data Expr v s = LitE (LiteralS s)
               | ConNameE (ConNameS s)
               | CaseE s (Expr v s) [CaseAlt v s]  -- ^ Not empty
               | LetE s [(VarBinder s, Expr v s)] (Expr v s)
-              | DoE s [Stmt v s]  -- ^ Not empty
+                -- | Represents simplified Haskell do-blocks for built-in
+                -- monads. They can only appear at the top-level (not nested
+                -- inside other expressions) as function equation body.
+                -- List of statements is not empty
+              | DoE s [Stmt v s]
               | BinOpE s (BinOpS s) (Expr v s) (Expr v s)
               | ParenE s (Expr v s)
   deriving Show
