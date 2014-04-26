@@ -136,26 +136,27 @@ type SrcPattern = Pattern SrcSpan
 -- 'ConNameE' stands on its own because constructors act as functions.
 --
 -- Function names are represented as 'VarE'.
---
--- 'LetE' represents both recursive and non-recursive let. So we have a list of
--- definitions both for convenience and to be able to handle mutually recursive
--- definitions.
---
--- 'ParenE' is used for better source spans and pretty printing.
 data Expr v s = LitE (LiteralS s)
               | VarE s v
-              | LambdaE s [VarBinder s] (Expr v s)  -- ^ Not empty
-              | TypeLambdaE s [TypeVarS s] (Expr v s)  -- ^ Not empty
+                -- | List of variable binders is not empty.
+              | LambdaE s [VarBinder s] (Expr v s)
+                -- | List of type variables is not empty.
+              | TypeLambdaE s [TypeVarS s] (Expr v s)
               | TypeAppE s (Expr v s) (TypeS s)
               | ConNameE (ConNameS s)
-              | CaseE s (Expr v s) [CaseAlt v s]  -- ^ Not empty
+                -- | List of case alternatives is not empty.
+              | CaseE s (Expr v s) [CaseAlt v s]
+                -- | Represents both recursive and non-recursive let. So we
+                -- have a list of definitions both for convenience and to be
+                -- able to handle mutually recursive definitions.
               | LetE s [(VarBinder s, Expr v s)] (Expr v s)
                 -- | Represents simplified Haskell do-blocks for built-in
                 -- monads. They can only appear at the top-level (not nested
                 -- inside other expressions) as function equation body.
-                -- List of statements is not empty
+                -- List of statements is not empty.
               | DoE s [Stmt v s]
               | BinOpE s (BinOpS s) (Expr v s) (Expr v s)
+                -- | Used for better source spans and pretty printing.
               | ParenE s (Expr v s)
   deriving Show
 
