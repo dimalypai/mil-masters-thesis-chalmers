@@ -18,7 +18,7 @@ module OOLang.TypeChecker
 import qualified Data.Set as Set
 import Data.Maybe (isJust, fromJust)
 import Data.List (find)
-import Control.Applicative ((<$>), (<*>))
+import Control.Applicative ((<$>))
 
 import OOLang.AST
 import OOLang.AST.Helpers
@@ -376,7 +376,7 @@ tcStmt srcStmt =
             throwError $ AssignIncorrectType tyExpr (getUnderType varType) exprType
       return (AssignS s srcAssignOp (VarTy (var, varType), varS) tyExpr, TyUnit, exprPure)
 
--- Note [Purity of declarations]:
+-- | Note [Purity of declarations]:
 --
 -- Conservatively, mark reference declaration with initialisation expression as
 -- impure (they can be passed somewhere out of the local control), mutable and
