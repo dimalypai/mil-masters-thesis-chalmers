@@ -82,3 +82,6 @@ While we don't have visibility modifiers, should fields be private
 
 Don't allow mutually recursive field declarations (in init expressions).
 
+Constructors question. For now, only one parameterless constructor or just one
+constructor of any type?
+
