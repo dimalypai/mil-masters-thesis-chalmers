@@ -1,0 +1,2 @@
+OOLang type checking error at MemberAccessUndefined.ool:5,5-5,15:
+  Class member with the name 'member' is not defined in the class 'C'

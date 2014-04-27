@@ -16,10 +16,13 @@ module OOLang.TypeChecker.TypeCheckM
   , getClassesAssoc
   , isClassDefined
   , isClassMemberDefined
+  , isClassFieldDefined
+  , isClassMethodDefined
   , isClassMethodOverride
   , addClass
   , addClassField
   , addClassMethod
+  , getClassMemberType
   , getClassFieldType
   , getSuperClass
 
@@ -125,6 +128,14 @@ modifyClassTypeEnv f = do
   (classTypeEnv, funTypeEnv) <- (,) <$> getClassTypeEnv <*> getFunTypeEnv
   modifyTypeEnv (const $ mkTypeEnv (f classTypeEnv) funTypeEnv)
 
+-- | Returns all information about the class from the environment.
+--
+-- Note: Unsafe. Should be used only after check that class is defined.
+getClassTypeInfo :: ClassName -> TypeCheckM ClassTypeInfo
+getClassTypeInfo className = do
+  classTypeEnv <- getClassTypeEnv
+  return $ fromJust $ Map.lookup className classTypeEnv  -- fromJust may fail
+
 modifyClassTypeInfo :: ClassName -> (ClassTypeInfo -> ClassTypeInfo) -> TypeCheckM ()
 modifyClassTypeInfo className f = do
   classTypeInfo <- getClassTypeInfo className
@@ -215,14 +226,28 @@ addClassMethod className methodName methodType = do
     -- overwrite with the modified class methods mapping
     classTypeInfo { ctiClassMethods = Map.insert methodName methodType (ctiClassMethods classTypeInfo) })
 
+-- | Returns a type of the class member.
+--
+-- Note: Unsafe. Should be used only after check that the class and the member
+-- are defined.
+getClassMemberType :: ClassName -> MemberName -> TypeCheckM Type
+getClassMemberType className memberName = do
+  classTypeInfo <- getClassTypeInfo className
+  case Map.lookup (memberNameToVar memberName) (ctiClassFields classTypeInfo) of
+    Just fieldType -> return fieldType
+    Nothing ->
+      case Map.lookup (memberNameToFunName memberName) (ctiClassMethods classTypeInfo) of
+        Just methodType -> return methodType
+        Nothing -> do
+          mSuperClassName <- getSuperClass className
+          getClassMemberType (fromJust mSuperClassName) memberName  -- fromJust may fail
+
 -- | Returns a type of the class field.
 --
--- Note: Unsafe. Should be used only after check that the field is defined.
--- | TODO: Inheritance
+-- Note: Unsafe. Should be used only after check that the class and the field
+-- are defined.
 getClassFieldType :: ClassName -> Var -> TypeCheckM Type
-getClassFieldType className fieldName = do
-  classTypeInfo <- getClassTypeInfo className
-  return $ fromJust $ Map.lookup fieldName (ctiClassFields classTypeInfo)  -- fromJust may fail
+getClassFieldType className fieldName = getClassMemberType className (varToMemberName fieldName)
 
 -- | Returns a super class of the given class if it has one.
 --
@@ -231,14 +256,6 @@ getSuperClass :: ClassName -> TypeCheckM (Maybe ClassName)
 getSuperClass className = do
   classTypeEnv <- getClassTypeEnv
   return $ ctiMSuperClassName $ fromJust $ Map.lookup className classTypeEnv  -- fromJust may fail
-
--- | Returns all information about the class from the environment.
---
--- Note: Unsafe. Should be used only after check that class is defined.
-getClassTypeInfo :: ClassName -> TypeCheckM ClassTypeInfo
-getClassTypeInfo className = do
-  classTypeEnv <- getClassTypeEnv
-  return $ fromJust $ Map.lookup className classTypeEnv  -- fromJust may fail
 
 -- Function type environment
 

@@ -1,0 +1,7 @@
+def main : Unit => unit; end
+
+class C =>
+  field : Int = self.field2;
+  field2 : Int = 1;
+end
+

@@ -1,0 +1,8 @@
+def main : Unit => unit; end
+
+class C =>
+  def method : Unit =>
+    1.call;
+  end
+end
+

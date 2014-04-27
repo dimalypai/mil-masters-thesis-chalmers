@@ -1,0 +1,13 @@
+def main : Unit => unit; end
+
+class Super =>
+  field : Int = 1;
+end
+
+class Child < Super =>
+end
+
+def fun : Pure Int =>
+  super.field;
+end
+

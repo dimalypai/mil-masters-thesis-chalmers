@@ -48,6 +48,9 @@ getClassName = fst
 getFunName :: FunNameS s -> FunName
 getFunName = fst
 
+getMemberName :: MemberNameS s -> MemberName
+getMemberName = fst
+
 getVar :: VarS s -> Var
 getVar = fst
 

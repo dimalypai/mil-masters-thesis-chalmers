@@ -120,38 +120,3 @@ def nothingLit : Pure (Maybe Unit) =>
   nothing [Maybe Unit];
 end
 
-class C =>
-  # Shadow global function
-  main : Int = 1;
-
-  # Shadow global function
-  def fun : Pure Unit =>
-    unit;
-  end
-end
-
-# The same field and method names as in C
-class Super =>
-  # Shadow global function
-  # `self` reference
-  main : Super = self;
-
-  # Shadow global function
-  def fun : Pure Unit =>
-    unit;
-  end
-end
-
-class Child < Super =>
-  # Super reference
-  super2 : Super = super;
-
-  # Self reference
-  self2 : Child = self;
-
-  # Method override
-  def fun : Pure Unit =>
-    unit;
-  end
-end
-

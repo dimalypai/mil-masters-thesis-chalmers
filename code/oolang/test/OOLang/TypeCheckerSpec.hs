@@ -32,8 +32,12 @@ spec :: Spec
 spec =
   describe "typeCheck" $ do
     -- Success
-    it "accepts type correct program" $
-      let baseName = "Program"
+    it "accepts type correct program with functions (mostly)" $
+      let baseName = "Functions"
+      in successCase baseName
+
+    it "accepts type correct program with classes (mostly)" $
+      let baseName = "Classes"
       in successCase baseName
 
     -- Failure
@@ -223,8 +227,8 @@ spec =
       it "given a class field initialiser which forward references another field (directly)" $
         failureCase "ClassFieldForwardDirectRef"
 
-      it "given a class field with incorrect initialiser type (`self`)" $
-        failureCase "ClassFieldInitIncorrectTypeSelf"
+      it "given a class field with incorrect initialiser type" $
+        failureCase "ClassFieldInitIncorrectType"
 
       it "given a class field with incorrect initialiser type (`super`)" $
         failureCase "ClassFieldInitIncorrectTypeSuper"
@@ -248,6 +252,40 @@ spec =
         failureCase "BaseSuperRef"
 
       -- TODO: add tests for references
+
+      it "given a member access to an undefined class member" $
+        failureCase "MemberAccessUndefined"
+
+      it "given a member access to an undefined super class member" $
+        failureCase "SuperMemberAccessUndefined"
+
+      it "given a forward class field access from field initialiser" $
+        failureCase "FieldInitForwardFieldAccess"
+
+      it "given a class method access from field initialiser" $
+        failureCase "FieldInitMethodAccess"
+
+      it "given a member access with Maybe type" $
+        failureCase "MemberAccessMaybeType"
+
+      it "given a member access with non-class type" $
+        failureCase "MemberAccessNonClass"
+
+      it "given a class field reference without `self`" $
+        failureCase "FieldReferenceNoSelf"
+
+      it "given a class method reference without `self`" $
+        failureCase "MethodReferenceNoSelf"
+
+      -- TODO: error message
+      it "given an impure method call from pure method" $
+        failureCase "PureMethodImpureMethodCall"
+
+      it "given a member access through `self` in a function after a class definition" $
+        failureCase "SelfMemberAccessFunAfterClass"
+
+      it "given a member access through `super` in a function after a class definition" $
+        failureCase "SuperMemberAccessFunAfterClass"
 
 -- Infrastructure
 

@@ -1,0 +1,2 @@
+OOLang type checking error at MemberAccessMaybeType.ool:7,5-7,14:
+  Incorrect usage of the member access operator (`.`) with the expression of type 'Maybe C'. Try using the `?` operator

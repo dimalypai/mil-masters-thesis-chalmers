@@ -1,0 +1,72 @@
+def main : Unit => unit; end
+
+def fun : Pure Int => 1; end
+
+class C =>
+  # Shadow global function
+  main : Int = 1;
+
+  # Mutable field
+  unitField : Mutable Unit <- unit;
+
+  # Shadow global function
+  # Member access with Mutable
+  def fun : Pure Unit =>
+    selfMutable : Mutable C <- self;
+    selfMutable.unitField;
+  end
+
+  # Partial application of impure
+  def pureMethod : Pure Int =>
+    self.impureParamMethod 1;
+    self.main;
+  end
+
+  # Partially applying impure method as return value, impure
+  def impurePartialMethod : Float -> Unit =>
+    self.impureParamMethod 1;
+  end
+
+  # Fully applying impure method, impure
+  # Mutual recursion
+  def impureMethod : Unit =>
+    self.impureParamMethod 1 0.01;
+    unit;
+  end
+
+  # Impure method with parameter
+  # Calling impure method without parameters
+  # Mutual recursion
+  def impureParamMethod : {a : Int} -> {b : Float} -> Unit =>
+    self.impureMethod;
+  end
+end
+
+# The same field and method names as in C
+class Super =>
+  # Shadow global function
+  main : Int = 1;
+
+  unitField : Unit = unit;
+
+  # Shadow global function
+  def fun : Pure Unit =>
+    self.unitField;
+  end
+end
+
+class Child < Super =>
+  # Super reference
+  super2 : Super = super;
+
+  # Super class method call
+  superMethod : Unit = super.fun;
+
+  # Method override, super class field
+  def fun : Pure Unit =>
+    super.fun;
+    super.unitField;
+    self.unitField;
+  end
+end
+

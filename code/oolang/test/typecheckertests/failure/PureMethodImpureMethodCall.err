@@ -1,0 +1,2 @@
+OOLang type checking error at PureMethodImpureMethodCall.ool:9,5-9,16:
+  Function 'pure' has Pure return type, but it contains an impure statement

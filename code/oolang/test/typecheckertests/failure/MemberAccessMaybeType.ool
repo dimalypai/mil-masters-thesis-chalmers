@@ -1,0 +1,10 @@
+def main : Unit => unit; end
+
+class C =>
+  mSelf : Maybe C;
+
+  def method : Pure Unit =>
+    self.mSelf.method;
+  end
+end
+

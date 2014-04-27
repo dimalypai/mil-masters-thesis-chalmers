@@ -224,43 +224,43 @@ traverseHierarchy className marked onStack = do
 -- Class members (types of fields and methods) have already been added to the
 -- class type environment. Method parameter names and field initialisers have
 -- *not* been checked.
--- Adds `self` and `super` (if it has a super class) to the local environment
--- and runs member checking in this environment.
+-- Adds `super` (if it has a super class) to the local environment and runs
+-- member checking in this environment.
 -- Returns type checked class definition.
 tcClassDef :: SrcClassDef -> TypeCheckM TyClassDef
 tcClassDef (ClassDef s srcClassName mSuperSrcClassName srcMembers) = do
   let className = getClassName srcClassName
-  let localTypeEnvSelf = addLocalVar (Var "self") (TyClass className)
-                           emptyLocalTypeEnv
   let localTypeEnv = case mSuperSrcClassName of
-                       Nothing -> localTypeEnvSelf
+                       Nothing -> emptyLocalTypeEnv
                        Just superSrcClassName ->
                          addLocalVar (Var "super") (TyClass $ getClassName superSrcClassName)
-                           localTypeEnvSelf
+                           emptyLocalTypeEnv
   tyMembers <- locallyWithEnv localTypeEnv (tcClassMembers className srcMembers)
   return $ ClassDef s srcClassName mSuperSrcClassName tyMembers
 
 -- | Checks all class members.
 -- First it checks all class field initialisers (we don't allow mutual
 -- recursion for them as well as referencing class methods, but they can use
--- backward references to other fields via `self` or super class fields via
--- `super`).
--- Then it checks method parameter names and bodies.
+-- member access to super class fields via `super`).
+-- Then it checks method parameter names and bodies (with `self` variable in
+-- scope).
 tcClassMembers :: ClassName -> [SrcMemberDecl] -> TypeCheckM [TyMemberDecl]
 tcClassMembers className srcMembers = do
   let (srcFieldDecls, srcMethodDecls) = partitionClassMembers srcMembers
   tyFieldDecls <- mapM (tcClassField className) srcFieldDecls
-  tyMethodDecls <- mapM (tcClassMethod className) srcMethodDecls
+  let localTypeEnvSelf = addLocalVar (Var "self") (TyClass className)
+                           emptyLocalTypeEnv
+  tyMethodDecls <- locallyWithEnv localTypeEnvSelf (mapM (tcClassMethod className) srcMethodDecls)
   return (map FieldMemberDecl tyFieldDecls ++ map MethodMemberDecl tyMethodDecls)
 
 -- | Checks class field initialiser.
 -- Its type and name are already checked.
 -- Class field initialisers have to be pure.
 -- Class fields are checked in the same local environment as function bodies
--- but with `self` and possible `super` variables in scope.
--- Class fields can use backward references to other fields via `self` or super
--- class fields via `super`, but mutual recursion and referencing class methods
--- is *not* allowed.
+-- but possibly with `super` variable in scope.
+-- Class fields can use member access to super class fields or methods via
+-- `super`, but mutual recursion and accessing current class members is *not*
+-- allowed.
 tcClassField :: ClassName -> SrcFieldDecl -> TypeCheckM TyFieldDecl
 tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit) _) = do
   let fieldName = getVar (getBinderVar varBinder)
@@ -298,7 +298,7 @@ tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit) _) = do
 -- Checks that the actual return type is consistent with the specified return type.
 -- Checks that the method is pure (if it is declared as such).
 -- Class methods are checked in the same local environment as function bodies
--- but with `self` and possible `super` variables in scope.
+-- but with `self` and possibly `super` variables in scope.
 -- Class methods' parameter names can shadow class fields
 -- (for the same reason), but they can *not* shadow global function names.
 tcClassMethod :: ClassName -> SrcMethodDecl -> TypeCheckM TyMethodDecl
@@ -425,6 +425,22 @@ tcInit (Init s srcInitOp srcExpr) = do
                    _       -> True
   return $ (Init s srcInitOp tyExpr, exprType, initPure && exprPure)
 
+-- | Note [Purity of function and value types]:
+--
+-- This applies when checking variable/function references and member access.
+--
+-- * If it is a global function or a method and it does not take any arguments,
+-- then in order to be pure, it must have Pure type.
+--
+-- * If it *does* take arguments, then it is pure, since we just reference its
+-- name and don't run the computation, it will be checked when it is fully
+-- applied.
+--
+-- * If it is a local variable (parameter) or a class field, then it is always
+-- pure, since if it has a value type, it has been computed already (we are in
+-- a strict language), and if it has a function type, then we again only
+-- reference its name, and its purity should be checked when fully applied.
+
 -- | Expression type checking.
 -- Returns a type checked expression together with its type and purity indicator.
 tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type, Bool)
@@ -439,22 +455,28 @@ tcExpr srcExpr =
       unlessM (isVarBound var) $
         throwError $ VarNotBound var s
       varType <- getVarType var
+      -- See Note [Purity of function and value types]
       isPure <- ifM (isFunctionDefined $ varToFunName var)
-                  -- if it is a global function and it does not take any arguments,
-                  -- then in order to be pure, it must have Pure type
-                  -- if it *does* take arguments, then it is pure, since here
-                  -- we just reference its name and don't run the computation,
-                  -- it will be checked when it is fully applied
                   (if isValueType varType && not (isPureFunType varType)
                      then return False
                      else return True)
-                  -- if it is a local variable, then it is always pure, since
-                  -- if it has value type, it has been computed already (we are
-                  -- in a strict language)
-                  -- if it is a function, then we again only reference its
-                  -- name, and its purity should be checked when fully applied
                   (return True)
       return (VarE s (VarTy (var, varType)), varType, isPure)
+
+    MemberAccessE s srcObjExpr srcMemberName -> do
+      (tyObjExpr, objType, objPure) <- tcExpr srcObjExpr
+      className <- tryGetClassName objType srcObjExpr
+      let memberName = getMemberName srcMemberName
+      unlessM (isClassMemberDefined className memberName) $
+        throwError $ NotMember memberName className srcExpr
+      memberType <- getClassMemberType className memberName
+      -- See Note [Purity of function and value types]
+      memberPure <- ifM (isClassMethodDefined className (memberNameToFunName memberName))
+                      (if isValueType memberType && not (isPureFunType memberType)
+                         then return False
+                         else return True)
+                      (return True)
+      return (MemberAccessE s tyObjExpr srcMemberName, memberType, objPure && memberPure)
 
     BinOpE s srcBinOp srcExpr1 srcExpr2 -> do
       let op = getBinOp srcBinOp
@@ -476,6 +498,18 @@ typeOfLiteral (NothingLit _ st) = do
   unless (isMaybeType nothingType) $
     throwError $ IncorrectNothingType st
   return nothingType
+
+-- | Returns a class name for 'TyClass' or 'TyMutable' which contains 'TyClass'
+-- inside. Throws an error for Maybe (with a suggestion for using `?` member
+-- access) and all other types.
+-- Takes an expression for error reporting.
+tryGetClassName :: Type -> SrcExpr -> TypeCheckM ClassName
+tryGetClassName objType srcExpr =
+  case objType of
+    TyClass className -> return className
+    TyMutable mutUnderType -> tryGetClassName mutUnderType srcExpr
+    TyMaybe {} -> throwError $ MemberAccessWithMaybe srcExpr objType
+    _ -> throwError $ NotObject srcExpr objType
 
 -- Binary operations type checking
 

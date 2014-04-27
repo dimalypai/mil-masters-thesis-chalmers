@@ -1,0 +1,2 @@
+OOLang type checking error at SelfMemberAccessFunAfterClass.ool:8,3-8,6:
+  Name 'self' is not bound

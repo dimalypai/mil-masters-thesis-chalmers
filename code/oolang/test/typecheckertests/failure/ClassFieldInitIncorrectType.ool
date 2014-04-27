@@ -1,6 +1,6 @@
 def main : Unit => unit; end
 
 class C =>
-  field : Int = self;
+  field : Int = 0.01;
 end
 

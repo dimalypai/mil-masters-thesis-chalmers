@@ -1,0 +1,2 @@
+OOLang type checking error at FieldInitMethodAccess.ool:4,17-4,20:
+  Name 'self' is not bound

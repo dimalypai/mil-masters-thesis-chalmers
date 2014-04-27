@@ -42,6 +42,9 @@ data TcError =
   | SuperMemberName SrcSpan
   | FieldInitNotPure Var SrcSpan
   | MemberAlreadyDefined MemberName SrcSpan
+  | NotMember MemberName ClassName SrcExpr
+  | NotObject SrcExpr Type
+  | MemberAccessWithMaybe SrcExpr Type
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -165,6 +168,20 @@ instance Pretty TcError where
   prPrn (MemberAlreadyDefined memberName srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Class member with the name" <+> quotes (prPrn memberName) <+> text "is already defined")
+
+  prPrn (NotMember memberName className srcExpr) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcExpr) <> colon $+$
+    nest indLvl (text "Class member with the name" <+> quotes (prPrn memberName) <+>
+      text "is not defined in the class" <+> quotes (prPrn className))
+
+  prPrn (NotObject srcExpr actType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcExpr) <> colon $+$
+    nest indLvl (text "The expression has to be an object (have a class type), but it has type" <+> quotes (prPrn actType))
+
+  prPrn (MemberAccessWithMaybe srcExpr actType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcExpr) <> colon $+$
+    nest indLvl (text "Incorrect usage of the member access operator (`.`) with the expression of type" <+> quotes (prPrn actType) <>
+      text ". Try using the `?` operator")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

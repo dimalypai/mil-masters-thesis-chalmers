@@ -1,0 +1,2 @@
+OOLang type checking error at MethodReferenceNoSelf.ool:9,5-9,10:
+  Name 'method' is not bound

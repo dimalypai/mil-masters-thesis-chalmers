@@ -1,0 +1,2 @@
+OOLang type checking error at SuperMemberAccessUndefined.ool:7,17-7,28:
+  Class member with the name 'member' is not defined in the class 'Super'
