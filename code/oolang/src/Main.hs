@@ -13,6 +13,8 @@ import Data.List (intercalate, stripPrefix)
 import OOLang.Lexer
 import OOLang.Parser
 import OOLang.TypeChecker
+import OOLang.CodeGenMil
+import qualified MIL.AST.PrettyPrinter as MIL
 
 -- | Main entry point.
 -- Gets compiler arguments.
@@ -74,7 +76,20 @@ interactive flags typeEnv revProgramStrs = do
               when (DumpAst `elem` flags) $
                 putStrLn (ppShow tyProgram)
               interactive flags typeEnv' (src : revProgramStrs)
-    --":compile" ->
+    -- `:compile` generates and displays MIL code for programs defined with
+    -- `:define` command.
+    ":compile" -> do
+      let src = intercalate "\n\n" (reverse revProgramStrs)
+      case lexer src |> parse "ooli" of
+        Left parseErr -> putStrLn (prPrint parseErr)
+        Right srcProgram ->
+          case typeCheck srcProgram of
+            Left tcErr -> putStrLn (prPrint tcErr)
+            Right (tyProgram, _) -> do
+              when (DumpAst `elem` flags) $
+                putStrLn (ppShow tyProgram)
+              let milProgram = codeGen tyProgram
+              putStrLn (MIL.prPrint milProgram)
     -- All commands with arguments go here
     command -> do
       let processCommand cmd | Just fileName <- stripPrefix ":save " cmd =

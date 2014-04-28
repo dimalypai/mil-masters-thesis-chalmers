@@ -19,6 +19,7 @@ executable oolc
                        OOLang.AST.PrettyPrinter
                        OOLang.AST.SrcAnnotated
                        OOLang.BuiltIn
+                       OOLang.CodeGenMil
                        OOLang.Lexer
                        OOLang.Parser
                        OOLang.Parser.ParseError
@@ -38,6 +39,7 @@ executable oolc
                      , mtl
                      , filepath
                      , containers
+                     , mil
   hs-source-dirs:      src
   build-tools:         alex
                      , happy

@@ -22,6 +22,12 @@ module MIL.AST where
 newtype Program = Program ([TypeDef], [FunDef])
   deriving Show
 
+getMilTypeDefs :: Program -> [TypeDef]
+getMilTypeDefs (Program (typeDefs, _)) = typeDefs
+
+getMilFunDefs :: Program -> [FunDef]
+getMilFunDefs (Program (_, funDefs)) = funDefs
+
 -- | Type definition:
 --
 -- * type name
