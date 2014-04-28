@@ -55,6 +55,7 @@ import Data.Maybe (fromJust)
 
 import OOLang.AST
 import OOLang.AST.Helpers
+import OOLang.BuiltIn
 import OOLang.TypeChecker.TcError
 
 -- | Type checking monad. Uses 'StateT' for type environment and 'ErrorT' for
@@ -94,7 +95,10 @@ newtype TypeEnv = TypeEnv { unTypeEnv :: (ClassTypeEnv, FunTypeEnv) }
 
 -- | Initial type environment.
 initTypeEnv :: TypeEnv
-initTypeEnv = mkTypeEnv Map.empty Map.empty
+initTypeEnv = mkTypeEnv Map.empty initFunTypeEnv
+
+initFunTypeEnv :: FunTypeEnv
+initFunTypeEnv = Map.fromList $ map (second builtInFunTypeInfo) builtInFunctions
 
 -- | Smart constructor for 'TypeEnv'.
 mkTypeEnv :: ClassTypeEnv -> FunTypeEnv -> TypeEnv
@@ -298,6 +302,9 @@ getFunTypeInfo :: FunName -> TypeCheckM FunTypeInfo
 getFunTypeInfo funName = do
   funTypeEnv <- getFunTypeEnv
   return $ fromJust $ Map.lookup funName funTypeEnv  -- fromJust may fail
+
+builtInFunTypeInfo :: Type -> FunTypeInfo
+builtInFunTypeInfo funType = FunTypeInfo funType undefined undefined
 
 -- Local type environment
 
