@@ -1,0 +1,16 @@
+main : IO Unit
+main = do
+  return unit;
+end;;
+
+fun : State Int Unit
+fun = do
+  fun2;
+  return unit;
+end;;
+
+fun2 : State Float Unit
+fun2 = do
+  return unit;
+end;;
+

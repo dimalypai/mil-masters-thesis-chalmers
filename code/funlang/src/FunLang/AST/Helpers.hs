@@ -25,6 +25,18 @@ getTyAppTypeName :: Type -> TypeName
 getTyAppTypeName (TyApp typeName _) = typeName
 getTyAppTypeName _ = error "getTyAppTypeName: not a type application"
 
+-- | For the monadic type `m a` returns a type representing m.
+-- Unsafe. Make sure that you pass 'TyApp' with at least one type argument.
+getMonadType :: Type -> Type
+getMonadType (TyApp typeName typeArgs) = TyApp typeName (init typeArgs)
+getMonadType _ = error "getMonadType: not a monadic type"
+
+-- | For the type `m a` where m is a monad, returns a.
+-- Unsafe. Make sure that you pass 'TyApp' with at least one type argument.
+getMonadResultType :: Type -> Type
+getMonadResultType (TyApp _ typeArgs) = last typeArgs
+getMonadResultType _ = error "getMonadResultType: not a monadic type"
+
 -- * Synonyms
 
 getLiteral :: LiteralS s -> Literal
@@ -64,6 +76,9 @@ srcTypeNameToTypeVar (typeName, s) = (typeNameToTypeVar typeName, s)
 
 -- * Constructors
 
+mkTypeVar :: String -> Type
+mkTypeVar = TyVar . TypeVar
+
 mkSimpleType :: String -> Type
 mkSimpleType typeName = TyApp (TypeName typeName) []
 
@@ -72,6 +87,13 @@ mkSimpleType typeName = TyApp (TypeName typeName) []
 mkKind :: Int -> Kind
 mkKind 0 = StarK
 mkKind n = StarK :=>: mkKind (n - 1)
+
+-- | Takes a type representing monad m and some type a and return a type
+-- representing `m a`.
+-- Unsafe. Make sure that you pass 'TyApp'.
+applyMonadType :: Type -> Type -> Type
+applyMonadType (TyApp typeName typeArgs) resType = TyApp typeName (typeArgs ++ [resType])
+applyMonadType _ _ = error "applyMonadType: not a monadic type"
 
 -- * Type predicates
 

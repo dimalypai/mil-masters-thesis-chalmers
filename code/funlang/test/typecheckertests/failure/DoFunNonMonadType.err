@@ -1,0 +1,2 @@
+FunLang type checking error at DoFunNonMonadType.fl:6,7-6,9:
+  Do-blocks can be used only in functions with monadic types. Type 'Int' is not monadic

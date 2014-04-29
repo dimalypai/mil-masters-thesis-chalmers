@@ -140,19 +140,29 @@ tcFunDef :: SrcFunDef -> TypeCheckM TyFunDef
 tcFunDef (FunDef s srcFunName funSrcType srcFunEqs) = do
   let funName = getFunName srcFunName
   funType <- srcTypeToType funSrcType
-  tyFunEqs <- mapM (tcFunEq funName funType) srcFunEqs
+  tyFunEqs <- mapM (tcFunEq funName funType funSrcType) srcFunEqs
   return $ FunDef s srcFunName funSrcType tyFunEqs
 
 -- | Checks that function equation belongs to the correct function definition.
 -- Checks equation body.
 -- Checks that the type of the body is consistent with the specified function
 -- type.
+-- Takes a function source type for error reporting.
 -- Returns type checked function equation.
-tcFunEq :: FunName -> Type -> SrcFunEq -> TypeCheckM TyFunEq
-tcFunEq funName funType (FunEq s srcFunName patterns srcBodyExpr) = do
+tcFunEq :: FunName -> Type -> SrcType -> SrcFunEq -> TypeCheckM TyFunEq
+tcFunEq funName funType funSrcType (FunEq s srcFunName patterns srcBodyExpr) = do
   when (getFunName srcFunName /= funName) $
     throwError $ FunEqIncorrectName srcFunName funName
-  (tyBodyExpr, bodyType) <- tcExpr srcBodyExpr
+  (tyBodyExpr, bodyType) <-
+    case srcBodyExpr of
+      DoE ds srcStmts -> do
+        unless (isMonadType funType) $
+          throwError $ DoBlockNotMonad funType (getSrcSpan funSrcType)
+        -- kinds have been checked, so it should not fail
+        let funMonad = getMonadType funType
+        (tyStmts, lastStmtType) <- tcDoBlock srcStmts funMonad
+        return (DoE ds tyStmts, lastStmtType)
+      _ -> tcExpr srcBodyExpr
   unless (bodyType `alphaEq` funType) $
     throwError $ FunEqBodyIncorrectType srcBodyExpr funName funType bodyType
   return $ FunEq s srcFunName [] tyBodyExpr
@@ -238,12 +248,6 @@ tcExpr srcExpr =
       dataConTypeInfo <- getDataConTypeInfo (getConName srcConName)
       return (ConNameE srcConName, dcontiType dataConTypeInfo)
 
-    DoE s srcStmts -> do
-      (tyStmts, stmtTypes) <- fmap unzip (mapM tcStmt srcStmts)
-      -- There is at least one statement, the type of the last one is the type
-      -- of the whole expression
-      return (DoE s tyStmts, last stmtTypes)
-
     BinOpE s srcBinOp srcExpr1 srcExpr2 -> do
       let op = getBinOp srcBinOp
       (tyExpr1, tyExpr2, resultType) <- tcBinOp op srcExpr1 srcExpr2
@@ -252,6 +256,8 @@ tcExpr srcExpr =
     ParenE s srcSubExpr -> do
       (tySubExpr, exprType) <- tcExpr srcSubExpr
       return (ParenE s tySubExpr, exprType)
+
+    DoE {} -> error "do-block is illegal in this context"
 
 -- Binary operations type checking
 
@@ -280,16 +286,73 @@ tcApp (tyExpr1, expr1Type) (tyExpr2, expr2Type) =
         else return resultType
     _ -> throwError $ NotFunctionType tyExpr1 expr1Type
 
--- | Statement type checking.
--- Returns a type checked statement together with its type.
-tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type)
-tcStmt srcStmt =
+-- | Do-block type checking.
+-- Takes a monad in which it should operate.
+-- Returns type checked statements together with the type of the last one (if
+-- it is not bind, otherwise - throws an error).
+-- There is at least one statement.
+tcDoBlock :: [SrcStmt] -> Type -> TypeCheckM ([TyStmt], Type)
+tcDoBlock [BindS s _ _] _ = throwError $ BindLastStmt s
+tcDoBlock (srcStmt:srcStmts) funMonad = do
   case srcStmt of
-    ReturnS s srcType srcExpr -> do
-      retType <- srcTypeToTypeOfKind monadKind srcType
-      let typeName = getTyAppTypeName retType  -- should not fail
-      when (typeName `Set.notMember` monadTypes) $
-        throwError $ NotMonad srcType
+    ExprS s srcExpr -> do
       (tyExpr, exprType) <- tcExpr srcExpr
-      return (ReturnS s srcType tyExpr, TyApp typeName [exprType])
+      unless (isMonadType exprType) $
+        throwError $ NotMonadicType funMonad exprType (getSrcSpan srcExpr)
+      -- kind checking has already been done, should not fail
+      let exprMonad = getMonadType exprType
+      unless (exprMonad `alphaEq` funMonad) $
+        throwError $ IncorrectMonad funMonad exprMonad s
+
+      let tyStmt = ExprS s tyExpr
+      (tyStmts, lastStmtType) <-
+        if null srcStmts
+          then return ([], exprType)
+          else tcDoBlock srcStmts funMonad
+      return (tyStmt : tyStmts, lastStmtType)
+
+    BindS s varBinder srcExpr -> do
+      let var = getVar (getBinderVar varBinder)
+      whenM (isVarBound var) $
+        throwError $ VarShadowing (getBinderVar varBinder)
+      varType <- srcTypeToType (getBinderType varBinder)
+
+      (tyExpr, exprType) <- tcExpr srcExpr
+
+      unless (isMonadType exprType) $
+        throwError $ NotMonadicType funMonad exprType (getSrcSpan srcExpr)
+      -- kind checking has already been done, should not fail
+      let exprMonad = getMonadType exprType
+      unless (exprMonad `alphaEq` funMonad) $
+        throwError $ IncorrectMonad funMonad exprMonad (getSrcSpan srcExpr)
+      -- kind checking has already been done, should not fail
+      unless (varType `alphaEq` getMonadResultType exprType) $
+        throwError $
+          IncorrectExprType (applyMonadType funMonad varType)
+                            exprType
+                            (getSrcSpan srcExpr)
+
+      let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
+      let tyStmt = BindS s varBinder tyExpr
+      -- srcStmts is not empty, otherwise we would have thrown an error in the
+      -- first equation
+      (tyStmts, lastStmtType) <- locallyWithEnv localTypeEnv (tcDoBlock srcStmts funMonad)
+      return (tyStmt : tyStmts, lastStmtType)
+
+    ReturnS s srcExpr -> do
+      (tyExpr, exprType) <- tcExpr srcExpr
+      let tyStmt = ReturnS s tyExpr
+          stmtType = applyMonadType funMonad exprType
+      (tyStmts, lastStmtType) <-
+        if null srcStmts
+          then return ([], stmtType)
+          else tcDoBlock srcStmts funMonad
+      return (tyStmt : tyStmts, lastStmtType)
+tcDoBlock [] _ = error "do-block can't be empty"
+
+-- | Check if the given type is the 'TyApp' with one of built-in monads.
+-- Kind is *not* checked.
+isMonadType :: Type -> Bool
+isMonadType (TyApp typeName _) = typeName `Set.member` monadTypes
+isMonadType                  _ = False
 

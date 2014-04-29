@@ -1,0 +1,2 @@
+FunLang type checking error at BindShadowsLocalVar.fl:4,3-4,3:
+  Variable binding for 'i' shadows an existing variable or function

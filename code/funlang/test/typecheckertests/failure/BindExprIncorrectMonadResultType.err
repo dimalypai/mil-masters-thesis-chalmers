@@ -1,0 +1,2 @@
+FunLang type checking error at BindExprIncorrectMonadResultType.fl:3,14-3,23:
+  The expression needs to have type 'IO Int', but it has type 'IO Unit'

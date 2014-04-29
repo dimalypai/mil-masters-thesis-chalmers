@@ -342,9 +342,8 @@ spec =
                                   (App, srcSp 4 23 4 23)
                                   (VarE (srcSp 4 15 4 22) (Var "printInt"))
                                   (LitE (IntLit 2, srcSp 4 24 4 24)))
-                           , ReturnS (srcSp 5 3 5 16)
-                               (SrcTyCon (TypeName "IO", srcSp 5 11 5 12))
-                               (VarE (srcSp 5 15 5 15) (Var "x"))
+                           , ReturnS (srcSp 5 3 5 11)
+                               (VarE (srcSp 5 10 5 10) (Var "x"))
                            ])]]
       in successCase baseName ast
 

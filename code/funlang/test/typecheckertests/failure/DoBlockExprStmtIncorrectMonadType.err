@@ -1,0 +1,2 @@
+FunLang type checking error at DoBlockExprStmtIncorrectMonadType.fl:8,3-8,7:
+  The expression needs to operate in the 'State Int' monad, but it operates in the 'State Float' monad

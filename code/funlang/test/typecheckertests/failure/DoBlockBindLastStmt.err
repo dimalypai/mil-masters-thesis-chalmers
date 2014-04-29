@@ -1,0 +1,2 @@
+FunLang type checking error at DoBlockBindLastStmt.fl:8,3-8,19:
+  Bind can not be the last statement in the do-block. The last statement has to return a value

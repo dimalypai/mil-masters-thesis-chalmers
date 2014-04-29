@@ -1,0 +1,11 @@
+main : IO Unit
+main = do
+  return unit;
+end;;
+
+fun : IO Int
+fun = do
+  main : Int <- fun;
+  return main;
+end;;
+

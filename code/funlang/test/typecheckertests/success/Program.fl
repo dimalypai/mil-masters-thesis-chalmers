@@ -1,6 +1,12 @@
 main : IO Unit
 main = do
-  return [IO] unit;
+  printString "Hello from main";
+  i : Int <- readInt;
+  printInt i;
+  f : Float <- readFloat;
+  printFloat f;
+  printInt (execState [Int] [Unit] stateManip 1);
+  return (evalState [Int] [Unit] stateManip 0);
 end;;
 
 type Pair A B = MkPair A B
@@ -67,4 +73,11 @@ compose = /\A B C . \f : B -> C g : A -> B x : A . f (g x);;
 # Monomorphising polymorphic data constructor
 mkIntPair : Int -> Int -> Pair Int Int
 mkIntPair = MkPair [Int] [Int];;
+
+stateManip : State Int Unit
+stateManip = do
+  i : Int <- get [Int];
+  put [Int] i;
+  modify [Int] (\s : Int . s);
+end;;
 

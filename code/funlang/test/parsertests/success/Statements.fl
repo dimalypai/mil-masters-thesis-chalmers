@@ -2,6 +2,6 @@ main : IO Unit
 main = do
   printInt 1;
   x : Unit <- printInt 2;
-  return [IO] x;
+  return x;
 end;;
 

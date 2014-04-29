@@ -1,0 +1,2 @@
+FunLang type checking error at BindShadowsGlobalFun.fl:8,3-8,6:
+  Variable binding for 'main' shadows an existing variable or function

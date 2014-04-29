@@ -1,2 +1,0 @@
-FunLang type checking error at ReturnNotMonad.fl:5,11-5,11:
-  Type 'T' is not a monad

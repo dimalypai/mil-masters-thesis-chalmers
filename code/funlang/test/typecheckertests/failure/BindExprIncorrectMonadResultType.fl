@@ -1,8 +1,6 @@
 main : IO Unit
 main = do
+  i : Int <- printInt 1;
   return unit;
 end;;
-
-fun : Unit
-fun = (\x : Int . unit) "string";;
 

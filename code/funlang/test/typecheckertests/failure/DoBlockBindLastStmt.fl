@@ -3,6 +3,8 @@ main = do
   return unit;
 end;;
 
-fun : Unit
-fun = (\x : Int . unit) "string";;
+fun : IO Int
+fun = do
+  i : Unit <- main;
+end;;
 

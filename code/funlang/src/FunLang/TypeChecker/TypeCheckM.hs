@@ -74,7 +74,7 @@ newtype TypeEnv = TypeEnv { unTypeEnv :: (DataTypeEnv, DataConTypeEnv, FunTypeEn
 initTypeEnv :: TypeEnv
 initTypeEnv = mkTypeEnv (Map.fromList $ map (second builtInDataTypeInfo) builtInDataTypes)
                         Map.empty
-                        Map.empty
+                        (Map.fromList $ map (second builtInFunTypeInfo) builtInFunctions)
 
 -- | Smart constructor for 'TypeEnv'.
 mkTypeEnv :: DataTypeEnv -> DataConTypeEnv -> FunTypeEnv -> TypeEnv
@@ -217,6 +217,9 @@ addFunction :: SrcFunName -> Type -> SrcType -> TypeCheckM ()
 addFunction srcFunName funType funSrcType = do
   let funName = getFunName srcFunName
   modifyFunTypeEnv $ Map.insert funName (FunTypeInfo funType funSrcType srcFunName)
+
+builtInFunTypeInfo :: Type -> FunTypeInfo
+builtInFunTypeInfo funType = FunTypeInfo funType undefined undefined
 
 -- | Local type environment (inside functions, lambdas etc.).
 -- Consists of variables with their types and a set of type variables (from

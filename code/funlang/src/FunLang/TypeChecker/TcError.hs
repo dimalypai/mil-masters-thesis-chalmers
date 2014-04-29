@@ -30,12 +30,16 @@ data TcError =
   | TypeVarApp SrcTypeVar
   | TypeVarShadowsType SrcTypeVar
   | TypeVarShadowsTypeVar SrcTypeVar
-  | NotMonad SrcType
   | IncorrectFunArgType TyExpr Type Type
   | NotFunctionType TyExpr Type
   | VarNotBound Var SrcSpan
   | VarShadowing SrcVar
   | NotForallTypeApp Type SrcSpan
+  | DoBlockNotMonad Type SrcSpan
+  | BindLastStmt SrcSpan
+  | NotMonadicType Type Type SrcSpan
+  | IncorrectMonad Type Type SrcSpan
+  | IncorrectExprType Type Type SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -111,10 +115,6 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcTypeVar) <> colon $+$
     nest indLvl (text "Type variable" <+> quotes (prPrn $ getTypeVar srcTypeVar) <+> text "shadows another type variable")
 
-  prPrn (NotMonad srcType) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
-    nest indLvl (text "Type" <+> quotes (prPrn srcType) <+> text "is not a monad")
-
   prPrn (IncorrectFunArgType tyArgExpr expType actType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan tyArgExpr) <> colon $+$
     nest indLvl (text "Incorrect type of the argument. The expected type is" <+> quotes (prPrn expType) <>
@@ -135,6 +135,29 @@ instance Pretty TcError where
   prPrn (NotForallTypeApp appType srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "The expression needs to have a polymorphic (forall) type, but it has type" <+> quotes (prPrn appType))
+
+  prPrn (DoBlockNotMonad t srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Do-blocks can be used only in functions with monadic types. Type" <+> quotes (prPrn t) <+> text "is not monadic")
+
+  prPrn (BindLastStmt srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Bind can not be the last statement in the do-block. The last statement has to return a value")
+
+  prPrn (NotMonadicType monadType exprType srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "The expression needs to have a monadic type (in the" <+> quotes (prPrn monadType) <+>
+      text "monad), but it has type" <+> quotes (prPrn exprType))
+
+  prPrn (IncorrectMonad expType actType srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "The expression needs to operate in the" <+> quotes (prPrn expType) <+>
+      text "monad, but it operates in the" <+> quotes (prPrn actType) <+> text "monad")
+
+  prPrn (IncorrectExprType expType actType srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "The expression needs to have type" <+> quotes (prPrn expType) <>
+      text ", but it has type" <+> quotes (prPrn actType))
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

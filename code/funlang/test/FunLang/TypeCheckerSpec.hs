@@ -87,12 +87,6 @@ spec =
       it "given a function equation with incorrect type" $
         failureCase "FunEqBodyIncorrectType"
 
-      it "given a return statement with ill-kinded type" $
-        failureCase "ReturnIllKinded"
-
-      it "given a return statement with non-monadic type" $
-        failureCase "ReturnNotMonad"
-
       it "given a return statement with incorrect expression type" $
         failureCase "ReturnIncorrectExprType"
 
@@ -140,6 +134,33 @@ spec =
 
       it "given a type application with non-forall left-hand side" $
         failureCase "TypeAppNotForall"
+
+      it "given a do-block in a function with non-monadic type" $
+        failureCase "DoFunNonMonadType"
+
+      it "given a do-block with bind as the last statement" $
+        failureCase "DoBlockBindLastStmt"
+
+      it "given an expression statement in a do-block of non-monadic type" $
+        failureCase "DoBlockExprStmtNonMonadType"
+
+      it "given an expression statement in a do-block of incorrect monadic type" $
+        failureCase "DoBlockExprStmtIncorrectMonadType"
+
+      it "given a bind statement that shadows a global function" $
+        failureCase "BindShadowsGlobalFun"
+
+      it "given a bind statement that shadows a local variable" $
+        failureCase "BindShadowsLocalVar"
+
+      it "given a bind statement with non-monadic expression" $
+        failureCase "BindExprNonMonadType"
+
+      it "given a bind statement with expression of incorrect monadic type" $
+        failureCase "BindExprIncorrectMonadType"
+
+      it "given a bind statement with expression with incorrect monad result type" $
+        failureCase "BindExprIncorrectMonadResultType"
 
 -- Infrastructure
 

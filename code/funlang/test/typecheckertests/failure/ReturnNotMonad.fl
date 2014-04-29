@@ -1,7 +1,0 @@
-type T A = MkT A
-
-main : IO Unit
-main = do
-  return [T] unit;
-end;;
-

@@ -1,5 +1,6 @@
 main : IO Unit
 main = do
-  return [IO Unit] unit;
+  i : Int <- 1;
+  return unit;
 end;;
 

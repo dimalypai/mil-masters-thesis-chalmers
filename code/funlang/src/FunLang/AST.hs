@@ -184,7 +184,7 @@ type TyCaseAlt  = CaseAlt VarTy SrcSpan
 -- 'ReturnS' is separate because we don't have type classes like in Haskell.
 data Stmt v s = ExprS s (Expr v s)
               | BindS s (VarBinder s) (Expr v s)
-              | ReturnS s (TypeS s) (Expr v s)  -- ^ Annotated with monad.
+              | ReturnS s (Expr v s)
   deriving Show
 
 type SrcStmt = Stmt Var   SrcSpan

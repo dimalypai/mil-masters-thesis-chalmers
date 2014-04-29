@@ -1,6 +1,6 @@
 main : IO Unit
 main = do
-  return [IO] unit;
+  return unit;
 end;;
 
 fun : Int -> Int

@@ -1,0 +1,2 @@
+FunLang type checking error at DoBlockExprStmtNonMonadType.fl:3,3-3,3:
+  The expression needs to have a monadic type (in the 'IO' monad), but it has type 'Int'

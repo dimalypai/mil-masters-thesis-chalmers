@@ -1,5 +1,10 @@
 main : IO Unit
 main = do
+  return unit;
+end;;
+
+fun : Int
+fun = do
   return 1;
 end;;
 
