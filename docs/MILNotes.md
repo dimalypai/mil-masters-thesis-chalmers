@@ -103,3 +103,5 @@ One of the things it needs to represent is A-normal form:
 
 * Do we use State at first and then translate to just lets and function calls?
 
+What should the type of main in MIL be? Specific stack?
+

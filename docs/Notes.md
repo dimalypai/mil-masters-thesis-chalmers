@@ -244,3 +244,14 @@ Meeting 2014-04-22
 * SSA effects: IO, State, Lift
 * Exceptions implementation in LLVM
 
+Meeting 2014-04-28
+==================
+
+* Substitution: if you reduce under lambda and have only closed terms, it is
+  possible to have name capture.
+* Running and combining monads: maybe we need something for initial values of
+  state for IO, which subsumes State.
+* FunLang transaction-like (state rollback) vs OOLang (state preservation)
+  ordering of State and Exception
+* FunLang: try-catch
+
