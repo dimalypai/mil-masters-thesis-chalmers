@@ -1,0 +1,8 @@
+def main : Unit =>
+  C.old;
+  unit;
+end
+
+class C =>
+end
+

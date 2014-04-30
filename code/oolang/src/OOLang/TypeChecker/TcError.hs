@@ -40,11 +40,13 @@ data TcError =
   | IncorrectNothingType SrcType
   | SelfMemberName SrcSpan
   | SuperMemberName SrcSpan
+  | NewMemberName SrcSpan
   | FieldInitNotPure Var SrcSpan
   | MemberAlreadyDefined MemberName SrcSpan
   | NotMember MemberName ClassName SrcExpr
   | NotObject SrcExpr Type
   | MemberAccessWithMaybe SrcExpr Type
+  | ClassAccessNotNew SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -161,6 +163,10 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Class member can not use a special name 'super'")
 
+  prPrn (NewMemberName srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Class member can not use a special name 'new'")
+
   prPrn (FieldInitNotPure fieldName srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Initialisation expression of the field" <+> quotes (prPrn fieldName) <+> text "is not pure")
@@ -182,6 +188,10 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcExpr) <> colon $+$
     nest indLvl (text "Incorrect usage of the member access operator (`.`) with the expression of type" <+> quotes (prPrn actType) <>
       text ". Try using the `?` operator")
+
+  prPrn (ClassAccessNotNew srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Class access can only be used for object construction with 'new'")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

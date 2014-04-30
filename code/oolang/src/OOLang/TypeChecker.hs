@@ -126,6 +126,9 @@ collectClassField className (FieldDecl _ (Decl _ varBinder _) _) = do
     throwError $ SelfMemberName fieldNameSrcSpan
   when (fieldName == Var "super") $
     throwError $ SuperMemberName fieldNameSrcSpan
+  when (fieldName == Var "new") $
+    throwError $ NewMemberName fieldNameSrcSpan
+
   let memberName = varToMemberName fieldName
   whenM (isClassMemberDefined className memberName) $
     throwError $ MemberAlreadyDefined memberName fieldNameSrcSpan
@@ -148,6 +151,9 @@ collectClassMethod className (MethodDecl _ (FunDef _ srcFunName srcFunType _) _)
     throwError $ SelfMemberName methodNameSrcSpan
   when (methodName == FunName "super") $
     throwError $ SuperMemberName methodNameSrcSpan
+  when (methodName == FunName "new") $
+    throwError $ NewMemberName methodNameSrcSpan
+
   methodType <- srcFunTypeToType srcFunType
   let memberName = funNameToMemberName methodName
   whenM (isClassMemberDefined className memberName) $ do
@@ -478,6 +484,16 @@ tcExpr srcExpr =
                       (return True)
       return (MemberAccessE s tyObjExpr srcMemberName, memberType, objPure && memberPure)
 
+    ClassAccessE s srcClassName srcMethodName -> do
+      let className = getClassName srcClassName
+          methodName = getFunName srcMethodName
+      unless (methodName == FunName "new") $
+        throwError $ ClassAccessNotNew s
+      -- Constructor is parameterless and pure and it is always "defined"
+      -- (there is just the default one). Purity comes from the fact that all
+      -- field initialisers are pure.
+      return (ClassAccessE s srcClassName srcMethodName, TyClass className, True)
+
     BinOpE s srcBinOp srcExpr1 srcExpr2 -> do
       let op = getBinOp srcBinOp
       (tyExpr1, tyExpr2, resultType, resultPure) <- tcBinOp op srcExpr1 srcExpr2
@@ -499,15 +515,16 @@ typeOfLiteral (NothingLit _ st) = do
     throwError $ IncorrectNothingType st
   return nothingType
 
--- | Returns a class name for 'TyClass' or 'TyMutable' which contains 'TyClass'
--- inside. Throws an error for Maybe (with a suggestion for using `?` member
--- access) and all other types.
+-- | Returns a class name for 'TyClass', 'TyMutable' or 'TyPure' which contains
+-- 'TyClass' inside. Throws an error for Maybe (with a suggestion for using `?`
+-- member access) and all other types.
 -- Takes an expression for error reporting.
 tryGetClassName :: Type -> SrcExpr -> TypeCheckM ClassName
 tryGetClassName objType srcExpr =
   case objType of
     TyClass className -> return className
     TyMutable mutUnderType -> tryGetClassName mutUnderType srcExpr
+    TyPure pureUnderType -> tryGetClassName pureUnderType srcExpr
     TyMaybe {} -> throwError $ MemberAccessWithMaybe srcExpr objType
     _ -> throwError $ NotObject srcExpr objType
 

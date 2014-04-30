@@ -1,0 +1,2 @@
+OOLang type checking error at ClassAccessNotNew.ool:2,3-2,7:
+  Class access can only be used for object construction with 'new'

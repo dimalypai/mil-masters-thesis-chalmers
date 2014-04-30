@@ -1,0 +1,2 @@
+OOLang type checking error at ClassMethodNew.ool:4,7-4,9:
+  Class member can not use a special name 'new'

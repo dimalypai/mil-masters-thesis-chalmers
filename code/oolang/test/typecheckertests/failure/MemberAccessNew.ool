@@ -1,0 +1,8 @@
+def main : Unit => unit; end
+
+class C =>
+  def method : Unit =>
+    self.new;
+  end
+end
+

@@ -194,6 +194,12 @@ spec =
       it "given a class method with the name `super`" $
         failureCase "ClassMethodSuper"
 
+      it "given a class field with the name `new`" $
+        failureCase "ClassFieldNew"
+
+      it "given a class method with the name `new`" $
+        failureCase "ClassMethodNew"
+
       it "given a class field names duplication in the same class" $
         failureCase "ClassFieldNamesDup"
 
@@ -286,6 +292,12 @@ spec =
 
       it "given a member access through `super` in a function after a class definition" $
         failureCase "SuperMemberAccessFunAfterClass"
+
+      it "given a class access not to `new`" $
+        failureCase "ClassAccessNotNew"
+
+      it "given a member access to `new`" $
+        failureCase "MemberAccessNew"
 
 -- Infrastructure
 

@@ -1,0 +1,8 @@
+def main : Unit => unit; end
+
+class C =>
+  def new : Int =>
+    1;
+  end
+end
+

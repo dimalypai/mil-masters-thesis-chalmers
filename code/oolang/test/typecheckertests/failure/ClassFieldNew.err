@@ -1,0 +1,2 @@
+OOLang type checking error at ClassFieldNew.ool:4,3-4,5:
+  Class member can not use a special name 'new'

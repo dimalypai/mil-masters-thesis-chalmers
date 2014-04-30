@@ -1,6 +1,12 @@
 def main : Unit => unit; end
 
-def fun : Pure Int => 1; end
+# Object construction
+# Double method call
+def fun : Pure Int =>
+  objChild : Child = Child.new;
+  objChild.getSuper.fun;
+  1;
+end
 
 class C =>
   # Shadow global function
@@ -67,6 +73,10 @@ class Child < Super =>
     super.fun;
     super.unitField;
     self.unitField;
+  end
+
+  def getSuper : Pure Super =>
+    self.super2;
   end
 end
 
