@@ -28,29 +28,45 @@ import OOLang.Utils
 --
 -- * Mutable A `isSubTypeOf` Mutable B iff A `isSubTypeOf` B
 --
+-- Inheritance and transitivity:
+--
+-- * A `isSubTypeOf` B iff class A < B or class A < C and C `isSubTypeOf` B
+--
 -- Note: this can't be used for purity checking.
-isSubTypeOf :: Type -> Type -> Bool
-t1 `isSubTypeOf` t2 = t1 == t2
-                   || pureSubType1 || pureSubType2  || pureSubType3
-                   || mutableSubType1 || mutableSubType2 || mutableSubType3
-  where pureSubType1 = case t1 of
-                         TyPure pt1 -> pt1 `isSubTypeOf` t2
-                         _ -> False
-        pureSubType2 = case t2 of
-                         TyPure pt2 -> t1 `isSubTypeOf` pt2
-                         _ -> False
-        pureSubType3 = case (t1, t2) of
-                         (TyPure pt1, TyPure pt2) -> pt1 `isSubTypeOf` pt2
-                         _ -> False
-        mutableSubType1 = case t1 of
-                            TyMutable pt1 -> pt1 `isSubTypeOf` t2
-                            _ -> False
-        mutableSubType2 = case t2 of
-                            TyMutable pt2 -> t1 `isSubTypeOf` pt2
-                            _ -> False
-        mutableSubType3 = case (t1, t2) of
-                            (TyMutable pt1, TyMutable pt2) -> pt1 `isSubTypeOf` pt2
-                            _ -> False
+isSubTypeOf :: Type -> Type -> TypeCheckM Bool
+t1 `isSubTypeOf` t2 = do
+  pureSubType1 <- case t1 of
+                    TyPure pt1 -> pt1 `isSubTypeOf` t2
+                    _ -> return False
+  pureSubType2 <- case t2 of
+                    TyPure pt2 -> t1 `isSubTypeOf` pt2
+                    _ -> return False
+  pureSubType3 <- case (t1, t2) of
+                    (TyPure pt1, TyPure pt2) -> pt1 `isSubTypeOf` pt2
+                    _ -> return False
+  mutableSubType1 <- case t1 of
+                       TyMutable pt1 -> pt1 `isSubTypeOf` t2
+                       _ -> return False
+  mutableSubType2 <- case t2 of
+                       TyMutable pt2 -> t1 `isSubTypeOf` pt2
+                       _ -> return False
+  mutableSubType3 <- case (t1, t2) of
+                       (TyMutable pt1, TyMutable pt2) -> pt1 `isSubTypeOf` pt2
+                       _ -> return False
+  inheritanceSubType <-
+    case (t1, t2) of
+      (TyClass className1, TyClass className2) -> do
+        mSuperClassName <- getSuperClass className1
+        case mSuperClassName of
+          Nothing -> return False
+          Just superClassName -> do
+            superSubType <- (TyClass superClassName) `isSubTypeOf` t2
+            return (superClassName == className2 || superSubType)
+      _ -> return False
+  return (t1 == t2
+       || pureSubType1 || pureSubType2  || pureSubType3
+       || mutableSubType1 || mutableSubType2 || mutableSubType3
+       || inheritanceSubType)
 
 -- * Type transformations
 

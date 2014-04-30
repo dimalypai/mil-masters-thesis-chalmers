@@ -1,4 +1,7 @@
-def main : Unit => unit; end
+def main : Unit =>
+  # Subtyping
+  objSuper : Super = GrandChild.new;
+end
 
 # Object construction
 # Double method call
@@ -94,5 +97,8 @@ class Child < Super =>
   def superFieldMutate : Unit =>
     super.unitField <- unit;
   end
+end
+
+class GrandChild < Child =>
 end
 

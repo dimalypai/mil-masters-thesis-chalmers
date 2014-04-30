@@ -317,6 +317,9 @@ spec =
       it "given a field access outside of the class" $
         failureCase "FieldAccessOutside"
 
+      it "given a declaration with a class not from hierarchy (subtyping)" $
+        failureCase "DeclClassNotSubClass"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

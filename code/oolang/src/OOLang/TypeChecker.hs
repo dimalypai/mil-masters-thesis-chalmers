@@ -296,7 +296,7 @@ tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit) _) = do
           InitMut ->
             unless (isMutableType fieldType) $
               throwError $ IncorrectMutableOpUsage fs
-        unless (initType `isSubTypeOf` fieldType) $
+        unlessM (initType `isSubTypeOf` fieldType) $
           throwError $ DeclInitIncorrectType srcInit fieldType initType
         return $ Just tyInit
       Nothing -> do
@@ -351,7 +351,7 @@ tcFunDef insideClass (FunDef s srcFunName srcFunType srcStmts) = do
   -- There is at least one statement, the value of the last one (and hence the
   -- type) is what function returns.
   let lastStmtType = last stmtTypes
-  unless (lastStmtType `isSubTypeOf` retType) $
+  unlessM (lastStmtType `isSubTypeOf` retType) $
     throwError $ FunIncorrectReturnType srcFunName (last tyStmts) retType lastStmtType
 
   when (isPureFunType retType) $ do
@@ -420,7 +420,7 @@ tcStmt insideClass srcStmt =
         AssignMut -> do
           unless (isMutableType exprLeftType) $
             throwError $ IncorrectMutableOpUsage (getSrcSpan srcStmt)
-          unless (exprRightType `isSubTypeOf` exprLeftType) $
+          unlessM (exprRightType `isSubTypeOf` exprLeftType) $
             throwError $ AssignIncorrectType tyExprRight (getUnderType exprLeftType) exprRightType
       return (AssignS s srcAssignOp tyExprLeft tyExprRight, TyUnit, assignPurity && exprRightPure)
 
@@ -456,7 +456,7 @@ tcDecl insideClass (Decl s varBinder mSrcInit) srcDeclStmt = do
         InitMut ->
           unless (isMutableType varType) $
             throwError $ IncorrectMutableOpUsage (getSrcSpan srcDeclStmt)
-      unless (initType `isSubTypeOf` varType) $
+      unlessM (initType `isSubTypeOf` varType) $
         throwError $ DeclInitIncorrectType srcInit (getUnderType varType) initType
       return $ (Decl s varBinder (Just tyInit), TyUnit, initPure)
     Nothing -> do
@@ -604,9 +604,9 @@ tcApp :: BinOpTc
 tcApp (tyExpr1, expr1Type, _) (tyExpr2, expr2Type, expr2Pure) =
   case expr1Type of
     TyArrow argType resultType ->
-      if not (expr2Type `isSubTypeOf` argType)
-        then throwError $ IncorrectFunArgType tyExpr2 argType expr2Type
-        else do
+      ifM (not <$> expr2Type `isSubTypeOf` argType)
+        (throwError $ IncorrectFunArgType tyExpr2 argType expr2Type)
+        (do
           -- function performs side effects only when fully applied, so
           -- if it does not take more arguments, then we check for purity,
           -- otherwise - postpone this check
@@ -614,6 +614,6 @@ tcApp (tyExpr1, expr1Type, _) (tyExpr2, expr2Type, expr2Pure) =
                             then False
                             else True
           -- application is pure iff both operands are pure
-          return (resultType, expr1Pure && expr2Pure)
+          return (resultType, expr1Pure && expr2Pure))
     _ -> throwError $ NotFunctionType tyExpr1 expr1Type
 

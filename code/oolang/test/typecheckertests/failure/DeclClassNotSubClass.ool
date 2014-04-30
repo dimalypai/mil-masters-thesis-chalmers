@@ -1,0 +1,9 @@
+def main : Unit =>
+  objA : A = B.new;
+end
+
+class A =>
+end
+
+class B =>
+end
