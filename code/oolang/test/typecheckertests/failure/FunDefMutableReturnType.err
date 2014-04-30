@@ -1,2 +1,2 @@
 OOLang type checking error at FunDefMutableReturnType.ool:3,10-3,20:
-  Function can not have Mutable return type
+  Function/method can not have Mutable return type

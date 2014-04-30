@@ -1,2 +1,2 @@
 OOLang type checking error at PureFunImpureStmt.ool:4,3-4,7:
-  Function 'fun' has Pure return type, but it contains an impure statement
+  Function/method 'fun' has Pure return type, but it contains an impure statement

@@ -1,0 +1,10 @@
+def main : Unit => unit; end
+
+class C =>
+  field : Mutable Int <- 1;
+
+  def method : Pure Unit =>
+    self.field <- 2;
+  end
+end
+

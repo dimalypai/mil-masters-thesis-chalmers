@@ -260,7 +260,7 @@ tcClassMembers className srcMembers = do
   tyFieldDecls <- mapM (tcClassField className) srcFieldDecls
   let localTypeEnvSelf = addLocalVar (Var "self") (TyClass className)
                            emptyLocalTypeEnv
-  tyMethodDecls <- locallyWithEnv localTypeEnvSelf (mapM (tcClassMethod className) srcMethodDecls)
+  tyMethodDecls <- locallyWithEnv localTypeEnvSelf (mapM tcClassMethod srcMethodDecls)
   return (map FieldMemberDecl tyFieldDecls ++ map MethodMemberDecl tyMethodDecls)
 
 -- | Checks class field initialiser.
@@ -300,33 +300,27 @@ tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit) _) = do
   return $ FieldDecl fs tyDecl []
 
 -- | Checks class method declaration.
--- Its name and type are already in the class environment.
--- Checks that all parameter names are distinct. Their types are already
--- checked and the method type is transformed. Adds parameters to the local
--- environment.
--- Checks method body (statements).
--- Checks that the actual return type is consistent with the specified return type.
--- Checks that the method is pure (if it is declared as such).
--- Class methods are checked in the same local environment as function bodies
--- but with `self` and possibly `super` variables in scope.
--- Class methods' parameter names can shadow class fields
--- (for the same reason), but they can *not* shadow global function names.
-tcClassMethod :: ClassName -> SrcMethodDecl -> TypeCheckM TyMethodDecl
-tcClassMethod className (MethodDecl s srcFunDef _) = do
-  -- TODO?
-  -- different mutable treatment
+-- See 'tcFunDef' for details.
+tcClassMethod :: SrcMethodDecl -> TypeCheckM TyMethodDecl
+tcClassMethod (MethodDecl s srcFunDef _) = do
   tyFunDef <- tcFunDef srcFunDef
   return $ MethodDecl s tyFunDef []
 
--- | Checks function definition.
+-- | Checks function/method definition.
 -- Its name and type are already in the environment.
 -- Checks that all parameter names are distinct. Their types are already
 -- checked and the function type is transformed. Adds parameters to the local
 -- environment.
--- Checks function body (statements).
--- Checks that the actual return type is consistent with the specified return type.
--- Checks that the function is pure (if it is declared as such).
+-- Checks function/method body (statements).
+-- Checks that the actual return type is consistent with the specified return
+-- type.
+-- Checks that the function/method is pure (if it is declared as such).
 -- Returns type checked function definition.
+-- Class methods are checked in the same local environment as function bodies
+-- but with `self` and possibly `super` variables in scope.
+-- Class methods' parameter names can shadow class fields and methods (because
+-- of explicit member access with `self` or `super`), but they can *not* shadow
+-- global function names.
 tcFunDef :: SrcFunDef -> TypeCheckM TyFunDef
 tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
   -- collect function parameters and check for variable shadowing
@@ -360,6 +354,18 @@ tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
 
   return $ FunDef s srcFunName srcFunType tyStmts
 
+-- | Note [Assignment purity]:
+--
+-- Assignments to Mutable variables are pure, since they are purely local and
+-- don't influence the global state of the program/world (they don't break
+-- referential transparency).
+-- Assignments to Mutable fields of the class inside the class is impure, since
+-- they modify the internal state of the object. We don't need to have a
+-- special treatment of assignments to fields outside of the class (not via
+-- `self` or `super`, since all class fields are not visible from the outside
+-- of the class and its children).
+-- TODO: Ref assignment purity.
+
 -- | Statement type checking.
 -- Returns a type checked statement together with its type and purity indicator.
 tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type, Bool)
@@ -373,18 +379,34 @@ tcStmt srcStmt =
       (tyExpr, exprType, exprPure) <- tcExpr srcExpr
       return (ExprS s tyExpr, exprType, exprPure)
 
-    AssignS s srcAssignOp (var, varS) srcExpr -> do
-      unlessM (isVarBound var) $
-        throwError $ VarNotBound var varS
-      (tyExpr, exprType, exprPure) <- tcExpr srcExpr
-      varType <- getVarType var
+    -- See Note [Assignment purity]
+    AssignS s srcAssignOp srcExprLeft srcExprRight -> do
+      (tyExprLeft, exprLeftType, assignPurity) <-
+        case srcExprLeft of
+          VarE varS var -> do
+            unlessM (isVarBound var) $
+              throwError $ VarNotBound var varS
+            whenM (isFunctionDefined $ varToFunName var) $
+              throwError $ AssignToFunction varS
+            varType <- getVarType var
+            return (VarE varS (VarTy (var, varType)), varType, True)
+          MemberAccessE ms srcObjExpr srcMemberName -> do
+            (tyObjExpr, objType, _) <- tcExpr srcObjExpr
+            className <- tryGetClassName objType srcObjExpr
+            let fieldName = memberNameToVar (getMemberName srcMemberName)
+            unlessM (isClassFieldDefined className fieldName) $
+              throwError $ AssignNotField fieldName className (getSrcSpan srcMemberName)
+            fieldType <- getClassFieldType className fieldName
+            return (MemberAccessE ms tyObjExpr srcMemberName, fieldType, False)
+          _ -> throwError $ IncorrectAssignLeft (getSrcSpan srcExprLeft)
+      (tyExprRight, exprRightType, exprRightPure) <- tcExpr srcExprRight
       case getAssignOp srcAssignOp of
         AssignMut -> do
-          unless (isMutableType varType) $
+          unless (isMutableType exprLeftType) $
             throwError $ IncorrectMutableOpUsage (getSrcSpan srcStmt)
-          unless (exprType `isSubTypeOf` varType) $
-            throwError $ AssignIncorrectType tyExpr (getUnderType varType) exprType
-      return (AssignS s srcAssignOp (VarTy (var, varType), varS) tyExpr, TyUnit, exprPure)
+          unless (exprRightType `isSubTypeOf` exprLeftType) $
+            throwError $ AssignIncorrectType tyExprRight (getUnderType exprLeftType) exprRightType
+      return (AssignS s srcAssignOp tyExprLeft tyExprRight, TyUnit, assignPurity && exprRightPure)
 
 -- | Note [Purity of declarations]:
 --

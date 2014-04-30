@@ -4,11 +4,10 @@
 -- AST is parameterised. Some of the data types have only one type parameter s
 -- (stands for source) and some have two - v (stands for variable) and s. The
 -- reason is that variable occurences are parameterised and are represented
--- differently at different stages. For more on this look at the 'Expr' and
--- 'Stmt' data types (these are the only places where a field of type v is
--- present). Thus, some of the data types eventually contain 'Expr' or 'Stmt'
--- (and therefore must have both v and s) and some of them don't (and have only
--- s).
+-- differently at different stages. For more on this look at the 'Expr' data
+-- type (it is the only place where a field of type v is present). Thus, some
+-- of the data types eventually contain 'Expr' (and therefore must have both v
+-- and s) and some of them don't (and have only s).
 --
 -- In general, sometimes there are two version of the data type, one of which
 -- may have S suffix. This distinction is for source representation of the
@@ -104,11 +103,8 @@ type TyMethodDecl  = MethodDecl VarTy SrcSpan
 
 data Stmt v s = DeclS s (Declaration v s)
               | ExprS s (Expr v s)
-                -- | It uses type parameter v. We allow to assign only to
-                -- variables. Unfortunately we have to explicitly use (v, s)
-                -- here instead of 'VarS' for example, because we abstract over
-                -- variables.
-              | AssignS s (AssignOpS s) (v, s) (Expr v s)
+                -- | Left-hand side can only be 'VarE' or 'MemberAccessE'.
+              | AssignS s (AssignOpS s) (Expr v s) (Expr v s)
               | WhileS s (Expr v s) [Stmt v s]
               | WhenS s (Expr v s) [Stmt v s] [Stmt v s]
               | ReturnS s (Expr v s)

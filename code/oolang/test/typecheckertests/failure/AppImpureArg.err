@@ -1,2 +1,2 @@
 OOLang type checking error at AppImpureArg.ool:4,3-4,10:
-  Function 'fun' has Pure return type, but it contains an impure statement
+  Function/method 'fun' has Pure return type, but it contains an impure statement

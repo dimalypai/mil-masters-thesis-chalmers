@@ -47,6 +47,9 @@ data TcError =
   | NotObject SrcExpr Type
   | MemberAccessWithMaybe SrcExpr Type
   | ClassAccessNotNew SrcSpan
+  | AssignToFunction SrcSpan
+  | AssignNotField Var ClassName SrcSpan
+  | IncorrectAssignLeft SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -91,12 +94,12 @@ instance Pretty TcError where
 
   prPrn (FunctionNotPure srcFunName tyStmt) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan tyStmt) <> colon $+$
-    nest indLvl (text "Function" <+> quotes (prPrn $ getFunName srcFunName) <+>
+    nest indLvl (text "Function/method" <+> quotes (prPrn $ getFunName srcFunName) <+>
       text "has Pure return type, but it contains an impure statement")
 
   prPrn (FunIncorrectReturnType srcFunName tyStmt expType actType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan tyStmt) <> colon $+$
-    nest indLvl (text "Function" <+> quotes (prPrn $ getFunName srcFunName) <+>
+    nest indLvl (text "Function/method" <+> quotes (prPrn $ getFunName srcFunName) <+>
       text "has to return a value of type" <+> quotes (prPrn expType) <>
       text ", but it returns a value of type" <+> quotes (prPrn actType))
 
@@ -111,7 +114,7 @@ instance Pretty TcError where
 
   prPrn (PureValue srcType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
-    nest indLvl (text "Pure type can be used only in the return type of a function")
+    nest indLvl (text "Pure type can be used only in the return type of a function/method")
 
   prPrn (MutableOrRefNested srcType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
@@ -119,15 +122,15 @@ instance Pretty TcError where
 
   prPrn (PureFunParam srcType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
-    nest indLvl (text "Function parameter can not have Pure type")
+    nest indLvl (text "Function/method parameter can not have Pure type")
 
   prPrn (MutableFunParam srcType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
-    nest indLvl (text "Function parameter can not have Mutable type")
+    nest indLvl (text "Function/method parameter can not have Mutable type")
 
   prPrn (MutableFunReturnType srcType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
-    nest indLvl (text "Function can not have Mutable return type")
+    nest indLvl (text "Function/method can not have Mutable return type")
 
   prPrn (DeclInitIncorrectType srcInit expType actType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcInit) <> colon $+$
@@ -192,6 +195,19 @@ instance Pretty TcError where
   prPrn (ClassAccessNotNew srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Class access can only be used for object construction with 'new'")
+
+  prPrn (AssignToFunction srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Global function can not be a left-hand side of the assignment")
+
+  prPrn (AssignNotField fieldName className srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "There is no field with the name" <+> quotes (prPrn fieldName) <+> text "in the class" <+> quotes (prPrn className) <>
+      text ". Method can not be a left-hand side of the assignment")
+
+  prPrn (IncorrectAssignLeft srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Incorrect left-hand side of the assignment. It can only be a variable or a class field")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

@@ -1,2 +1,2 @@
 OOLang type checking error at PureNestedInType.ool:3,21-3,28:
-  Pure type can be used only in the return type of a function
+  Pure type can be used only in the return type of a function/method

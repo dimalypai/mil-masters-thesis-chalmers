@@ -1,2 +1,2 @@
 OOLang type checking error at FunDefPureParam.ool:3,15-3,22:
-  Function parameter can not have Pure type
+  Function/method parameter can not have Pure type

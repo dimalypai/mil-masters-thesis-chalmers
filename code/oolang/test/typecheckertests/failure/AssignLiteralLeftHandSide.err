@@ -1,0 +1,2 @@
+OOLang type checking error at AssignLiteralLeftHandSide.ool:2,3-2,3:
+  Incorrect left-hand side of the assignment. It can only be a variable or a class field

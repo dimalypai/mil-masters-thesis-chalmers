@@ -283,7 +283,6 @@ spec =
       it "given a class method reference without `self`" $
         failureCase "MethodReferenceNoSelf"
 
-      -- TODO: error message
       it "given an impure method call from pure method" $
         failureCase "PureMethodImpureMethodCall"
 
@@ -298,6 +297,18 @@ spec =
 
       it "given a member access to `new`" $
         failureCase "MemberAccessNew"
+
+      it "given an assignment statement with incorrect left-hand side (literal)" $
+        failureCase "AssignLiteralLeftHandSide"
+
+      it "given an assignment to global function" $
+        failureCase "AssignGlobalFun"
+
+      it "given an assignment to a class method" $
+        failureCase "AssignClassMethod"
+
+      it "given a pure method with assignment to a class field" $
+        failureCase "AssignFieldPure"
 
 -- Infrastructure
 

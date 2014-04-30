@@ -1,0 +1,4 @@
+def main : Unit =>
+  main <- unit;
+end
+

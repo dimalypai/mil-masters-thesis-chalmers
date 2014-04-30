@@ -1,0 +1,2 @@
+OOLang type checking error at AssignGlobalFun.ool:2,3-2,6:
+  Global function can not be a left-hand side of the assignment

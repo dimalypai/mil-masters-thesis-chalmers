@@ -1,0 +1,2 @@
+OOLang type checking error at AssignClassMethod.ool:3,8-3,13:
+  There is no field with the name 'method' in the class 'C'. Method can not be a left-hand side of the assignment

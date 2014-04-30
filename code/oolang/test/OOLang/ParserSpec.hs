@@ -200,7 +200,7 @@ spec =
                                (LitE (IntLit (srcSp 4 22 4 22) 1))))
                      , AssignS (srcSp 5 3 5 9)
                          (AssignMut, srcSp 5 5 5 6)
-                         (Var "x", srcSp 5 3 5 3)
+                         (VarE (srcSp 5 3 5 3) (Var "x"))
                          (LitE (IntLit (srcSp 5 8 5 8) 2))]]
       in successCase baseName ast
 

@@ -1,2 +1,2 @@
 OOLang type checking error at FunDefMutableParam.ool:3,15-3,25:
-  Function parameter can not have Mutable type
+  Function/method parameter can not have Mutable type

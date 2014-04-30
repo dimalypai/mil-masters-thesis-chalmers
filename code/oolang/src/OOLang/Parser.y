@@ -163,10 +163,10 @@ stmt
       {% withFileName $ \fileName ->
            DeclS (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $2] fileName)
                  $1 }
-  | lowerId assignop expr ';'
+  | expr assignop expr ';'
       {% withFileName $ \fileName ->
-           AssignS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $4] fileName)
-                   $2 (Var $ getTokId $1, mkTokSrcSpan $1 fileName) $3 }
+           AssignS (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $4] fileName)
+                   $2 $1 $3 }
   | when expr do list(stmt) otherwise list(stmt) end ';'
       {% withFileName $ \fileName ->
            WhenS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $8] fileName)

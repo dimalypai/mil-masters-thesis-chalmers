@@ -46,6 +46,17 @@ class C =>
   def impureParamMethod : {a : Int} -> {b : Float} -> Unit =>
     self.impureMethod;
   end
+
+  # Mutate class field, impure
+  def fieldMutate : Unit =>
+    self.unitField <- unit;
+  end
+
+  # Mutate local variable, pure
+  def localMutate : Pure Unit =>
+    unitLocal : Mutable Unit <- unit;
+    unitLocal <- unit;
+  end
 end
 
 # The same field and method names as in C
@@ -53,7 +64,7 @@ class Super =>
   # Shadow global function
   main : Int = 1;
 
-  unitField : Unit = unit;
+  unitField : Mutable Unit <- unit;
 
   # Shadow global function
   def fun : Pure Unit =>
@@ -77,6 +88,11 @@ class Child < Super =>
 
   def getSuper : Pure Super =>
     self.super2;
+  end
+
+  # Mutate a field in the super class, impure
+  def superFieldMutate : Unit =>
+    super.unitField <- unit;
   end
 end
 
