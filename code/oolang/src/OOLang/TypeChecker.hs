@@ -363,7 +363,7 @@ tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
 -- they modify the internal state of the object. We don't need to have a
 -- special treatment of assignments to fields outside of the class (not via
 -- `self` or `super`, since all class fields are not visible from the outside
--- of the class and its children).
+-- of the class and its subclasses).
 -- TODO: Ref assignment purity.
 
 -- | Statement type checking.
