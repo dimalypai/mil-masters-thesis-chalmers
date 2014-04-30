@@ -122,6 +122,7 @@ collectClassField :: ClassName -> SrcFieldDecl -> TypeCheckM ()
 collectClassField className (FieldDecl _ (Decl _ varBinder _) _) = do
   let fieldName = getVar (getBinderVar varBinder)
   let fieldNameSrcSpan = getSrcSpan (getBinderVar varBinder)
+
   when (fieldName == Var "self") $
     throwError $ SelfMemberName fieldNameSrcSpan
   when (fieldName == Var "super") $
@@ -132,6 +133,7 @@ collectClassField className (FieldDecl _ (Decl _ varBinder _) _) = do
   let memberName = varToMemberName fieldName
   whenM (isClassMemberDefined className memberName) $
     throwError $ MemberAlreadyDefined memberName fieldNameSrcSpan
+
   fieldType <- srcTypeToType (getBinderType varBinder)
   addClassField className fieldName fieldType
 
@@ -147,6 +149,7 @@ collectClassMethod :: ClassName -> SrcMethodDecl -> TypeCheckM ()
 collectClassMethod className (MethodDecl _ (FunDef _ srcFunName srcFunType _) _) = do
   let methodName = getFunName srcFunName
   let methodNameSrcSpan = getSrcSpan srcFunName
+
   when (methodName == FunName "self") $
     throwError $ SelfMemberName methodNameSrcSpan
   when (methodName == FunName "super") $
@@ -159,6 +162,7 @@ collectClassMethod className (MethodDecl _ (FunDef _ srcFunName srcFunType _) _)
   whenM (isClassMemberDefined className memberName) $ do
     unlessM (isClassMethodOverride className methodName methodType) $
       throwError $ MemberAlreadyDefined memberName methodNameSrcSpan
+
   addClassMethod className methodName methodType
 
 -- | Checks if the function is already defined.
