@@ -1,0 +1,2 @@
+OOLang type checking error at FieldAccessOutside.ool:7,3-7,12:
+  Class fields can not be accessed outside of the class and its subclasses

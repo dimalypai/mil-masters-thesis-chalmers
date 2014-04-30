@@ -18,6 +18,7 @@ module OOLang.TypeChecker
 import qualified Data.Set as Set
 import Data.Maybe (isJust, fromJust)
 import Data.List (find)
+import Control.Monad (void)
 import Control.Applicative ((<$>))
 
 import OOLang.AST
@@ -43,7 +44,7 @@ typeCheckStage srcProgram typeEnv = runTypeCheckM (tcProgram srcProgram) typeEnv
 -- | Type checks a given source expression in a given type environment.
 -- In the case of success - returns its type.
 typeOf :: SrcExpr -> TypeEnv -> Either TcError Type
-typeOf srcExpr typeEnv = getExprType <$> runTypeCheckM (tcExpr srcExpr) typeEnv
+typeOf srcExpr typeEnv = getExprType <$> runTypeCheckM (tcExpr False srcExpr) typeEnv
   where getExprType = (\(_,t,_) -> t) . fst
 
 -- | Entry point into the type checking of the program.
@@ -61,7 +62,7 @@ tcProgram (Program s classDefs funDefs) = do
   checkMain
   checkInheritance
   tyClassDefs <- mapM tcClassDef classDefs
-  tyFunDefs <- mapM tcFunDef funDefs
+  tyFunDefs <- mapM (tcFunDef False) funDefs
   return $ Program s tyClassDefs tyFunDefs
 
 -- | In order to be able to handle (mutually) recursive definitions and forward
@@ -278,7 +279,7 @@ tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit) _) = do
   mTyInit <-
     case mSrcInit of
       Just srcInit -> do
-        (tyInit, initType, initPure) <- tcInit srcInit
+        (tyInit, initType, initPure) <- tcInit True srcInit
         unless initPure $
           throwError $ FieldInitNotPure fieldName fs
         let initOp = getInitOp $ getInitOpS srcInit
@@ -303,10 +304,11 @@ tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit) _) = do
 -- See 'tcFunDef' for details.
 tcClassMethod :: SrcMethodDecl -> TypeCheckM TyMethodDecl
 tcClassMethod (MethodDecl s srcFunDef _) = do
-  tyFunDef <- tcFunDef srcFunDef
+  tyFunDef <- tcFunDef True srcFunDef
   return $ MethodDecl s tyFunDef []
 
 -- | Checks function/method definition.
+-- Takes a boolean indicator whether it is inside a class.
 -- Its name and type are already in the environment.
 -- Checks that all parameter names are distinct. Their types are already
 -- checked and the function type is transformed. Adds parameters to the local
@@ -321,8 +323,8 @@ tcClassMethod (MethodDecl s srcFunDef _) = do
 -- Class methods' parameter names can shadow class fields and methods (because
 -- of explicit member access with `self` or `super`), but they can *not* shadow
 -- global function names.
-tcFunDef :: SrcFunDef -> TypeCheckM TyFunDef
-tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
+tcFunDef :: Bool -> SrcFunDef -> TypeCheckM TyFunDef
+tcFunDef insideClass (FunDef s srcFunName srcFunType srcStmts) = do
   -- collect function parameters and check for variable shadowing
   let varBinders = getFunParams srcFunType
   localTypeEnv <- foldM (\localTyEnv vb -> do
@@ -337,7 +339,7 @@ tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
     emptyLocalTypeEnv varBinders
 
   (tyStmts, stmtTypes, stmtsPure) <-
-    unzip3 <$> locallyWithEnv localTypeEnv (mapM tcStmt srcStmts)
+    unzip3 <$> locallyWithEnv localTypeEnv (mapM (tcStmt insideClass) srcStmts)
 
   retType <- srcFunReturnTypeToType $ getFunReturnType srcFunType
   -- There is at least one statement, the value of the last one (and hence the
@@ -362,21 +364,22 @@ tcFunDef (FunDef s srcFunName srcFunType srcStmts) = do
 -- Assignments to Mutable fields of the class inside the class is impure, since
 -- they modify the internal state of the object. We don't need to have a
 -- special treatment of assignments to fields outside of the class (not via
--- `self` or `super`, since all class fields are not visible from the outside
--- of the class and its subclasses).
+-- `self` or `super`), since all class fields are not visible from the outside
+-- of the class and its subclasses.
 -- TODO: Ref assignment purity.
 
 -- | Statement type checking.
+-- Takes a boolean indicator whether it is inside a class.
 -- Returns a type checked statement together with its type and purity indicator.
-tcStmt :: SrcStmt -> TypeCheckM (TyStmt, Type, Bool)
-tcStmt srcStmt =
+tcStmt :: Bool -> SrcStmt -> TypeCheckM (TyStmt, Type, Bool)
+tcStmt insideClass srcStmt =
   case srcStmt of
     DeclS s srcDecl -> do
-      (tyDecl, declType, declPure) <- tcDecl srcDecl srcStmt
+      (tyDecl, declType, declPure) <- tcDecl insideClass srcDecl srcStmt
       return (DeclS s tyDecl, declType, declPure)
 
     ExprS s srcExpr -> do
-      (tyExpr, exprType, exprPure) <- tcExpr srcExpr
+      (tyExpr, exprType, exprPure) <- tcExpr insideClass srcExpr
       return (ExprS s tyExpr, exprType, exprPure)
 
     -- See Note [Assignment purity]
@@ -391,15 +394,22 @@ tcStmt srcStmt =
             varType <- getVarType var
             return (VarE varS (VarTy (var, varType)), varType, True)
           MemberAccessE ms srcObjExpr srcMemberName -> do
-            (tyObjExpr, objType, _) <- tcExpr srcObjExpr
+            -- Check the whole member access expression: whether it is defined,
+            -- and most importantly - for class field access check
+            -- (visibility).
+            -- TODO: can it be harmful to perform double checking?
+            void (tcExpr insideClass srcExprLeft)
+            (tyObjExpr, objType, _) <- tcExpr insideClass srcObjExpr
             className <- tryGetClassName objType srcObjExpr
             let fieldName = memberNameToVar (getMemberName srcMemberName)
+            -- Visibility has already been checked with 'tcExpr', so if there
+            -- is a field, it can be assigned to.
             unlessM (isClassFieldDefined className fieldName) $
               throwError $ AssignNotField fieldName className (getSrcSpan srcMemberName)
             fieldType <- getClassFieldType className fieldName
             return (MemberAccessE ms tyObjExpr srcMemberName, fieldType, False)
           _ -> throwError $ IncorrectAssignLeft (getSrcSpan srcExprLeft)
-      (tyExprRight, exprRightType, exprRightPure) <- tcExpr srcExprRight
+      (tyExprRight, exprRightType, exprRightPure) <- tcExpr insideClass srcExprRight
       case getAssignOp srcAssignOp of
         AssignMut -> do
           unless (isMutableType exprLeftType) $
@@ -418,10 +428,11 @@ tcStmt srcStmt =
 -- pure.
 
 -- | Declaration type checking. Takes a declaration source statement for error
--- messages. Returns a type checked declaration with its type and purity
--- indicator.
-tcDecl :: SrcDeclaration -> SrcStmt -> TypeCheckM (TyDeclaration, Type, Bool)
-tcDecl (Decl s varBinder mSrcInit) srcDeclStmt = do
+-- messages.
+-- Takes a boolean indicator whether it is inside a class.
+-- Returns a type checked declaration with its type and purity indicator.
+tcDecl :: Bool -> SrcDeclaration -> SrcStmt -> TypeCheckM (TyDeclaration, Type, Bool)
+tcDecl insideClass (Decl s varBinder mSrcInit) srcDeclStmt = do
   let var = getVar $ getBinderVar varBinder
   whenM (isVarBound var) $
     throwError $ VarShadowing (getBinderVar varBinder)
@@ -430,7 +441,7 @@ tcDecl (Decl s varBinder mSrcInit) srcDeclStmt = do
   -- See Note [Purity of declarations]
   case mSrcInit of
     Just srcInit -> do
-      (tyInit, initType, initPure) <- tcInit srcInit
+      (tyInit, initType, initPure) <- tcInit insideClass srcInit
       let initOp = getInitOp $ getInitOpS srcInit
       case initOp of
         InitEqual ->
@@ -447,9 +458,13 @@ tcDecl (Decl s varBinder mSrcInit) srcDeclStmt = do
         throwError $ NonMaybeVarNotInit var (getSrcSpan srcDeclStmt)
       return (Decl s varBinder Nothing, TyUnit, True)
 
-tcInit :: SrcInit -> TypeCheckM (TyInit, Type, Bool)
-tcInit (Init s srcInitOp srcExpr) = do
-  (tyExpr, exprType, exprPure) <- tcExpr srcExpr
+-- | Initialisation expression type checking.
+-- Takes a boolean indicator whether it is inside a class.
+-- Returns a type checked initialisation expression together with its type and
+-- purity indicator.
+tcInit :: Bool -> SrcInit -> TypeCheckM (TyInit, Type, Bool)
+tcInit insideClass (Init s srcInitOp srcExpr) = do
+  (tyExpr, exprType, exprPure) <- tcExpr insideClass srcExpr
   -- See Note [Purity of declarations]
   let initOp = getInitOp srcInitOp
   let initPure = case initOp of
@@ -474,9 +489,11 @@ tcInit (Init s srcInitOp srcExpr) = do
 -- reference its name, and its purity should be checked when fully applied.
 
 -- | Expression type checking.
--- Returns a type checked expression together with its type and purity indicator.
-tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type, Bool)
-tcExpr srcExpr =
+-- Takes a boolean indicator whether it is inside a class.
+-- Returns a type checked expression together with its type and purity
+-- indicator.
+tcExpr :: Bool -> SrcExpr -> TypeCheckM (TyExpr, Type, Bool)
+tcExpr insideClass srcExpr =
   case srcExpr of
     LitE srcLit -> do
       litType <- typeOfLiteral srcLit
@@ -496,11 +513,14 @@ tcExpr srcExpr =
       return (VarE s (VarTy (var, varType)), varType, isPure)
 
     MemberAccessE s srcObjExpr srcMemberName -> do
-      (tyObjExpr, objType, objPure) <- tcExpr srcObjExpr
+      (tyObjExpr, objType, objPure) <- tcExpr insideClass srcObjExpr
       className <- tryGetClassName objType srcObjExpr
       let memberName = getMemberName srcMemberName
       unlessM (isClassMemberDefined className memberName) $
         throwError $ NotMember memberName className srcExpr
+      isField <- isClassFieldDefined className (memberNameToVar memberName)
+      when (isField && not insideClass) $
+        throwError $ OutsideFieldAccess s
       memberType <- getClassMemberType className memberName
       -- See Note [Purity of function and value types]
       memberPure <- ifM (isClassMethodDefined className (memberNameToFunName memberName))
@@ -522,11 +542,11 @@ tcExpr srcExpr =
 
     BinOpE s srcBinOp srcExpr1 srcExpr2 -> do
       let op = getBinOp srcBinOp
-      (tyExpr1, tyExpr2, resultType, resultPure) <- tcBinOp op srcExpr1 srcExpr2
+      (tyExpr1, tyExpr2, resultType, resultPure) <- tcBinOp insideClass op srcExpr1 srcExpr2
       return (BinOpE s srcBinOp tyExpr1 tyExpr2, resultType, resultPure)
 
     ParenE s srcSubExpr -> do
-      (tySubExpr, exprType, exprPure) <- tcExpr srcSubExpr
+      (tySubExpr, exprType, exprPure) <- tcExpr insideClass srcSubExpr
       return (ParenE s tySubExpr, exprType, exprPure)
 
 typeOfLiteral :: SrcLiteral -> TypeCheckM Type
@@ -557,11 +577,12 @@ tryGetClassName objType srcExpr =
 -- Binary operations type checking
 
 -- | Type checks a given binary operation. Takes operands.
+-- Takes a boolean indicator whether it is inside a class.
 -- Returns type checked operands, a type of the result and its purity indicator.
-tcBinOp :: BinOp -> SrcExpr -> SrcExpr -> TypeCheckM (TyExpr, TyExpr, Type, Bool)
-tcBinOp op srcExpr1 srcExpr2 = do
-  tyExpr1TypePure@(tyExpr1, _, _) <- tcExpr srcExpr1
-  tyExpr2TypePure@(tyExpr2, _, _) <- tcExpr srcExpr2
+tcBinOp :: Bool -> BinOp -> SrcExpr -> SrcExpr -> TypeCheckM (TyExpr, TyExpr, Type, Bool)
+tcBinOp insideClass op srcExpr1 srcExpr2 = do
+  tyExpr1TypePure@(tyExpr1, _, _) <- tcExpr insideClass srcExpr1
+  tyExpr2TypePure@(tyExpr2, _, _) <- tcExpr insideClass srcExpr2
   (resultType, resultPure) <- case op of
     App -> tcApp tyExpr1TypePure tyExpr2TypePure
   return (tyExpr1, tyExpr2, resultType, resultPure)

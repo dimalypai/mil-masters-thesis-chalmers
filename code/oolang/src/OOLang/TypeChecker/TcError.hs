@@ -50,6 +50,7 @@ data TcError =
   | AssignToFunction SrcSpan
   | AssignNotField Var ClassName SrcSpan
   | IncorrectAssignLeft SrcSpan
+  | OutsideFieldAccess SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -208,6 +209,10 @@ instance Pretty TcError where
   prPrn (IncorrectAssignLeft srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Incorrect left-hand side of the assignment. It can only be a variable or a class field")
+
+  prPrn (OutsideFieldAccess srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Class fields can not be accessed outside of the class and its subclasses")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

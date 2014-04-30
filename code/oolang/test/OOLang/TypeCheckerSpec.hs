@@ -310,6 +310,9 @@ spec =
       it "given a pure method with assignment to a class field" $
         failureCase "AssignFieldPure"
 
+      it "given a field access outside of the class" $
+        failureCase "FieldAccessOutside"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

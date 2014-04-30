@@ -1,0 +1,13 @@
+def main : Unit =>
+  # It is called `self` on purpose, since this could be used during the type
+  # checking and relying only on this would be incorrect
+  self : C = C.new;
+  # Note that field access is the left-hand side of the assignment, so we check
+  # that this is caught as well, since it is more indirect
+  self.field <- unit;
+end
+
+class C =>
+  field : Mutable Unit <- unit;
+end
+
