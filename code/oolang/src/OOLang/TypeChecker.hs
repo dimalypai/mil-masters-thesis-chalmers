@@ -225,7 +225,13 @@ traverseHierarchy className marked onStack = do
     then do
       let superClassName = fromJust mSuperClassName
       if Set.notMember superClassName marked'
-        then traverseHierarchy superClassName marked' onStack'  -- DFS on adjacent vertex
+        then do
+          (marked'', onStack'') <-
+            traverseHierarchy superClassName marked' onStack'  -- DFS on adjacent vertex
+          -- This was not a tail call, we need to remove the current class name
+          -- from the stack after the recursion is finished. See
+          -- `NoInheritanceCycleRegression` test case.
+          return (marked'', Set.delete className onStack'')
         else if Set.member superClassName onStack'
                then throwError InheritanceCycle
                else return (marked', onStack)  -- remove current class name from the stack

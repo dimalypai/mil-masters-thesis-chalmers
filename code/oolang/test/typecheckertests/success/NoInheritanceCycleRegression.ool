@@ -1,0 +1,18 @@
+# There was a bug in the DFS implementation. It showed up when the base class
+# (D) had a name which is lexicographically greater than others and there were
+# three classes in the hierarchy. There was a tail call in the DFS so it was
+# not cleaning up the stack of vertices after that.
+
+def main : Unit =>
+  unit;
+end
+
+class D =>
+end
+
+class B < D =>
+end
+
+class C < B =>
+end
+

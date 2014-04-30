@@ -40,6 +40,10 @@ spec =
       let baseName = "Classes"
       in successCase baseName
 
+    it "accepts type correct program (regression test for inheritance cycle detection)" $
+      let baseName = "NoInheritanceCycleRegression"
+      in successCase baseName
+
     -- Failure
     describe "gives an error message" $ do
       it "given a program without main function" $
