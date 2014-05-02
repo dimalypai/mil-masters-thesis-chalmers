@@ -97,8 +97,26 @@ codeGenBinOp App tyExpr1 tyExpr2 milFunType =
 
 -- | TODO
 codeGenDoBlock :: [TyStmt] -> MIL.Type -> MIL.Expr
+codeGenDoBlock [ExprS _ tyExpr] milFunType = codeGenExpr milFunType tyExpr
 codeGenDoBlock [ReturnS _ tyExpr] milFunType@(MIL.TyApp (MIL.TyMonad monadType) _) =
   MIL.ReturnE monadType (codeGenExpr milFunType tyExpr)
+codeGenDoBlock (tyStmt:tyStmts) milFunType =
+  case tyStmt of
+    ExprS _ tyExpr ->
+      MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.TyTypeCon (MIL.TypeName "Unit")))  -- TODO
+               (codeGenExpr milFunType tyExpr)
+               (codeGenDoBlock tyStmts milFunType)
+
+    BindS _ varBinder tyExpr ->
+      MIL.LetE (MIL.VarBinder ( varMil (getVar $ getBinderVar varBinder)
+                              , srcTypeToMilType $ getBinderType varBinder))
+               (codeGenExpr milFunType tyExpr)
+               (codeGenDoBlock tyStmts milFunType)
+
+    ReturnS _ tyExpr ->
+      MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.TyTypeCon (MIL.TypeName "Unit")))  -- TODO
+               (codeGenExpr milFunType tyExpr)
+               (codeGenDoBlock tyStmts milFunType)
 
 -- | Internal type representation transformation.
 -- The most interesting is the 'TyApp' transformation, because it deals with

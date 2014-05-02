@@ -1,5 +1,62 @@
 type Pair A B
   = MkPair A B;
 
-main : IO Unit = return [IO] unit;
+main : IO Unit =
+  let (_ : Unit) <- printString "Hello from main" in
+    let (i : Int) <- readInt in
+      let (_ : Unit) <- printInt i in
+        let (f : Float) <- readFloat in
+          let (_ : Unit) <- printFloat f in
+            let (_ : Unit) <- printInt (execState [Int] [Unit] stateManip 1) in
+              return [IO] evalState [Int] [Unit] stateManip 0;
+
+mkPair : forall A . forall B . A -> B -> Pair A B =
+  MkPair;
+
+lamFun : Int -> Unit -> Float =
+  \(x : Int) -> \(y : Unit) -> 1.0e-2;
+
+lamFun2 : Int -> Unit -> Float =
+  \(x : Int) -> \(y : Unit) -> 2.0e-2;
+
+lamApp1 : Unit -> Float =
+  lamFun 1;
+
+lamApp2 : Float =
+  lamApp1 unit;
+
+lamApp3 : Unit -> Float =
+  lamFun2 1;
+
+lamApp4 : Float =
+  lamFun2 1 unit;
+
+lamFun3 : Unit -> Unit =
+  (\(x : Unit -> Unit) -> x) (\(x : Unit) -> x);
+
+id : forall A . A -> A =
+  /\A . \(x : A) -> x;
+
+idInt : Int -> Int =
+  id [Int];
+
+idFun : (forall B . B -> B) -> (forall C . C -> C) =
+  id [forall A . A -> A];
+
+idFunApp : forall T . T -> T =
+  idFun id;
+
+typeAppsFun : Unit =
+  (/\A . /\B . \(f : A -> B) -> \(x : A) -> f x) [Int] [Unit] (\(x : Int) -> unit) 1;
+
+compose : forall A . forall B . forall C . (B -> C) -> (A -> B) -> A -> C =
+  /\A . /\B . /\C . \(f : B -> C) -> \(g : A -> B) -> \(x : A) -> f (g x);
+
+mkIntPair : Int -> Int -> Pair Int Int =
+  MkPair [Int] [Int];
+
+stateManip : State Int Unit =
+  let (i : Int) <- get [Int] in
+    let (_ : Unit) <- put [Int] i in
+      modify [Int] (\(s : Int) -> s);
 

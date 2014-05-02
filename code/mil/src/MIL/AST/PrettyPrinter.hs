@@ -39,7 +39,8 @@ instance Pretty ConDef where
 
 instance Pretty FunDef where
   prPrn (FunDef funName funType expr) =
-    prPrn funName <+> colon <+> prPrn funType <+> equals <+> prPrn expr <> semi
+    prPrn funName <+> colon <+> prPrn funType <+> equals $+$
+    nest indLvl (prPrn expr <> semi)
 
 -- See Note [Precedences and associativity]
 instance Pretty Expr where
@@ -50,7 +51,9 @@ instance Pretty Expr where
     prPrnParens (e1 `exprHasLowerPrecAssoc` e) e1 <+>
     prPrnParens (e2 `exprHasLowerPrec` e) e2
   prPrn (TypeLambdaE typeVar e) = text "/\\" <> prPrn typeVar <+> text "." <+> prPrn e
-  prPrn (TypeAppE e t) = prPrn e <+> brackets (prPrn t)
+  prPrn e@(TypeAppE e1 t) =
+    prPrnParens (e1 `exprHasLowerPrecAssoc` e) e1 <+>
+    brackets (prPrn t)
   prPrn (ConNameE conName) = prPrn conName
   prPrn e@(NewRefE e1) = text "new" <+> prPrnParens (e1 `exprHasLowerPrec` e) e1
   prPrn e@(DerefE e1) = text "!" <+> prPrnParens (e1 `exprHasLowerPrec` e) e1
@@ -59,12 +62,15 @@ instance Pretty Expr where
     text ":=" <+>
     prPrnParens (e2 `exprHasLowerPrecAssoc` e) e2
   prPrn (LetE varBind e1 e2) =
-    text "let" <+> prPrn varBind <+> text "<-" <+> prPrn e1 <+> text "in" <+> prPrn e2
+    text "let" <+> prPrn varBind <+> text "<-" <+> prPrn e1 <+> text "in" $+$
+    nest indLvl (prPrn e2)
   prPrn (ReturnE m e) = text "return" <+> brackets (prPrn m) <+> prPrn e
 
 instance Pretty Literal where
-  prPrn UnitLit    = text "unit"
-  prPrn (IntLit i) = int i
+  prPrn UnitLit       = text "unit"
+  prPrn (IntLit i)    = int i
+  prPrn (FloatLit f)  = double f
+  prPrn (StringLit s) = text (show s)
 
 -- See Note [Precedences and associativity]
 instance Pretty Type where
