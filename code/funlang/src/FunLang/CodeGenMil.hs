@@ -53,7 +53,7 @@ codeGenExpr (VarE _ varTy) = MIL.VarE $ MIL.VarBinder (var, milVarType)
         milVarType = typeMil $ getVarTyType varTy
 -- TODO
 codeGenExpr (DoE _ [ReturnS _ tyExpr]) =
-  MIL.ReturnE undefined (codeGenExpr tyExpr)
+  MIL.ReturnE (MIL.MTyMonad MIL.IO) (codeGenExpr tyExpr)
 
 literalMil :: Literal -> MIL.Literal
 literalMil UnitLit        = MIL.UnitLit
