@@ -59,6 +59,7 @@ test-suite spec
                    , hspec
                    , filepath
                    , containers
+                   , mil
   build-tools:       alex
                    , happy
   other-modules:     OOLang.Lexer
