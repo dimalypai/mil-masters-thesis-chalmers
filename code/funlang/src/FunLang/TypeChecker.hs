@@ -350,9 +350,3 @@ tcDoBlock (srcStmt:srcStmts) funMonad = do
       return (tyStmt : tyStmts, lastStmtType)
 tcDoBlock [] _ = error "do-block can't be empty"
 
--- | Check if the given type is the 'TyApp' with one of built-in monads.
--- Kind is *not* checked.
-isMonadType :: Type -> Bool
-isMonadType (TyApp typeName _) = typeName `Set.member` monadTypes
-isMonadType                  _ = False
-

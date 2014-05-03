@@ -5,6 +5,7 @@ import qualified Data.Set as Set
 
 import FunLang.AST
 import FunLang.AST.Helpers
+import FunLang.BuiltIn
 import FunLang.TypeChecker.TypeCheckM
 import FunLang.TypeChecker.TcError
 import FunLang.Utils
@@ -180,4 +181,10 @@ tvArg `substTypeIn` (TyApp typeName argTypes) =
 tvArg@(typeVar, _) `substTypeIn` forallT@(TyForAll tv t)
   | typeVar /= tv = TyForAll tv (tvArg `substTypeIn` t)
   | otherwise     = forallT
+
+-- | Check if the given type is the 'TyApp' with one of built-in monads.
+-- Kind is *not* checked.
+isMonadType :: Type -> Bool
+isMonadType (TyApp typeName _) = typeName `Set.member` monadTypes
+isMonadType                  _ = False
 
