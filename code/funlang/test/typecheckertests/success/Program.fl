@@ -81,3 +81,24 @@ stateManip = do
   modify [Int] (\s : Int . s);
 end;;
 
+type Tree A = Empty
+            | Leaf A
+            | Node A (Tree A) (Tree A)
+
+# Monomorphic case scrutinee
+caseExpr : Tree Int -> Int
+caseExpr = \tree : Tree Int .
+  case tree of
+    | Leaf (x : Int) => x
+    | Node 0 (left : Tree Int) _ => caseExpr left
+    | _ => 0
+  end;;
+
+# Polymorphic case scrutinee
+caseExprPoly : forall A . Tree A -> A
+caseExprPoly = /\A . \tree : Tree A .
+  case tree of
+    | Leaf (x : A) => x
+    | Node _ (left : Tree A) Empty => caseExprPoly [A] left
+    | Node _ (Node (x : A) _ _) (Node _ _ _) => x
+  end;;

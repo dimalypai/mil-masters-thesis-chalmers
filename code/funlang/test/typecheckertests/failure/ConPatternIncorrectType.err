@@ -1,0 +1,2 @@
+FunLang type checking error at ConPatternIncorrectType.fl:13,7-13,9:
+  The pattern needs to have type 'T', but it has type 'S'

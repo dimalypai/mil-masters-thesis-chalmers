@@ -42,6 +42,9 @@ instance SrcAnnotated (Expr v) where
   ann (BinOpE s _ _ _) = s
   ann (ParenE s _) = s
 
+instance SrcAnnotated (CaseAlt v) where
+  ann (CaseAlt s _ _) = s
+
 instance SrcAnnotated TypeS where
   ann (SrcTyCon typeName) = ann typeName
   ann (SrcTyApp s _ _) = s

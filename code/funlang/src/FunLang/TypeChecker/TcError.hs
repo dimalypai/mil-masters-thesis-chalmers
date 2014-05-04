@@ -40,6 +40,9 @@ data TcError =
   | NotMonadicType Type Type SrcSpan
   | IncorrectMonad Type Type SrcSpan
   | IncorrectExprType Type Type SrcSpan
+  | CaseAltIncorrectType Type Type SrcSpan
+  | PatternIncorrectType Type Type SrcSpan
+  | ConPatternIncorrectNumberOfFields Int Int SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -158,6 +161,21 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "The expression needs to have type" <+> quotes (prPrn expType) <>
       text ", but it has type" <+> quotes (prPrn actType))
+
+  prPrn (CaseAltIncorrectType expType actType srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "The case alternative expression needs to have type" <+> quotes (prPrn expType) <>
+      text ", but it has type" <+> quotes (prPrn actType))
+
+  prPrn (PatternIncorrectType expType actType srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "The pattern needs to have type" <+> quotes (prPrn expType) <>
+      text ", but it has type" <+> quotes (prPrn actType))
+
+  prPrn (ConPatternIncorrectNumberOfFields expNum actNum srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "The constructor pattern needs to have" <+> int expNum <+> text "argument(s)" <>
+      text ", but it was given" <+> int actNum)
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

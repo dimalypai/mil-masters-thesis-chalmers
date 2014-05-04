@@ -1,0 +1,11 @@
+main : IO Unit
+main = do
+  return unit;
+end;;
+
+caseExpr : Int
+caseExpr =
+  case 1 of
+    | 0.01 => "Hello"
+  end;;
+

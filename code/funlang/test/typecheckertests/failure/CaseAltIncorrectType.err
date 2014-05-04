@@ -1,0 +1,2 @@
+FunLang type checking error at CaseAltIncorrectType.fl:10,5-10,15:
+  The case alternative expression needs to have type 'Int', but it has type 'Float'

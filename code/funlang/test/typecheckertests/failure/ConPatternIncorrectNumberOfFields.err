@@ -1,0 +1,2 @@
+FunLang type checking error at ConPatternIncorrectNumberOfFields.fl:11,7-11,14:
+  The constructor pattern needs to have 2 argument(s), but it was given 1

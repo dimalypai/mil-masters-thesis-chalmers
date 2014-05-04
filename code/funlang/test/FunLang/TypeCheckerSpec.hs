@@ -162,6 +162,33 @@ spec =
       it "given a bind statement with expression with incorrect monad result type" $
         failureCase "BindExprIncorrectMonadResultType"
 
+      it "given a case alternative of incorrect type" $
+        failureCase "CaseAltIncorrectType"
+
+      it "given a literal pattern of incorrect type" $
+        failureCase "LitPatternIncorrectType"
+
+      it "given a variable pattern which shadows an existing function" $
+        failureCase "VarPatternShadowsFun"
+
+      it "given a nested variable pattern which shadows another variable" $
+        failureCase "VarPatternShadowsNested"
+
+      it "given a nested variable pattern of incorrect type" $
+        failureCase "VarPatternNestedIncorrectType"
+
+      it "given a constructor pattern with undefined constructor" $
+        failureCase "ConPatternUndefined"
+
+      it "given a constructor pattern for a scrutinee of function type" $
+        failureCase "ConPatternFunctionScrutinee"
+
+      it "given a constructor pattern with incorrect number of field patterns" $
+        failureCase "ConPatternIncorrectNumberOfFields"
+
+      it "given a constructor pattern of incorrect type" $
+        failureCase "ConPatternIncorrectType"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

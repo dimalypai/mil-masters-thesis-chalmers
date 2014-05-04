@@ -1,0 +1,2 @@
+FunLang type checking error at LitPatternIncorrectType.fl:9,7-9,10:
+  The pattern needs to have type 'Int', but it has type 'Float'

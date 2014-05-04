@@ -16,6 +16,7 @@ module FunLang.TypeChecker.TypeCheckM
   , addType
 
   , dcontiType
+  , dcontiTypeName
   , getDataConTypeInfo
   , isDataConDefined
   , addDataCon
@@ -26,6 +27,7 @@ module FunLang.TypeChecker.TypeCheckM
   , isFunctionDefined
   , addFunction
 
+  , LocalTypeEnv
   , emptyLocalTypeEnv
   , isVarBound
   , isTypeVarBound

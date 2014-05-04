@@ -16,6 +16,8 @@ module FunLang.TypeChecker
   ) where
 
 import qualified Data.Set as Set
+import Data.List (find)
+import Control.Applicative ((<$>))
 
 import FunLang.AST
 import FunLang.AST.Helpers
@@ -248,6 +250,11 @@ tcExpr srcExpr =
       dataConTypeInfo <- getDataConTypeInfo (getConName srcConName)
       return (ConNameE srcConName, dcontiType dataConTypeInfo)
 
+    CaseE s srcScrutExpr srcCaseAlts -> do
+      (tyScrutExpr, scrutType) <- tcExpr srcScrutExpr
+      (tyCaseAlts, caseExprType) <- tcCaseAlts scrutType srcCaseAlts
+      return (CaseE s tyScrutExpr tyCaseAlts, caseExprType)
+
     BinOpE s srcBinOp srcExpr1 srcExpr2 -> do
       let op = getBinOp srcBinOp
       (tyExpr1, tyExpr2, resultType) <- tcBinOp op srcExpr1 srcExpr2
@@ -258,6 +265,81 @@ tcExpr srcExpr =
       return (ParenE s tySubExpr, exprType)
 
     DoE {} -> error "do-block is illegal in this context"
+
+-- | Takes a scrurinee (an expression we are pattern matching on) type and a
+-- list of case alternatives (which is not empty). Returns a list of type
+-- checked case alternatives and a type of their bodies and so of the whole
+-- case expression (they all must agree).
+tcCaseAlts :: Type -> [SrcCaseAlt] -> TypeCheckM ([TyCaseAlt], Type)
+tcCaseAlts scrutType srcCaseAlts = do
+  (tyCaseAlts, caseAltTypes) <- unzip <$> mapM (tcCaseAlt scrutType) srcCaseAlts
+  -- There is at least one case alternative and all types should be the same
+  let caseExprType = head caseAltTypes
+  let mIncorrectTypeAlt = find (\(t,_) -> not (t `alphaEq` caseExprType)) (zip caseAltTypes tyCaseAlts)
+  case mIncorrectTypeAlt of
+    Just (incorrectAltType, caseAlt) ->
+      throwError $ CaseAltIncorrectType caseExprType incorrectAltType (getSrcSpan caseAlt)
+    Nothing -> return ()
+  return (tyCaseAlts, caseExprType)
+
+-- | Takes a scrutinee type and a case alternative, type checkes a pattern
+-- against the scrutinee type and type checks the alternative's body with
+-- variables bound by the pattern added to the local type environment.
+-- Returns the type checked case alternative and its body type.
+tcCaseAlt :: Type -> SrcCaseAlt -> TypeCheckM (TyCaseAlt, Type)
+tcCaseAlt scrutType (CaseAlt s pat srcExpr) = do
+  localTypeEnv <- tcPattern scrutType pat emptyLocalTypeEnv
+  (tyExpr, exprType) <- locallyWithEnv localTypeEnv (tcExpr srcExpr)
+  return (CaseAlt s pat tyExpr, exprType)
+
+-- | Takes a scrutinee type, a pattern and a local type environment. Type
+-- checks the pattern against the scrutinee type and returns the extended local
+-- type environment (with variables bound by the pattern).
+-- The most interesting case is 'ConP'.
+tcPattern :: Type -> SrcPattern -> LocalTypeEnv -> TypeCheckM LocalTypeEnv
+tcPattern scrutType pat localTypeEnv =
+  case pat of
+    LitP srcLit -> do
+      let litType = typeOfLiteral $ getLiteral srcLit
+      unless (litType `alphaEq` scrutType) $
+        throwError $ PatternIncorrectType scrutType litType (getSrcSpan srcLit)
+      return localTypeEnv
+
+    VarP varBinder -> do
+      let var = getVar (getBinderVar varBinder)
+      isBound <- isVarBound var
+      -- it is important to check in both places, since localTypeEnv is not
+      -- queried by 'isVarBound', see `VarPatternShadowsNested` test case
+      when (isBound || isVarInLocalEnv var localTypeEnv) $
+        throwError $ VarShadowing (getBinderVar varBinder)
+      varType <- srcTypeToType (getBinderType varBinder)
+      unless (varType `alphaEq` scrutType) $
+        throwError $ PatternIncorrectType scrutType varType (getSrcSpan varBinder)
+      return $ addLocalVar var varType localTypeEnv
+
+    ConP s srcConName subPats -> do
+      let conName = getConName srcConName
+      unlessM (isDataConDefined conName) $
+        throwError $ ConNotDefined srcConName
+      dataConTypeInfo <- getDataConTypeInfo conName
+      let conType = dcontiType dataConTypeInfo
+          conTypeName = dcontiTypeName dataConTypeInfo
+      case scrutType of
+        TyApp scrutTypeName scrutTypeArgs -> do
+          when (conTypeName /= scrutTypeName) $
+            throwError $ PatternIncorrectType scrutType conType s
+          let conFieldTypes = conFieldTypesFromType conType scrutTypeArgs
+          when (length subPats /= length conFieldTypes) $
+            throwError $ ConPatternIncorrectNumberOfFields (length conFieldTypes) (length subPats) s
+          foldM (\localTyEnv (p, fieldType) -> tcPattern fieldType p localTyEnv)
+            localTypeEnv (zip subPats conFieldTypes)
+        -- If the scrutinee has a type other than a type application, then this
+        -- pattern can not be type correct. Data constructors have a
+        -- monomorphic fully applied type constructor type.
+        _ -> throwError $ PatternIncorrectType scrutType conType s
+
+    DefaultP _ -> return localTypeEnv
+    ParenP _ pat' -> tcPattern scrutType pat' localTypeEnv
 
 -- Binary operations type checking
 

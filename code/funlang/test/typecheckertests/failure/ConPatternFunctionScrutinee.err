@@ -1,0 +1,2 @@
+FunLang type checking error at ConPatternFunctionScrutinee.fl:11,7-11,16:
+  The pattern needs to have type 'Int -> Int', but it has type 'forall A . forall B . A -> B -> Pair A B'

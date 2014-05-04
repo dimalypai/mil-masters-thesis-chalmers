@@ -136,6 +136,19 @@ tyArrowFromList resultType = foldr (\t acc -> TyArrow t acc) resultType
 tyForAllFromList :: Type -> [TypeVar] -> Type
 tyForAllFromList bodyType = foldr (\tv acc -> TyForAll tv acc) bodyType
 
+-- | Given a data constructor function type, recovers its field types.
+-- Takes a list of type arguments to the type constructor (which is fully
+-- applied). It is used for substitution when coming across forall types.
+conFieldTypesFromType :: Type -> [Type] -> [Type]
+conFieldTypesFromType t typeArgs = init $ conFieldTypesFromType' t typeArgs
+  where conFieldTypesFromType' (TyForAll typeVar forallBodyType) (tyArg:tyArgs) =
+          conFieldTypesFromType' ((typeVar, tyArg) `substTypeIn` forallBodyType) tyArgs
+        conFieldTypesFromType' (TyArrow t1 t2)  [] =
+          conFieldTypesFromType' t1 [] ++ conFieldTypesFromType' t2 []
+        conFieldTypesFromType' tyApp@(TyApp {}) [] = [tyApp]
+        conFieldTypesFromType' tyVar@(TyVar {}) [] = [tyVar]
+        conFieldTypesFromType'          _ _ = error "conFieldTypesFromType: kind checking must have gone wrong"
+
 -- | Alpha equivalence of types.
 -- Decides if two types are equivalent up to change of type variables bound by
 -- forall.
