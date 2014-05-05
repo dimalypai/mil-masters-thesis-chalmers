@@ -255,3 +255,11 @@ Meeting 2014-04-28
   ordering of State and Exception
 * FunLang: try-catch
 
+General thoughts. Week 13
+=========================
+
+* OO-polymorphism in MIL. Passing subclasses problem, self parameter. Maybe
+  introduce record/tuples with subtyping instead of going through ADTs.
+* FunLang monad hierarchy: IO subsumes State, but what is the type of it?
+  Maybe, have built-in StateT?
+

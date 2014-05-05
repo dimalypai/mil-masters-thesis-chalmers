@@ -85,3 +85,6 @@ Don't allow mutually recursive field declarations (in init expressions).
 Constructors question. For now, only one parameterless constructor or just one
 constructor of any type?
 
+References impurity together with field initialisation purity means that we can
+have only Ref Maybe class fields.
+
