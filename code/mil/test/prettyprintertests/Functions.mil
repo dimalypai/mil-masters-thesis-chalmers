@@ -1,3 +1,5 @@
-fun : Unit = unit;
+fun : Unit =
+  unit;
 
-fun2 : Int = 2;
+fun2 : Int =
+  2;
