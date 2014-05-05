@@ -1,0 +1,2 @@
+OOLang type checking error at RefDeclMutInitOp.ool:2,3-2,23:
+  Incorrect usage of '<-' operator. It can be used only with Mutable variables/fields

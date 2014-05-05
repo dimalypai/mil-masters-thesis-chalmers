@@ -1,0 +1,2 @@
+OOLang type checking error at NestedNewRef.ool:2,7-2,20:
+  Nested references can not be created

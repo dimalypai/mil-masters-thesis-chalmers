@@ -1,0 +1,2 @@
+OOLang type checking error at AssignRefMutableVar.ool:3,3-3,9:
+  Incorrect usage of ':=' operator. It can be used only with Ref variables/fields

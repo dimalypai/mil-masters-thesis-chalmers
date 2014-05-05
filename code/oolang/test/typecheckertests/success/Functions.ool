@@ -6,6 +6,9 @@ def main : Unit =>
   printInt i;
   f : Float = readFloat;
   printFloat f;
+  refFun (ref 1);
+  paramRefPure (!(ref 2));
+  unit;
 end
 
 class A => end
@@ -102,6 +105,14 @@ def mutableImpureDecl : Unit =>
   x : Mutable Unit <- main;
 end
 
+def refPureDecl : Pure Unit =>
+  x : Ref (Maybe Int);
+end
+
+def refImpureDecl : Unit =>
+  x : Ref Int = ref 1;
+end
+
 # Mix of mutable and immutable declarations
 def mutableImmutableDecl : Pure Unit =>
   x : Int = 1;
@@ -122,9 +133,16 @@ end
 def impureAssign : Unit =>
   x : Mutable Unit <- unit;
   x <- main;
+  y : Ref Int = ref 1;
+  y := 2;
 end
 
 def nothingLit : Pure (Maybe Unit) =>
   nothing [Maybe Unit];
+end
+
+def refFun : {r : Ref Int} -> Ref Unit =>
+  x : Int = !r;
+  ref unit;
 end
 

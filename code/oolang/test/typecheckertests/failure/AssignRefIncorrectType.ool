@@ -1,0 +1,5 @@
+def main : Unit =>
+  x : Ref Int = ref 1;
+  x := 0.01;
+end
+

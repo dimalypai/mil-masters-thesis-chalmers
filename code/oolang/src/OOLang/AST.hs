@@ -256,8 +256,8 @@ type SrcAssignOp = AssignOpS SrcSpan
 --
 -- * Mutable (<-) is for Mutable.
 --
--- * Ref (:=) is used for Ref (references).
-data InitOp = InitEqual | InitMut | InitRef
+-- There is no init operator for references, since they use (=).
+data InitOp = InitEqual | InitMut
   deriving Show
 
 type InitOpS s = (InitOp, s)

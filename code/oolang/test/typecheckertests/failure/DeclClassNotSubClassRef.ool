@@ -1,0 +1,8 @@
+def main : Unit =>
+  x : Ref A = ref B.new;
+end
+
+class A => end
+
+class B => end
+

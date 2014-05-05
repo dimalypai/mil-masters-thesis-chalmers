@@ -36,6 +36,7 @@ data TcError =
   | AssignIncorrectType TyExpr Type Type
   | IncorrectImmutableOpUsage SrcSpan
   | IncorrectMutableOpUsage SrcSpan
+  | IncorrectRefOpUsage SrcSpan
   | NonMaybeVarNotInit Var SrcSpan
   | IncorrectNothingType SrcType
   | SelfMemberName SrcSpan
@@ -51,6 +52,8 @@ data TcError =
   | AssignNotField Var ClassName SrcSpan
   | IncorrectAssignLeft SrcSpan
   | OutsideFieldAccess SrcSpan
+  | NestedRefCreation SrcSpan
+  | NonRefDeref SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -145,11 +148,15 @@ instance Pretty TcError where
 
   prPrn (IncorrectImmutableOpUsage srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
-    nest indLvl (text "Incorrect usage of '=' operator. It can be used only with immutable (default) variables/fields")
+    nest indLvl (text "Incorrect usage of '=' operator. It can be used only with immutable (default) and Ref variables/fields")
 
   prPrn (IncorrectMutableOpUsage srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Incorrect usage of '<-' operator. It can be used only with Mutable variables/fields")
+
+  prPrn (IncorrectRefOpUsage srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Incorrect usage of ':=' operator. It can be used only with Ref variables/fields")
 
   prPrn (NonMaybeVarNotInit var srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
@@ -213,6 +220,14 @@ instance Pretty TcError where
   prPrn (OutsideFieldAccess srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Class fields can not be accessed outside of the class and its subclasses")
+
+  prPrn (NestedRefCreation srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Nested references can not be created")
+
+  prPrn (NonRefDeref srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Incorrect usage of '!' operator. It can be used only with Ref variables/fields")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

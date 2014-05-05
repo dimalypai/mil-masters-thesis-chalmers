@@ -1,0 +1,2 @@
+OOLang type checking error at DeclClassNotSubClassRef.ool:2,13-2,23:
+  Incorrect type of initialisation expression. The expected type is 'Ref A', but it has type 'Ref B'

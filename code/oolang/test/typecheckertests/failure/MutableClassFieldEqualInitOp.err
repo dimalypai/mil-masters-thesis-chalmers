@@ -1,2 +1,2 @@
 OOLang type checking error at MutableClassFieldEqualInitOp.ool:4,3-4,26:
-  Incorrect usage of '=' operator. It can be used only with immutable (default) variables/fields
+  Incorrect usage of '=' operator. It can be used only with immutable (default) and Ref variables/fields

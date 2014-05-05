@@ -1,0 +1,3 @@
+def main : Unit =>
+  x : Ref Int = 1;
+end

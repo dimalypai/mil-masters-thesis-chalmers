@@ -3,7 +3,7 @@ def fun : Unit =>
   y : Int = 1;
   z : Mutable Int <- 1;
   x <- 2;
-  r : Ref Int := ref 1;
+  r : Ref Int = ref 1;
   r := 2;
 end
 

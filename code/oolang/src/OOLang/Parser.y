@@ -271,7 +271,6 @@ init : initop expr {% withFileName $ \fileName ->
 initop :: { SrcInitOp }
 initop : '=' {% withFileName $ \fileName -> (InitEqual, mkTokSrcSpan $1 fileName) }
        | '<-' {% withFileName $ \fileName -> (InitMut, mkTokSrcSpan $1 fileName) }
-       | ':=' {% withFileName $ \fileName -> (InitRef, mkTokSrcSpan $1 fileName) }
 
 -- For simplicity we parse much more generally than it is allowed by the language.
 type :: { SrcType }

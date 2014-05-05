@@ -88,6 +88,9 @@ spec =
       it "given a function with Pure return type and impure statement (local function)" $
         failureCase "PureFunImpureStmtLocal"
 
+      it "given a function with Pure return type and impure statement (dereferencing)" $
+        failureCase "PureFunImpureStmtDeref"
+
       it "given an application with left-hand side which is not a function" $
         failureCase "AppNotFunction"
 
@@ -154,13 +157,17 @@ spec =
       it "given a declaration with incorrect init type" $
         failureCase "DeclInitIncorrectType"
 
+      it "given a declaration with incorrect init type (Ref)" $
+        failureCase "DeclInitIncorrectTypeRef"
+
       it "given a declaration of immutable variable with mutable init operator" $
         failureCase "ImmutableDeclMutInitOp"
 
       it "given a declaration of mutable variable with immutable init operator" $
         failureCase "MutableDeclEqualInitOp"
 
-      -- TODO: add tests for references
+      it "given a declaration of reference variable with mutable init operator" $
+        failureCase "RefDeclMutInitOp"
 
       it "given a declaration as a last statement of integer returning function" $
         failureCase "DeclIntFunReturn"
@@ -168,14 +175,23 @@ spec =
       it "given an impure declaration inside a Pure function" $
         failureCase "PureFunImpureDecl"
 
+      it "given an impure declaration inside a Pure function (Ref)" $
+        failureCase "PureFunImpureDeclRef"
+
       it "given a mutable variable assignment to an immutable variable" $
         failureCase "AssignMutImmutableVar"
+
+      it "given a reference variable assignment to a mutable variable" $
+        failureCase "AssignRefMutableVar"
 
       it "given a mutable variable assignment with incorrect type" $
         failureCase "AssignMutIncorrectType"
 
       it "given an impure mutable variable assignment inside a Pure function" $
         failureCase "PureFunImpureAssignMut"
+
+      it "given an impure reference variable assignment inside a Pure function" $
+        failureCase "PureFunImpureAssignRef"
 
       it "given a mutable variable assignment as a last statement of integer returning function" $
         failureCase "AssignIntFunReturn"
@@ -252,6 +268,9 @@ spec =
       it "given a mutable class field with immutable init operator" $
         failureCase "MutableClassFieldEqualInitOp"
 
+      it "given a reference class field with mutable init operator" $
+        failureCase "RefClassFieldMutInitOp"
+
       it "given an assignment to `self`" $
         failureCase "ClassSelfAssign"
 
@@ -260,8 +279,6 @@ spec =
 
       it "given a `super` reference from a base class" $
         failureCase "BaseSuperRef"
-
-      -- TODO: add tests for references
 
       it "given a member access to an undefined class member" $
         failureCase "MemberAccessUndefined"
@@ -319,6 +336,24 @@ spec =
 
       it "given a declaration with a class not from hierarchy (subtyping)" $
         failureCase "DeclClassNotSubClass"
+
+      it "given a declaration with a class not from hierarchy (subtyping, Ref)" $
+        failureCase "DeclClassNotSubClassRef"
+
+      it "given a nested reference creation" $
+        failureCase "NestedNewRef"
+
+      it "given a dereference operation with non-Ref type" $
+        failureCase "DerefNonRef"
+
+      it "given a reference assignment with incorrect type" $
+        failureCase "AssignRefIncorrectType"
+
+      it "given a reference assignment with incorrect type (nested ref)" $
+        failureCase "AssignRefIncorrectTypeRef"
+
+      it "given a usage of not-dereferenced variable (member access)" $
+        failureCase "NotDerefVarUsage"
 
 -- Infrastructure
 

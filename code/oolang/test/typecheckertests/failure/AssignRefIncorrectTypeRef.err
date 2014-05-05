@@ -1,0 +1,2 @@
+OOLang type checking error at AssignRefIncorrectTypeRef.ool:3,8-3,12:
+  Incorrect type of assignable expression. The expected type is 'Int', but it has type 'Ref Int'

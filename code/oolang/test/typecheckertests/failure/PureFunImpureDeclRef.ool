@@ -1,0 +1,6 @@
+def main : Unit => unit; end
+
+def fun : Pure Unit =>
+  x : Ref Int = ref 1;
+end
+

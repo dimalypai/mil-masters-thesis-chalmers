@@ -1,0 +1,2 @@
+OOLang type checking error at PureFunImpureStmtDeref.ool:4,3-4,5:
+  Function/method 'fun' has Pure return type, but it contains an impure statement

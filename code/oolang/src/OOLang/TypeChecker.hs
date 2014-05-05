@@ -18,7 +18,6 @@ module OOLang.TypeChecker
 import qualified Data.Set as Set
 import Data.Maybe (isJust, fromJust)
 import Data.List (find)
-import Control.Monad (void)
 import Control.Applicative ((<$>))
 
 import OOLang.AST
@@ -291,7 +290,7 @@ tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit) _) = do
         let initOp = getInitOp $ getInitOpS srcInit
         case initOp of
           InitEqual ->
-            unless (isImmutableType fieldType) $
+            unless (isImmutableType fieldType || isRefType fieldType) $
               throwError $ IncorrectImmutableOpUsage fs
           InitMut ->
             unless (isMutableType fieldType) $
@@ -372,7 +371,7 @@ tcFunDef insideClass (FunDef s srcFunName srcFunType srcStmts) = do
 -- special treatment of assignments to fields outside of the class (not via
 -- `self` or `super`), since all class fields are not visible from the outside
 -- of the class and its subclasses.
--- TODO: Ref assignment purity.
+-- Assignments to Refs are considered impure.
 
 -- | Statement type checking.
 -- Takes a boolean indicator whether it is inside a class.
@@ -390,6 +389,7 @@ tcStmt insideClass srcStmt =
 
     -- See Note [Assignment purity]
     AssignS s srcAssignOp srcExprLeft srcExprRight -> do
+      let assignOp = getAssignOp srcAssignOp
       (tyExprLeft, exprLeftType, assignPurity) <-
         case srcExprLeft of
           VarE varS var -> do
@@ -398,7 +398,7 @@ tcStmt insideClass srcStmt =
             whenM (isFunctionDefined $ varToFunName var) $
               throwError $ AssignToFunction varS
             varType <- getVarType var
-            return (VarE varS (VarTy (var, varType)), varType, True)
+            return (VarE varS (VarTy (var, varType)), varType, not $ isAssignRef assignOp)
           MemberAccessE ms srcObjExpr srcMemberName -> do
             -- Check the whole member access expression: whether it is defined,
             -- and most importantly - for class field access check
@@ -416,20 +416,23 @@ tcStmt insideClass srcStmt =
             return (MemberAccessE ms tyObjExpr srcMemberName, fieldType, False)
           _ -> throwError $ IncorrectAssignLeft (getSrcSpan srcExprLeft)
       (tyExprRight, exprRightType, exprRightPure) <- tcExpr insideClass srcExprRight
-      case getAssignOp srcAssignOp of
+      case assignOp of
         AssignMut -> do
           unless (isMutableType exprLeftType) $
             throwError $ IncorrectMutableOpUsage (getSrcSpan srcStmt)
           unlessM (exprRightType `isSubTypeOf` exprLeftType) $
             throwError $ AssignIncorrectType tyExprRight (getUnderType exprLeftType) exprRightType
+        AssignRef ->
+          case exprLeftType of
+            TyRef exprLeftUnderType ->
+              unlessM (exprRightType `isSubTypeOf` exprLeftUnderType) $
+                throwError $ AssignIncorrectType tyExprRight exprLeftUnderType exprRightType
+            _ -> throwError $ IncorrectRefOpUsage (getSrcSpan srcStmt)
       return (AssignS s srcAssignOp tyExprLeft tyExprRight, TyUnit, assignPurity && exprRightPure)
 
 -- | Note [Purity of declarations]:
 --
--- Conservatively, mark reference declaration with initialisation expression as
--- impure (they can be passed somewhere out of the local control), mutable and
--- immutable variable declarations (since they are handled by value) and
--- reference declarations without initialisation - as pure.
+-- Mark declarations without initialisation as pure.
 -- In order for declaration to be pure, its initialisation expression must be
 -- pure.
 
@@ -451,7 +454,7 @@ tcDecl insideClass (Decl s varBinder mSrcInit) srcDeclStmt = do
       let initOp = getInitOp $ getInitOpS srcInit
       case initOp of
         InitEqual ->
-          unless (isImmutableType varType) $
+          unless (isImmutableType varType || isRefType varType) $
             throwError $ IncorrectImmutableOpUsage (getSrcSpan srcDeclStmt)
         InitMut ->
           unless (isMutableType varType) $
@@ -472,11 +475,7 @@ tcInit :: Bool -> SrcInit -> TypeCheckM (TyInit, Type, Bool)
 tcInit insideClass (Init s srcInitOp srcExpr) = do
   (tyExpr, exprType, exprPure) <- tcExpr insideClass srcExpr
   -- See Note [Purity of declarations]
-  let initOp = getInitOp srcInitOp
-  let initPure = case initOp of
-                   InitRef -> False
-                   _       -> True
-  return $ (Init s srcInitOp tyExpr, exprType, initPure && exprPure)
+  return $ (Init s srcInitOp tyExpr, exprType, exprPure)
 
 -- | Note [Purity of function and value types]:
 --
@@ -545,6 +544,21 @@ tcExpr insideClass srcExpr =
       -- (there is just the default one). Purity comes from the fact that all
       -- field initialisers are pure.
       return (ClassAccessE s srcClassName srcMethodName, TyClass className, True)
+
+    NewRefE s srcRefExpr -> do
+      (tyRefExpr, refUnderType, _) <- tcExpr insideClass srcRefExpr
+      when (isRefType refUnderType) $
+        throwError $ NestedRefCreation s
+      -- Conservatively, mark reference creation as impure.
+      return (NewRefE s tyRefExpr, TyRef refUnderType, False)
+
+    DerefE s srcRefExpr -> do
+      (tyRefExpr, refType, _) <- tcExpr insideClass srcRefExpr
+      case refType of
+        TyRef refUnderType ->
+          -- Conservatively, mark dereferencing as impure.
+          return (DerefE s tyRefExpr, refUnderType, False)
+        _ -> throwError $ NonRefDeref s
 
     BinOpE s srcBinOp srcExpr1 srcExpr2 -> do
       let op = getBinOp srcBinOp

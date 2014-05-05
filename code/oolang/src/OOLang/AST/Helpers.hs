@@ -43,6 +43,12 @@ partitionClassMembers = foldr selectClassMember ([], [])
 setVarBinderAnn :: VarBinder s -> s -> VarBinder s
 setVarBinderAnn (VarBinder _ v t) s = VarBinder s v t
 
+-- * Predicates
+
+isAssignRef :: AssignOp -> Bool
+isAssignRef AssignRef {} = True
+isAssignRef            _ = False
+
 -- * Synonyms
 
 getClassName :: ClassNameS s -> ClassName
@@ -117,6 +123,10 @@ isImmutableType :: Type -> Bool
 isImmutableType TyMutable {} = False
 isImmutableType TyRef     {} = False
 isImmutableType            _ = True
+
+isRefType :: Type -> Bool
+isRefType TyRef {} = True
+isRefType        _ = False
 
 isMaybeType :: Type -> Bool
 isMaybeType TyMaybe {} = True

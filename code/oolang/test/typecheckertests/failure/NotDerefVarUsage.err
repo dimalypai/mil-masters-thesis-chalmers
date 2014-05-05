@@ -1,0 +1,2 @@
+OOLang type checking error at NotDerefVarUsage.ool:3,3-3,9:
+  The expression has to be an object (have a class type), but it has type 'Ref C'
