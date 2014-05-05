@@ -31,6 +31,7 @@ instance SrcAnnotated (Expr v) where
   ann (MemberAccessE s _ _) = s
   ann (MemberAccessMaybeE s _ _) = s
   ann (ClassAccessE s _ _) = s
+  ann (NewRefE s _) = s
   ann (DerefE s _) = s
   ann (BinOpE s _ _ _) = s
   ann (JustE s _) = s

@@ -167,9 +167,9 @@ spec =
       let baseName = "DeclAssignStatements"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 6 3)
+          ast = Program (srcSp 1 1 8 3)
                   []
-                  [FunDef (srcSp 1 1 6 3)
+                  [FunDef (srcSp 1 1 8 3)
                      (FunName "fun", srcSp 1 5 1 7)
                      (FunType (srcSp 1 11 1 14)
                         []
@@ -201,7 +201,21 @@ spec =
                      , AssignS (srcSp 5 3 5 9)
                          (AssignMut, srcSp 5 5 5 6)
                          (VarE (srcSp 5 3 5 3) (Var "x"))
-                         (LitE (IntLit (srcSp 5 8 5 8) 2))]]
+                         (LitE (IntLit (srcSp 5 8 5 8) 2))
+                     , DeclS (srcSp 6 3 6 23)
+                         (Decl (srcSp 6 3 6 22)
+                            (VarBinder (srcSp 6 3 6 13)
+                               (Var "r", srcSp 6 3 6 3)
+                               (SrcTyRef (srcSp 6 7 6 13)
+                                  (SrcTyInt $ srcSp 6 11 6 13)))
+                            (Just $ Init (srcSp 6 15 6 22)
+                               (InitRef, srcSp 6 15 6 16)
+                               (NewRefE (srcSp 6 18 6 22)
+                                  (LitE (IntLit (srcSp 6 22 6 22) 1)))))
+                     , AssignS (srcSp 7 3 7 9)
+                         (AssignRef, srcSp 7 5 7 6)
+                         (VarE (srcSp 7 3 7 3) (Var "r"))
+                         (LitE (IntLit (srcSp 7 8 7 8) 2))]]
       in successCase baseName ast
 
     it "parses control flow statements" $
@@ -229,9 +243,9 @@ spec =
       let baseName = "Expressions"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 4 3)
+          ast = Program (srcSp 1 1 5 3)
                   []
-                  [FunDef (srcSp 1 1 4 3)
+                  [FunDef (srcSp 1 1 5 3)
                      (FunName "fun", srcSp 1 5 1 7)
                      (FunType (srcSp 1 11 1 14)
                         []
@@ -262,7 +276,10 @@ spec =
                          (JustE (srcSp 3 3 3 27)
                             (LitE (NothingLit (srcSp 3 8 3 27)
                                (SrcTyMaybe (srcSp 3 17 3 26)
-                                  (SrcTyUnit $ srcSp 3 23 3 26)))))]]
+                                  (SrcTyUnit $ srcSp 3 23 3 26)))))
+                     , ExprS (srcSp 4 3 4 8)
+                         (NewRefE (srcSp 4 3 4 7)
+                            (LitE (IntLit (srcSp 4 7 4 7) 1)))]]
       in successCase baseName ast
 
     it "parses class expressions" $

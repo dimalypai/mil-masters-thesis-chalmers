@@ -182,6 +182,9 @@ expr
   | just atomexpr {% withFileName $ \fileName ->
                        JustE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
                              $2 }
+  | ref atomexpr {% withFileName $ \fileName ->
+                      NewRefE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $2] fileName)
+                              $2 }
   | expr '??' expr {% binOp $1 $2 $3 NothingCoalesce }
   | expr '+' expr  {% binOp $1 $2 $3 Add }
   | expr '-' expr  {% binOp $1 $2 $3 Sub }
@@ -251,6 +254,7 @@ literal
 
 assignop :: { SrcAssignOp }
 assignop : '<-' {% withFileName $ \fileName -> (AssignMut, mkTokSrcSpan $1 fileName) }
+         | ':=' {% withFileName $ \fileName -> (AssignRef, mkTokSrcSpan $1 fileName) }
 
 decl :: { SrcDeclaration }
 decl
@@ -267,6 +271,7 @@ init : initop expr {% withFileName $ \fileName ->
 initop :: { SrcInitOp }
 initop : '=' {% withFileName $ \fileName -> (InitEqual, mkTokSrcSpan $1 fileName) }
        | '<-' {% withFileName $ \fileName -> (InitMut, mkTokSrcSpan $1 fileName) }
+       | ':=' {% withFileName $ \fileName -> (InitRef, mkTokSrcSpan $1 fileName) }
 
 -- For simplicity we parse much more generally than it is allowed by the language.
 type :: { SrcType }
