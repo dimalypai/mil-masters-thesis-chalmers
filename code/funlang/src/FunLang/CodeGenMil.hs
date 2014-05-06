@@ -77,7 +77,7 @@ codeGenExpr milFunType srcExpr =
     TypeAppE _ tyAppExpr srcArgType ->
       MIL.TypeAppE (codeGenExpr milFunType tyAppExpr) (srcTypeToMilType srcArgType)
 
-    ConNameE srcConName -> MIL.ConNameE $ conNameMil (getConName srcConName)
+    ConNameE srcConName -> MIL.ConNameE (conNameMil $ getConName srcConName) undefined  -- TODO
 
     BinOpE _ srcBinOp tyExpr1 tyExpr2 -> codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 milFunType
 
@@ -151,7 +151,7 @@ srcTypeToMilType (SrcTyCon srcTypeName) =
   case getTypeName srcTypeName of
     TypeName "IO" -> MIL.TyMonad $ MIL.MTyMonad MIL.IO
     TypeName "State" -> error "srcTypeToMilType: State should have been handled earlier"
-    typeName -> MIL.TyTypeCon $ typeNameMil typeName
+    typeName -> MIL.TyTypeCon $ typeNameMil typeName  -- TODO: type variables
 srcTypeToMilType (SrcTyApp _ st1 st2) =
   case st1 of
     SrcTyCon (getTypeName -> TypeName "State") ->
