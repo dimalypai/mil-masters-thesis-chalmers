@@ -71,13 +71,15 @@ data FunDef = FunDef FunName Type Expr
 -- recursive definitions.
 --
 -- 'CaseE' must have exhaustive patterns.
+--
+-- Constructors and variables (functions) are annotated with their types.
 data Expr = LitE Literal
           | VarE VarBinder
           | LambdaE VarBinder Expr
           | AppE Expr Expr
           | TypeLambdaE TypeVar Expr
           | TypeAppE Expr Type
-          | ConNameE ConName
+          | ConNameE ConName Type
           | NewRefE Expr
           | DerefE Expr
           | AssignRefE Expr Expr
@@ -123,13 +125,13 @@ data Type = TyTypeCon TypeName
           | TyForAll TypeVar Type
           | TyApp Type Type
           | TyMonad TypeM
-  deriving Show
+  deriving (Show, Eq)
 
 -- | Monadic type. It is either a single monad or a monad on top of another
 -- 'TypeM'. This represents a monad transformers stack, basically.
 data TypeM = MTyMonad MilMonad
            | MTyMonadCons MilMonad TypeM
-  deriving Show
+  deriving (Show, Eq)
 
 -- | "Type of the type".
 -- This representation is more general that we allow in the language. Also note,
@@ -139,25 +141,37 @@ data TypeM = MTyMonad MilMonad
 -- (kind) checking.
 data Kind = StarK
           | Kind :=>: Kind
-  deriving Show
+  deriving (Show, Eq)
 
 newtype VarBinder = VarBinder (Var, Type)
   deriving Show
 
+getBinderVar :: VarBinder -> Var
+getBinderVar (VarBinder (v,_)) = v
+
+getBinderType :: VarBinder -> Type
+getBinderType (VarBinder (_,t)) = t
+
 newtype Var = Var String
-  deriving Show
+  deriving (Show, Eq, Ord)
+
+varToFunName :: Var -> FunName
+varToFunName (Var varName) = FunName varName
 
 newtype TypeVar = TypeVar String
-  deriving Show
+  deriving (Show, Eq, Ord)
+
+typeVarToTypeName :: TypeVar -> TypeName
+typeVarToTypeName (TypeVar typeVarName) = TypeName typeVarName
 
 newtype TypeName = TypeName String
-  deriving Show
+  deriving (Show, Eq, Ord)
 
 newtype ConName = ConName String
-  deriving Show
+  deriving (Show, Eq, Ord)
 
 newtype FunName = FunName String
-  deriving Show
+  deriving (Show, Eq, Ord)
 
 -- | Built-in monads (effects).
 data MilMonad = Id
@@ -165,7 +179,7 @@ data MilMonad = Id
               | Error Type
               | Lift
               | IO
-  deriving Show
+  deriving (Show, Eq)
 
 -- | Type constructors and type variables are atomic types.
 isAtomicType :: Type -> Bool
@@ -229,11 +243,17 @@ typeHasLowerPrec t1 t2 = getTypePrec t1 <= getTypePrec t2
 typeHasLowerPrecAssoc :: Type -> Type -> Bool
 typeHasLowerPrecAssoc t1 t2 = getTypePrec t1 < getTypePrec t2
 
--- Smart constructors
+-- * Smart constructors
 
 mkTypeVar :: String -> Type
 mkTypeVar = TyVar . TypeVar
 
 mkSimpleType :: String -> Type
 mkSimpleType typeName = TyTypeCon (TypeName typeName)
+
+-- | Constructs a kind from an integer that denotes the number of parameters of
+-- a type constructor
+mkKind :: Int -> Kind
+mkKind 0 = StarK
+mkKind n = StarK :=>: mkKind (n - 1)
 

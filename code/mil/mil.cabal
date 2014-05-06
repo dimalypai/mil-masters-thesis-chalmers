@@ -18,10 +18,18 @@ library
                        MIL.Lexer
                        MIL.Parser
                        MIL.PrettyPrinter
+                       MIL.TypeChecker
+  other-modules:       MIL.BuiltIn
+                       MIL.TypeChecker.Helpers
+                       MIL.TypeChecker.TcError
+                       MIL.TypeChecker.TypeCheckM
+                       MIL.Utils
   -- other-extensions:    
   build-depends:       base >= 4.6 && < 4.7
                      , array
                      , pretty
+                     , mtl
+                     , containers
   hs-source-dirs:      src
   build-tools:         alex
                      , happy

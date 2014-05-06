@@ -54,7 +54,7 @@ instance Pretty Expr where
   prPrn e@(TypeAppE e1 t) =
     prPrnParens (e1 `exprHasLowerPrecAssoc` e) e1 <+>
     brackets (prPrn t)
-  prPrn (ConNameE conName) = prPrn conName
+  prPrn (ConNameE conName _) = prPrn conName
   prPrn e@(NewRefE e1) = text "new" <+> prPrnParens (e1 `exprHasLowerPrec` e) e1
   prPrn e@(DerefE e1) = text "!" <+> prPrnParens (e1 `exprHasLowerPrec` e) e1
   prPrn e@(AssignRefE e1 e2) =
@@ -90,6 +90,10 @@ instance Pretty Type where
 instance Pretty TypeM where
   prPrn (MTyMonad m) = prPrn m
   prPrn (MTyMonadCons m tm) = prPrn m <+> text ":::" <+> prPrn tm
+
+instance Pretty Kind where
+  prPrn StarK = text "*"
+  prPrn (k1 :=>: k2) = prPrn k1 <+> text "=>" <+> prPrn k2  -- TODO: parens
 
 instance Pretty VarBinder where
   prPrn (VarBinder (v, t)) = parens $ prPrn v <+> colon <+> prPrn t
