@@ -14,7 +14,9 @@ import FunLang.Lexer
 import FunLang.Parser
 import FunLang.TypeChecker
 import FunLang.CodeGenMil
+
 import qualified MIL.AST.PrettyPrinter as MIL
+import qualified MIL.TypeChecker as MIL
 
 -- | Main entry point.
 -- Gets compiler arguments.
@@ -89,7 +91,11 @@ interactive flags typeEnv revProgramStrs = do
               when (DumpAst `elem` flags) $
                 putStrLn (ppShow tyProgram)
               let milProgram = codeGen tyProgram
-              putStrLn (MIL.prPrint milProgram)
+              case MIL.typeCheck milProgram of
+                Left milTcErr -> do
+                  putStrLn (MIL.prPrint milProgram)
+                  putStrLn (MIL.prPrint milTcErr)
+                Right milTypeEnv -> putStrLn (MIL.prPrint milProgram)
     -- All commands with arguments go here
     command -> do
       let processCommand cmd | Just fileName <- stripPrefix ":save " cmd =
