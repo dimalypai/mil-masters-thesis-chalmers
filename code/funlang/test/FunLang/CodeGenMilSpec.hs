@@ -27,8 +27,17 @@ testDir = "test" </> "codegenmiltests"
 spec :: Spec
 spec =
   describe "codeGen" $ do
-    it "generates MIL code" $
-      testCase "Program"
+    it "generates MIL code for data types" $
+      testCase "DataTypes"
+
+    it "generates MIL code for lambdas and applications" $
+      testCase "LambdasApps"
+
+    it "generates MIL code for polymorphic functions" $
+      testCase "Polymorphism"
+
+    it "generates MIL code for monadic do-blocks" $
+      testCase "DoBlocks"
 
 -- Infrastructure
 

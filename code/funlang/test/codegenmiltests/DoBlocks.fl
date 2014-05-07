@@ -1,0 +1,9 @@
+main : IO Unit
+main = do
+  printString "Hello from main";
+  i : Int <- readInt;
+  printInt i;
+  f : Float <- readFloat;
+  printFloat f;
+end;;
+

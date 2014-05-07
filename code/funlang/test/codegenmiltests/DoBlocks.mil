@@ -1,0 +1,7 @@
+main : IO Unit =
+  let (_ : Unit) <- printString "Hello from main" in
+    let (i : Int) <- readInt in
+      let (_ : Unit) <- printInt i in
+        let (f : Float) <- readFloat in
+          printFloat f;
+

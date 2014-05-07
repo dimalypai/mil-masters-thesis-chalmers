@@ -1,0 +1,10 @@
+type T
+  = MkT
+  | MkTT;
+
+type Pair A B
+  = MkPair A B;
+
+main : IO Unit =
+  return [IO] unit;
+

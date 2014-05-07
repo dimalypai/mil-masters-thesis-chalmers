@@ -1,39 +1,12 @@
 main : IO Unit
 main = do
-  printString "Hello from main";
-  i : Int <- readInt;
-  printInt i;
-  f : Float <- readFloat;
-  printFloat f;
-  printInt (execState [Int] [Unit] stateManip 1);
-  return (evalState [Int] [Unit] stateManip 0);
+  return unit;
 end;;
 
 type Pair A B = MkPair A B
 
 mkPair : forall A . forall B . A -> B -> Pair A B
 mkPair = MkPair;;
-
-lamFun : Int -> Unit -> Float
-lamFun = \x : Int y : Unit . 0.01;;
-
-lamFun2 : Int -> Unit -> Float
-lamFun2 = \x : Int . \y : Unit . 0.02;;
-
-lamApp1 : Unit -> Float
-lamApp1 = lamFun 1;;
-
-lamApp2 : Float
-lamApp2 = lamApp1 unit;;
-
-lamApp3 : Unit -> Float
-lamApp3 = lamFun2 1;;
-
-lamApp4 : Float
-lamApp4 = lamFun2 1 unit;;
-
-lamFun3 : Unit -> Unit
-lamFun3 = (\x : Unit -> Unit . x) (\x : Unit . x);;
 
 id : forall A . A -> A
 id = /\A . \x : A . x;;
@@ -62,11 +35,4 @@ compose = /\A B C . \f : B -> C g : A -> B x : A . f (g x);;
 # Monomorphising polymorphic data constructor
 mkIntPair : Int -> Int -> Pair Int Int
 mkIntPair = MkPair [Int] [Int];;
-
-stateManip : State Int Unit
-stateManip = do
-  i : Int <- get [Int];
-  put [Int] i;
-  modify [Int] (\s : Int . s);
-end;;
 

@@ -1,0 +1,24 @@
+main : IO Unit =
+  return [IO] unit;
+
+lamFun : Int -> Unit -> Float =
+  \(x : Int) -> \(y : Unit) -> 1.0e-2;
+
+lamFun2 : Int -> Unit -> Float =
+  \(x : Int) -> \(y : Unit) -> 2.0e-2;
+
+lamApp1 : Unit -> Float =
+  lamFun 1;
+
+lamApp2 : Float =
+  lamApp1 unit;
+
+lamApp3 : Unit -> Float =
+  lamFun2 1;
+
+lamApp4 : Float =
+  lamFun2 1 unit;
+
+lamFun3 : Unit -> Unit =
+  (\(x : Unit -> Unit) -> x) (\(x : Unit) -> x);
+

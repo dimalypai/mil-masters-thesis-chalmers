@@ -1,0 +1,9 @@
+main : IO Unit
+main = do
+  return unit;
+end;;
+
+type T = MkT | MkTT
+
+type Pair A B = MkPair A B
+
