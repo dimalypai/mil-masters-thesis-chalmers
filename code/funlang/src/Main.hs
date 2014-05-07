@@ -87,10 +87,10 @@ interactive flags typeEnv revProgramStrs = do
         Right srcProgram ->
           case typeCheck srcProgram of
             Left tcErr -> putStrLn (prPrint tcErr)
-            Right (tyProgram, _) -> do
+            Right (tyProgram, programTypeEnv) -> do
               when (DumpAst `elem` flags) $
                 putStrLn (ppShow tyProgram)
-              let milProgram = codeGen tyProgram
+              let milProgram = codeGen tyProgram programTypeEnv
               case MIL.typeCheck milProgram of
                 Left milTcErr -> do
                   putStrLn (MIL.prPrint milProgram)

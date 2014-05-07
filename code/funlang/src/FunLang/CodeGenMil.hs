@@ -1,83 +1,99 @@
-{-# LANGUAGE ViewPatterns #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving, ViewPatterns #-}
 
 -- | Module responsible for MIL code generation.
 module FunLang.CodeGenMil
   ( codeGen
   ) where
 
-import FunLang.AST
-import FunLang.AST.Helpers
-import qualified MIL.AST as MIL
-
+import Control.Monad.Reader
+import Control.Applicative
 import Data.List (foldl')
 
+import FunLang.AST
+import FunLang.AST.Helpers
+import FunLang.TypeChecker
+import FunLang.TypeChecker.TypeEnv
+import qualified MIL.AST as MIL
+
 -- | Entry point to the code generator.
--- Takes a type checked program in FunLang and produces a program in MIL.
-codeGen :: TyProgram -> MIL.Program
-codeGen = codeGenProgram
+-- Takes a type checked program in FunLang and a type environment and produces
+-- a program in MIL.
+codeGen :: TyProgram -> TypeEnv -> MIL.Program
+codeGen tyProgram typeEnv = runReader (runCG $ codeGenProgram tyProgram) typeEnv
 
-codeGenProgram :: TyProgram -> MIL.Program
-codeGenProgram (Program _ srcTypeDefs tyFunDefs) =
-  let milTypeDefs = map codeGenTypeDef srcTypeDefs
-      milFunDefs = map codeGenFunDef tyFunDefs
-  in MIL.Program (milTypeDefs, milFunDefs)
+-- | Code generation monad. Uses 'Reader' for querying the type environment.
+newtype CodeGenM a = CG { runCG :: Reader TypeEnv a }
+  deriving (Monad, MonadReader TypeEnv, Functor, Applicative)
 
-codeGenTypeDef :: SrcTypeDef -> MIL.TypeDef
-codeGenTypeDef (TypeDef _ srcTypeName srcTypeVars srcConDefs) =
+codeGenProgram :: TyProgram -> CodeGenM MIL.Program
+codeGenProgram (Program _ srcTypeDefs tyFunDefs) = do
+  milTypeDefs <- mapM codeGenTypeDef srcTypeDefs
+  milFunDefs <- mapM codeGenFunDef tyFunDefs
+  return $ MIL.Program (milTypeDefs, milFunDefs)
+
+codeGenTypeDef :: SrcTypeDef -> CodeGenM MIL.TypeDef
+codeGenTypeDef (TypeDef _ srcTypeName srcTypeVars srcConDefs) = do
   let milTypeVars = map (typeVarMil . getTypeVar) srcTypeVars
-      milConDefs = map codeGenConDef srcConDefs
-  in MIL.TypeDef (typeNameMil $ getTypeName srcTypeName) milTypeVars milConDefs
+  milConDefs <- mapM codeGenConDef srcConDefs
+  return $ MIL.TypeDef (typeNameMil $ getTypeName srcTypeName) milTypeVars milConDefs
 
-codeGenConDef :: SrcConDef -> MIL.ConDef
-codeGenConDef (ConDef _ srcConName srcConFields) =
-  let milConFields = map srcTypeToMilType srcConFields
-  in MIL.ConDef (conNameMil $ getConName srcConName) milConFields
+codeGenConDef :: SrcConDef -> CodeGenM MIL.ConDef
+codeGenConDef (ConDef _ srcConName srcConFields) = do
+  milConFields <- mapM srcTypeToMilType srcConFields
+  return $ MIL.ConDef (conNameMil $ getConName srcConName) milConFields
 
-codeGenFunDef :: TyFunDef -> MIL.FunDef
-codeGenFunDef (FunDef _ srcFunName funSrcType tyFunEqs) =
+codeGenFunDef :: TyFunDef -> CodeGenM MIL.FunDef
+codeGenFunDef (FunDef _ srcFunName _ tyFunEqs) = do
   let funName = getFunName srcFunName
-      milFunType = srcTypeToMilType funSrcType
-      milFunBody = codeGenFunEqs tyFunEqs milFunType
-  in MIL.FunDef (funNameMil funName) milFunType milFunBody
+  milFunType <- typeMil <$> asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
+  milFunBody <- codeGenFunEqs tyFunEqs milFunType
+  return $ MIL.FunDef (funNameMil funName) milFunType milFunBody
 
 -- | Takes function equations of the function definition and the transformed
 -- function type and returns an MIL expression.
 -- Type is needed for annotating monadic operations.
-codeGenFunEqs :: [TyFunEq] -> MIL.Type -> MIL.Expr
-codeGenFunEqs tyFunEqs milFunType =
-  let funEqExprs = map (codeGenExpr milFunType . getFunEqBody) tyFunEqs
-  in head funEqExprs  -- TODO
+codeGenFunEqs :: [TyFunEq] -> MIL.Type -> CodeGenM MIL.Expr
+codeGenFunEqs tyFunEqs milFunType = do
+  funEqExprs <- mapM (codeGenExpr milFunType . getFunEqBody) tyFunEqs
+  return $ head funEqExprs  -- TODO
 
 -- | Expression code generation.
 -- Takes a transformed type of the containing function for annotating monadic
 -- operations.
-codeGenExpr :: MIL.Type -> TyExpr -> MIL.Expr
+codeGenExpr :: MIL.Type -> TyExpr -> CodeGenM MIL.Expr
 codeGenExpr milFunType srcExpr =
   case srcExpr of
-    LitE srcLit -> MIL.LitE (literalMil $ getLiteral srcLit)
+    LitE srcLit -> return $ MIL.LitE (literalMil $ getLiteral srcLit)
 
-    VarE _ varTy ->
+    VarE _ varTy -> do
       let var = varMil $ getVarTyVar varTy
           milVarType = typeMil $ getVarTyType varTy
-      in MIL.VarE $ MIL.VarBinder (var, milVarType)
+      return (MIL.VarE $ MIL.VarBinder (var, milVarType))
 
-    LambdaE _ varBinders tyBodyExpr ->
-      foldr (\vb mexpr ->
-          MIL.LambdaE (MIL.VarBinder ( varMil (getVar $ getBinderVar vb)
-                                     , srcTypeToMilType $ getBinderType vb)) mexpr)
-        (codeGenExpr milFunType tyBodyExpr)
-        varBinders
+    LambdaE _ varBinders tyBodyExpr -> do
+      milBodyExpr <- codeGenExpr milFunType tyBodyExpr
+      foldM (\mexpr vb -> do
+          milVarType <- srcTypeToMilType $ getBinderType vb
+          return $ MIL.LambdaE (MIL.VarBinder ( varMil (getVar $ getBinderVar vb)
+                                              , milVarType)) mexpr)
+        milBodyExpr
+        (reverse varBinders)
 
-    TypeLambdaE _ srcTypeVars tyBodyExpr ->
-      foldr (\tv mexpr ->
+    TypeLambdaE _ srcTypeVars tyBodyExpr -> do
+      milBodyExpr <- codeGenExpr milFunType tyBodyExpr
+      return $
+        foldr (\tv mexpr ->
           MIL.TypeLambdaE (typeVarMil tv) mexpr)
-        (codeGenExpr milFunType tyBodyExpr)
+        milBodyExpr
         (map getTypeVar srcTypeVars)
 
     TypeAppE _ tyAppExpr srcArgType ->
-      MIL.TypeAppE (codeGenExpr milFunType tyAppExpr) (srcTypeToMilType srcArgType)
+      MIL.TypeAppE <$> codeGenExpr milFunType tyAppExpr <*> srcTypeToMilType srcArgType
 
-    ConNameE srcConName -> MIL.ConNameE (conNameMil $ getConName srcConName) undefined  -- TODO
+    ConNameE srcConName -> do
+      let conName = getConName srcConName
+      conType <- asks (dcontiType . getDataConTypeInfo conName . getDataConTypeEnv)
+      return $ MIL.ConNameE (conNameMil conName) (typeMil conType)
 
     BinOpE _ srcBinOp tyExpr1 tyExpr2 -> codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 milFunType
 
@@ -91,32 +107,33 @@ literalMil (IntLit i)     = MIL.IntLit i
 literalMil (FloatLit f _) = MIL.FloatLit f
 literalMil (StringLit s)  = MIL.StringLit s
 
-codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> MIL.Type -> MIL.Expr
+codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> MIL.Type -> CodeGenM MIL.Expr
 codeGenBinOp App tyExpr1 tyExpr2 milFunType =
-  MIL.AppE (codeGenExpr milFunType tyExpr1) (codeGenExpr milFunType tyExpr2)
+  MIL.AppE <$> codeGenExpr milFunType tyExpr1 <*> codeGenExpr milFunType tyExpr2
 
 -- | TODO
-codeGenDoBlock :: [TyStmt] -> MIL.Type -> MIL.Expr
+codeGenDoBlock :: [TyStmt] -> MIL.Type -> CodeGenM MIL.Expr
 codeGenDoBlock [ExprS _ tyExpr] milFunType = codeGenExpr milFunType tyExpr
-codeGenDoBlock [ReturnS _ tyExpr] milFunType@(MIL.TyApp (MIL.TyMonad monadType) _) =
-  MIL.ReturnE monadType (codeGenExpr milFunType tyExpr)
+codeGenDoBlock [ReturnS _ tyExpr] milFunType@(MIL.TyApp (MIL.TyMonad monadType) _) = do
+  milExpr <- codeGenExpr milFunType tyExpr
+  return $ MIL.ReturnE monadType milExpr
 codeGenDoBlock (tyStmt:tyStmts) milFunType =
   case tyStmt of
     ExprS _ tyExpr ->
-      MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.TyTypeCon (MIL.TypeName "Unit")))  -- TODO
-               (codeGenExpr milFunType tyExpr)
-               (codeGenDoBlock tyStmts milFunType)
+      MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.TyTypeCon (MIL.TypeName "Unit"))) <$>  -- TODO
+               codeGenExpr milFunType tyExpr <*>
+               codeGenDoBlock tyStmts milFunType
 
-    BindS _ varBinder tyExpr ->
-      MIL.LetE (MIL.VarBinder ( varMil (getVar $ getBinderVar varBinder)
-                              , srcTypeToMilType $ getBinderType varBinder))
-               (codeGenExpr milFunType tyExpr)
-               (codeGenDoBlock tyStmts milFunType)
+    BindS _ varBinder tyExpr -> do
+      milVarType <- srcTypeToMilType $ getBinderType varBinder
+      MIL.LetE (MIL.VarBinder (varMil (getVar $ getBinderVar varBinder), milVarType)) <$>
+               codeGenExpr milFunType tyExpr <*>
+               codeGenDoBlock tyStmts milFunType
 
     ReturnS _ tyExpr ->
-      MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.TyTypeCon (MIL.TypeName "Unit")))  -- TODO
-               (codeGenExpr milFunType tyExpr)
-               (codeGenDoBlock tyStmts milFunType)
+      MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.TyTypeCon (MIL.TypeName "Unit"))) <$>  -- TODO
+               codeGenExpr milFunType tyExpr <*>
+               codeGenDoBlock tyStmts milFunType
 
 -- | Internal type representation transformation.
 -- The most interesting is the 'TyApp' transformation, because it deals with
@@ -146,21 +163,29 @@ typeMil (TyForAll typeVar t) = MIL.TyForAll (typeVarMil typeVar) (typeMil t)
 -- * IO has kind `* => *` so it is caught in 'SrcTyCon'
 -- * State has kind `* => * => *` so it must be caught earlier, in 'SrcTyApp',
 -- in order to construct an MilMonad with the type of the state.
-srcTypeToMilType :: SrcType -> MIL.Type
+srcTypeToMilType :: SrcType -> CodeGenM MIL.Type
 srcTypeToMilType (SrcTyCon srcTypeName) =
   case getTypeName srcTypeName of
-    TypeName "IO" -> MIL.TyMonad $ MIL.MTyMonad MIL.IO
+    TypeName "IO" -> return $ MIL.TyMonad (MIL.MTyMonad MIL.IO)
     TypeName "State" -> error "srcTypeToMilType: State should have been handled earlier"
-    typeName -> MIL.TyTypeCon $ typeNameMil typeName  -- TODO: type variables
+    typeName -> do
+      -- 'SrcTyCon' can represent both type names and type variables, so we
+      -- need to distinguish between them in order to generate correct MIL
+      -- code.
+      dataTypeEnv <- asks getDataTypeEnv
+      if isTypeDefined typeName dataTypeEnv
+        then return $ MIL.TyTypeCon (typeNameMil typeName)
+        else return $ MIL.TyVar (typeVarMil $ typeNameToTypeVar typeName)
 srcTypeToMilType (SrcTyApp _ st1 st2) =
   case st1 of
-    SrcTyCon (getTypeName -> TypeName "State") ->
-      MIL.TyMonad $ MIL.MTyMonad (MIL.State $ srcTypeToMilType st2)
-    _ -> MIL.TyApp (srcTypeToMilType st1) (srcTypeToMilType st2)
+    SrcTyCon (getTypeName -> TypeName "State") -> do
+      mt2 <- srcTypeToMilType st2
+      return $ MIL.TyMonad (MIL.MTyMonad $ MIL.State mt2)
+    _ -> MIL.TyApp <$> srcTypeToMilType st1 <*> srcTypeToMilType st2
 srcTypeToMilType (SrcTyArrow _ st1 st2) =
-  MIL.TyArrow (srcTypeToMilType st1) (srcTypeToMilType st2)
+  MIL.TyArrow <$> srcTypeToMilType st1 <*> srcTypeToMilType st2
 srcTypeToMilType (SrcTyForAll _ stv st) =
-  MIL.TyForAll (typeVarMil $ getTypeVar stv) (srcTypeToMilType st)
+  MIL.TyForAll (typeVarMil $ getTypeVar stv) <$> srcTypeToMilType st
 srcTypeToMilType (SrcTyParen _ st) = srcTypeToMilType st
 
 -- * Conversion utils
