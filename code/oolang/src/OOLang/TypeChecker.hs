@@ -524,7 +524,7 @@ tcExpr insideClass srcExpr =
       unlessM (isClassMemberDefined className memberName) $
         throwError $ NotMember memberName className srcExpr
       isField <- isClassFieldDefined className (memberNameToVar memberName)
-      when (isField && not insideClass) $
+      when (isField && (not insideClass || not (isSelfOrSuper srcObjExpr))) $
         throwError $ OutsideFieldAccess s
       memberType <- getClassMemberType className memberName
       -- See Note [Purity of function and value types]

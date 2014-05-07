@@ -25,9 +25,9 @@ class C =>
 
   # Shadow global function
   # Member access with Mutable
-  def fun : Pure Unit =>
+  def fun : Pure Int =>
     selfMutable : Mutable C <- self;
-    selfMutable.unitField;
+    selfMutable.pureMethod;
   end
 
   # Partial application of impure

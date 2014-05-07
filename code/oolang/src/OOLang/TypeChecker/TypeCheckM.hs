@@ -24,6 +24,7 @@ module OOLang.TypeChecker.TypeCheckM
   , addClassMethod
   , getClassMemberType
   , getClassFieldType
+  , getClassMethodType
   , getSuperClass
 
   , ftiType
@@ -252,6 +253,13 @@ getClassMemberType className memberName = do
 -- are defined.
 getClassFieldType :: ClassName -> Var -> TypeCheckM Type
 getClassFieldType className fieldName = getClassMemberType className (varToMemberName fieldName)
+
+-- | Returns a type of the class method.
+--
+-- Note: Unsafe. Should be used only after check that the class and the method
+-- are defined.
+getClassMethodType :: ClassName -> FunName -> TypeCheckM Type
+getClassMethodType className methodName = getClassMemberType className (funNameToMemberName methodName)
 
 -- | Returns a super class of the given class if it has one.
 --

@@ -334,6 +334,9 @@ spec =
       it "given a field access outside of the class" $
         failureCase "FieldAccessOutside"
 
+      it "given a field access inside of the class, but not via `self` or `super`" $
+        failureCase "FieldAccessInsideNotSelfSuper"
+
       it "given a declaration with a class not from hierarchy (subtyping)" $
         failureCase "DeclClassNotSubClass"
 
