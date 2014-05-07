@@ -522,7 +522,7 @@ tcExpr insideClass srcExpr =
       className <- tryGetClassName objType srcObjExpr
       let memberName = getMemberName srcMemberName
       unlessM (isClassMemberDefined className memberName) $
-        throwError $ NotMember memberName className srcExpr
+        throwError $ MemberNotDefined memberName className srcExpr
       isField <- isClassFieldDefined className (memberNameToVar memberName)
       when (isField && (not insideClass || not (isSelfOrSuper srcObjExpr))) $
         throwError $ OutsideFieldAccess s

@@ -44,7 +44,7 @@ data TcError =
   | NewMemberName SrcSpan
   | FieldInitNotPure Var SrcSpan
   | MemberAlreadyDefined MemberName SrcSpan
-  | NotMember MemberName ClassName SrcExpr
+  | MemberNotDefined MemberName ClassName SrcExpr
   | NotObject SrcExpr Type
   | MemberAccessWithMaybe SrcExpr Type
   | ClassAccessNotNew SrcSpan
@@ -186,7 +186,7 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Class member with the name" <+> quotes (prPrn memberName) <+> text "is already defined")
 
-  prPrn (NotMember memberName className srcExpr) =
+  prPrn (MemberNotDefined memberName className srcExpr) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcExpr) <> colon $+$
     nest indLvl (text "Class member with the name" <+> quotes (prPrn memberName) <+>
       text "is not defined in the class" <+> quotes (prPrn className))
