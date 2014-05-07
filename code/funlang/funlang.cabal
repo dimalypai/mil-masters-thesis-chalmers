@@ -29,6 +29,7 @@ executable flc
                        FunLang.TypeChecker
                        FunLang.TypeChecker.Helpers
                        FunLang.TypeChecker.TcError
+                       FunLang.TypeChecker.TypeEnv
                        FunLang.TypeChecker.TypeCheckM
                        FunLang.Utils
   -- other-extensions:    

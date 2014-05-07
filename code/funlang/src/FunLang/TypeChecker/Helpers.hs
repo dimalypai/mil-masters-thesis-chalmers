@@ -65,14 +65,14 @@ srcTypeToTypeWithTypeVarsOfKind :: Set.Set TypeVar -> Kind -> SrcType -> TypeChe
 srcTypeToTypeWithTypeVarsOfKind typeVars kind (SrcTyCon srcTypeName) = do
   let typeName = getTypeName srcTypeName
       typeVar = typeNameToTypeVar typeName
-  ifM (isTypeDefined typeName)
-    (do dataTypeInfo <- getDataTypeInfo typeName
-        when (dtiKind dataTypeInfo /= kind) $
-          throwError $ TypeConIncorrectApp srcTypeName (dtiKind dataTypeInfo) kind
+  ifM (isTypeDefinedM typeName)
+    (do dataTypeKind <- getDataTypeKindM typeName
+        when (dataTypeKind /= kind) $
+          throwError $ TypeConIncorrectApp srcTypeName dataTypeKind kind
         return $ TyApp typeName [])
-    (do isTyVarBound <- isTypeVarBound typeVar
+    (do isTyVarBound <- isTypeVarBoundM typeVar
         -- it is important to check in both places, since typeVars is not
-        -- queried by 'isTypeVarBound'
+        -- queried by 'isTypeVarBoundM'
         if isTyVarBound || typeVar `Set.member` typeVars
           then return $ TyVar typeVar
           else throwError $ TypeNotDefined srcTypeName)
@@ -113,11 +113,11 @@ srcTypeToTypeWithTypeVarsOfKind typeVars kind (SrcTyArrow _ st1 st2) = do
 srcTypeToTypeWithTypeVarsOfKind typeVars kind (SrcTyForAll _ srcTypeVar st) = do
   let typeVar = getTypeVar srcTypeVar
   -- it is important to check in all these places, since it can shadow a type
-  -- or another type variable and typeVars is not queried by 'isTypeDefined'
-  -- and 'isTypeVarBound', see `TypeVarShadowsTypeVar` test case
-  whenM (isTypeDefined $ typeVarToTypeName typeVar) $
+  -- or another type variable and typeVars is not queried by 'isTypeDefinedM'
+  -- and 'isTypeVarBoundM', see `TypeVarShadowsTypeVar` test case
+  whenM (isTypeDefinedM $ typeVarToTypeName typeVar) $
     throwError $ TypeVarShadowsType srcTypeVar
-  isTyVarBound <- isTypeVarBound typeVar
+  isTyVarBound <- isTypeVarBoundM typeVar
   when (isTyVarBound || typeVar `Set.member` typeVars) $
     throwError $ TypeVarShadowsTypeVar srcTypeVar
   let typeVars' = Set.insert typeVar typeVars

@@ -22,6 +22,7 @@ import Control.Applicative ((<$>))
 import FunLang.AST
 import FunLang.AST.Helpers
 import FunLang.TypeChecker.TypeCheckM
+import FunLang.TypeChecker.TypeEnv
 import FunLang.TypeChecker.TcError
 import FunLang.TypeChecker.Helpers
 import FunLang.SrcAnnotated
@@ -82,7 +83,8 @@ collectDefs typeDefs funDefs = do
 -- Adds the type name and its kind to the type environment.
 collectTypeDef :: SrcTypeDef -> TypeCheckM ()
 collectTypeDef (TypeDef _ srcTypeName srcTypeVars _) = do
-  whenM (isTypeDefined $ getTypeName srcTypeName) $
+  let typeName = getTypeName srcTypeName
+  whenM (isTypeDefinedM typeName) $
     throwError $ TypeAlreadyDefined srcTypeName
   let typeVars = map getTypeVar srcTypeVars
   foldM_ (\tvs (tv, stv) ->
@@ -91,7 +93,7 @@ collectTypeDef (TypeDef _ srcTypeName srcTypeVars _) = do
               else return $ Set.insert tv tvs)
          Set.empty (zip typeVars srcTypeVars)
   let kind = mkKind (length srcTypeVars)
-  addType srcTypeName kind
+  addTypeM typeName kind
 
 -- | Checks if the function is already defined.
 -- Checks that the specified function type is correct (well-formed,
@@ -99,17 +101,18 @@ collectTypeDef (TypeDef _ srcTypeName srcTypeVars _) = do
 -- Adds the function and its type to the environment.
 collectFunDef :: SrcFunDef -> TypeCheckM ()
 collectFunDef (FunDef _ srcFunName funSrcType _) = do
-  whenM (isFunctionDefined $ getFunName srcFunName) $
+  let funName = getFunName srcFunName
+  whenM (isFunctionDefinedM funName) $
     throwError $ FunctionAlreadyDefined srcFunName
   funType <- srcTypeToType funSrcType
-  addFunction srcFunName funType funSrcType
+  addFunctionM funName funType funSrcType
 
 -- | Program needs to have an entry point: `main : IO Unit`.
 checkMain :: TypeCheckM ()
 checkMain = do
-  unlessM (isFunctionDefined $ FunName "main") $
+  unlessM (isFunctionDefinedM $ FunName "main") $
     throwError MainNotDefined
-  funTypeInfo <- getFunTypeInfo $ FunName "main"
+  funTypeInfo <- getFunTypeInfoM $ FunName "main"
   let mainType = ioType unitType
   unless (ftiType funTypeInfo `alphaEq` mainType) $
     throwError $ MainIncorrectType (ftiSrcType funTypeInfo)
@@ -128,13 +131,14 @@ tcTypeDef (TypeDef _ srcTypeName srcTypeVars srcConDefs) = do
 -- Adds the constructor with its type to the environment.
 tcConDef :: TypeName -> [TypeVar] -> SrcConDef -> TypeCheckM ()
 tcConDef typeName typeVars (ConDef _ srcConName srcConFields) = do
-  whenM (isDataConDefined $ getConName srcConName) $
+  let conName = getConName srcConName
+  whenM (isDataConDefinedM conName) $
     throwError $ ConAlreadyDefined srcConName
   conFields <- mapM (srcTypeToTypeWithTypeVars $ Set.fromList typeVars) srcConFields
   let conResultType = TyApp typeName (map TyVar typeVars)
       conArrType = tyArrowFromList conResultType conFields
       conType = foldr (\tv acc -> TyForAll tv acc) conArrType typeVars
-  addDataCon srcConName conType typeName
+  addDataConM conName conType typeName
 
 -- | Checks all function equations and their consistency (TODO).
 -- Returns type checked function definition.
@@ -178,9 +182,9 @@ tcExpr srcExpr =
 
     VarE s var -> do
       -- it can be both a local variable and a global function
-      unlessM (isVarBound var) $
+      unlessM (isVarBoundM var) $
         throwError $ VarNotBound var s
-      varType <- getVarType var
+      varType <- getVarTypeM var
       return (VarE s (VarTy (var, varType)), varType)
 
     LambdaE s varBinders srcBodyExpr -> do
@@ -188,10 +192,10 @@ tcExpr srcExpr =
       (localTypeEnv, revParamTypes) <-
         foldM (\(localTyEnv, revTyList) vb -> do
             let var = getVar (getBinderVar vb)
-            isBound <- isVarBound var
+            isBound <- isVarBoundM var
             -- it is important to check in both places, since localTyEnv
-            -- is not queried by 'isVarBound', see `LambdaParamsDup` test case
-            when (isBound || isVarInLocalEnv var localTyEnv) $
+            -- is not queried by 'isVarBoundM', see `LambdaParamsDup` test case
+            when (isBound || isVarBound var localTyEnv) $
               throwError $ VarShadowing (getBinderVar vb)
             varType <- srcTypeToType (getBinderType vb)
             return $ (addLocalVar var varType localTyEnv, varType : revTyList))
@@ -200,7 +204,7 @@ tcExpr srcExpr =
       -- extend local type environment with variables introduced by the lambda
       -- this is safe, since we ensure above that all variable and function names are distinct
       -- perform the type checking of the body in this extended environment
-      (tyBodyExpr, bodyType) <- locallyWithEnv localTypeEnv (tcExpr srcBodyExpr)
+      (tyBodyExpr, bodyType) <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
       let paramTypes = reverse revParamTypes
       let lambdaType = tyArrowFromList bodyType paramTypes
       return (LambdaE s varBinders tyBodyExpr, lambdaType)
@@ -212,12 +216,12 @@ tcExpr srcExpr =
             let typeVar = getTypeVar stv
             -- it is important to check in all these places, since it can
             -- shadow a type or another type variable and localTyEnv is not
-            -- queried by 'isTypeDefined' and 'isTypeVarBound', see
+            -- queried by 'isTypeDefinedM' and 'isTypeVarBoundM', see
             -- `TypeLambdaParamsDup` test case
-            whenM (isTypeDefined $ typeVarToTypeName typeVar) $
+            whenM (isTypeDefinedM $ typeVarToTypeName typeVar) $
               throwError $ TypeVarShadowsType stv
-            isTyVarBound <- isTypeVarBound typeVar
-            when (isTyVarBound || isTypeVarInLocalEnv typeVar localTyEnv) $
+            isTyVarBound <- isTypeVarBoundM typeVar
+            when (isTyVarBound || isTypeVarBound typeVar localTyEnv) $
               throwError $ TypeVarShadowsTypeVar stv
             return $ addLocalTypeVar typeVar localTyEnv)
           emptyLocalTypeEnv srcTypeVars
@@ -225,7 +229,7 @@ tcExpr srcExpr =
       -- extend local type environment with type variables introduced by the type lambda
       -- this is safe, since we ensure that all type variables and type names in scope are distinct
       -- perform the type checking of the body in this extended environment
-      (tyBodyExpr, bodyType) <- locallyWithEnv localTypeEnv (tcExpr srcBodyExpr)
+      (tyBodyExpr, bodyType) <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
       let typeVars = map getTypeVar srcTypeVars
       let tyLambdaType = tyForAllFromList bodyType typeVars
       return (TypeLambdaE s srcTypeVars tyBodyExpr, tyLambdaType)
@@ -245,9 +249,9 @@ tcExpr srcExpr =
 
     ConNameE srcConName -> do
       let conName = getConName srcConName
-      unlessM (isDataConDefined conName) $
+      unlessM (isDataConDefinedM conName) $
         throwError $ ConNotDefined srcConName
-      dataConTypeInfo <- getDataConTypeInfo (getConName srcConName)
+      dataConTypeInfo <- getDataConTypeInfoM conName
       return (ConNameE srcConName, dcontiType dataConTypeInfo)
 
     CaseE s srcScrutExpr srcCaseAlts -> do
@@ -289,7 +293,7 @@ tcCaseAlts scrutType srcCaseAlts = do
 tcCaseAlt :: Type -> SrcCaseAlt -> TypeCheckM (TyCaseAlt, Type)
 tcCaseAlt scrutType (CaseAlt s pat srcExpr) = do
   localTypeEnv <- tcPattern scrutType pat emptyLocalTypeEnv
-  (tyExpr, exprType) <- locallyWithEnv localTypeEnv (tcExpr srcExpr)
+  (tyExpr, exprType) <- locallyWithEnvM localTypeEnv (tcExpr srcExpr)
   return (CaseAlt s pat tyExpr, exprType)
 
 -- | Takes a scrutinee type, a pattern and a local type environment. Type
@@ -307,10 +311,10 @@ tcPattern scrutType pat localTypeEnv =
 
     VarP varBinder -> do
       let var = getVar (getBinderVar varBinder)
-      isBound <- isVarBound var
+      isBound <- isVarBoundM var
       -- it is important to check in both places, since localTypeEnv is not
-      -- queried by 'isVarBound', see `VarPatternShadowsNested` test case
-      when (isBound || isVarInLocalEnv var localTypeEnv) $
+      -- queried by 'isVarBoundM', see `VarPatternShadowsNested` test case
+      when (isBound || isVarBound var localTypeEnv) $
         throwError $ VarShadowing (getBinderVar varBinder)
       varType <- srcTypeToType (getBinderType varBinder)
       unless (varType `alphaEq` scrutType) $
@@ -319,9 +323,9 @@ tcPattern scrutType pat localTypeEnv =
 
     ConP s srcConName subPats -> do
       let conName = getConName srcConName
-      unlessM (isDataConDefined conName) $
+      unlessM (isDataConDefinedM conName) $
         throwError $ ConNotDefined srcConName
-      dataConTypeInfo <- getDataConTypeInfo conName
+      dataConTypeInfo <- getDataConTypeInfoM conName
       let conType = dcontiType dataConTypeInfo
           conTypeName = dcontiTypeName dataConTypeInfo
       case scrutType of
@@ -395,7 +399,7 @@ tcDoBlock (srcStmt:srcStmts) funMonad = do
 
     BindS s varBinder srcExpr -> do
       let var = getVar (getBinderVar varBinder)
-      whenM (isVarBound var) $
+      whenM (isVarBoundM var) $
         throwError $ VarShadowing (getBinderVar varBinder)
       varType <- srcTypeToType (getBinderType varBinder)
 
@@ -418,7 +422,7 @@ tcDoBlock (srcStmt:srcStmts) funMonad = do
       let tyStmt = BindS s varBinder tyExpr
       -- srcStmts is not empty, otherwise we would have thrown an error in the
       -- first equation
-      (tyStmts, lastStmtType) <- locallyWithEnv localTypeEnv (tcDoBlock srcStmts funMonad)
+      (tyStmts, lastStmtType) <- locallyWithEnvM localTypeEnv (tcDoBlock srcStmts funMonad)
       return (tyStmt : tyStmts, lastStmtType)
 
     ReturnS s srcExpr -> do
