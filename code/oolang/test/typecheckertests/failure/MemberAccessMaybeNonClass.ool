@@ -1,0 +1,5 @@
+def main : Unit =>
+  x : Maybe Int = just 1;
+  x ? method;
+end
+

@@ -358,6 +358,18 @@ spec =
       it "given a usage of not-dereferenced variable (member access)" $
         failureCase "NotDerefVarUsage"
 
+      it "given a Maybe member access with non-Maybe type" $
+        failureCase "MemberAccessMaybeWithNonMaybeType"
+
+      it "given a Maybe member access with non-class type" $
+        failureCase "MemberAccessMaybeNonClass"
+
+      it "given a Maybe member access to an undefined class method" $
+        failureCase "MemberAccessMaybeUndefined"
+
+      it "given a Maybe member access to a class field" $
+        failureCase "MemberAccessMaybeField"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

@@ -1,0 +1,2 @@
+OOLang type checking error at MemberAccessMaybeWithNonMaybeType.ool:3,3-3,15:
+  Incorrect usage of the member access operator (`?`) with the expression of type 'C'. Try using the `.` operator

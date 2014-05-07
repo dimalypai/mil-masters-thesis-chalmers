@@ -45,8 +45,10 @@ data TcError =
   | FieldInitNotPure Var SrcSpan
   | MemberAlreadyDefined MemberName SrcSpan
   | MemberNotDefined MemberName ClassName SrcExpr
+  | MethodNotDefined FunName ClassName SrcExpr
   | NotObject SrcExpr Type
   | MemberAccessWithMaybe SrcExpr Type
+  | MemberAccessMaybeWithNonMaybe SrcExpr Type
   | ClassAccessNotNew SrcSpan
   | AssignToFunction SrcSpan
   | AssignNotField Var ClassName SrcSpan
@@ -191,6 +193,11 @@ instance Pretty TcError where
     nest indLvl (text "Class member with the name" <+> quotes (prPrn memberName) <+>
       text "is not defined in the class" <+> quotes (prPrn className))
 
+  prPrn (MethodNotDefined methodName className srcExpr) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcExpr) <> colon $+$
+    nest indLvl (text "Class method with the name" <+> quotes (prPrn methodName) <+>
+      text "is not defined in the class" <+> quotes (prPrn className))
+
   prPrn (NotObject srcExpr actType) =
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcExpr) <> colon $+$
     nest indLvl (text "The expression has to be an object (have a class type), but it has type" <+> quotes (prPrn actType))
@@ -199,6 +206,11 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn (getSrcSpan srcExpr) <> colon $+$
     nest indLvl (text "Incorrect usage of the member access operator (`.`) with the expression of type" <+> quotes (prPrn actType) <>
       text ". Try using the `?` operator")
+
+  prPrn (MemberAccessMaybeWithNonMaybe srcExpr actType) =
+    tcErrorHeaderSpan <> prPrn (getSrcSpan srcExpr) <> colon $+$
+    nest indLvl (text "Incorrect usage of the member access operator (`?`) with the expression of type" <+> quotes (prPrn actType) <>
+      text ". Try using the `.` operator")
 
   prPrn (ClassAccessNotNew srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$

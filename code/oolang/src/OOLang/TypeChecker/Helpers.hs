@@ -36,6 +36,10 @@ import OOLang.Utils
 --
 -- * Ref A `isSubTypeOf` Ref B iff A `isSubTypeOf` B
 --
+-- Maybe is covariant:
+--
+-- * Maybe A `isSubTypeOf` Maybe B iff A `isSubTypeOf` B
+--
 -- Note: this can't be used for purity checking.
 isSubTypeOf :: Type -> Type -> TypeCheckM Bool
 t1 `isSubTypeOf` t2 = do
@@ -71,10 +75,14 @@ t1 `isSubTypeOf` t2 = do
     case (t1, t2) of
       (TyRef refT1, TyRef refT2) -> refT1 `isSubTypeOf` refT2
       _ -> return False
+  maybeCovariance <-
+    case (t1, t2) of
+      (TyMaybe maybeT1, TyMaybe maybeT2) -> maybeT1 `isSubTypeOf` maybeT2
+      _ -> return False
   return (t1 == t2
        || pureSubType1 || pureSubType2  || pureSubType3
        || mutableSubType1 || mutableSubType2 || mutableSubType3
-       || inheritanceSubType || refCovariance)
+       || inheritanceSubType || refCovariance || maybeCovariance)
 
 -- * Type transformations
 

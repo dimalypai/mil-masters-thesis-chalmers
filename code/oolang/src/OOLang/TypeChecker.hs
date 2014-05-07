@@ -535,6 +535,24 @@ tcExpr insideClass srcExpr =
                       (return True)
       return (MemberAccessE s tyObjExpr srcMemberName, memberType, objPure && memberPure)
 
+    MemberAccessMaybeE s srcMaybeObjExpr srcMemberName -> do
+      (tyMaybeObjExpr, objMaybeType, objPure) <- tcExpr insideClass srcMaybeObjExpr
+      case objMaybeType of
+        TyMaybe objType -> do
+          className <- tryGetClassName objType srcMaybeObjExpr
+          let methodName = memberNameToFunName $ getMemberName srcMemberName
+          unlessM (isClassMethodDefined className methodName) $
+            throwError $ MethodNotDefined methodName className srcExpr
+          methodType <- getClassMethodType className methodName
+          -- See Note [Purity of function and value types]
+          methodPure <- if isValueType methodType && not (isPureFunType methodType)
+                          then return False
+                          else return True
+          return ( MemberAccessMaybeE s tyMaybeObjExpr srcMemberName
+                 , TyMaybe methodType
+                 , objPure && methodPure)
+        _ -> throwError $ MemberAccessMaybeWithNonMaybe srcExpr objMaybeType
+
     ClassAccessE s srcClassName srcMethodName -> do
       let className = getClassName srcClassName
           methodName = getFunName srcMethodName

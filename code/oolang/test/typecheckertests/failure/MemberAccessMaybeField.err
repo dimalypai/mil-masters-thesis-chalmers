@@ -1,0 +1,2 @@
+OOLang type checking error at MemberAccessMaybeField.ool:3,3-3,14:
+  Class method with the name 'field' is not defined in the class 'C'

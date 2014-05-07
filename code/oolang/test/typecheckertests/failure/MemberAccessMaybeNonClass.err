@@ -1,0 +1,2 @@
+OOLang type checking error at MemberAccessMaybeNonClass.ool:3,3-3,3:
+  The expression has to be an object (have a class type), but it has type 'Int'

@@ -1,0 +1,11 @@
+def main : Unit =>
+  objC : C = C.new;
+  objC ? method;
+end
+
+class C =>
+  def method : Unit =>
+    unit;
+  end
+end
+

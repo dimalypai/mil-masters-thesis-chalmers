@@ -1,11 +1,16 @@
 def main : Unit =>
   # Subtyping
   objSuper : Super = GrandChild.new;
+
   # References
   objSuperRef : Ref Super = ref Child.new;
   objSuperRef := Super.new;
   objSuper2 : Super = !objSuperRef;
   !objSuperRef.fun;
+
+  # Maybe
+  mObjChild : Maybe Child = just Child.new;
+  mSuper : Maybe Super = mObjChild ? getSuper;
 end
 
 # Object construction
