@@ -565,6 +565,10 @@ tcExpr insideClass srcExpr =
       (tyExpr1, tyExpr2, resultType, resultPure) <- tcBinOp insideClass op srcExpr1 srcExpr2
       return (BinOpE s srcBinOp tyExpr1 tyExpr2, resultType, resultPure)
 
+    JustE s srcSubExpr -> do
+      (tySubExpr, subExprType, subExprPure) <- tcExpr insideClass srcSubExpr
+      return (JustE s tySubExpr, TyMaybe subExprType, subExprPure)
+
     ParenE s srcSubExpr -> do
       (tySubExpr, exprType, exprPure) <- tcExpr insideClass srcSubExpr
       return (ParenE s tySubExpr, exprType, exprPure)

@@ -146,3 +146,7 @@ def refFun : {r : Ref Int} -> Ref Unit =>
   ref unit;
 end
 
+def justFun : Maybe Int =>
+  just 1;
+end
+
