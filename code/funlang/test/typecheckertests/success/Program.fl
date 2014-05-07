@@ -26,10 +26,10 @@ fun4 : Unit
 fun4 = fun;;
 
 lamFun : Int -> Unit -> Float
-lamFun = \x : Int y : Unit . 0.01;;
+lamFun = \(x : Int) (y : Unit) -> 0.01;;
 
 lamFun2 : Int -> Unit -> Float
-lamFun2 = \x : Int . \y : Unit . 0.02;;
+lamFun2 = \(x : Int) -> \(y : Unit) -> 0.02;;
 
 lamApp1 : Unit -> Float
 lamApp1 = lamFun 1;;
@@ -44,10 +44,10 @@ lamApp4 : Float
 lamApp4 = lamFun2 1 unit;;
 
 lamFun3 : Unit -> Unit
-lamFun3 = (\x : Unit -> Unit . x) (\x : Unit . x);;
+lamFun3 = (\(x : Unit -> Unit) -> x) (\(x : Unit) -> x);;
 
 id : forall A . A -> A
-id = /\A . \x : A . x;;
+id = /\A . \(x : A) -> x;;
 
 # Monomorphising id with Int
 idInt : Int -> Int
@@ -64,11 +64,11 @@ idFunApp = idFun id;;
 
 # Polymorphic function application
 typeAppsFun : Unit
-typeAppsFun = (/\A . /\B . \f : A -> B . \x : A . f x) [Int] [Unit] (\x : Int . unit) 1;;
+typeAppsFun = (/\A . /\B . \(f : A -> B) -> \(x : A) -> f x) [Int] [Unit] (\(x : Int) -> unit) 1;;
 
 # Function composition with non-nested lambdas
 compose : forall A . forall B . forall C . (B -> C) -> (A -> B) -> A -> C
-compose = /\A B C . \f : B -> C g : A -> B x : A . f (g x);;
+compose = /\A B C . \(f : B -> C) (g : A -> B) (x : A) -> f (g x);;
 
 # Monomorphising polymorphic data constructor
 mkIntPair : Int -> Int -> Pair Int Int
@@ -78,7 +78,7 @@ stateManip : State Int Unit
 stateManip = do
   i : Int <- get [Int];
   put [Int] i;
-  modify [Int] (\s : Int . s);
+  modify [Int] (\(s : Int) -> s);
 end;;
 
 type Tree A = Empty
@@ -87,7 +87,7 @@ type Tree A = Empty
 
 # Monomorphic case scrutinee
 caseExpr : Tree Int -> Int
-caseExpr = \tree : Tree Int .
+caseExpr = \(tree : Tree Int) ->
   case tree of
     | Leaf (x : Int) => x
     | Node 0 (left : Tree Int) _ => caseExpr left
@@ -96,7 +96,7 @@ caseExpr = \tree : Tree Int .
 
 # Polymorphic case scrutinee
 caseExprPoly : forall A . Tree A -> A
-caseExprPoly = /\A . \tree : Tree A .
+caseExprPoly = /\A . \(tree : Tree A) ->
   case tree of
     | Leaf (x : A) => x
     | Node _ (left : Tree A) Empty => caseExprPoly [A] left

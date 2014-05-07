@@ -1,2 +1,2 @@
-FunLang type checking error at LambdaAppIncorrectType.fl:7,25-7,32:
+FunLang type checking error at LambdaAppIncorrectType.fl:7,28-7,35:
   Incorrect type of the argument. The expected type is 'Int', but it has type 'String'

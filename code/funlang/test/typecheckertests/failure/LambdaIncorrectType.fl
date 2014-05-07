@@ -4,5 +4,5 @@ main = do
 end;;
 
 fun : Int -> Unit
-fun = \x : Unit . 1;;
+fun = \(x : Unit) -> 1;;
 

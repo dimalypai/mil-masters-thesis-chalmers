@@ -4,5 +4,5 @@ main = do
 end;;
 
 fun : Unit
-fun = (\x : Int . unit) "string";;
+fun = (\(x : Int) -> unit) "string";;
 

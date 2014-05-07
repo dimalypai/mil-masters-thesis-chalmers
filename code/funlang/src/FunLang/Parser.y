@@ -79,7 +79,7 @@ import FunLang.Parser.ParseError
   floatLit  { $$@(Lex.FloatLit _ _, _) }
   stringLit { $$@(Lex.StringLit  _, _) }
 
-%nonassoc '.'  -- lambdas bind less tightly than others, go to the right as far as possible
+%nonassoc '.' '->'  -- lambdas bind less tightly than others, go to the right as far as possible
 %left '<' '>' '<=' '>=' '=' '/='
 %left '+' '-'
 %left '*' '/'
@@ -146,7 +146,7 @@ funeqbody
 expr :: { SrcExpr }
 expr
   : appexpr { $1 }
-  | '\\' list1(varbinder) '.' expr
+  | '\\' list1(lambdavarbinder) '->' expr
       {% withFileName $ \fileName ->
            LambdaE (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $4] fileName)
                    $2 $4}
@@ -253,6 +253,9 @@ varbinder
       {% withFileName $ \fileName ->
            VarBinder (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $3] fileName)
                      (Var $ getTokId $1, mkTokSrcSpan $1 fileName) $3}
+
+lambdavarbinder :: { SrcVarBinder }
+lambdavarbinder : '(' varbinder ')' { $2 }
 
 srctype :: { SrcType }
 srctype

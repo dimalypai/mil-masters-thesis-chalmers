@@ -4,5 +4,5 @@ main = do
 end;;
 
 fun : Unit
-fun = \x : T . x;;
+fun = \(x : T) -> x;;
 

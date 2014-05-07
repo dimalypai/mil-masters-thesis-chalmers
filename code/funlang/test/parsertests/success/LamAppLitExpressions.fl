@@ -1,6 +1,6 @@
 fun : Unit
-fun = (\y : Unit . unit) (h 1 0.01);;
+fun = (\(y : Unit) -> unit) (h 1 0.01);;
 
 fun2 : Unit
-fun2 = (/\T . \x : T . x) [Int] 1;;
+fun2 = (/\T . \(x : T) -> x) [Int] 1;;
 

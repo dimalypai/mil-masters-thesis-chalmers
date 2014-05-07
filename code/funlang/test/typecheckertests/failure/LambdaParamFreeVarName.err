@@ -1,2 +1,2 @@
-FunLang type checking error at LambdaParamFreeVarName.fl:7,25-7,25:
+FunLang type checking error at LambdaParamFreeVarName.fl:7,28-7,28:
   Name 'x' is not bound

@@ -6,5 +6,5 @@ end;;
 type T = MkT
 
 fun : Int -> Int
-fun = (/\T . \x : T . x) [Int];;
+fun = (/\T . \(x : T) -> x) [Int];;
 

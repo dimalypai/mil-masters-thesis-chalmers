@@ -4,5 +4,5 @@ main = do
 end;;
 
 fun : Int -> Int
-fun = (\x : Int . x) [Int];;
+fun = (\(x : Int) -> x) [Int];;
 

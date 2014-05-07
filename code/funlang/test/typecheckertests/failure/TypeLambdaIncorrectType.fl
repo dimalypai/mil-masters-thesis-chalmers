@@ -4,5 +4,5 @@ main = do
 end;;
 
 fun : forall A . A -> A
-fun = /\A . /\B . \x : B . x;;
+fun = /\A . /\B . \(x : B) -> x;;
 

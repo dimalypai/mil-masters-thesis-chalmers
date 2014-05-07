@@ -4,10 +4,10 @@ main = do
 end;;
 
 lamFun : Int -> Unit -> Float
-lamFun = \x : Int y : Unit . 0.01;;
+lamFun = \(x : Int) (y : Unit) -> 0.01;;
 
 lamFun2 : Int -> Unit -> Float
-lamFun2 = \x : Int . \y : Unit . 0.02;;
+lamFun2 = \(x : Int) -> \(y : Unit) -> 0.02;;
 
 lamApp1 : Unit -> Float
 lamApp1 = lamFun 1;;
@@ -22,5 +22,5 @@ lamApp4 : Float
 lamApp4 = lamFun2 1 unit;;
 
 lamFun3 : Unit -> Unit
-lamFun3 = (\x : Unit -> Unit . x) (\x : Unit . x);;
+lamFun3 = (\(x : Unit -> Unit) -> x) (\(x : Unit) -> x);;
 

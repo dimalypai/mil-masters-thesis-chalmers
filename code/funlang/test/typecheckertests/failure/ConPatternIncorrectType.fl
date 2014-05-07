@@ -8,7 +8,7 @@ type S = MkS
 type T = MkT
 
 caseExpr : T -> Int
-caseExpr = \t : T .
+caseExpr = \(t : T) ->
   case t of
     | MkS => 1
   end;;

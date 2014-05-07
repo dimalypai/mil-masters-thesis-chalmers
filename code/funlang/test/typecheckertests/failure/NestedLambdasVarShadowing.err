@@ -1,2 +1,2 @@
-FunLang type checking error at NestedLambdasVarShadowing.fl:7,20-7,20:
+FunLang type checking error at NestedLambdasVarShadowing.fl:7,24-7,24:
   Variable binding for 'x' shadows an existing variable or function
