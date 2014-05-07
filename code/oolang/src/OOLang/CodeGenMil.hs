@@ -19,7 +19,7 @@ codeGenProgram (Program _ tyClassDefs tyFunDefs) =
       classMilTypeDefs = concatMap MIL.getMilTypeDefs classMilPrograms
       classMilFunDefs = concatMap MIL.getMilFunDefs classMilPrograms
       milFunDefs = classMilFunDefs ++ map codeGenFunDef tyFunDefs
-  in MIL.Program (classMilTypeDefs, milFunDefs)
+  in MIL.Program (builtInTypeDefs ++ classMilTypeDefs, milFunDefs)
 
 -- | TODO: outline the code gen idea
 codeGenClassDef :: TyClassDef -> MIL.Program
@@ -69,6 +69,10 @@ srcTypeToMilType (SrcTyClass srcClassName) =
   MIL.TyTypeCon $ typeNameMil (getClassName srcClassName)
 srcTypeToMilType (SrcTyArrow _ st1 st2) =
   MIL.TyArrow (srcTypeToMilType st1) (srcTypeToMilType st2)
+srcTypeToMilType (SrcTyPure _ st) = srcTypeToMilType st
+srcTypeToMilType (SrcTyMaybe _ st) =
+  MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (srcTypeToMilType st)
+srcTypeToMilType (SrcTyMutable _ st) = srcTypeToMilType st
 srcTypeToMilType (SrcTyParen _ st) = srcTypeToMilType st
 
 effects :: MIL.TypeM
@@ -84,4 +88,15 @@ conNameMil (ClassName classNameStr) = MIL.ConName classNameStr
 
 funNameMil :: FunName -> MIL.FunName
 funNameMil (FunName funNameStr) = MIL.FunName funNameStr
+
+-- * Built-ins
+
+builtInTypeDefs :: [MIL.TypeDef]
+builtInTypeDefs =
+  [ MIL.TypeDef (MIL.TypeName "Bool") [] [ MIL.ConDef (MIL.ConName "True") []
+                                         , MIL.ConDef (MIL.ConName "False") []]
+  , MIL.TypeDef (MIL.TypeName "Maybe") [MIL.TypeVar "A"]
+      [ MIL.ConDef (MIL.ConName "Nothing") []
+      , MIL.ConDef (MIL.ConName "Just") [MIL.mkTypeVar "A"]]
+  ]
 
