@@ -14,6 +14,7 @@ import OOLang.TypeChecker
 import OOLang.TypeChecker.TypeEnv
 import OOLang.Utils
 import qualified MIL.AST as MIL
+import qualified MIL.BuiltIn as MIL
 import qualified MIL.Transformations.IdExprMonadElimination as MIL
 
 -- | Entry point to the code generator.
@@ -112,11 +113,11 @@ literalMil NothingLit {} =
 
 -- | Internal type representation transformation.
 typeMil :: Type -> MIL.Type
-typeMil TyUnit   = MIL.mkSimpleType "Unit"
+typeMil TyUnit   = MIL.unitType
 typeMil TyBool   = MIL.mkSimpleType "Bool"
-typeMil TyInt    = MIL.mkSimpleType "Int"
-typeMil TyFloat  = MIL.mkSimpleType "Float"
-typeMil TyString = MIL.mkSimpleType "String"
+typeMil TyInt    = MIL.intType
+typeMil TyFloat  = MIL.floatType
+typeMil TyString = MIL.stringType
 typeMil (TyClass className) = MIL.TyTypeCon $ typeNameMil className
 typeMil (TyArrow t1 t2)     = MIL.TyArrow (typeMil t1) (typeMil t2)
 typeMil (TyPure t)          = typeMil t

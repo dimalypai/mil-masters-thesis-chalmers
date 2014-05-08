@@ -15,13 +15,13 @@ cabal-version:       >= 1.10
 library
   exposed-modules:     MIL.AST
                        MIL.AST.PrettyPrinter
+                       MIL.BuiltIn
                        MIL.Lexer
                        MIL.Parser
                        MIL.PrettyPrinter
                        MIL.TypeChecker
                        MIL.Transformations.IdExprMonadElimination
-  other-modules:       MIL.BuiltIn
-                       MIL.TypeChecker.Helpers
+  other-modules:       MIL.TypeChecker.Helpers
                        MIL.TypeChecker.TcError
                        MIL.TypeChecker.TypeCheckM
                        MIL.Utils
