@@ -1,29 +1,40 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+
 -- | Module responsible for MIL code generation.
 module OOLang.CodeGenMil
   ( codeGen
   ) where
 
+import Control.Monad.Reader
+import Control.Applicative
+
 import OOLang.AST
 import OOLang.AST.Helpers
+import OOLang.TypeChecker
 import qualified MIL.AST as MIL
 
 -- | Entry point to the code generator.
--- Takes a type checked program in OOLang and produces a program in MIL.
-codeGen :: TyProgram -> MIL.Program
-codeGen = codeGenProgram
+-- Takes a type checked program in OOLang and a type environment and produces a
+-- program in MIL.
+codeGen :: TyProgram -> TypeEnv -> MIL.Program
+codeGen tyProgram typeEnv = runReader (runCG $ codeGenProgram tyProgram) typeEnv
+
+-- | Code generation monad. Uses 'Reader' for querying the type environment.
+newtype CodeGenM a = CG { runCG :: Reader TypeEnv a }
+  deriving (Monad, MonadReader TypeEnv, Functor, Applicative)
 
 -- | TODO
-codeGenProgram :: TyProgram -> MIL.Program
-codeGenProgram (Program _ tyClassDefs tyFunDefs) =
-  let classMilPrograms = map codeGenClassDef tyClassDefs
-      classMilTypeDefs = concatMap MIL.getMilTypeDefs classMilPrograms
+codeGenProgram :: TyProgram -> CodeGenM MIL.Program
+codeGenProgram (Program _ tyClassDefs tyFunDefs) = do
+  classMilPrograms <- mapM codeGenClassDef tyClassDefs
+  milFunDefs <- mapM codeGenFunDef tyFunDefs
+  let classMilTypeDefs = concatMap MIL.getMilTypeDefs classMilPrograms
       classMilFunDefs = concatMap MIL.getMilFunDefs classMilPrograms
-      milFunDefs = classMilFunDefs ++ map codeGenFunDef tyFunDefs
-  in MIL.Program (builtInTypeDefs ++ classMilTypeDefs, milFunDefs)
+  return $ MIL.Program (builtInTypeDefs ++ classMilTypeDefs, classMilFunDefs ++ milFunDefs)
 
 -- | TODO: outline the code gen idea
-codeGenClassDef :: TyClassDef -> MIL.Program
-codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) =
+codeGenClassDef :: TyClassDef -> CodeGenM MIL.Program
+codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) = do
   let (tyFieldDecls, tyMethodDecls) = partitionClassMembers tyMembers
       superClassField =
         case mSuperSrcClassName of
@@ -32,22 +43,22 @@ codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) =
       classFields = map codeGenClassField tyFieldDecls
       classConDef = MIL.ConDef (conNameMil $ getClassName srcClassName) (superClassField ++ classFields)
       classTypeDef = MIL.TypeDef (typeNameMil $ getClassName srcClassName) [] [classConDef]
-      classMemberFunDefs = map codeGenClassMethod tyMethodDecls
-  in MIL.Program ([classTypeDef], classMemberFunDefs)
+  classMemberFunDefs <- mapM codeGenClassMethod tyMethodDecls
+  return $ MIL.Program ([classTypeDef], classMemberFunDefs)
 
 -- | TODO: inits (together with constructor)
 codeGenClassField :: TyFieldDecl -> MIL.Type
 codeGenClassField (FieldDecl _ tyDecl _) = srcTypeToMilType (getDeclVarType tyDecl)
 
 -- | TODO: ?
-codeGenClassMethod :: TyMethodDecl -> MIL.FunDef
+codeGenClassMethod :: TyMethodDecl -> CodeGenM MIL.FunDef
 codeGenClassMethod (MethodDecl _ tyFunDef _) = codeGenFunDef tyFunDef
 
-codeGenFunDef :: TyFunDef -> MIL.FunDef
-codeGenFunDef (FunDef _ srcFunName srcFunType tyStmts) =
+codeGenFunDef :: TyFunDef -> CodeGenM MIL.FunDef
+codeGenFunDef (FunDef _ srcFunName srcFunType tyStmts) = do
   let funBody = codeGenStmts tyStmts
       funType = srcFunTypeToMilType srcFunType
-  in MIL.FunDef (funNameMil $ getFunName srcFunName) funType funBody
+  return $ MIL.FunDef (funNameMil $ getFunName srcFunName) funType funBody
 
 -- | List of statements is not empty.
 codeGenStmts :: [TyStmt] -> MIL.Expr

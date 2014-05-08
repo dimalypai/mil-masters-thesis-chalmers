@@ -85,10 +85,10 @@ interactive flags typeEnv revProgramStrs = do
         Right srcProgram ->
           case typeCheck srcProgram of
             Left tcErr -> putStrLn (prPrint tcErr)
-            Right (tyProgram, _) -> do
+            Right (tyProgram, programTypeEnv) -> do
               when (DumpAst `elem` flags) $
                 putStrLn (ppShow tyProgram)
-              let milProgram = codeGen tyProgram
+              let milProgram = codeGen tyProgram programTypeEnv
               putStrLn (MIL.prPrint milProgram)
     -- All commands with arguments go here
     command -> do
@@ -136,10 +136,10 @@ compiler flags args = do
     Right srcProgram ->
       case typeCheck srcProgram of
         Left tcErr -> putStrLn (prPrint tcErr) >> exitFailure
-        Right (tyProgram, _) -> do
+        Right (tyProgram, programTypeEnv) -> do
           when (DumpAst `elem` flags) $
             putStrLn (ppShow tyProgram)
-          let milProgram = codeGen tyProgram
+          let milProgram = codeGen tyProgram programTypeEnv
           putStrLn (MIL.prPrint milProgram)
           exitSuccess
 

@@ -38,8 +38,8 @@ testCase :: String -> IO ()
 testCase baseName = do
   (input, output) <- testRead baseName
   let Right srcProgram = parseOOLang (mkFileName baseName) input
-  let Right (tyProgram, _) = typeCheck srcProgram
-  let milProgram = codeGen tyProgram
+  let Right (tyProgram, typeEnv) = typeCheck srcProgram
+  let milProgram = codeGen tyProgram typeEnv
   case MIL.typeCheck milProgram of
     Right _ -> (dropNewLine $ MIL.prPrint milProgram) `shouldBe` output
     Left milTcErr -> MIL.prPrint milTcErr `shouldBe` ""
