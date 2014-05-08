@@ -14,6 +14,9 @@ getFunReturnType (FunType _ _ retType) = retType
 getInitOpS :: Init v s -> InitOpS s
 getInitOpS (Init _ initOpS _) = initOpS
 
+getDeclVarName :: Declaration v s -> VarS s
+getDeclVarName (Decl _ varBinder _) = getBinderVar varBinder
+
 getDeclVarType :: Declaration v s -> TypeS s
 getDeclVarType (Decl _ varBinder _) = getBinderType varBinder
 

@@ -11,6 +11,7 @@ import Control.Applicative
 import OOLang.AST
 import OOLang.AST.Helpers
 import OOLang.TypeChecker
+import OOLang.TypeChecker.TypeEnv
 import qualified MIL.AST as MIL
 
 -- | Entry point to the code generator.
@@ -35,20 +36,24 @@ codeGenProgram (Program _ tyClassDefs tyFunDefs) = do
 -- | TODO: outline the code gen idea
 codeGenClassDef :: TyClassDef -> CodeGenM MIL.Program
 codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) = do
+  let className = getClassName srcClassName
   let (tyFieldDecls, tyMethodDecls) = partitionClassMembers tyMembers
       superClassField =
         case mSuperSrcClassName of
           Nothing -> []
-          Just superSrcClassName -> [MIL.TyTypeCon (typeNameMil $ getClassName superSrcClassName)]
-      classFields = map codeGenClassField tyFieldDecls
-      classConDef = MIL.ConDef (conNameMil $ getClassName srcClassName) (superClassField ++ classFields)
-      classTypeDef = MIL.TypeDef (typeNameMil $ getClassName srcClassName) [] [classConDef]
+          Just superSrcClassName -> [MIL.TyTypeCon (typeNameMil className)]
+  classFields <- mapM (codeGenClassField className) tyFieldDecls
+  let classConDef = MIL.ConDef (conNameMil className) (superClassField ++ classFields)
+      classTypeDef = MIL.TypeDef (typeNameMil className) [] [classConDef]
   classMemberFunDefs <- mapM codeGenClassMethod tyMethodDecls
   return $ MIL.Program ([classTypeDef], classMemberFunDefs)
 
 -- | TODO: inits (together with constructor)
-codeGenClassField :: TyFieldDecl -> MIL.Type
-codeGenClassField (FieldDecl _ tyDecl _) = srcTypeToMilType (getDeclVarType tyDecl)
+codeGenClassField :: ClassName -> TyFieldDecl -> CodeGenM MIL.Type
+codeGenClassField className (FieldDecl _ tyDecl _) = do
+  let fieldName = getVar $ getDeclVarName tyDecl
+  fieldType <- asks (getClassFieldType className fieldName . getClassTypeEnv)
+  return $ typeMil fieldType
 
 -- | TODO: ?
 codeGenClassMethod :: TyMethodDecl -> CodeGenM MIL.FunDef
@@ -56,9 +61,10 @@ codeGenClassMethod (MethodDecl _ tyFunDef _) = codeGenFunDef tyFunDef
 
 codeGenFunDef :: TyFunDef -> CodeGenM MIL.FunDef
 codeGenFunDef (FunDef _ srcFunName srcFunType tyStmts) = do
+  let funName = getFunName srcFunName
   let funBody = codeGenStmts tyStmts
-      funType = srcFunTypeToMilType srcFunType
-  return $ MIL.FunDef (funNameMil $ getFunName srcFunName) funType funBody
+  funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
+  return $ MIL.FunDef (funNameMil funName) (typeMil funType) funBody
 
 -- | List of statements is not empty.
 codeGenStmts :: [TyStmt] -> MIL.Expr
@@ -66,25 +72,18 @@ codeGenStmts _ = MIL.LitE (MIL.UnitLit)  -- TODO
 
 -- * Type conversions
 
-srcFunTypeToMilType :: SrcFunType -> MIL.Type
-srcFunTypeToMilType (FunType _ varBinders retSrcType) =
-  let retType = srcTypeToMilType retSrcType
-  in retType  -- TODO
-
-srcTypeToMilType :: SrcType -> MIL.Type
-srcTypeToMilType (SrcTyUnit  _) = MIL.mkSimpleType "Unit"
-srcTypeToMilType (SrcTyBool  _) = MIL.mkSimpleType "Bool"
-srcTypeToMilType (SrcTyInt   _) = MIL.mkSimpleType "Int"
-srcTypeToMilType (SrcTyFloat _) = MIL.mkSimpleType "Float"
-srcTypeToMilType (SrcTyClass srcClassName) =
-  MIL.TyTypeCon $ typeNameMil (getClassName srcClassName)
-srcTypeToMilType (SrcTyArrow _ st1 st2) =
-  MIL.TyArrow (srcTypeToMilType st1) (srcTypeToMilType st2)
-srcTypeToMilType (SrcTyPure _ st) = srcTypeToMilType st
-srcTypeToMilType (SrcTyMaybe _ st) =
-  MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (srcTypeToMilType st)
-srcTypeToMilType (SrcTyMutable _ st) = srcTypeToMilType st
-srcTypeToMilType (SrcTyParen _ st) = srcTypeToMilType st
+-- | Internal type representation transformation.
+typeMil :: Type -> MIL.Type
+typeMil TyUnit   = MIL.mkSimpleType "Unit"
+typeMil TyBool   = MIL.mkSimpleType "Bool"
+typeMil TyInt    = MIL.mkSimpleType "Int"
+typeMil TyFloat  = MIL.mkSimpleType "Float"
+typeMil TyString = MIL.mkSimpleType "String"
+typeMil (TyClass className) = MIL.TyTypeCon $ typeNameMil className
+typeMil (TyArrow t1 t2)     = MIL.TyArrow (typeMil t1) (typeMil t2)
+typeMil (TyPure t)          = typeMil t
+typeMil (TyMaybe t)         = MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (typeMil t)
+typeMil (TyMutable t)       = typeMil t
 
 -- * Conversion utils
 
