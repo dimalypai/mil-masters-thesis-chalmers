@@ -163,7 +163,7 @@ getClassMemberTypeM className memberName =
 -- are defined.
 getClassFieldTypeM :: ClassName -> Var -> TypeCheckM Type
 getClassFieldTypeM className fieldName =
-  getClassMemberTypeM className (varToMemberName fieldName)
+  getClassFieldType className fieldName <$> getClassTypeEnvM
 
 -- | Returns a type of the class method.
 --
@@ -171,7 +171,7 @@ getClassFieldTypeM className fieldName =
 -- are defined.
 getClassMethodTypeM :: ClassName -> FunName -> TypeCheckM Type
 getClassMethodTypeM className methodName =
-  getClassMemberTypeM className (funNameToMemberName methodName)
+  getClassMethodType className methodName <$> getClassTypeEnvM
 
 -- | Returns a super class of the given class if it has one.
 --

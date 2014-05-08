@@ -18,6 +18,8 @@ module OOLang.TypeChecker.TypeEnv
   , addClassField
   , addClassMethod
   , getClassMemberType
+  , getClassFieldType
+  , getClassMethodType
   , getSuperClass
   , getClassesAssoc
 
@@ -175,6 +177,22 @@ getClassMemberType className memberName classTypeEnv =
         Nothing ->
           let mSuperClassName = getSuperClass className classTypeEnv
           in getClassMemberType (fromJust mSuperClassName) memberName classTypeEnv  -- fromJust may fail
+
+-- | Returns a type of the class field.
+--
+-- Note: Unsafe. Should be used only after check that the class and the field
+-- are defined.
+getClassFieldType :: ClassName -> Var -> ClassTypeEnv -> Type
+getClassFieldType className fieldName =
+  getClassMemberType className (varToMemberName fieldName)
+
+-- | Returns a type of the class method.
+--
+-- Note: Unsafe. Should be used only after check that the class and the method
+-- are defined.
+getClassMethodType :: ClassName -> FunName -> ClassTypeEnv -> Type
+getClassMethodType className methodName =
+  getClassMemberType className (funNameToMemberName methodName)
 
 -- | Returns a super class of the given class if it has one.
 --
