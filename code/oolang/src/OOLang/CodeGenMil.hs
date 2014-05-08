@@ -12,7 +12,7 @@ import qualified MIL.AST as MIL
 codeGen :: TyProgram -> MIL.Program
 codeGen = codeGenProgram
 
--- | TODO: generate code for built-ins
+-- | TODO
 codeGenProgram :: TyProgram -> MIL.Program
 codeGenProgram (Program _ tyClassDefs tyFunDefs) =
   let classMilPrograms = map codeGenClassDef tyClassDefs
@@ -75,9 +75,6 @@ srcTypeToMilType (SrcTyMaybe _ st) =
 srcTypeToMilType (SrcTyMutable _ st) = srcTypeToMilType st
 srcTypeToMilType (SrcTyParen _ st) = srcTypeToMilType st
 
-effects :: MIL.TypeM
-effects = undefined
-
 -- * Conversion utils
 
 typeNameMil :: ClassName -> MIL.TypeName
@@ -93,10 +90,10 @@ funNameMil (FunName funNameStr) = MIL.FunName funNameStr
 
 builtInTypeDefs :: [MIL.TypeDef]
 builtInTypeDefs =
-  [ MIL.TypeDef (MIL.TypeName "Bool") [] [ MIL.ConDef (MIL.ConName "True") []
+  [ MIL.TypeDef (MIL.TypeName "Bool") [] [ MIL.ConDef (MIL.ConName "True")  []
                                          , MIL.ConDef (MIL.ConName "False") []]
   , MIL.TypeDef (MIL.TypeName "Maybe") [MIL.TypeVar "A"]
       [ MIL.ConDef (MIL.ConName "Nothing") []
-      , MIL.ConDef (MIL.ConName "Just") [MIL.mkTypeVar "A"]]
+      , MIL.ConDef (MIL.ConName "Just")    [MIL.mkTypeVar "A"]]
   ]
 
