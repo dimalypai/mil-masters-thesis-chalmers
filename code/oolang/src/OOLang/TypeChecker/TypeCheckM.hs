@@ -1,45 +1,34 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 -- | Module containing type checking monad and API for building a type checker.
--- This module mostly is for working with type environment (querying, adding).
+-- This module is mostly for working with type environment (querying, adding)
+-- via monadic wrappers for pure functions from "OOLang.TypeChecker.TypeEnv".
 -- Nothing smart should happen here.
 module OOLang.TypeChecker.TypeCheckM
   ( TypeCheckM
   , runTypeCheckM
 
-  , TypeEnv
-  , initTypeEnv
+  , isClassDefinedM
+  , isClassMemberDefinedM
+  , isClassFieldDefinedM
+  , isClassMethodDefinedM
+  , isClassMethodOverrideM
+  , addClassM
+  , addClassFieldM
+  , addClassMethodM
+  , getClassMemberTypeM
+  , getClassFieldTypeM
+  , getClassMethodTypeM
+  , getSuperClassM
+  , getClassesAssocM
 
-  , ctiMSuperClassName
-  , ctiSrcClassName
-  , ctiMSuperSrcClassName
-  , getClassesAssoc
-  , isClassDefined
-  , isClassMemberDefined
-  , isClassFieldDefined
-  , isClassMethodDefined
-  , isClassMethodOverride
-  , addClass
-  , addClassField
-  , addClassMethod
-  , getClassMemberType
-  , getClassFieldType
-  , getClassMethodType
-  , getSuperClass
+  , isFunctionDefinedM
+  , addFunctionM
+  , getFunTypeInfoM
 
-  , ftiType
-  , ftiSrcFunName
-  , ftiSrcFunType
-  , isFunctionDefined
-  , addFunction
-  , getFunTypeInfo
-
-  , emptyLocalTypeEnv
-  , isVarBound
-  , isVarInLocalEnv
-  , getVarType
-  , addLocalVar
+  , isVarBoundM
   , addLocalVarM
+  , getVarTypeM
   , locallyWithEnv
 
   , module Control.Monad.Error
@@ -51,13 +40,12 @@ import Control.Monad.Identity
 import Control.Applicative
 -- 'first' and 'second' are used just to transform components of a pair
 import Control.Arrow (first, second)
-import qualified Data.Map as Map
-import Data.Maybe (fromJust)
 
 import OOLang.AST
 import OOLang.AST.Helpers
-import OOLang.BuiltIn
+import OOLang.TypeChecker.TypeEnv
 import OOLang.TypeChecker.TcError
+import OOLang.Utils
 
 -- | Type checking monad. Uses 'StateT' for type environment and 'ErrorT' for
 -- error handling.
@@ -91,271 +79,162 @@ dropLocalTypeEnv :: (a, (TypeEnv, LocalTypeEnv))
                  -> (a, TypeEnv)
 dropLocalTypeEnv = second getTypeEnv
 
--- | Type environment.
-newtype TypeEnv = TypeEnv { unTypeEnv :: (ClassTypeEnv, FunTypeEnv) }
+-- * Class type environment
 
--- | Initial type environment.
-initTypeEnv :: TypeEnv
-initTypeEnv = mkTypeEnv Map.empty initFunTypeEnv
+getClassTypeEnvM :: TypeCheckM ClassTypeEnv
+getClassTypeEnvM = gets (getClassTypeEnv . getTypeEnv)
 
-initFunTypeEnv :: FunTypeEnv
-initFunTypeEnv = Map.fromList $ map (second builtInFunTypeInfo) builtInFunctions
-
--- | Smart constructor for 'TypeEnv'.
-mkTypeEnv :: ClassTypeEnv -> FunTypeEnv -> TypeEnv
-mkTypeEnv classTypeEnv funTypeEnv = TypeEnv (classTypeEnv, funTypeEnv)
-
--- Class type environment
-
-type ClassTypeEnv = Map.Map ClassName ClassTypeInfo
-
--- | All the information about classes that we store in the type environment.
--- Some of the fields are kept just for error messages.
-data ClassTypeInfo = ClassTypeInfo
-  { ctiMSuperClassName    :: Maybe ClassName       -- ^ Name of the super class, if it has one.
-  , ctiClassFields        :: Map.Map Var Type      -- ^ Class fields environment.
-  , ctiClassMethods       :: Map.Map FunName Type  -- ^ Class methods environment.
-  , ctiSrcClassName       :: SrcClassName          -- ^ Source name. For error messages.
-  , ctiMSuperSrcClassName :: Maybe SrcClassName    -- ^ Super class source name. For error messages.
-  }
-
--- | 'ClassTypeEnv' getter.
-getClassTypeEnv :: TypeCheckM ClassTypeEnv
-getClassTypeEnv = gets (fst . unTypeEnv . getTypeEnv)
-
--- | Get class type environment as an associative list.
-getClassesAssoc :: TypeCheckM [(ClassName, ClassTypeInfo)]
-getClassesAssoc = fmap Map.assocs getClassTypeEnv
-
--- | Modification function for 'ClassTypeEnv'.
 modifyClassTypeEnv :: (ClassTypeEnv -> ClassTypeEnv) -> TypeCheckM ()
 modifyClassTypeEnv f = do
-  (classTypeEnv, funTypeEnv) <- (,) <$> getClassTypeEnv <*> getFunTypeEnv
+  (classTypeEnv, funTypeEnv) <- (,) <$> getClassTypeEnvM <*> getFunTypeEnvM
   modifyTypeEnv (const $ mkTypeEnv (f classTypeEnv) funTypeEnv)
 
--- | Returns all information about the class from the environment.
+isClassDefinedM :: ClassName -> TypeCheckM Bool
+isClassDefinedM className = isClassDefined className <$> getClassTypeEnvM
+
+-- | Looks for a member in the whole class hierarchy.
 --
 -- Note: Unsafe. Should be used only after check that class is defined.
-getClassTypeInfo :: ClassName -> TypeCheckM ClassTypeInfo
-getClassTypeInfo className = do
-  classTypeEnv <- getClassTypeEnv
-  return $ fromJust $ Map.lookup className classTypeEnv  -- fromJust may fail
-
-modifyClassTypeInfo :: ClassName -> (ClassTypeInfo -> ClassTypeInfo) -> TypeCheckM ()
-modifyClassTypeInfo className f = do
-  classTypeInfo <- getClassTypeInfo className
-  -- overwrite with the modified ClassTypeInfo
-  modifyClassTypeEnv (Map.insert className (f classTypeInfo))
-
-isClassDefined :: ClassName -> TypeCheckM Bool
-isClassDefined className = do
-  classTypeEnv <- getClassTypeEnv
-  return $ Map.member className classTypeEnv
-
-isClassMemberDefined :: ClassName -> MemberName -> TypeCheckM Bool
-isClassMemberDefined className memberName = do
+isClassMemberDefinedM :: ClassName -> MemberName -> TypeCheckM Bool
+isClassMemberDefinedM className memberName = do
   let fieldName = memberNameToVar memberName
       methodName = memberNameToFunName memberName
-  isField <- isClassFieldDefined className fieldName
-  isMethod <- isClassMethodDefined className methodName
+  isField <- isClassFieldDefinedM className fieldName
+  isMethod <- isClassMethodDefinedM className methodName
   return (isField || isMethod)
 
 -- | Looks for a field in the whole class hierarchy.
-isClassFieldDefined :: ClassName -> Var -> TypeCheckM Bool
-isClassFieldDefined className fieldName = do
-  classTypeInfo <- getClassTypeInfo className
-  if Map.member fieldName (ctiClassFields classTypeInfo)
-    then return True
-    else case ctiMSuperClassName classTypeInfo of
-           Nothing -> return False
-           Just superClassName -> isClassFieldDefined superClassName fieldName
+--
+-- Note: Unsafe. Should be used only after check that class is defined.
+isClassFieldDefinedM :: ClassName -> Var -> TypeCheckM Bool
+isClassFieldDefinedM className fieldName =
+  isClassFieldDefined className fieldName <$> getClassTypeEnvM
 
 -- | Looks for a method in the whole class hierarchy.
-isClassMethodDefined :: ClassName -> FunName -> TypeCheckM Bool
-isClassMethodDefined className methodName = do
-  classTypeInfo <- getClassTypeInfo className
-  if Map.member methodName (ctiClassMethods classTypeInfo)
-    then return True
-    else case ctiMSuperClassName classTypeInfo of
-           Nothing -> return False
-           Just superClassName -> isClassMethodDefined superClassName methodName
+--
+-- Note: Unsafe. Should be used only after check that class is defined.
+isClassMethodDefinedM :: ClassName -> FunName -> TypeCheckM Bool
+isClassMethodDefinedM className methodName =
+  isClassMethodDefined className methodName <$> getClassTypeEnvM
 
 -- | Checks whether there is a method with a given name and type in on of the
 -- super classes (does *not* check a given class).
-isClassMethodOverride :: ClassName -> FunName -> Type -> TypeCheckM Bool
-isClassMethodOverride className methodName methodType = do
-  mSuperClassName <- getSuperClass className
-  case mSuperClassName of
-    Nothing -> return False
-    Just superClassName -> hasClassMethodOfType superClassName methodName methodType
-
--- | Checks whether there is a method with a given name and type in on of the
--- classes in the hierarchy (starts from a given class).
-hasClassMethodOfType :: ClassName -> FunName -> Type -> TypeCheckM Bool
-hasClassMethodOfType className methodName methodType = do
-  classTypeInfo <- getClassTypeInfo className
-  case Map.lookup methodName (ctiClassMethods classTypeInfo) of
-    Just methodType' -> return (methodType == methodType')
-    Nothing -> do
-      mSuperClassName <- getSuperClass className
-      case mSuperClassName of
-        Nothing -> return False
-        Just superClassName -> hasClassMethodOfType superClassName methodName methodType
+--
+-- Note: Unsafe. Should be used only after check that class is defined.
+isClassMethodOverrideM :: ClassName -> FunName -> Type -> TypeCheckM Bool
+isClassMethodOverrideM className methodName methodType =
+  isClassMethodOverride className methodName methodType <$> getClassTypeEnvM
 
 -- | Doesn't check if the class is already in the environment.
 -- Will overwrite it in this case.
-addClass :: SrcClassName -> Maybe SrcClassName -> TypeCheckM ()
-addClass srcClassName mSuperSrcClassName = do
-  let className = getClassName srcClassName
-      mSuperClassName = getClassName <$> mSuperSrcClassName
+addClassM :: ClassName -> Maybe SrcClassName -> TypeCheckM ()
+addClassM className mSuperSrcClassName = do
+  let mSuperClassName = getClassName <$> mSuperSrcClassName
   modifyClassTypeEnv $
-    Map.insert className (ClassTypeInfo mSuperClassName
-                                        Map.empty
-                                        Map.empty
-                                        srcClassName
-                                        mSuperSrcClassName)
+    addClass className mSuperClassName mSuperSrcClassName
 
 -- | Doesn't check if the field is already in the environment.
 -- Will overwrite it in this case.
-addClassField :: ClassName -> Var -> Type -> TypeCheckM ()
-addClassField className fieldName fieldType = do
-  modifyClassTypeInfo className (\classTypeInfo ->
-    -- overwrite with the modified class fields mapping
-    classTypeInfo { ctiClassFields = Map.insert fieldName fieldType (ctiClassFields classTypeInfo) })
+--
+-- Note: Unsafe. Should be used only after check that class is defined.
+addClassFieldM :: ClassName -> Var -> Type -> TypeCheckM ()
+addClassFieldM className fieldName fieldType =
+  modifyClassTypeEnv $ addClassField className fieldName fieldType
 
 -- | Doesn't check if the method is already in the environment.
 -- Will overwrite it in this case.
-addClassMethod :: ClassName -> FunName -> Type -> TypeCheckM ()
-addClassMethod className methodName methodType = do
-  modifyClassTypeInfo className (\classTypeInfo ->
-    -- overwrite with the modified class methods mapping
-    classTypeInfo { ctiClassMethods = Map.insert methodName methodType (ctiClassMethods classTypeInfo) })
+--
+-- Note: Unsafe. Should be used only after check that class is defined.
+addClassMethodM :: ClassName -> FunName -> Type -> TypeCheckM ()
+addClassMethodM className methodName methodType =
+  modifyClassTypeEnv $ addClassMethod className methodName methodType
 
 -- | Returns a type of the class member.
 --
 -- Note: Unsafe. Should be used only after check that the class and the member
 -- are defined.
-getClassMemberType :: ClassName -> MemberName -> TypeCheckM Type
-getClassMemberType className memberName = do
-  classTypeInfo <- getClassTypeInfo className
-  case Map.lookup (memberNameToVar memberName) (ctiClassFields classTypeInfo) of
-    Just fieldType -> return fieldType
-    Nothing ->
-      case Map.lookup (memberNameToFunName memberName) (ctiClassMethods classTypeInfo) of
-        Just methodType -> return methodType
-        Nothing -> do
-          mSuperClassName <- getSuperClass className
-          getClassMemberType (fromJust mSuperClassName) memberName  -- fromJust may fail
+getClassMemberTypeM :: ClassName -> MemberName -> TypeCheckM Type
+getClassMemberTypeM className memberName =
+  getClassMemberType className memberName <$> getClassTypeEnvM
 
 -- | Returns a type of the class field.
 --
 -- Note: Unsafe. Should be used only after check that the class and the field
 -- are defined.
-getClassFieldType :: ClassName -> Var -> TypeCheckM Type
-getClassFieldType className fieldName = getClassMemberType className (varToMemberName fieldName)
+getClassFieldTypeM :: ClassName -> Var -> TypeCheckM Type
+getClassFieldTypeM className fieldName =
+  getClassMemberTypeM className (varToMemberName fieldName)
 
 -- | Returns a type of the class method.
 --
 -- Note: Unsafe. Should be used only after check that the class and the method
 -- are defined.
-getClassMethodType :: ClassName -> FunName -> TypeCheckM Type
-getClassMethodType className methodName = getClassMemberType className (funNameToMemberName methodName)
+getClassMethodTypeM :: ClassName -> FunName -> TypeCheckM Type
+getClassMethodTypeM className methodName =
+  getClassMemberTypeM className (funNameToMemberName methodName)
 
 -- | Returns a super class of the given class if it has one.
 --
 -- Note: Unsafe. Should be used only after check that class is defined.
-getSuperClass :: ClassName -> TypeCheckM (Maybe ClassName)
-getSuperClass className = do
-  classTypeEnv <- getClassTypeEnv
-  return $ ctiMSuperClassName $ fromJust $ Map.lookup className classTypeEnv  -- fromJust may fail
+getSuperClassM :: ClassName -> TypeCheckM (Maybe ClassName)
+getSuperClassM className = getSuperClass className <$> getClassTypeEnvM
 
--- Function type environment
+-- | Get class type environment as an associative list.
+getClassesAssocM :: TypeCheckM [(ClassName, ClassTypeInfo)]
+getClassesAssocM = getClassesAssoc <$> getClassTypeEnvM
 
-type FunTypeEnv = Map.Map FunName FunTypeInfo
+-- * Function type environment
 
--- | All the information about functions that we store in the type environment.
--- Some of the fields are kept just for error messages.
-data FunTypeInfo = FunTypeInfo
-  { ftiType       :: Type        -- ^ Function type.
-  , ftiSrcFunName :: SrcFunName  -- ^ Source name. For error messages.
-  , ftiSrcFunType :: SrcFunType  -- ^ Source type. For error messages.
-  }
+getFunTypeEnvM :: TypeCheckM FunTypeEnv
+getFunTypeEnvM = gets (getFunTypeEnv . getTypeEnv)
 
--- | 'FunTypeEnv' getter.
-getFunTypeEnv :: TypeCheckM FunTypeEnv
-getFunTypeEnv = gets (snd . unTypeEnv . getTypeEnv)
-
--- | Modification function for 'FunTypeEnv'.
 modifyFunTypeEnv :: (FunTypeEnv -> FunTypeEnv) -> TypeCheckM ()
 modifyFunTypeEnv f = do
-  (classTypeEnv, funTypeEnv) <- (,) <$> getClassTypeEnv <*> getFunTypeEnv
+  (classTypeEnv, funTypeEnv) <- (,) <$> getClassTypeEnvM <*> getFunTypeEnvM
   modifyTypeEnv (const $ mkTypeEnv classTypeEnv (f funTypeEnv))
 
-isFunctionDefined :: FunName -> TypeCheckM Bool
-isFunctionDefined funName = do
-  funTypeEnv <- getFunTypeEnv
-  return $ Map.member funName funTypeEnv
+isFunctionDefinedM :: FunName -> TypeCheckM Bool
+isFunctionDefinedM funName = isFunctionDefined funName <$> getFunTypeEnvM
 
 -- | Doesn't check if the function is already in the environment.
 -- Will overwrite it in this case.
-addFunction :: SrcFunName -> Type ->SrcFunType -> TypeCheckM ()
-addFunction srcFunName funType srcFunType = do
-  let funName = getFunName srcFunName
-  modifyFunTypeEnv $ Map.insert funName (FunTypeInfo funType srcFunName srcFunType)
+addFunctionM :: FunName -> Type ->SrcFunType -> TypeCheckM ()
+addFunctionM funName funType srcFunType =
+  modifyFunTypeEnv $ addFunction funName funType srcFunType
 
 -- | Returns all information about the function from the environment.
 --
 -- Note: Unsafe. Should be used only after check that function is defined.
-getFunTypeInfo :: FunName -> TypeCheckM FunTypeInfo
-getFunTypeInfo funName = do
-  funTypeEnv <- getFunTypeEnv
-  return $ fromJust $ Map.lookup funName funTypeEnv  -- fromJust may fail
+getFunTypeInfoM :: FunName -> TypeCheckM FunTypeInfo
+getFunTypeInfoM funName = getFunTypeInfo funName <$> getFunTypeEnvM
 
-builtInFunTypeInfo :: Type -> FunTypeInfo
-builtInFunTypeInfo funType = FunTypeInfo funType undefined undefined
-
--- Local type environment
-
--- | Local variables, parameters etc. and their types.
-type LocalTypeEnv = Map.Map Var Type
-
-emptyLocalTypeEnv :: LocalTypeEnv
-emptyLocalTypeEnv = Map.empty
+-- * Local type environment
 
 -- | Check whether a variable is in scope. It can be either local variable name
 -- or a function name.
-isVarBound :: Var -> TypeCheckM Bool
-isVarBound var = do
-  isLocalVar <- gets (Map.member var . getLocalTypeEnv)
-  isFunction <- isFunctionDefined (varToFunName var)
+isVarBoundM :: Var -> TypeCheckM Bool
+isVarBoundM var = do
+  isLocalVar <- gets (isVarBound var . getLocalTypeEnv)
+  isFunction <- isFunctionDefinedM (varToFunName var)
   return (isLocalVar || isFunction)
-
--- | Pure function for querying local type environment.
-isVarInLocalEnv :: Var -> LocalTypeEnv -> Bool
-isVarInLocalEnv var = Map.member var
-
--- | Returns variable type. First looks for locals and then for functions.
---
--- Note: Unsafe. Should be used only after check that the variable is bound.
-getVarType :: Var -> TypeCheckM Type
-getVarType var = do
-  mVarType <- gets (Map.lookup var . getLocalTypeEnv)
-  case mVarType of
-    Just varType -> return varType
-    Nothing -> do
-      funTypeInfo <- getFunTypeInfo (varToFunName var)
-      return $ ftiType funTypeInfo
-
--- | Extends local type environment. Pure (meaning, not a 'TypeCheckM' function).
-addLocalVar :: Var -> Type -> LocalTypeEnv -> LocalTypeEnv
-addLocalVar = Map.insert
 
 -- | Monadic function for adding variables to the local environment.
 -- Doesn't check if the variable is already in the environment.
 -- Will overwrite it in this case.
 addLocalVarM :: Var -> Type -> TypeCheckM ()
-addLocalVarM var varType =
-  modifyLocalTypeEnv $ Map.insert var varType
+addLocalVarM var varType = modifyLocalTypeEnv $ addLocalVar var varType
+
+-- | Returns variable type. First looks for locals and then for functions.
+--
+-- Note: Unsafe. Should be used only after check that the variable is bound.
+getVarTypeM :: Var -> TypeCheckM Type
+getVarTypeM var = do
+  mVarType <- gets (getVarType var . getLocalTypeEnv)
+  case mVarType of
+    Just varType -> return varType
+    Nothing -> do
+      funTypeInfo <- getFunTypeInfoM (varToFunName var)
+      return $ ftiType funTypeInfo
 
 -- | Takes a separate local type environment and merges it with what is already
 -- in the local type environment and performs a given computation in this new
@@ -364,14 +243,8 @@ addLocalVarM var varType =
 locallyWithEnv :: LocalTypeEnv -> TypeCheckM a -> TypeCheckM a
 locallyWithEnv localTypeEnv tcm = do
   currentLocalTypeEnv <- gets getLocalTypeEnv
-  modifyLocalTypeEnv (Map.union localTypeEnv)
+  modifyLocalTypeEnv (mergeLocalTypeEnv localTypeEnv)
   a <- tcm
   modifyLocalTypeEnv (const currentLocalTypeEnv)
   return a
-
--- Utils
-
--- | Convenient version of 'runStateT' with the arguments flipped.
-runStateTFrom :: Monad m => s -> StateT s m a -> m (a, s)
-runStateTFrom = flip runStateT
 

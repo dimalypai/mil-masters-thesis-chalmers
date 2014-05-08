@@ -64,7 +64,7 @@ t1 `isSubTypeOf` t2 = do
   inheritanceSubType <-
     case (t1, t2) of
       (TyClass className1, TyClass className2) -> do
-        mSuperClassName <- getSuperClass className1
+        mSuperClassName <- getSuperClassM className1
         case mSuperClassName of
           Nothing -> return False
           Just superClassName -> do
@@ -100,7 +100,7 @@ srcTypeToType (SrcTyFloat _) = return TyFloat
 
 srcTypeToType (SrcTyClass srcClassName) = do
   let className = getClassName srcClassName
-  unlessM (isClassDefined className) $
+  unlessM (isClassDefinedM className) $
     throwError $ ClassNotDefined srcClassName
   return $ TyClass className
 

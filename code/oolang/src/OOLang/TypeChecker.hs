@@ -24,6 +24,7 @@ import OOLang.AST
 import OOLang.AST.Helpers
 import OOLang.SrcAnnotated
 import OOLang.TypeChecker.TypeCheckM
+import OOLang.TypeChecker.TypeEnv
 import OOLang.TypeChecker.TcError
 import OOLang.TypeChecker.Helpers
 import OOLang.Utils
@@ -94,9 +95,9 @@ collectDefs classDefs funDefs = do
 collectClassDef :: SrcClassDef -> TypeCheckM ()
 collectClassDef (ClassDef _ srcClassName mSuperSrcClassName srcMembers) = do
   let className = getClassName srcClassName
-  whenM (isClassDefined className) $
+  whenM (isClassDefinedM className) $
     throwError $ ClassAlreadyDefined srcClassName
-  addClass srcClassName mSuperSrcClassName
+  addClassM className mSuperSrcClassName
   -- it is important that we add class to the environment first
   collectClassMembers className srcMembers
 
@@ -131,11 +132,11 @@ collectClassField className (FieldDecl _ (Decl _ varBinder _) _) = do
     throwError $ NewMemberName fieldNameSrcSpan
 
   let memberName = varToMemberName fieldName
-  whenM (isClassMemberDefined className memberName) $
+  whenM (isClassMemberDefinedM className memberName) $
     throwError $ MemberAlreadyDefined memberName fieldNameSrcSpan
 
   fieldType <- srcTypeToType (getBinderType varBinder)
-  addClassField className fieldName fieldType
+  addClassFieldM className fieldName fieldType
 
 -- | Checks if a field with the same name is already defined.
 -- Checks if a method with the same name and different type is already
@@ -159,11 +160,11 @@ collectClassMethod className (MethodDecl _ (FunDef _ srcFunName srcFunType _) _)
 
   methodType <- srcFunTypeToType srcFunType
   let memberName = funNameToMemberName methodName
-  whenM (isClassMemberDefined className memberName) $ do
-    unlessM (isClassMethodOverride className methodName methodType) $
+  whenM (isClassMemberDefinedM className memberName) $ do
+    unlessM (isClassMethodOverrideM className methodName methodType) $
       throwError $ MemberAlreadyDefined memberName methodNameSrcSpan
 
-  addClassMethod className methodName methodType
+  addClassMethodM className methodName methodType
 
 -- | Checks if the function is already defined.
 -- Checks that the specified function type is correct (used types are defined).
@@ -172,17 +173,18 @@ collectClassMethod className (MethodDecl _ (FunDef _ srcFunName srcFunType _) _)
 -- Adds the function and its type to the environment.
 collectFunDef :: SrcFunDef -> TypeCheckM ()
 collectFunDef (FunDef _ srcFunName srcFunType _) = do
-  whenM (isFunctionDefined $ getFunName srcFunName) $
+  let funName = getFunName srcFunName
+  whenM (isFunctionDefinedM funName) $
     throwError $ FunctionAlreadyDefined srcFunName
   funType <- srcFunTypeToType srcFunType
-  addFunction srcFunName funType srcFunType
+  addFunctionM funName funType srcFunType
 
 -- | Program needs to have an entry point: `main : Unit`.
 checkMain :: TypeCheckM ()
 checkMain = do
-  unlessM (isFunctionDefined $ FunName "main") $
+  unlessM (isFunctionDefinedM $ FunName "main") $
     throwError MainNotDefined
-  funTypeInfo <- getFunTypeInfo $ FunName "main"
+  funTypeInfo <- getFunTypeInfoM $ FunName "main"
   when (ftiType funTypeInfo /= TyUnit) $
     throwError $ MainIncorrectType (ftiSrcFunType funTypeInfo) (ftiType funTypeInfo)
 
@@ -190,14 +192,14 @@ checkMain = do
 -- inheritance.
 checkInheritance :: TypeCheckM ()
 checkInheritance = do
-  classesAssoc <- getClassesAssoc
+  classesAssoc <- getClassesAssocM
   -- running DFS from each vertex (class name)
   -- See comment on 'traverseHierarchy'
   foldM_ (\(marked, onStack) (className, classTypeInfo) -> do
       let mSuperClassName = ctiMSuperClassName classTypeInfo
       when (isJust mSuperClassName) $ do
         let superClassName = fromJust mSuperClassName
-        unlessM (isClassDefined superClassName) $
+        unlessM (isClassDefinedM superClassName) $
           throwError $ ClassNotDefined (fromJust $ ctiMSuperSrcClassName classTypeInfo)
 
       -- Classical running of DFS from non-marked vertices
@@ -219,7 +221,7 @@ traverseHierarchy className marked onStack = do
   -- mark current vertex (class name) and put it on the DFS stack
   let marked' = Set.insert className marked
       onStack' = Set.insert className onStack
-  mSuperClassName <- getSuperClass className
+  mSuperClassName <- getSuperClassM className
   if isJust mSuperClassName  -- if there is an adjacent vertex
     then do
       let superClassName = fromJust mSuperClassName
@@ -280,7 +282,7 @@ tcClassMembers className srcMembers = do
 tcClassField :: ClassName -> SrcFieldDecl -> TypeCheckM TyFieldDecl
 tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit) _) = do
   let fieldName = getVar (getBinderVar varBinder)
-  fieldType <- getClassFieldType className fieldName
+  fieldType <- getClassFieldTypeM className fieldName
   mTyInit <-
     case mSrcInit of
       Just srcInit -> do
@@ -334,10 +336,10 @@ tcFunDef insideClass (FunDef s srcFunName srcFunType srcStmts) = do
   let varBinders = getFunParams srcFunType
   localTypeEnv <- foldM (\localTyEnv vb -> do
       let var = getVar (getBinderVar vb)
-      isBound <- isVarBound var
+      isBound <- isVarBoundM var
       -- it is important to check in both places, since localTyEnv
-      -- is not queried by 'isVarBound', see `FunParamsDup` test case
-      when (isBound || isVarInLocalEnv var localTyEnv) $
+      -- is not queried by 'isVarBoundM', see `FunParamsDup` test case
+      when (isBound || isVarBound var localTyEnv) $
         throwError $ VarShadowing (getBinderVar vb)
       varType <- srcFunParamTypeToType (getBinderType vb)
       return $ addLocalVar var varType localTyEnv)
@@ -393,11 +395,11 @@ tcStmt insideClass srcStmt =
       (tyExprLeft, exprLeftType, assignPurity) <-
         case srcExprLeft of
           VarE varS var -> do
-            unlessM (isVarBound var) $
+            unlessM (isVarBoundM var) $
               throwError $ VarNotBound var varS
-            whenM (isFunctionDefined $ varToFunName var) $
+            whenM (isFunctionDefinedM $ varToFunName var) $
               throwError $ AssignToFunction varS
-            varType <- getVarType var
+            varType <- getVarTypeM var
             return (VarE varS (VarTy (var, varType)), varType, not $ isAssignRef assignOp)
           MemberAccessE ms srcObjExpr srcMemberName -> do
             -- Check the whole member access expression: whether it is defined,
@@ -410,9 +412,9 @@ tcStmt insideClass srcStmt =
             let fieldName = memberNameToVar (getMemberName srcMemberName)
             -- Visibility has already been checked with 'tcExpr', so if there
             -- is a field, it can be assigned to.
-            unlessM (isClassFieldDefined className fieldName) $
+            unlessM (isClassFieldDefinedM className fieldName) $
               throwError $ AssignNotField fieldName className (getSrcSpan srcMemberName)
-            fieldType <- getClassFieldType className fieldName
+            fieldType <- getClassFieldTypeM className fieldName
             return (MemberAccessE ms tyObjExpr srcMemberName, fieldType, False)
           _ -> throwError $ IncorrectAssignLeft (getSrcSpan srcExprLeft)
       (tyExprRight, exprRightType, exprRightPure) <- tcExpr insideClass srcExprRight
@@ -443,7 +445,7 @@ tcStmt insideClass srcStmt =
 tcDecl :: Bool -> SrcDeclaration -> SrcStmt -> TypeCheckM (TyDeclaration, Type, Bool)
 tcDecl insideClass (Decl s varBinder mSrcInit) srcDeclStmt = do
   let var = getVar $ getBinderVar varBinder
-  whenM (isVarBound var) $
+  whenM (isVarBoundM var) $
     throwError $ VarShadowing (getBinderVar varBinder)
   varType <- srcTypeToType (getBinderType varBinder)
   addLocalVarM var varType
@@ -506,11 +508,11 @@ tcExpr insideClass srcExpr =
 
     VarE s var -> do
       -- it can be both a local variable and a global function
-      unlessM (isVarBound var) $
+      unlessM (isVarBoundM var) $
         throwError $ VarNotBound var s
-      varType <- getVarType var
+      varType <- getVarTypeM var
       -- See Note [Purity of function and value types]
-      isPure <- ifM (isFunctionDefined $ varToFunName var)
+      isPure <- ifM (isFunctionDefinedM $ varToFunName var)
                   (if isValueType varType && not (isPureFunType varType)
                      then return False
                      else return True)
@@ -521,14 +523,14 @@ tcExpr insideClass srcExpr =
       (tyObjExpr, objType, objPure) <- tcExpr insideClass srcObjExpr
       className <- tryGetClassName objType srcObjExpr
       let memberName = getMemberName srcMemberName
-      unlessM (isClassMemberDefined className memberName) $
+      unlessM (isClassMemberDefinedM className memberName) $
         throwError $ MemberNotDefined memberName className srcExpr
-      isField <- isClassFieldDefined className (memberNameToVar memberName)
+      isField <- isClassFieldDefinedM className (memberNameToVar memberName)
       when (isField && (not insideClass || not (isSelfOrSuper srcObjExpr))) $
         throwError $ OutsideFieldAccess s
-      memberType <- getClassMemberType className memberName
+      memberType <- getClassMemberTypeM className memberName
       -- See Note [Purity of function and value types]
-      memberPure <- ifM (isClassMethodDefined className (memberNameToFunName memberName))
+      memberPure <- ifM (isClassMethodDefinedM className (memberNameToFunName memberName))
                       (if isValueType memberType && not (isPureFunType memberType)
                          then return False
                          else return True)
@@ -541,9 +543,9 @@ tcExpr insideClass srcExpr =
         TyMaybe objType -> do
           className <- tryGetClassName objType srcMaybeObjExpr
           let methodName = memberNameToFunName $ getMemberName srcMemberName
-          unlessM (isClassMethodDefined className methodName) $
+          unlessM (isClassMethodDefinedM className methodName) $
             throwError $ MethodNotDefined methodName className srcExpr
-          methodType <- getClassMethodType className methodName
+          methodType <- getClassMethodTypeM className methodName
           -- See Note [Purity of function and value types]
           methodPure <- if isValueType methodType && not (isPureFunType methodType)
                           then return False

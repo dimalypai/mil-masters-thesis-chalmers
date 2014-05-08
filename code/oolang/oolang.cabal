@@ -29,6 +29,7 @@ executable oolc
                        OOLang.TypeChecker
                        OOLang.TypeChecker.Helpers
                        OOLang.TypeChecker.TcError
+                       OOLang.TypeChecker.TypeEnv
                        OOLang.TypeChecker.TypeCheckM
                        OOLang.Utils
   -- other-extensions:    

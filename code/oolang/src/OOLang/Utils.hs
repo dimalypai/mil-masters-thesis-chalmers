@@ -1,7 +1,7 @@
 -- | Common utility functions.
 module OOLang.Utils where
 
-import Control.Monad (when, unless)
+import Control.Monad.State
 
 -- | Monadic version of 'when'.
 whenM :: Monad m => m Bool -> m () -> m ()
@@ -20,4 +20,8 @@ ifM :: Monad m => m Bool -> m a -> m a -> m a
 ifM condM th el = do
   cond <- condM
   if cond then th else el
+
+-- | Convenient version of 'runStateT' with the arguments flipped.
+runStateTFrom :: Monad m => s -> StateT s m a -> m (a, s)
+runStateTFrom = flip runStateT
 
