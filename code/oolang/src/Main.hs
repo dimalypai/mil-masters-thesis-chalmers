@@ -14,6 +14,7 @@ import OOLang.Lexer
 import OOLang.Parser
 import OOLang.TypeChecker
 import OOLang.CodeGenMil
+import OOLang.Utils
 import qualified MIL.AST.PrettyPrinter as MIL
 
 -- | Main entry point.
@@ -167,9 +168,4 @@ compilerOpts argv =
 printHelp :: IO ()
 printHelp = putStr $ usageInfo header options
   where header = "Usage: oolc [OPTIONS] file"
-
--- | Postfix application. Inspired by OCaml/F#.
--- Used with lexer and parser calls.
-(|>) :: a -> (a -> b) -> b
-a |> f = f a
 

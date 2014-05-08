@@ -25,3 +25,8 @@ ifM condM th el = do
 runStateTFrom :: Monad m => s -> StateT s m a -> m (a, s)
 runStateTFrom = flip runStateT
 
+-- | Postfix application. Inspired by OCaml/F#.
+-- Used with lexer and parser calls.
+(|>) :: a -> (a -> b) -> b
+a |> f = f a
+
