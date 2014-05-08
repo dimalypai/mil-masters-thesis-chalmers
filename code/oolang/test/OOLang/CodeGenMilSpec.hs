@@ -10,7 +10,9 @@ import OOLang.Parser
 import OOLang.TypeChecker
 import OOLang.CodeGenMil
 import OOLang.TestUtils
+
 import qualified MIL.AST.PrettyPrinter as MIL
+import qualified MIL.TypeChecker as MIL
 
 -- | To be able to run this module from GHCi.
 main :: IO ()
@@ -38,7 +40,9 @@ testCase baseName = do
   let Right srcProgram = parseOOLang (mkFileName baseName) input
   let Right (tyProgram, _) = typeCheck srcProgram
   let milProgram = codeGen tyProgram
-  (dropNewLine $ MIL.prPrint milProgram) `shouldBe` output
+  case MIL.typeCheck milProgram of
+    Right _ -> (dropNewLine $ MIL.prPrint milProgram) `shouldBe` output
+    Left milTcErr -> MIL.prPrint milTcErr `shouldBe` ""
 
 -- | Takes a file base name and reads a source program and expected output
 -- (from .mil file).
