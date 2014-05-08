@@ -12,13 +12,16 @@ import OOLang.AST
 import OOLang.AST.Helpers
 import OOLang.TypeChecker
 import OOLang.TypeChecker.TypeEnv
+import OOLang.Utils
 import qualified MIL.AST as MIL
+import qualified MIL.Transformations.IdExprMonadElimination as MIL
 
 -- | Entry point to the code generator.
 -- Takes a type checked program in OOLang and a type environment and produces a
 -- program in MIL.
 codeGen :: TyProgram -> TypeEnv -> MIL.Program
 codeGen tyProgram typeEnv = runReader (runCG $ codeGenProgram tyProgram) typeEnv
+                         |> MIL.idExprMonadElimination
 
 -- | Code generation monad. Uses 'Reader' for querying the type environment.
 newtype CodeGenM a = CG { runCG :: Reader TypeEnv a }
@@ -62,17 +65,32 @@ codeGenClassMethod (MethodDecl _ tyFunDef _) = codeGenFunDef tyFunDef
 codeGenFunDef :: TyFunDef -> CodeGenM MIL.FunDef
 codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
   let funName = getFunName srcFunName
-  let funBody = codeGenStmts tyStmts
   funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
-  return $ MIL.FunDef (funNameMil funName) (typeMil funType) funBody
+  let isPure = isPureFunType funType
+  let funBody = codeGenStmts tyStmts isPure
+  let monadType = if isPure
+                    then MIL.TyMonad idMonad
+                    else MIL.TyMonad $ MIL.MTyMonad MIL.IO
+  -- TODO: only return type
+  return $ MIL.FunDef (funNameMil funName) (MIL.TyApp monadType (typeMil funType)) funBody
 
 -- | List of statements is not empty.
-codeGenStmts :: [TyStmt] -> MIL.Expr
-codeGenStmts [ExprS _ tyExpr] = codeGenExpr tyExpr
-codeGenStmts [tyStmt]         = MIL.LitE MIL.UnitLit
+-- Takes a purity indicator.
+codeGenStmts :: [TyStmt] -> Bool -> MIL.Expr
+codeGenStmts [ExprS _ tyExpr] isPure =
+  let milExpr = codeGenExpr tyExpr isPure in
+  if isPure
+    then MIL.ReturnE idMonad milExpr
+    else MIL.ReturnE (MIL.MTyMonad MIL.IO) milExpr
+codeGenStmts [tyStmt]         isPure =
+  if isPure
+    then MIL.ReturnE idMonad (MIL.LitE MIL.UnitLit)
+    else MIL.ReturnE (MIL.MTyMonad MIL.IO) (MIL.LitE MIL.UnitLit)
 
-codeGenExpr :: TyExpr -> MIL.Expr
-codeGenExpr tyExpr =
+-- | Expression code generation.
+-- Takes a purity indicator.
+codeGenExpr :: TyExpr -> Bool -> MIL.Expr
+codeGenExpr tyExpr isPure =
   case tyExpr of
     LitE lit -> literalMil lit
 
@@ -126,4 +144,7 @@ builtInTypeDefs =
       [ MIL.ConDef (MIL.ConName "Nothing") []
       , MIL.ConDef (MIL.ConName "Just")    [MIL.mkTypeVar "A"]]
   ]
+
+idMonad :: MIL.TypeM
+idMonad = MIL.MTyMonad MIL.Id
 

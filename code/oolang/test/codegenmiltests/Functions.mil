@@ -1,0 +1,14 @@
+type Bool
+  = True
+  | False;
+
+type Maybe A
+  = Nothing
+  | Just A;
+
+main : IO Unit =
+  return [IO] unit;
+
+pureFun : Id Int =
+  return [Id] 1;
+

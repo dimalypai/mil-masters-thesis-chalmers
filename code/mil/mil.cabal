@@ -19,6 +19,7 @@ library
                        MIL.Parser
                        MIL.PrettyPrinter
                        MIL.TypeChecker
+                       MIL.Transformations.IdExprMonadElimination
   other-modules:       MIL.BuiltIn
                        MIL.TypeChecker.Helpers
                        MIL.TypeChecker.TcError
