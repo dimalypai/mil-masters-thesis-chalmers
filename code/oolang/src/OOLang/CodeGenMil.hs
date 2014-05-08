@@ -60,7 +60,7 @@ codeGenClassMethod :: TyMethodDecl -> CodeGenM MIL.FunDef
 codeGenClassMethod (MethodDecl _ tyFunDef _) = codeGenFunDef tyFunDef
 
 codeGenFunDef :: TyFunDef -> CodeGenM MIL.FunDef
-codeGenFunDef (FunDef _ srcFunName srcFunType tyStmts) = do
+codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
   let funName = getFunName srcFunName
   let funBody = codeGenStmts tyStmts
   funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
@@ -68,7 +68,27 @@ codeGenFunDef (FunDef _ srcFunName srcFunType tyStmts) = do
 
 -- | List of statements is not empty.
 codeGenStmts :: [TyStmt] -> MIL.Expr
-codeGenStmts _ = MIL.LitE (MIL.UnitLit)  -- TODO
+codeGenStmts [ExprS _ tyExpr] = codeGenExpr tyExpr
+codeGenStmts [tyStmt]         = MIL.LitE MIL.UnitLit
+
+codeGenExpr :: TyExpr -> MIL.Expr
+codeGenExpr tyExpr =
+  case tyExpr of
+    LitE lit -> literalMil lit
+
+literalMil :: Literal s -> MIL.Expr
+literalMil UnitLit {} = MIL.LitE MIL.UnitLit
+literalMil (BoolLit _ b) =
+  if b
+    then MIL.ConNameE (MIL.ConName "True")  (MIL.mkSimpleType "Bool")
+    else MIL.ConNameE (MIL.ConName "False") (MIL.mkSimpleType "Bool")
+literalMil (IntLit _ i)     = MIL.LitE (MIL.IntLit i)
+literalMil (FloatLit _ f _) = MIL.LitE (MIL.FloatLit f)
+literalMil (StringLit _ s)  = MIL.LitE (MIL.StringLit s)
+literalMil NothingLit {} =
+  MIL.ConNameE (MIL.ConName "Nothing")
+    (MIL.TyForAll (MIL.TypeVar "A") $
+       MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (MIL.mkTypeVar "A"))
 
 -- * Type conversions
 
