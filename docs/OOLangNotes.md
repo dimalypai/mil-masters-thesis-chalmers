@@ -94,4 +94,10 @@ and State should be? Are they polymorphic? Should Error be some built-in
 Exception type? State is a mapping from variable names to any type?  Do we
 really need these types at all? Are they useful for transformations and/or code
 generation?
+Is there really a type of State? Maybe, for Mutable assignments we can go just
+with SSA-style lets/function calls and for references - compile to Ref, which
+will generate State computation without a specific type of State. When using
+references one usually doesn't talk about a general type of storage the
+computation is using, only the type of references and a result of computation
+that uses references.
 
