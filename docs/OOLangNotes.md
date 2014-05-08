@@ -88,3 +88,10 @@ constructor of any type?
 References impurity together with field initialisation purity means that we can
 have only Ref Maybe class fields.
 
+OOLang has either Pure of impure, so probably impure should be the type of all
+effects combined, and Pure - just a corresponding type. What the type of Error
+and State should be? Are they polymorphic? Should Error be some built-in
+Exception type? State is a mapping from variable names to any type?  Do we
+really need these types at all? Are they useful for transformations and/or code
+generation?
+
