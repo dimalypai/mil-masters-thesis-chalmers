@@ -28,7 +28,10 @@ codeGen tyProgram typeEnv = runReader (runCG $ codeGenProgram tyProgram) typeEnv
 newtype CodeGenM a = CG { runCG :: Reader TypeEnv a }
   deriving (Monad, MonadReader TypeEnv, Functor, Applicative)
 
--- | TODO
+-- | Entry point into the type checking of the program.
+-- There is an MIL program generated for each class definition.
+-- There is an MIL function generated for each function definition.
+-- All these definitions are then regrouped and the built-ins are added.
 codeGenProgram :: TyProgram -> CodeGenM MIL.Program
 codeGenProgram (Program _ tyClassDefs tyFunDefs) = do
   classMilPrograms <- mapM codeGenClassDef tyClassDefs
@@ -37,7 +40,8 @@ codeGenProgram (Program _ tyClassDefs tyFunDefs) = do
       classMilFunDefs = concatMap MIL.getMilFunDefs classMilPrograms
   return $ MIL.Program (builtInTypeDefs ++ classMilTypeDefs, classMilFunDefs ++ milFunDefs)
 
--- | TODO: outline the code gen idea
+-- | Each class definition gets its own data type representing data (fields)
+-- and a function definition for each method defined in this class.
 codeGenClassDef :: TyClassDef -> CodeGenM MIL.Program
 codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) = do
   let className = getClassName srcClassName
@@ -52,14 +56,14 @@ codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) = do
   classMemberFunDefs <- mapM codeGenClassMethod tyMethodDecls
   return $ MIL.Program ([classTypeDef], classMemberFunDefs)
 
--- | TODO: inits (together with constructor)
+-- | TODO: inits (together with constructor).
 codeGenClassField :: ClassName -> TyFieldDecl -> CodeGenM MIL.Type
 codeGenClassField className (FieldDecl _ tyDecl _) = do
   let fieldName = getVar $ getDeclVarName tyDecl
   fieldType <- asks (getClassFieldType className fieldName . getClassTypeEnv)
   return $ typeMil fieldType
 
--- | TODO: ?
+-- | TODO: add method specifics.
 codeGenClassMethod :: TyMethodDecl -> CodeGenM MIL.FunDef
 codeGenClassMethod (MethodDecl _ tyFunDef _) = codeGenFunDef tyFunDef
 
@@ -77,6 +81,9 @@ codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
 
 -- | List of statements is not empty.
 -- Takes a purity indicator.
+-- TODO: should purity indicator be only global or annotate every statement and
+-- even expression?
+-- TODO: where and what do we return and in which monad?
 codeGenStmts :: [TyStmt] -> Bool -> MIL.Expr
 codeGenStmts [ExprS _ tyExpr] isPure =
   let milExpr = codeGenExpr tyExpr isPure in
@@ -87,6 +94,18 @@ codeGenStmts [tyStmt]         isPure =
   if isPure
     then MIL.ReturnE idMonad (MIL.LitE MIL.UnitLit)
     else MIL.ReturnE (MIL.MTyMonad MIL.IO) (MIL.LitE MIL.UnitLit)
+codeGenStmts (tyStmt:tyStmts) isPure =
+  case tyStmt of
+    -- TODO: It will be a bind introducing new variable
+    DeclS _ tyDecl -> undefined
+
+    ExprS _ tyExpr ->
+      MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.TyTypeCon (MIL.TypeName "Unit")))  -- TODO
+               (MIL.ReturnE idMonad $ codeGenExpr tyExpr isPure)  -- TODO
+               (codeGenStmts tyStmts isPure)
+
+    -- TODO: "then" with state putting operations
+    AssignS _ srcAssignOp tyExprLeft tyExprRight -> undefined
 
 -- | Expression code generation.
 -- Takes a purity indicator.
