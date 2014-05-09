@@ -26,6 +26,12 @@ getBinderVar (VarBinder _ srcVar _ ) = srcVar
 getBinderType :: VarBinder s -> TypeS s
 getBinderType (VarBinder _ _ srcType) = srcType
 
+getVarTyVar :: VarTy -> Var
+getVarTyVar (VarTy (var,_)) = var
+
+getVarTyType :: VarTy -> Type
+getVarTyType (VarTy (_,t)) = t
+
 -- | Returns an underlying type. For Mutable A it is A, for everything else it
 -- is just the type itself. Used with assignment type checking.
 -- Mutable is more modifier-like than a type-like, comparing to Ref, for

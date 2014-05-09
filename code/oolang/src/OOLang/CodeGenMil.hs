@@ -95,6 +95,16 @@ codeGenExpr tyExpr isPure =
   case tyExpr of
     LitE lit -> literalMil lit
 
+    VarE _ varTy ->
+      let var = varMil $ getVarTyVar varTy
+          milVarType = typeMil $ getVarTyType varTy
+      in (MIL.VarE $ MIL.VarBinder (var, milVarType))
+
+    BinOpE _ srcBinOp tyExpr1 tyExpr2 ->
+      codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 isPure
+
+    ParenE _ tySubExpr -> codeGenExpr tySubExpr isPure
+
 literalMil :: Literal s -> MIL.Expr
 literalMil UnitLit {} = MIL.LitE MIL.UnitLit
 literalMil (BoolLit _ b) =
@@ -108,6 +118,10 @@ literalMil NothingLit {} =
   MIL.ConNameE (MIL.ConName "Nothing")
     (MIL.TyForAll (MIL.TypeVar "A") $
        MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (MIL.mkTypeVar "A"))
+
+codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Bool -> MIL.Expr
+codeGenBinOp App tyExpr1 tyExpr2 isPure =
+  MIL.AppE (codeGenExpr tyExpr1 isPure) (codeGenExpr tyExpr2 isPure)
 
 -- * Type conversions
 
@@ -134,6 +148,9 @@ conNameMil (ClassName classNameStr) = MIL.ConName classNameStr
 
 funNameMil :: FunName -> MIL.FunName
 funNameMil (FunName funNameStr) = MIL.FunName funNameStr
+
+varMil :: Var -> MIL.Var
+varMil (Var varStr) = MIL.Var varStr
 
 -- * Built-ins
 
