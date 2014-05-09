@@ -264,4 +264,7 @@ General thoughts. Weeks 13-14
   Maybe, have built-in StateT?
 * OOLang super-effect type (impure) and FunLang more fine-grained effects
   combinations.
+* MIL effects: Read, Write, Alloc vs State? What about ordering of these more
+  fine-grained effects and Error.
+* FunLang: what about compiling State to references in MIL?
 
