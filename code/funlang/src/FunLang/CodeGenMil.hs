@@ -149,8 +149,8 @@ typeMil (TyApp typeName typeArgs) =
       MIL.TyApp (MIL.TyMonad $ MIL.MTyMonad MIL.IO) (typeMil ioResultType)
     (TypeName "IO", _) -> error "IO type is ill-formed"
 
-    (TypeName "State", [stateType, stateResultType]) ->
-      MIL.TyApp (MIL.TyMonad $ MIL.MTyMonad (MIL.State $ typeMil stateType)) (typeMil stateResultType)
+    (TypeName "State", [stateResultType]) ->
+      MIL.TyApp (MIL.TyMonad $ MIL.MTyMonad MIL.State) (typeMil stateResultType)
     (TypeName "State", _) -> error "State type is ill-formed"
 
     _ -> foldl' (\mt t -> MIL.TyApp mt (typeMil t))
@@ -160,14 +160,12 @@ typeMil (TyForAll typeVar t) = MIL.TyForAll (typeVarMil typeVar) (typeMil t)
 
 -- | Source type representation transformation.
 -- Monadic types are transformed in different cases depending on their kind.
--- * IO has kind `* => *` so it is caught in 'SrcTyCon'
--- * State has kind `* => * => *` so it must be caught earlier, in 'SrcTyApp',
--- in order to construct an MilMonad with the type of the state.
+-- * IO and State have kind `* => *` so it is caught in 'SrcTyCon'.
 srcTypeToMilType :: SrcType -> CodeGenM MIL.Type
 srcTypeToMilType (SrcTyCon srcTypeName) =
   case getTypeName srcTypeName of
     TypeName "IO" -> return $ MIL.TyMonad (MIL.MTyMonad MIL.IO)
-    TypeName "State" -> error "srcTypeToMilType: State should have been handled earlier"
+    TypeName "State" -> return $ MIL.TyMonad (MIL.MTyMonad MIL.State)
     typeName -> do
       -- 'SrcTyCon' can represent both type names and type variables, so we
       -- need to distinguish between them in order to generate correct MIL
@@ -177,11 +175,7 @@ srcTypeToMilType (SrcTyCon srcTypeName) =
         then return $ MIL.TyTypeCon (typeNameMil typeName)
         else return $ MIL.TyVar (typeVarMil $ typeNameToTypeVar typeName)
 srcTypeToMilType (SrcTyApp _ st1 st2) =
-  case st1 of
-    SrcTyCon (getTypeName -> TypeName "State") -> do
-      mt2 <- srcTypeToMilType st2
-      return $ MIL.TyMonad (MIL.MTyMonad $ MIL.State mt2)
-    _ -> MIL.TyApp <$> srcTypeToMilType st1 <*> srcTypeToMilType st2
+  MIL.TyApp <$> srcTypeToMilType st1 <*> srcTypeToMilType st2
 srcTypeToMilType (SrcTyArrow _ st1 st2) =
   MIL.TyArrow <$> srcTypeToMilType st1 <*> srcTypeToMilType st2
 srcTypeToMilType (SrcTyForAll _ stv st) =
