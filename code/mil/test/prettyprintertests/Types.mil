@@ -9,3 +9,6 @@ fun3 : (forall A . A -> A) -> Int -> Unit =
 
 fun4 : (State ::: Error String ::: Id) A =
   unit;
+
+fun5 : {Int, Float} =
+  unit;

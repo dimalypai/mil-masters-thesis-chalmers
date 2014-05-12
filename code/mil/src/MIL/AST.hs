@@ -86,6 +86,7 @@ data Expr = LitE Literal
           | LetRecE [(VarBinder, Expr)] Expr
             -- | Patterns must be exhaustive.
           | CaseE Expr [CaseAlt]
+          | TupleE [Expr]
   deriving Show
 
 -- | Literal constants.
@@ -107,6 +108,8 @@ data Pattern =
   | VarP VarBinder
     -- | Constructor pattern. Can't be nested.
   | ConP [VarBinder]
+    -- | Tuple pattern. Can't be nested.
+  | TupleP [VarBinder]
     -- | Default alternative: underscore.
   | DefaultP
   deriving Show
@@ -122,6 +125,7 @@ data Type = TyTypeCon TypeName
           | TyArrow Type Type
           | TyForAll TypeVar Type
           | TyApp Type Type
+          | TyTuple [Type]
           | TyMonad TypeM
   deriving (Show, Eq)
 
@@ -179,10 +183,11 @@ data MilMonad = Id
               | IO
   deriving (Show, Eq)
 
--- | Type constructors and type variables are atomic types.
+-- | Type constructors, type variables and tuple types are atomic types.
 isAtomicType :: Type -> Bool
 isAtomicType (TyTypeCon {}) = True
 isAtomicType (TyVar     {}) = True
+isAtomicType (TyTuple   {}) = True
 isAtomicType              _ = False
 
 -- Precedences
@@ -197,6 +202,7 @@ getExprPrec TypeAppE    {} = 4
 getExprPrec ConNameE    {} = 5
 getExprPrec LetE        {} = 2
 getExprPrec ReturnE     {} = 2
+getExprPrec TupleE      {} = 5
 
 -- | Returns whether the first expression has a lower precedence than the
 -- second one. Convenient to use in infix form.
@@ -220,6 +226,7 @@ getTypePrec (TyVar     {}) = 5
 getTypePrec (TyArrow   {}) = 2
 getTypePrec (TyForAll  {}) = 1
 getTypePrec (TyApp     {}) = 4
+getTypePrec (TyTuple   {}) = 5
 -- Dirty hacking for nice pretty printing:
 -- Atomic monad doesn't get parentheses, but cons does.
 getTypePrec (TyMonad (MTyMonad {})) = 4

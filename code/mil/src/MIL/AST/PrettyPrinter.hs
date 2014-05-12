@@ -65,6 +65,7 @@ instance Pretty Expr where
     text "let" <+> prPrn varBind <+> text "<-" <+> prPrn e1 <+> text "in" $+$
     nest indLvl (prPrn e2)
   prPrn (ReturnE m e) = text "return" <+> brackets (prPrn m) <+> prPrn e
+  prPrn (TupleE tElems) = braces (hsep $ punctuate comma $ map prPrn tElems)
 
 instance Pretty Literal where
   prPrn UnitLit       = text "unit"
@@ -85,6 +86,7 @@ instance Pretty Type where
   prPrn t@(TyApp t1 t2) =
     prPrnParens (t1 `typeHasLowerPrecAssoc` t) t1 <+>
     prPrnParens (t2 `typeHasLowerPrec` t) t2
+  prPrn (TyTuple elemTypes) = braces (hsep $ punctuate comma $ map prPrn elemTypes)
   prPrn (TyMonad tm) = prPrn tm
 
 instance Pretty TypeM where

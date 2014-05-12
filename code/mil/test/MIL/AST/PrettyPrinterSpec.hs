@@ -119,7 +119,40 @@ spec =
                                     (Error (TyTypeCon (TypeName "String")))
                                     (MTyMonad Id))))
                            (mkTypeVar "A"))
+                        (LitE UnitLit)
+                    , FunDef
+                        (FunName "fun5")
+                        (TyTuple [mkSimpleType "Int", mkSimpleType "Float"])
                         (LitE UnitLit)])
+      in testCase baseName ast
+
+    it "pretty prints expressions" $
+      let baseName = "Expressions"
+          ast = Program
+                  ( []
+                  , [ FunDef
+                        (FunName "fun")
+                        (mkSimpleType "Unit")
+                        (TypeLambdaE
+                           (TypeVar "A")
+                           (LambdaE
+                              (VarBinder (Var "x", TyVar $ TypeVar "A"))
+                              (AppE
+                                 (AppE
+                                    (TypeAppE
+                                       (ConNameE (ConName "MkT") undefined)
+                                       (mkSimpleType "Int"))
+                                    (VarE $ VarBinder (Var "x", undefined)))
+                                 (LitE $ IntLit 1))))
+                    , FunDef
+                        (FunName "fun2")
+                        (mkSimpleType "Unit")
+                        (LetE
+                           (VarBinder (Var "x", TyTuple [mkSimpleType "Int", mkSimpleType "Float"]))
+                           (ReturnE
+                              (MTyMonad IO)
+                              (TupleE [LitE $ IntLit 1, LitE $ FloatLit 0.01]))
+                           (VarE $ VarBinder (Var "x", undefined)))])
       in testCase baseName ast
 
 -- Infrastructure
