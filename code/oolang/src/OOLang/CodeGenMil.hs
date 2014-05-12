@@ -22,7 +22,6 @@ import qualified MIL.Transformations.IdExprMonadElimination as MIL
 -- program in MIL.
 codeGen :: TyProgram -> TypeEnv -> MIL.Program
 codeGen tyProgram typeEnv = runReader (runCG $ codeGenProgram tyProgram) typeEnv
-                         |> MIL.idExprMonadElimination
 
 -- | Code generation monad. Uses 'Reader' for querying the type environment.
 newtype CodeGenM a = CG { runCG :: Reader TypeEnv a }
