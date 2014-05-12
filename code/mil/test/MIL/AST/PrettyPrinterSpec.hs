@@ -114,7 +114,7 @@ spec =
                         (TyApp
                            (TyMonad
                               (MTyMonadCons
-                                 (State (TyTypeCon (TypeName "Int")))
+                                 State
                                  (MTyMonadCons
                                     (Error (TyTypeCon (TypeName "String")))
                                     (MTyMonad Id))))

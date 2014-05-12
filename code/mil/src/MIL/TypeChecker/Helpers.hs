@@ -113,7 +113,6 @@ checkTypeMWithTypeVars typeVars (MTyMonadCons m tm) = do
 -- | For monads with type parameters: perform checking of those types (they
 -- must be of kind *). All the others are correct.
 checkMilMonadWithTypeVars :: Set.Set TypeVar -> MilMonad -> TypeCheckM ()
-checkMilMonadWithTypeVars typeVars (State t) = checkTypeWithTypeVarsOfKind typeVars StarK t
 checkMilMonadWithTypeVars typeVars (Error t) = checkTypeWithTypeVarsOfKind typeVars StarK t
 checkMilMonadWithTypeVars _ _ = return ()
 
@@ -165,7 +164,6 @@ instance AlphaEq TypeM where
 -- | For monads that have type arguments check that these arguments are alpha
 -- equivalent. For the others it is just an equality.
 instance AlphaEq MilMonad where
-  alphaEq (State t1) (State t2) = t1 `alphaEq` t2
   alphaEq (Error t1) (Error t2) = t1 `alphaEq` t2
   alphaEq m1 m2 = m1 == m2
 
@@ -214,7 +212,6 @@ instance SubstType TypeM where
 -- | Perform substitution on type parameters if there are any, otherwise, just
 -- return a monad.
 instance SubstType MilMonad where
-  tvArg `substTypeIn` (State t) = State (tvArg `substTypeIn` t)
   tvArg `substTypeIn` (Error t) = Error (tvArg `substTypeIn` t)
   _ `substTypeIn` m = m
 

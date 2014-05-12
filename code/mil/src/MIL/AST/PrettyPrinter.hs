@@ -115,7 +115,7 @@ instance Pretty FunName where
 
 instance Pretty MilMonad where
   prPrn Id = text "Id"
-  prPrn (State st) = text "State" <+> prPrn st
+  prPrn State = text "State"
   prPrn (Error et) = text "Error" <+> prPrn et
   prPrn Lift = text "Lift"
   prPrn IO = text "IO"

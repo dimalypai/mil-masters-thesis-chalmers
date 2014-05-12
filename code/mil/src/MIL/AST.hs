@@ -175,7 +175,7 @@ newtype FunName = FunName String
 
 -- | Built-in monads (effects).
 data MilMonad = Id
-              | State Type
+              | State
               | Error Type
               | Lift
               | IO
