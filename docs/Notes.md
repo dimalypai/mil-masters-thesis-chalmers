@@ -268,3 +268,14 @@ General thoughts. Weeks 13-14
   fine-grained effects and Error.
 * FunLang: what about compiling State to references in MIL?
 
+Meeting 2014-04-12
+==================
+
+* OO-polymorphism. More subtyping, depth subtyping, function subtyping?
+* FunLang monad combining. It is a limitation, but we should postpone it for
+  now.
+* State vs ST in Haskell. runST doesn't let to return a reference by forall s.
+* OOLang: Mutables are compiled with producing ANF/SSA.
+* Fine-grained effects are nice and powerful, but maybe later. They require
+  some thought.
+
