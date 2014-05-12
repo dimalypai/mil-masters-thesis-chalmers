@@ -63,14 +63,7 @@ data FunDef = FunDef FunName Type Expr
 -- We have type (big) lambdas and type applications because we use System F as
 -- a base for the type system.
 --
--- 'ConNameE' stands on its own because constructors act as functions.
---
 -- 'LetE' (bind), 'ReturnE' and 'LiftE' are monadic operations.
---
--- 'LetRecE' has a list of definitions in order to be able to handle mutually
--- recursive definitions.
---
--- 'CaseE' must have exhaustive patterns.
 --
 -- Constructors and variables (functions) are annotated with their types.
 data Expr = LitE Literal
@@ -79,6 +72,8 @@ data Expr = LitE Literal
           | AppE Expr Expr
           | TypeLambdaE TypeVar Expr
           | TypeAppE Expr Type
+            -- | 'ConNameE' stands on its own because constructors act as
+            -- functions.
           | ConNameE ConName Type
           | NewRefE Expr
           | DerefE Expr
@@ -86,7 +81,10 @@ data Expr = LitE Literal
           | LetE VarBinder Expr Expr
           | ReturnE TypeM Expr
           | LiftE Expr TypeM TypeM
+            -- | 'LetRecE' has a list of definitions in order to be able to
+            -- handle mutually recursive definitions.
           | LetRecE [(VarBinder, Expr)] Expr
+            -- | Patterns must be exhaustive.
           | CaseE Expr [CaseAlt]
   deriving Show
 
