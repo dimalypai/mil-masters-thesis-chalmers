@@ -74,7 +74,7 @@ codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
   let funBody = codeGenStmts tyStmts isPure
   let monadType = if isPure
                     then MIL.TyMonad idMonad
-                    else MIL.TyMonad $ MIL.MTyMonad MIL.IO
+                    else MIL.TyMonad allEffectsMonad
   -- TODO: only return type
   return $ MIL.FunDef (funNameMil funName) (MIL.TyApp monadType (typeMil funType)) funBody
 
@@ -84,26 +84,39 @@ codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
 -- even expression?
 -- TODO: where and what do we return and in which monad?
 codeGenStmts :: [TyStmt] -> Bool -> MIL.Expr
-codeGenStmts [ExprS _ tyExpr] isPure =
-  let milExpr = codeGenExpr tyExpr isPure in
-  if isPure
-    then MIL.ReturnE idMonad milExpr
-    else MIL.ReturnE (MIL.MTyMonad MIL.IO) milExpr
-codeGenStmts [tyStmt]         isPure =
-  if isPure
-    then MIL.ReturnE idMonad (MIL.LitE MIL.UnitLit)
-    else MIL.ReturnE (MIL.MTyMonad MIL.IO) (MIL.LitE MIL.UnitLit)
+
+codeGenStmts [tyStmt@(ExprS {})] isPure = fst $ codeGenStmt tyStmt isPure
+
+codeGenStmts [tyStmt] isPure =
+  let (milExpr, milExprType) = codeGenStmt tyStmt isPure in
+  MIL.LetE (MIL.VarBinder (MIL.Var "_", milExprType))  -- TODO: get monad result type
+           milExpr
+           (if isPure
+              then MIL.ReturnE idMonad (MIL.LitE MIL.UnitLit)
+              else MIL.ReturnE allEffectsMonad
+                               (MIL.LitE MIL.UnitLit))
+
 codeGenStmts (tyStmt:tyStmts) isPure =
+  let (milExpr, milExprType) = codeGenStmt tyStmt isPure in
+  MIL.LetE (MIL.VarBinder (MIL.Var "_", milExprType))  -- TODO: get monad result type
+           milExpr
+           (codeGenStmts tyStmts isPure)
+
+codeGenStmt :: TyStmt -> Bool -> (MIL.Expr, MIL.Type)
+codeGenStmt tyStmt isPure =
   case tyStmt of
     -- TODO: It will be a bind introducing new variable
     DeclS _ tyDecl -> undefined
 
     ExprS _ tyExpr ->
-      MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.TyTypeCon (MIL.TypeName "Unit")))  -- TODO
-               (MIL.ReturnE idMonad $ codeGenExpr tyExpr isPure)  -- TODO
-               (codeGenStmts tyStmts isPure)
+      let milExpr = codeGenExpr tyExpr isPure in
+      if isPure
+        then (MIL.ReturnE idMonad milExpr, undefined)
+        else (milExpr, undefined)
 
-    -- TODO: "then" with state putting operations
+    -- TODO:
+    -- + "then" with state putting operations
+    -- + ANF/SSA construction
     AssignS _ srcAssignOp tyExprLeft tyExprRight -> undefined
 
 -- | Expression code generation.
@@ -183,4 +196,15 @@ builtInTypeDefs =
 
 idMonad :: MIL.TypeM
 idMonad = MIL.MTyMonad MIL.Id
+
+allEffectsMonad :: MIL.TypeM
+allEffectsMonad =
+  MIL.MTyMonadCons (MIL.Error exceptionType) $
+    MIL.MTyMonadCons MIL.State $
+      MIL.MTyMonadCons MIL.Lift $
+        MIL.MTyMonad MIL.IO
+
+-- TODO: should be a built-in Exception class type.
+exceptionType :: MIL.Type
+exceptionType = MIL.unitType
 
