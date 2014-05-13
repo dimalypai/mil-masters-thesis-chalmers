@@ -293,4 +293,9 @@ General thoughts. Week 15
   environment type and (probably) adjustable in the return type.
   For class methods: environment is the self type, the return type is the
   source method type.
+* OOLang monad stack: it turned out to be useful for the purposes of lifting
+  (when we have, for example, a pure function call inside an impure function)
+  to include Id as a base monad for the stack. But is it OK to have IO not at
+  the bottom? We don't run any transformers to get away from them, they are
+  mostly for annotation purposes, so should it be fine?
 

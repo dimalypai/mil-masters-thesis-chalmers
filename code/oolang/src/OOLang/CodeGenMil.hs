@@ -202,7 +202,8 @@ allEffectsMonad =
   MIL.MTyMonadCons (MIL.Error exceptionType) $
     MIL.MTyMonadCons MIL.State $
       MIL.MTyMonadCons MIL.Lift $
-        MIL.MTyMonad MIL.IO
+        MIL.MTyMonadCons MIL.IO $
+          MIL.MTyMonad MIL.Id
 
 -- TODO: should be a built-in Exception class type.
 exceptionType :: MIL.Type
