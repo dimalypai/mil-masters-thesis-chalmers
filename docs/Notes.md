@@ -308,4 +308,7 @@ General thoughts. Week 15
   -> State A. So, the storage is explicit. There is no way, we could "prestore"
   the reference before specifying the type argument. Maybe, with type
   inference, it would be possible, by compiling get to read_ref ref.
+* Non-termination (Lift effect): need to perform dependency analysis as in SPJ
+  6.2.8 to find recursive and groups of mutually recursive definitions + loops
+  in OOLang.
 
