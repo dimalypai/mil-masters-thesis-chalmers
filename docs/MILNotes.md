@@ -108,3 +108,8 @@ What should the type of main in MIL be? Specific stack?
 Add type aliases to the language (as type in Haskell):
 alias T = Int -> Int
 
+MIL needs tuples and subtyping to be able to handle OOLang with inheritance
+nicely. Tuples should have width and depth subtyping. What is bothering is that
+it seems that function types need to be covariant and not contravariant in the
+argument types.
+
