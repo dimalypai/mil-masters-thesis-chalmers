@@ -298,4 +298,14 @@ General thoughts. Week 15
   to include Id as a base monad for the stack. But is it OK to have IO not at
   the bottom? We don't run any transformers to get away from them, they are
   mostly for annotation purposes, so should it be fine?
+* FunLang State compilation: compiling State to references might be good from
+  the performance point of view, but there are some problems. Namely, it arises
+  from the fact that we have explicit type application for polymorphic
+  functions, like get, put etc and the storage itself is implicit here.
+  Consider: g : (forall S . State S) <- return get;
+            i : Int <- g [Int];
+  This corresponds to read_ref (!) operation, which has type forall A . Ref A
+  -> State A. So, the storage is explicit. There is no way, we could "prestore"
+  the reference before specifying the type argument. Maybe, with type
+  inference, it would be possible, by compiling get to read_ref ref.
 

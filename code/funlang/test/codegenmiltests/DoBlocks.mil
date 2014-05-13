@@ -1,7 +1,24 @@
-main : IO Unit =
-  let (_ : Unit) <- printString "Hello from main" in
-    let (i : Int) <- readInt in
-      let (_ : Unit) <- printInt i in
-        let (f : Float) <- readFloat in
-          printFloat f;
+main : (State ::: IO) Unit =
+  let (_ : Unit) <- lift [IO -> State ::: IO] printString "Hello from main" in
+    let (i : Int) <- lift [IO -> State ::: IO] readInt in
+      let (_ : Unit) <- lift [IO -> State ::: IO] printInt i in
+        let (f : Float) <- lift [IO -> State ::: IO] readFloat in
+          let (_ : Unit) <- lift [IO -> State ::: IO] printFloat f in
+            let (ref1 : Ref Int) <- new_ref 1 in
+              let (_ : Unit) <- stateManip ref1 in
+                let (_ : Unit) <- lift [IO -> State ::: IO] printInt (read_ref [Int] ref1) in
+                  let (ref2 : Ref Int) <- new_ref 0 in
+                    let (ret : Unit) <- stateManip ref2 in
+                      return [State ::: IO] ret;
+
+stateManip : Ref Int -> State Unit =
+  \(state : Ref Int) -> let (i : Int) <- read_ref [Int] state in
+                          let (_ : Unit) <- write_ref [Int] state i in
+                            state := (\(s : Int) -> s) (read_ref [Int] state);
+
+execState : forall S . forall A . Ref S -> State A -> S =
+  unit;
+
+evalState : forall S . forall A . Ref S -> State A -> A =
+  unit;
 
