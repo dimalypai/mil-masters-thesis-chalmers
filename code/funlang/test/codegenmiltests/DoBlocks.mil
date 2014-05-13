@@ -9,9 +9,24 @@ main : (IO ::: Id) Unit =
                 lift [Id -> IO ::: Id] evalState [Int] [Unit] stateManip 0;
 
 stateManip : Int -> Id {Unit, Int} =
-  \(state1 : Int) -> let (i : Int) <- return [Id] state1 in
-                       let (state2 : Int) <- return [Id] i in
-                         return [Id] {unit, (\(s : Int) -> s) state2};
+  \(state1 : Int) -> let (get_res : {Int, Int}) <- stateManip_get state1 [Int] in
+                       case get_res of
+                         | {a1 : Int, state2 : Int} =>
+                             let (put_res : {Unit, Int}) <- stateManip_put [Int] i in
+                               case put_res of
+                                 | {a2 : Unit, state3 : Int} =>
+                                     stateManip_modify state2 [Int] (\(s : Int) -> s)
+                               end
+                       end;
+
+stateManip_get : Int -> forall S . Id {Int, Int} =
+  \(s : Int) -> /\S . return [Id] {s, s};
+
+stateManip_put : forall S . Int -> Id {Unit, Int} =
+  /\S . \(s : Int) -> return [Id] {unit, s};
+
+stateManip_modify : Int -> forall S . (Int -> Int) -> Id {Unit, Int} =
+  \(s : Int) -> /\S . \(f : Int -> Int) -> return [Id] {unit, f s};
 
 execState : forall S . forall A . (S -> Id {A, S}) -> S -> Id S =
   /\S . /\A . \(f : S -> Id {A, S}) -> \(s : S) -> let (res : {A, S}) <- f s in
