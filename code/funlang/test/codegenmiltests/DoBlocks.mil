@@ -1,24 +1,27 @@
-main : (State ::: IO) Unit =
-  let (_ : Unit) <- lift [IO -> State ::: IO] printString "Hello from main" in
-    let (i : Int) <- lift [IO -> State ::: IO] readInt in
-      let (_ : Unit) <- lift [IO -> State ::: IO] printInt i in
-        let (f : Float) <- lift [IO -> State ::: IO] readFloat in
-          let (_ : Unit) <- lift [IO -> State ::: IO] printFloat f in
-            let (ref1 : Ref Int) <- new_ref 1 in
-              let (_ : Unit) <- stateManip ref1 in
-                let (_ : Unit) <- lift [IO -> State ::: IO] printInt (read_ref [Int] ref1) in
-                  let (ref2 : Ref Int) <- new_ref 0 in
-                    let (ret : Unit) <- stateManip ref2 in
-                      return [State ::: IO] ret;
+main : (IO ::: Id) Unit =
+  let (_ : Unit) <- printString "Hello from main" in
+    let (i : Int) <- readInt in
+      let (_ : Unit) <- printInt i in
+        let (f : Float) <- readFloat in
+          let (_ : Unit) <- printFloat f in
+            let (v : Int) <- lift [Id -> IO ::: Id] execState [Int] [Unit] stateManip 1 in
+              let (_ : Unit) <- printInt v in
+                lift [Id -> IO ::: Id] evalState [Int] [Unit] stateManip 0;
 
-stateManip : Ref Int -> State Unit =
-  \(state : Ref Int) -> let (i : Int) <- read_ref [Int] state in
-                          let (_ : Unit) <- write_ref [Int] state i in
-                            state := (\(s : Int) -> s) (read_ref [Int] state);
+stateManip : Int -> Id {Unit, Int} =
+  \(state1 : Int) -> let (i : Int) <- return [Id] state1 in
+                       let (state2 : Int) <- return [Id] i in
+                         return [Id] {unit, (\(s : Int) -> s) state2};
 
-execState : forall S . forall A . Ref S -> State A -> S =
-  unit;
+execState : forall S . forall A . (S -> Id {A, S}) -> S -> Id S =
+  /\S . /\A . \(f : S -> Id {A, S}) -> \(s : S) -> let (res : {A, S}) <- f s in
+                                                     case res of
+                                                       | {a : A, s1 : S} => return [Id] s1
+                                                     end;
 
-evalState : forall S . forall A . Ref S -> State A -> A =
-  unit;
+evalState : forall S . forall A . (S -> Id {A, S}) -> S -> Id A =
+  /\S . /\A . \(f : S -> Id {A, S}) -> \(s : S) -> let (res : {A, S}) <- f s in
+                                                     case res of
+                                                       | {a : A, s1 : S} => return [Id] a
+                                                     end;
 
