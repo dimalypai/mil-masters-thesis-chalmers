@@ -283,5 +283,14 @@ General thoughts. Week 15
 =========================
 
 * MIL, OOLang and subtyping: can the different overriding variance in OOLang
-  influence how the subtyping relation should look like in MIL?
+  influence how the subtyping relation should look like in MIL? It seems that
+  yes. We need the self argument to be covariant, which is incompatible with
+  contravariant argument types. Is having covariance only for the first
+  argument of the method, which is self (probably) too ugly and crazy? Yes.
+  There is an idea to hide the self parameter with built-in ReaderM monad. Not
+  sure how good is this, but we can avoid having covariant function types (and
+  make this adjustable for example). ReaderM type will be covariant in the
+  environment type and (probably) adjustable in the return type.
+  For class methods: environment is the self type, the return type is the
+  source method type.
 

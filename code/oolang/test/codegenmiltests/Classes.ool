@@ -7,13 +7,13 @@ main : Unit =>
 end
 
 def fun : {obj : Super} -> Pure Int =>
-  obj.method;
+  obj.method unit;
 end
 
 class Super =>
   superField : Int = 1;
 
-  def method : Pure Int =>
+  def method : {u : Unit} -> Pure Int =>
     self.superField;
   end
 
@@ -25,7 +25,7 @@ end
 class Child =>
   chieldField : Float = 0.01;
 
-  def method : Pure Int =>
+  def method : {u : Unit} -> Pure Int =>
     self.chieldField;
     2;
   end
