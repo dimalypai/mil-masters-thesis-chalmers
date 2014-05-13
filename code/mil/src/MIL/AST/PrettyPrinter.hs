@@ -64,7 +64,12 @@ instance Pretty Expr where
   prPrn (LetE varBind e1 e2) =
     text "let" <+> prPrn varBind <+> text "<-" <+> prPrn e1 <+> text "in" $+$
     nest indLvl (prPrn e2)
-  prPrn (ReturnE m e) = text "return" <+> brackets (prPrn m) <+> prPrn e
+  prPrn e@(ReturnE m e1) =
+    text "return" <+> brackets (prPrn m) <+>
+    prPrnParens (e1 `exprHasLowerPrec` e) e1
+  prPrn e@(LiftE e1 tm1 tm2) =
+    text "lift" <+> brackets (prPrn tm1 <+> text "->" <+> prPrn tm2) <+>
+    prPrnParens (e1 `exprHasLowerPrec` e) e1
   prPrn (TupleE tElems) = braces (hsep $ punctuate comma $ map prPrn tElems)
 
 instance Pretty Literal where

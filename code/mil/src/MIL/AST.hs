@@ -193,16 +193,20 @@ isAtomicType              _ = False
 -- Precedences
 
 getExprPrec :: Expr -> Int
-getExprPrec LitE        {} = 5
-getExprPrec VarE        {} = 5
+getExprPrec LitE        {} = 6
+getExprPrec VarE        {} = 6
 getExprPrec LambdaE     {} = 3
-getExprPrec AppE        {} = 4
+getExprPrec AppE        {} = 5
 getExprPrec TypeLambdaE {} = 3
-getExprPrec TypeAppE    {} = 4
-getExprPrec ConNameE    {} = 5
+getExprPrec TypeAppE    {} = 5
+getExprPrec ConNameE    {} = 6
 getExprPrec LetE        {} = 2
 getExprPrec ReturnE     {} = 2
-getExprPrec TupleE      {} = 5
+getExprPrec LiftE       {} = 2
+getExprPrec NewRefE     {} = 6
+getExprPrec DerefE      {} = 6
+getExprPrec AssignRefE  {} = 4
+getExprPrec TupleE      {} = 6
 
 -- | Returns whether the first expression has a lower precedence than the
 -- second one. Convenient to use in infix form.
