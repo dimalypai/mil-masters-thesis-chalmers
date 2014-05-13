@@ -279,3 +279,9 @@ Meeting 2014-04-12
 * Fine-grained effects are nice and powerful, but maybe later. They require
   some thought.
 
+General thoughts. Week 15
+=========================
+
+* MIL, OOLang and subtyping: can the different overriding variance in OOLang
+  influence how the subtyping relation should look like in MIL?
+

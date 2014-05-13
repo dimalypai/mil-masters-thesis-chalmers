@@ -110,6 +110,7 @@ isClassMethodDefined className methodName classTypeEnv =
 
 -- | Checks whether there is a method with a given name and type in on of the
 -- super classes (does *not* check a given class).
+-- Both argument and return types are *invariant* for overriding.
 --
 -- Note: Unsafe. Should be used only after check that class is defined.
 isClassMethodOverride :: ClassName -> FunName -> Type -> ClassTypeEnv -> Bool

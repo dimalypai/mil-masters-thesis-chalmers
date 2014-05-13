@@ -111,5 +111,6 @@ alias T = Int -> Int
 MIL needs tuples and subtyping to be able to handle OOLang with inheritance
 nicely. Tuples should have width and depth subtyping. What is bothering is that
 it seems that function types need to be covariant and not contravariant in the
-argument types.
+argument types. One solution to this confusion might be to allow subtyping of
+function types only during depth-subtyping checking for tuples.
 
