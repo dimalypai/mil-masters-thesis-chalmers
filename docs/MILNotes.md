@@ -105,3 +105,6 @@ One of the things it needs to represent is A-normal form:
 
 What should the type of main in MIL be? Specific stack?
 
+Add type aliases to the language (as type in Haskell):
+alias T = Int -> Int
+
