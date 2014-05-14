@@ -105,6 +105,10 @@ checkTypeWithTypeVarsOfKind typeVars kind t =
         TyVar tv -> throwError $ TypeVarApp tv
         _ -> throwError $ IllFormedType t
 
+    TyTuple elemTypes ->
+      -- All types of tuple elements must be of kind *.
+      mapM_ (checkTypeWithTypeVarsOfKind typeVars StarK) elemTypes
+
     TyMonad tm -> checkTypeMWithTypeVars typeVars tm
 
 -- | Checking the monadic type.
@@ -162,6 +166,10 @@ instance AlphaEq Type where
   alphaEq (TyApp t11 t12) (TyApp t21 t22) =
     (&&) <$> (t11 `alphaEq` t21) <*> (t12 `alphaEq` t22)
   alphaEq (TyForAll tv1 t1) (TyForAll tv2 t2) = t1 `alphaEq` ((tv2, TyVar tv1) `substTypeIn` t2)
+  alphaEq (TyTuple elemTypes1) (TyTuple elemTypes2) = do
+    let lengthEq = length elemTypes1 == length elemTypes2
+    elemsAlphaEq <- mapM (uncurry alphaEq) (zip elemTypes1 elemTypes2)
+    return (lengthEq && and elemsAlphaEq)
   alphaEq (TyMonad tm1) (TyMonad tm2) = tm1 `alphaEq` tm2
   alphaEq (TyTypeCon typeName) t = do
     ifM (isAliasDefined typeName)
@@ -218,6 +226,8 @@ instance SubstType Type where
   tvArg@(typeVar, _) `substTypeIn` forallT@(TyForAll tv t)
     | typeVar /= tv = TyForAll tv (tvArg `substTypeIn` t)
     | otherwise     = forallT
+  tvArg `substTypeIn` (TyTuple elemTypes) =
+    TyTuple (map (tvArg `substTypeIn`) elemTypes)
   tvArg `substTypeIn` (TyMonad tm) = TyMonad (tvArg `substTypeIn` tm)
 
 instance SubstType TypeM where

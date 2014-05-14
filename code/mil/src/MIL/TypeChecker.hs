@@ -254,3 +254,7 @@ tcExpr expr =
       retExprType <- tcExpr retExpr
       return $ TyApp (TyMonad tm) retExprType
 
+    TupleE tElems -> do
+      elemTypes <- mapM tcExpr tElems
+      return $ TyTuple elemTypes
+
