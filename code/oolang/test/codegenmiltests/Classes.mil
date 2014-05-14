@@ -15,58 +15,62 @@ alias Child = {{Int, Float}, {ReaderM Child (Unit -> Id Int), ReaderM Super (Id 
 new_Super : Id Super =
   return [Id] {{1}, {method_Super, superMethod_Super}};
 
-method_Super : Super -> Id Int =
-  \(self : Super) -> case self of
-                       | {self_fields, self_methods} =>
-                           case self_fields of
-                             | {self_superField} =>
-                                 case self_methods of
-                                   | {self_method, self_superMethod} =>
-                                       return [Id] self_superField
-                                 end
-                           end
-                     end;
+method_Super : ReaderM Super (Unit -> Id Int) =
+  let (self : Super) <- ask in
+    return [ReaderM Super] \(u : Unit) -> case self of
+                                            | {self_fields, self_methods} =>
+                                                case self_fields of
+                                                  | {self_superField} =>
+                                                      case self_methods of
+                                                        | {self_method, self_superMethod} =>
+                                                            return [Id] self_superField
+                                                      end
+                                                end
+                                          end;
 
-superMethod_Super : Super -> Id Bool =
-  \(self : Super) -> case self of
-                       | {self_fields, self_methods} =>
-                           case self_fields of
-                             | {self_superField} =>
-                                 case self_methods of
-                                   | {self_method, self_superMethod} =>
-                                       return [Id] True
+superMethod_Super : ReaderM Super (Id Bool) =
+  let (self : Super) <- ask in
+    return [ReaderM Super] case self of
+                             | {self_fields, self_methods} =>
+                                 case self_fields of
+                                   | {self_superField} =>
+                                       case self_methods of
+                                         | {self_method, self_superMethod} =>
+                                             return [Id] True
+                                       end
                                  end
-                           end
-                     end;
+                           end;
 
 new_Child : Id Child =
   return [Id] {{1, 1.0e-2}, {method_Child, superMethod_Super, childMethod_Child}};
 
-method_Child : Child -> Id Int =
-  \(self : Child) -> case self of
-                       | {self_fields, self_methods} =>
-                           case self_fields of
-                             | {self_superField, self_childField} =>
-                                 case self_methods of
-                                   | {self_method, self_superMethod, self_childMethod} =>
-                                       let (_ : Float) <- return [Id] self_childField in
-                                         return [Id] 2
-                                 end
-                           end
-                     end;
+method_Child : ReaderM Child (Unit -> Id Int) =
+  let (self : Child) <- ask in
+    return [ReaderM Child] \(u : Unit) -> case self of
+                                            | {self_fields, self_methods} =>
+                                                case self_fields of
+                                                  | {self_superField, self_childField} =>
+                                                      case self_methods of
+                                                        | {self_method, self_superMethod, self_childMethod} =>
+                                                            let (_ : Float) <- return [Id] self_childField in
+                                                              return [Id] 2
+                                                      end
+                                                end
+                                          end;
 
-childMethod_Child : Child -> Id Float =
-  \(self : Child) -> case self of
-                       | {self_fields, self_methods} =>
-                           case self_fields of
-                             | {self_superField, self_childField} =>
-                                 case self_methods of
-                                   | {self_method, self_superMethod, self_childMethod} =>
-                                       let (_ : Bool) <- in self_superMethod self
-                                         return [Id] self_childField
+childMethod_Child : ReaderM Child (Id Float) =
+  let (self : Child) <- ask in
+    return [ReaderM Child] case self of
+                             | {self_fields, self_methods} =>
+                                 case self_fields of
+                                   | {self_superField, self_childField} =>
+                                       case self_methods of
+                                         | {self_method, self_superMethod, self_childMethod} =>
+                                             let (_ : Bool) <- in self_superMethod self
+                                               return [Id] self_childField
+                                       end
                                  end
-                           end
-                     end;
+                           end;
 
 main : Impure_M Unit =
   let (objSuper : Super) <- lift [Id -> Impure_M] new_Super in
