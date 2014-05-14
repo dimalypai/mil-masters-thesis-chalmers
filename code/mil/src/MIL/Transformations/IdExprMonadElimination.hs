@@ -5,8 +5,8 @@ module MIL.Transformations.IdExprMonadElimination
 import MIL.AST
 
 idExprMonadElimination :: Program -> Program
-idExprMonadElimination (Program (typeDefs, funDefs)) =
-  Program (typeDefs, map idExprMEliminateFunDef funDefs)
+idExprMonadElimination (Program (typeDefs, aliasDefs, funDefs)) =
+  Program (typeDefs, aliasDefs, map idExprMEliminateFunDef funDefs)
 
 -- TODO: very very naive
 idExprMEliminateFunDef :: FunDef -> FunDef

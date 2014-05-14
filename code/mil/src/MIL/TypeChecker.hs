@@ -14,6 +14,7 @@ module MIL.TypeChecker
   ) where
 
 import qualified Data.Set as Set
+import Control.Applicative
 
 import MIL.AST
 import MIL.TypeChecker.TypeCheckM
@@ -29,32 +30,36 @@ typeCheck program = runTypeCheckM (tcProgram program) initTypeEnv
 
 -- | Entry point into the type checking of the program.
 tcProgram :: Program -> TypeCheckM ()
-tcProgram (Program (typeDefs, funDefs)) = do
-  collectDefs typeDefs funDefs
+tcProgram (Program (typeDefs, aliasDefs, funDefs)) = do
+  collectDefs typeDefs aliasDefs funDefs
   -- Type parameters and function types have been checked.
   -- Now first information about definitions is in the environment:
   -- + type names and their kinds
+  -- + type aliases
   -- + function names and their types
   checkMain
   mapM_ tcTypeDef typeDefs
   mapM_ tcFunDef funDefs
 
 -- | In order to be able to handle (mutually) recursive definitions, we need to
--- do an additional first pass to collect type names with their kinds and
--- function names and type signatures.
+-- do an additional first pass to collect type names with their kinds, type
+-- aliases, function names and type signatures.
 --
 -- It collects:
 --
 -- * type names and their kinds
 --
+-- * type aliases
+--
 -- * function names and their types
 --
 -- It also does checking of type parameters and function types.
-collectDefs :: [TypeDef] -> [FunDef] -> TypeCheckM ()
-collectDefs typeDefs funDefs = do
-  -- It is essential that we collect types before functions, because function
-  -- types may mention defined data types.
+collectDefs :: [TypeDef] -> [AliasDef] -> [FunDef] -> TypeCheckM ()
+collectDefs typeDefs aliasDefs funDefs = do
+  -- It is essential that we collect types, then aliases and then functions,
+  -- because function types may mention defined data types and type aliases.
   mapM_ collectTypeDef typeDefs
+  mapM_ collectAliasDef aliasDefs
   mapM_ collectFunDef funDefs
 
 -- | Checks if the type is already defined.
@@ -71,6 +76,19 @@ collectTypeDef (TypeDef typeName typeVars _) = do
          Set.empty typeVars
   let kind = mkKind (length typeVars)
   addType typeName kind
+
+-- | Checks if the data type or another type alias with the same type name is
+-- already defined.
+-- Checks that the specified type is correct (well-formed, well-kinded and uses
+-- types in scope).
+-- Adds the type alias to the type environment.
+-- Note: type aliases can *not* be recursive.
+collectAliasDef :: AliasDef -> TypeCheckM ()
+collectAliasDef (AliasDef typeName t) = do
+  whenM (isTypeOrAliasDefined typeName) $
+    throwError $ TypeOrAliasAlreadyDefined typeName
+  checkType t
+  addAlias typeName t
 
 -- | Checks if the function is already defined.
 -- Checks that the specified function type is correct (well-formed,
@@ -113,7 +131,7 @@ tcConDef typeName typeVars (ConDef conName conFields) = do
 tcFunDef :: FunDef -> TypeCheckM ()
 tcFunDef (FunDef funName funType bodyExpr) = do
   bodyType <- tcExpr bodyExpr
-  unless (bodyType `alphaEq` funType) $
+  unlessM (bodyType `alphaEq` funType) $
     throwError $ FunBodyIncorrectType funName funType bodyType
 
 -- | Expression type checking.
@@ -131,7 +149,7 @@ tcExpr expr =
       varType <- getVarType var
       let binderType = getBinderType varBinder
       checkType binderType
-      unless (binderType `alphaEq` varType) $
+      unlessM (binderType `alphaEq` varType) $
         throwError $ VarIncorrectType var varType binderType
       return varType
 
@@ -156,15 +174,15 @@ tcExpr expr =
       argType <- tcExpr exprArg
       case appType of
         TyArrow paramType resultType ->
-          if not (argType `alphaEq` paramType)
-            then throwError $ IncorrectFunArgType paramType argType
-            else return resultType
+          ifM (not <$> (argType `alphaEq` paramType))
+            (throwError $ IncorrectFunArgType paramType argType)
+            (return resultType)
         _ -> throwError $ NotFunctionType appType
 
     TypeLambdaE typeVar bodyExpr -> do
       -- it is important to check in all these places, since it can shadow a
-      -- type or another type variable
-      whenM (isTypeDefined $ typeVarToTypeName typeVar) $
+      -- type, type alias or another type variable
+      whenM (isTypeOrAliasDefined $ typeVarToTypeName typeVar) $
         throwError $ TypeVarShadowsType typeVar
       whenM (isTypeVarBound typeVar) $
         throwError $ TypeVarShadowsTypeVar typeVar
@@ -196,7 +214,7 @@ tcExpr expr =
       unlessM (isDataConDefined conName) $
         throwError $ ConNotDefined conName
       dataConTypeInfo <- getDataConTypeInfo conName
-      unless (conType `alphaEq` dcontiType dataConTypeInfo) $
+      unlessM (conType `alphaEq` dcontiType dataConTypeInfo) $
         throwError $ ConIncorrectType conName (dcontiType dataConTypeInfo) conType
       return conType
 
@@ -208,7 +226,7 @@ tcExpr expr =
       bindExprTm <-
         case bindExprType of
           TyApp (TyMonad tm) a -> do
-            unless (a `alphaEq` varType) $
+            unlessM (a `alphaEq` varType) $
               throwError $ IncorrectExprType (TyApp (TyMonad tm) varType) bindExprType
             return tm
           _ -> throwError $ NotMonadicType bindExprType
@@ -226,7 +244,7 @@ tcExpr expr =
           else tcExpr bodyExpr
       case bodyType of
         TyApp (TyMonad bodyExprTm) _ ->
-          unless (bodyExprTm `alphaEq` bindExprTm) $  -- TODO: rising
+          unlessM (bodyExprTm `alphaEq` bindExprTm) $  -- TODO: rising
             throwError $ IncorrectMonad bindExprTm bodyExprTm
         _ -> throwError $ NotMonadicType bodyType
       return bodyType

@@ -3,6 +3,7 @@ module MIL.TypeChecker.Helpers where
 
 import qualified Data.Set as Set
 import Data.List (foldl')
+import Control.Applicative
 
 import MIL.AST
 import MIL.TypeChecker.TypeCheckM
@@ -46,7 +47,14 @@ checkTypeWithTypeVarsOfKind typeVars kind t =
         (do dataTypeInfo <- getDataTypeInfo typeName
             when (dtiKind dataTypeInfo /= kind) $
               throwError $ TypeConIncorrectApp typeName (dtiKind dataTypeInfo) kind)
-        (throwError $ TypeNotDefined typeName)
+        (ifM (isAliasDefined typeName)
+           (do aliasType <- getAliasType typeName
+               -- Aliased types should be checked without the type variables we
+               -- have collected in scope, because they were defined in a
+               -- different scope.
+               -- TODO: what if it is TyForAll or TyArrow?
+               checkTypeWithTypeVarsOfKind Set.empty kind aliasType)
+           (throwError $ TypeNotDefined typeName))
 
     TyVar typeVar -> do
       isTyVarBound <- isTypeVarBound typeVar
@@ -63,9 +71,9 @@ checkTypeWithTypeVarsOfKind typeVars kind t =
 
     TyForAll typeVar bodyT -> do
       -- It is important to check in all these places, since it can shadow a
-      -- type or another type variable and typeVars is not queried by
-      -- 'isTypeDefined' and 'isTypeVarBound'.
-      whenM (isTypeDefined $ typeVarToTypeName typeVar) $
+      -- type, type alias or another type variable and typeVars is not queried
+      -- by 'isTypeOrAliasDefined' and 'isTypeVarBound'.
+      whenM (isTypeOrAliasDefined $ typeVarToTypeName typeVar) $
         throwError $ TypeVarShadowsType typeVar
       isTyVarBound <- isTypeVarBound typeVar
       when (isTyVarBound || typeVar `Set.member` typeVars) $
@@ -134,38 +142,46 @@ tyForAllFromList bodyType = foldr (\tv acc -> TyForAll tv acc) bodyType
 -- * Alpha equivalence of types.
 
 -- | Decides if two types are equivalent up to a change of type variables bound
--- by forall.
+-- by forall. It is monadic to be able to expand type aliases.
 --
 -- For example, forall A . A -> A and forall B . B -> B are alpha equivalent.
 class AlphaEq t where
-  alphaEq :: t -> t -> Bool
+  alphaEq :: t -> t -> TypeCheckM Bool
 
 -- | Most of the cases are straightforward. When we get two forall types, we
 -- replace one of the type variables (its free occurences) with another one and
 -- check whether the resulting types are alpha equivalent.
 -- Use 'TypeM' instance for 'TyMonad'.
+-- When we have a type name on either of the sides and it happens to be a type
+-- alias, we expand it.
 instance AlphaEq Type where
-  alphaEq (TyTypeCon typeName1) (TyTypeCon typeName2) = typeName1 == typeName2
-  alphaEq (TyVar typeVar1) (TyVar typeVar2) = typeVar1 == typeVar2
+  alphaEq (TyTypeCon typeName1) (TyTypeCon typeName2) = return (typeName1 == typeName2)
+  alphaEq (TyVar typeVar1) (TyVar typeVar2) = return (typeVar1 == typeVar2)
   alphaEq (TyArrow t11 t12) (TyArrow t21 t22) =
-    t11 `alphaEq` t21 && t12 `alphaEq` t22
+    (&&) <$> (t11 `alphaEq` t21) <*> (t12 `alphaEq` t22)
   alphaEq (TyApp t11 t12) (TyApp t21 t22) =
-    t11 `alphaEq` t21 && t12 `alphaEq` t22
+    (&&) <$> (t11 `alphaEq` t21) <*> (t12 `alphaEq` t22)
   alphaEq (TyForAll tv1 t1) (TyForAll tv2 t2) = t1 `alphaEq` ((tv2, TyVar tv1) `substTypeIn` t2)
   alphaEq (TyMonad tm1) (TyMonad tm2) = tm1 `alphaEq` tm2
-  alphaEq _ _ = False
+  alphaEq (TyTypeCon typeName) t = do
+    ifM (isAliasDefined typeName)
+      (do aliasType <- getAliasType typeName
+          aliasType `alphaEq` t)
+      (return False)
+  alphaEq t1 t2@(TyTypeCon {}) = t2 `alphaEq` t1
+  alphaEq _ _ = return False
 
 instance AlphaEq TypeM where
   alphaEq (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
   alphaEq (MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
-    m1 `alphaEq` m2 && tm1 `alphaEq` tm2
-  alphaEq _ _ = False
+    (&&) <$> (m1 `alphaEq` m2) <*> (tm1 `alphaEq` tm2)
+  alphaEq _ _ = return False
 
 -- | For monads that have type arguments check that these arguments are alpha
 -- equivalent. For the others it is just an equality.
 instance AlphaEq MilMonad where
   alphaEq (Error t1) (Error t2) = t1 `alphaEq` t2
-  alphaEq m1 m2 = m1 == m2
+  alphaEq m1 m2 = return (m1 == m2)
 
 -- * Type substitution.
 

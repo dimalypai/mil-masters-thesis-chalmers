@@ -18,8 +18,9 @@ import MIL.AST
 import MIL.PrettyPrinter
 
 instance Pretty Program where
-  prPrn (Program (typeDefs, funDefs)) =
+  prPrn (Program (typeDefs, aliasDefs, funDefs)) =
     vsepBig (map prPrn typeDefs) $+$
+    vsepBig (map prPrn aliasDefs) $+$
     vsepBig (map prPrn funDefs)
 
 instance Pretty TypeDef where
@@ -36,6 +37,10 @@ instance Pretty TypeDef where
 instance Pretty ConDef where
   prPrn (ConDef conName conFields) =
     prPrn conName <+> hsep (map (\t -> prPrnParens (not $ isAtomicType t) t) conFields)
+
+instance Pretty AliasDef where
+  prPrn (AliasDef typeName t) =
+    text "alias" <+> prPrn typeName <+> equals <+> prPrn t <> semi
 
 instance Pretty FunDef where
   prPrn (FunDef funName funType expr) =

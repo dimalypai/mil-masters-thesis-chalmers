@@ -4,3 +4,5 @@ type T
 type Tree A
   = Empty
   | Node A (Tree A) (Tree A);
+
+alias A = Tree Int;

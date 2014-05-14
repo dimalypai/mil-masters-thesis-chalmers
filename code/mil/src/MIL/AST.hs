@@ -16,17 +16,19 @@ module MIL.AST where
 --
 -- * list of type definitions
 --
+-- * list of type alias definitions
+--
 -- * list of function definitions
 --
 -- Note: they must be in the same order on the source level.
-newtype Program = Program ([TypeDef], [FunDef])
+newtype Program = Program ([TypeDef], [AliasDef], [FunDef])
   deriving Show
 
 getMilTypeDefs :: Program -> [TypeDef]
-getMilTypeDefs (Program (typeDefs, _)) = typeDefs
+getMilTypeDefs (Program (typeDefs, _, _)) = typeDefs
 
 getMilFunDefs :: Program -> [FunDef]
-getMilFunDefs (Program (_, funDefs)) = funDefs
+getMilFunDefs (Program (_, _, funDefs)) = funDefs
 
 -- | Type definition:
 --
@@ -44,6 +46,10 @@ data TypeDef = TypeDef TypeName [TypeVar] [ConDef]
 --
 -- * constructor fields (expressed as types)
 data ConDef = ConDef ConName [Type]
+  deriving Show
+
+-- | Type alias definition. Gives a name to a type.
+data AliasDef = AliasDef TypeName Type
   deriving Show
 
 -- | Function definition:
@@ -120,7 +126,8 @@ data Pattern =
 -- handled uniformly with user-defined data types.
 --
 -- TODO: monads
-data Type = TyTypeCon TypeName
+data Type = -- | May refer to both data types and type aliases.
+            TyTypeCon TypeName
           | TyVar TypeVar
           | TyArrow Type Type
           | TyForAll TypeVar Type

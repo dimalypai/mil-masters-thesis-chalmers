@@ -21,8 +21,8 @@ testDir = "test" </> "prettyprintertests"
 spec :: Spec
 spec =
   describe "prPrint" $ do
-    it "pretty prints data type definitions" $
-      let baseName = "DataTypes"
+    it "pretty prints data type and alias definitions" $
+      let baseName = "DataTypesAndAliases"
           ast = Program
                   ( [ TypeDef
                         (TypeName "T")
@@ -43,6 +43,11 @@ spec =
                             , TyApp
                                 (TyTypeCon (TypeName "Tree"))
                                 (mkTypeVar "A")]]]
+                  , [AliasDef
+                       (TypeName "A")
+                       (TyApp
+                          (TyTypeCon (TypeName "Tree"))
+                          (mkSimpleType "Int"))]
                   , [])
       in testCase baseName ast
 
@@ -50,6 +55,7 @@ spec =
       let baseName = "Functions"
           ast = Program
                   ( []
+                  , []
                   , [ FunDef
                         (FunName "fun")
                         (mkSimpleType "Unit")
@@ -67,6 +73,7 @@ spec =
                        (TypeName "T")
                        []
                        [ConDef (ConName "MkT") []]]
+                  , []
                   , [ FunDef
                         (FunName "fun")
                         (mkSimpleType "Unit")
@@ -81,6 +88,7 @@ spec =
       let baseName = "Types"
           ast = Program
                   ( []
+                  , []
                   , [ FunDef
                         (FunName "fun")
                         (TyForAll (TypeVar "A")
@@ -130,6 +138,7 @@ spec =
       let baseName = "Expressions"
           ast = Program
                   ( []
+                  , []
                   , [ FunDef
                         (FunName "fun")
                         (mkSimpleType "Unit")
