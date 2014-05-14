@@ -8,69 +8,65 @@ type Maybe A
 
 alias Impure_M = Error Unit ::: State ::: Lift ::: IO ::: Id;
 
-alias Super = {{Int}, {ReaderM Super (Unit -> Id Int), ReaderM Super (Id Bool)}};
+alias Super = {{Int}, {Super -> Unit -> Id Int, Super -> Id Bool}};
 
-alias Child = {{Int, Float}, {ReaderM Super (Unit -> Id Int), ReaderM Super (Id Bool), ReaderM Child (Unit -> Id Int), ReaderM Child (Id Float)}};
+alias Child = {{Int, Float}, {Super -> Unit -> Id Int, Super -> Id Bool, Child -> Unit -> Id Int, Child -> Id Float}};
 
 new_Super : Id Super =
   return [Id] {{1}, {method_Super, superMethod_Super}};
 
-method_Super : ReaderM Super (Unit -> Id Int) =
-  let (self : Super) <- ask in
-    return [ReaderM Super] \(u : Unit) -> case self of
-                                            | {self_fields, self_methods} =>
-                                                case self_fields of
-                                                  | {self_superField} =>
-                                                      case self_methods of
-                                                        | {self_method, self_superMethod} =>
-                                                            return [Id] self_superField
-                                                      end
+method_Super : Super -> Unit -> Id Int =
+  \(self : Super) -> \(u : Unit) -> case self of
+                                      | {self_fields, self_methods} =>
+                                          case self_fields of
+                                            | {self_superField} =>
+                                                case self_methods of
+                                                  | {self_method, self_superMethod} =>
+                                                      return [Id] self_superField
                                                 end
-                                          end;
+                                          end
+                                    end;
 
-superMethod_Super : ReaderM Super (Id Bool) =
-  let (self : Super) <- ask in
-    return [ReaderM Super] case self of
-                             | {self_fields, self_methods} =>
-                                 case self_fields of
-                                   | {self_superField} =>
-                                       case self_methods of
-                                         | {self_method, self_superMethod} =>
-                                             return [Id] True
-                                       end
+superMethod_Super : Super -> Id Bool =
+  \(self : Super) -> case self of
+                       | {self_fields, self_methods} =>
+                           case self_fields of
+                             | {self_superField} =>
+                                 case self_methods of
+                                   | {self_method, self_superMethod} =>
+                                       return [Id] True
                                  end
-                           end;
+                           end
+                     end;
 
 new_Child : Id Child =
-  return [Id] {{1, 1.0e-2}, {method_super, superMethod_Super, method_Child, childMethod_Child}};
+  return [Id] {{1, 1.0e-2}, {method_Super, superMethod_Super, method_Child, childMethod_Child}};
 
-method_Child : ReaderM Child (Unit -> Id Int) =
-  let (self : Child) <- ask in
-    return [ReaderM Child] \(u : Unit) -> case self of
-                                            | {self_fields, self_methods} =>
-                                                case self_fields of
-                                                  | {self_superField, self_childField} =>
-                                                      case self_methods of
-                                                        | {super_method, self_superMethod, self_method, self_childMethod} =>
-                                                            let (_ : Float) <- return [Id] self_childField in
-                                                              return [Id] 2
-                                                      end
+method_Child : Child -> Unit -> Id Int =
+  \(self : Child) -> \(u : Unit) -> case self of
+                                      | {self_fields, self_methods} =>
+                                          case self_fields of
+                                            | {self_superField, self_childField} =>
+                                                case self_methods of
+                                                  | {super_method, self_superMethod, self_method, self_childMethod} =>
+                                                      let (_ : Float) <- return [Id] self_childField in
+                                                        return [Id] 2
                                                 end
-                                          end;
+                                          end
+                                    end;
 
-childMethod_Child : ReaderM Child (Id Float) =
-  let (self : Child) <- ask in
-    return [ReaderM Child] case self of
-                             | {self_fields, self_methods} =>
-                                 case self_fields of
-                                   | {self_superField, self_childField} =>
-                                       case self_methods of
-                                         | {super_method, self_superMethod, self_method, self_childMethod} =>
-                                             let (_ : Bool) <- in self_superMethod self
-                                               return [Id] self_childField
-                                       end
+childMethod_Child : Child -> Id Float =
+  \(self : Child) -> case self of
+                       | {self_fields, self_methods} =>
+                           case self_fields of
+                             | {self_superField, self_childField} =>
+                                 case self_methods of
+                                   | {super_method, self_superMethod, self_method, self_childMethod} =>
+                                       let (_ : Bool) <- in self_superMethod self
+                                         return [Id] self_childField
                                  end
-                           end;
+                           end
+                     end;
 
 main : Impure_M Unit =
   let (objSuper : Super) <- lift [Id -> Impure_M] new_Super in
