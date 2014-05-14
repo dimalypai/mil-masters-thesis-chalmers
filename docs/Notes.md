@@ -293,6 +293,13 @@ General thoughts. Week 15
   environment type and (probably) adjustable in the return type.
   For class methods: environment is the self type, the return type is the
   source method type.
+  We need to keep super class methods in order to be able to call them via
+  `super`, this on one hand eliminates the need for ReaderM trick, since it is
+  only width subtyping and we don't subtype function types with different self
+  parameters. But on the other hand, it is not yet clear how to do a method
+  dispatch with this setup. Do we need some type cast operations? Maybe,
+  introduce a third element of the tuple for super class methods (but with this
+  we need ReaderM trick back again)?
 * OOLang monad stack: it turned out to be useful for the purposes of lifting
   (when we have, for example, a pure function call inside an impure function)
   to include Id as a base monad for the stack. But is it OK to have IO not at
