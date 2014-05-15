@@ -169,7 +169,7 @@ tyArrowFromList :: Type -> [Type] -> Type
 tyArrowFromList resultType = foldr (\t acc -> TyArrow t acc) resultType
 
 isSelfOrSuper :: SrcExpr -> Bool
-isSelfOrSuper (VarE _ (Var varName)) =
+isSelfOrSuper (VarE _ _ (Var varName)) =
   varName == "self" || varName == "super"
 isSelfOrSuper _ = False
 

@@ -12,6 +12,7 @@ import qualified Data.Map as Map
 import Control.Arrow (second)
 
 import OOLang.AST
+import OOLang.AST.TypeAnnotated
 import OOLang.AST.Helpers
 import OOLang.TypeChecker
 import OOLang.TypeChecker.TypeEnv
@@ -132,7 +133,7 @@ codeGenStmt tyStmt isPure =
     -- TODO:
     -- + "then" with state putting operations
     -- + ANF/SSA construction
-    AssignS _ srcAssignOp tyExprLeft tyExprRight -> undefined
+    AssignS _ _ srcAssignOp tyExprLeft tyExprRight -> undefined
 
 -- | Expression code generation.
 -- Takes a purity indicator.
@@ -141,25 +142,23 @@ codeGenExpr tyExpr isPure =
   case tyExpr of
     LitE lit -> literalMil lit
 
-    VarE _ varTy ->
-      let var = varMil $ getVarTyVar varTy
-          milVarType = typeMil $ getVarTyType varTy
-      in (MIL.VarE $ MIL.VarBinder (var, milVarType))
+    VarE _ varType var ->
+      MIL.VarE $ MIL.VarBinder (varMil var, typeMil varType)
 
-    BinOpE _ srcBinOp tyExpr1 tyExpr2 ->
+    BinOpE _ _ srcBinOp tyExpr1 tyExpr2 ->
       codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 isPure
 
     ParenE _ tySubExpr -> codeGenExpr tySubExpr isPure
 
-literalMil :: Literal s -> MIL.Expr
+literalMil :: Literal t s -> MIL.Expr
 literalMil UnitLit {} = MIL.LitE MIL.UnitLit
-literalMil (BoolLit _ b) =
+literalMil (BoolLit _ _ b) =
   if b
     then MIL.ConNameE (MIL.ConName "True")  (MIL.mkSimpleType "Bool")
     else MIL.ConNameE (MIL.ConName "False") (MIL.mkSimpleType "Bool")
-literalMil (IntLit _ i)     = MIL.LitE (MIL.IntLit i)
-literalMil (FloatLit _ f _) = MIL.LitE (MIL.FloatLit f)
-literalMil (StringLit _ s)  = MIL.LitE (MIL.StringLit s)
+literalMil (IntLit _ _ i)     = MIL.LitE (MIL.IntLit i)
+literalMil (FloatLit _ _ f _) = MIL.LitE (MIL.FloatLit f)
+literalMil (StringLit _ _ s)  = MIL.LitE (MIL.StringLit s)
 literalMil NothingLit {} =
   MIL.ConNameE (MIL.ConName "Nothing")
     (MIL.TyForAll (MIL.TypeVar "A") $
