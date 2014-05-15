@@ -2,9 +2,9 @@
 -- Built using the API from 'TypeCheckM'.
 --
 -- Type checking produces a type environment with information about global
--- definitions and annotates local variable occurences with their types. So,
--- when we say type checked and it is applicable to annotate something it also
--- means `annotated`.
+-- definitions and annotates some syntax nodes with their types. So, when we
+-- say `type checked` and it is applicable to annotate something it also means
+-- `annotated`.
 module OOLang.TypeChecker
   ( typeCheck
   , typeCheckStage
