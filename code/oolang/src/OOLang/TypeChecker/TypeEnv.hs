@@ -22,6 +22,8 @@ module OOLang.TypeChecker.TypeEnv
   , getClassMethodType
   , getSuperClass
   , getClassesAssoc
+  , getClassFieldsAssoc
+  , getClassMethodsAssoc
 
   , FunTypeEnv
   , FunTypeInfo
@@ -205,6 +207,24 @@ getSuperClass className classTypeEnv =
 -- | Get class type environment as an associative list.
 getClassesAssoc :: ClassTypeEnv -> [(ClassName, ClassTypeInfo)]
 getClassesAssoc = Map.assocs
+
+-- | Returns an associative list of names and types of all class fields
+-- accessible from a given class (including super class fields).
+getClassFieldsAssoc :: ClassName -> ClassTypeEnv -> [(Var, Type)]
+getClassFieldsAssoc className classTypeEnv =
+  let classFieldsAssoc = Map.assocs $ ctiClassFields $ fromJust $ Map.lookup className classTypeEnv
+  in case getSuperClass className classTypeEnv of
+       Nothing -> classFieldsAssoc
+       Just superClassName -> getClassFieldsAssoc superClassName classTypeEnv ++ classFieldsAssoc
+
+-- | Returns an associative list of names and types of all class methods
+-- accessible from a given class (including super class methods).
+getClassMethodsAssoc :: ClassName -> ClassTypeEnv -> [(FunName, Type)]
+getClassMethodsAssoc className classTypeEnv =
+  let classMethodsAssoc = Map.assocs $ ctiClassMethods $ fromJust $ Map.lookup className classTypeEnv
+  in case getSuperClass className classTypeEnv of
+       Nothing -> classMethodsAssoc
+       Just superClassName -> getClassMethodsAssoc superClassName classTypeEnv ++ classMethodsAssoc
 
 -- | Returns all information about the class from the environment.
 --

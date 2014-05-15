@@ -7,6 +7,9 @@ module OOLang.CodeGenMil
 
 import Control.Monad.Reader
 import Control.Applicative
+import qualified Data.Map as Map
+-- 'second' is used just to transform components of a pair
+import Control.Arrow (second)
 
 import OOLang.AST
 import OOLang.AST.Helpers
@@ -21,45 +24,58 @@ import qualified MIL.Transformations.IdExprMonadElimination as MIL
 -- Takes a type checked program in OOLang and a type environment and produces a
 -- program in MIL.
 codeGen :: TyProgram -> TypeEnv -> MIL.Program
-codeGen tyProgram typeEnv = runReader (runCG $ codeGenProgram tyProgram) typeEnv
+codeGen tyProgram typeEnv = runReader (runCG $ codeGenProgram tyProgram) (typeEnv, Map.empty)
 
--- | Code generation monad. Uses 'Reader' for querying the type environment.
-newtype CodeGenM a = CG { runCG :: Reader TypeEnv a }
-  deriving (Monad, MonadReader TypeEnv, Functor, Applicative)
+-- | Code generation monad. Uses 'Reader' for querying the type environment and
+-- class types.
+newtype CodeGenM a = CG { runCG :: Reader (TypeEnv, ClassTypes) a }
+  deriving (Monad, MonadReader (TypeEnv, ClassTypes), Functor, Applicative)
+
+-- | All field and method names accessible from the class and a MIL type of the
+-- object representation.
+type ClassTypes = Map.Map ClassName ([Var], [FunName], MIL.Type)
 
 -- | Entry point into the type checking of the program.
--- There is an MIL program generated for each class definition.
+-- There is a list of MIL functions generated for each class definition.
+-- TODO: type aliases
 -- There is an MIL function generated for each function definition.
 -- All these definitions are then regrouped and the built-ins are added.
 codeGenProgram :: TyProgram -> CodeGenM MIL.Program
 codeGenProgram (Program _ tyClassDefs tyFunDefs) = do
-  classMilPrograms <- mapM codeGenClassDef tyClassDefs
-  milFunDefs <- mapM codeGenFunDef tyFunDefs
-  let classMilTypeDefs = concatMap MIL.getMilTypeDefs classMilPrograms
-      classMilFunDefs = concatMap MIL.getMilFunDefs classMilPrograms
-  return $ MIL.Program (builtInTypeDefs ++ classMilTypeDefs, classMilFunDefs ++ milFunDefs)
+  classTypes <- asks snd
+  classTypes' <- foldM (\cts (ClassDef _ srcClassName _ _) ->
+    collectClassTypes (getClassName srcClassName) cts)
+    classTypes tyClassDefs
+  local (second $ const classTypes') $ do
+    classMilFunDefs <- concat <$> mapM codeGenClassDef tyClassDefs
+    milFunDefs <- mapM codeGenFunDef tyFunDefs
+    return $ MIL.Program (builtInTypeDefs, [], classMilFunDefs ++ milFunDefs)
 
--- | Each class definition gets its own data type representing data (fields)
--- and a function definition for each method defined in this class.
-codeGenClassDef :: TyClassDef -> CodeGenM MIL.Program
+-- | Collects information about the class: field and methods names. Constructs
+-- a type of the object representation.
+collectClassTypes :: ClassName -> ClassTypes -> CodeGenM ClassTypes
+collectClassTypes className classTypes = do
+  classTypeEnv <- asks (getClassTypeEnv . fst)
+  let fields = getClassFieldsAssoc className classTypeEnv
+      methods = getClassMethodsAssoc className classTypeEnv
+      (fieldNames, fieldTypes) = unzip fields
+      (methodNames, methodTypes) = unzip methods
+      -- TODO: virtual methods and self parameters
+      classTupleType = MIL.TyTuple [ MIL.TyTuple $ map typeMil fieldTypes
+                                   , MIL.TyTuple $ map typeMil methodTypes]
+  return $ Map.insert className (fieldNames, methodNames, classTupleType) classTypes
+
+codeGenClassDef :: TyClassDef -> CodeGenM [MIL.FunDef]
 codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) = do
-  let className = getClassName srcClassName
-  let (tyFieldDecls, tyMethodDecls) = partitionClassMembers tyMembers
-      superClassField =
-        case mSuperSrcClassName of
-          Nothing -> []
-          Just superSrcClassName -> [MIL.TyTypeCon (typeNameMil className)]
-  classFields <- mapM (codeGenClassField className) tyFieldDecls
-  let classConDef = MIL.ConDef (conNameMil className) (superClassField ++ classFields)
-      classTypeDef = MIL.TypeDef (typeNameMil className) [] [classConDef]
+  let (_, tyMethodDecls) = partitionClassMembers tyMembers
   classMemberFunDefs <- mapM codeGenClassMethod tyMethodDecls
-  return $ MIL.Program ([classTypeDef], classMemberFunDefs)
+  return $ classMemberFunDefs
 
 -- | TODO: inits (together with constructor).
 codeGenClassField :: ClassName -> TyFieldDecl -> CodeGenM MIL.Type
 codeGenClassField className (FieldDecl _ tyDecl _) = do
   let fieldName = getVar $ getDeclVarName tyDecl
-  fieldType <- asks (getClassFieldType className fieldName . getClassTypeEnv)
+  fieldType <- asks (getClassFieldType className fieldName . getClassTypeEnv . fst)
   return $ typeMil fieldType
 
 -- | TODO: add method specifics.
@@ -69,7 +85,7 @@ codeGenClassMethod (MethodDecl _ tyFunDef _) = codeGenFunDef tyFunDef
 codeGenFunDef :: TyFunDef -> CodeGenM MIL.FunDef
 codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
   let funName = getFunName srcFunName
-  funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
+  funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv . fst)
   let isPure = isPureFunType funType
   let funBody = codeGenStmts tyStmts isPure
   let monadType = if isPure
