@@ -18,6 +18,7 @@ executable oolc
                        OOLang.AST.Helpers
                        OOLang.AST.PrettyPrinter
                        OOLang.AST.SrcAnnotated
+                       OOLang.AST.TypeAnnotated
                        OOLang.BuiltIn
                        OOLang.CodeGenMil
                        OOLang.Lexer
@@ -26,6 +27,7 @@ executable oolc
                        OOLang.PrettyPrinter
                        OOLang.SrcAnnotated
                        OOLang.SrcSpan
+                       OOLang.TypeAnnotated
                        OOLang.TypeChecker
                        OOLang.TypeChecker.Helpers
                        OOLang.TypeChecker.TcError
