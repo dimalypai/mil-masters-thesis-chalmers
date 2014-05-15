@@ -105,7 +105,7 @@ type TyMethodDecl  = MethodDecl Type SrcSpan
 -- | Statement representation.
 --
 -- Annotated with types, which become available after the type checking.
-data Stmt t s = DeclS s t (Declaration t s)
+data Stmt t s = DeclS s (Declaration t s)
               | ExprS s (Expr t s)
                 -- | Left-hand side can only be 'VarE' or 'MemberAccessE'.
               | AssignS s t (AssignOpS s) (Expr t s) (Expr t s)

@@ -11,7 +11,7 @@ import OOLang.AST
 import OOLang.TypeAnnotated
 
 instance TypeAnnotated Stmt where
-  getTypeOf (DeclS _ t _) = t
+  getTypeOf (DeclS _ decl) = getTypeOf decl
   getTypeOf (ExprS _ e) = getTypeOf e
   getTypeOf (AssignS _ t _ _ _) = t
 
