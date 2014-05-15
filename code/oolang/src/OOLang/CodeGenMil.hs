@@ -49,7 +49,7 @@ codeGenProgram (Program _ tyClassDefs tyFunDefs) = do
   local (second $ const classTypes') $ do
     classMilFunDefs <- concat <$> mapM codeGenClassDef tyClassDefs
     milFunDefs <- mapM codeGenFunDef tyFunDefs
-    return $ MIL.Program (builtInTypeDefs, [], classMilFunDefs ++ milFunDefs)
+    return $ MIL.Program (builtInTypeDefs, builtInAliasDefs, classMilFunDefs ++ milFunDefs)
 
 -- | Collects information about the class: field and methods names. Constructs
 -- a type of the object representation.
@@ -90,7 +90,7 @@ codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
   let funBody = codeGenStmts tyStmts isPure
   let monadType = if isPure
                     then MIL.TyMonad idMonad
-                    else MIL.TyMonad allEffectsMonad
+                    else MIL.TyMonad impureMonad
   -- TODO: only return type
   return $ MIL.FunDef (funNameMil funName) (MIL.TyApp monadType (typeMil funType)) funBody
 
@@ -109,8 +109,7 @@ codeGenStmts [tyStmt] isPure =
            milExpr
            (if isPure
               then MIL.ReturnE idMonad (MIL.LitE MIL.UnitLit)
-              else MIL.ReturnE allEffectsMonad
-                               (MIL.LitE MIL.UnitLit))
+              else MIL.ReturnE impureMonad (MIL.LitE MIL.UnitLit))
 
 codeGenStmts (tyStmt:tyStmts) isPure =
   let (milExpr, milExprType) = codeGenStmt tyStmt isPure in
@@ -126,9 +125,9 @@ codeGenStmt tyStmt isPure =
 
     ExprS _ tyExpr ->
       let milExpr = codeGenExpr tyExpr isPure in
-      if isPure
-        then (MIL.ReturnE idMonad milExpr, undefined)
-        else (milExpr, undefined)
+      if isPure  -- TODO
+        then (MIL.ReturnE idMonad milExpr, MIL.unitType)
+        else (MIL.ReturnE impureMonad milExpr, MIL.unitType)
 
     -- TODO:
     -- + "then" with state putting operations
@@ -210,11 +209,23 @@ builtInTypeDefs =
       , MIL.ConDef (MIL.ConName "Just")    [MIL.mkTypeVar "A"]]
   ]
 
+builtInAliasDefs :: [MIL.AliasDef]
+builtInAliasDefs =
+  [MIL.AliasDef impureMonadName $ MIL.TyMonad impureMonadType]
+
+-- * Monads
+
 idMonad :: MIL.TypeM
 idMonad = MIL.MTyMonad MIL.Id
 
-allEffectsMonad :: MIL.TypeM
-allEffectsMonad =
+impureMonadName :: MIL.TypeName
+impureMonadName = MIL.TypeName "Impure_M"
+
+impureMonad :: MIL.TypeM
+impureMonad = MIL.MTyAlias impureMonadName
+
+impureMonadType :: MIL.TypeM
+impureMonadType =
   MIL.MTyMonadCons (MIL.Error exceptionType) $
     MIL.MTyMonadCons MIL.State $
       MIL.MTyMonadCons MIL.Lift $
