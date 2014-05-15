@@ -10,40 +10,40 @@ module OOLang.AST.SrcAnnotated
 import OOLang.AST
 import OOLang.SrcAnnotated
 
-instance SrcAnnotated (TopDef v) where
+instance SrcAnnotated (TopDef a) where
   ann (TopClassDef cd) = ann cd
   ann (TopFunDef fd)   = ann fd
 
-instance SrcAnnotated (ClassDef v) where
+instance SrcAnnotated (ClassDef a) where
   ann (ClassDef s _ _ _) = s
 
-instance SrcAnnotated (FunDef v) where
+instance SrcAnnotated (FunDef a) where
   ann (FunDef s _ _ _) = s
 
-instance SrcAnnotated (Stmt v) where
-  ann (DeclS s _) = s
+instance SrcAnnotated (Stmt a) where
+  ann (DeclS s _ _) = s
   ann (ExprS s _) = s
-  ann (AssignS s _ _ _) = s
+  ann (AssignS s _ _ _ _) = s
 
-instance SrcAnnotated (Expr v) where
+instance SrcAnnotated (Expr a) where
   ann (LitE lit) = ann lit
-  ann (VarE s _) = s
-  ann (MemberAccessE s _ _) = s
-  ann (MemberAccessMaybeE s _ _) = s
-  ann (ClassAccessE s _ _) = s
-  ann (NewRefE s _) = s
-  ann (DerefE s _) = s
-  ann (BinOpE s _ _ _) = s
-  ann (JustE s _) = s
+  ann (VarE s _ _) = s
+  ann (MemberAccessE s _ _ _) = s
+  ann (MemberAccessMaybeE s _ _ _) = s
+  ann (ClassAccessE s _ _ _) = s
+  ann (NewRefE s _ _) = s
+  ann (DerefE s _ _) = s
+  ann (BinOpE s _ _ _ _) = s
+  ann (JustE s _ _) = s
   ann (ParenE s _) = s
 
-instance SrcAnnotated Literal where
-  ann (UnitLit s) = s
-  ann (BoolLit s _) = s
-  ann (IntLit s _) = s
-  ann (FloatLit s _ _) = s
-  ann (StringLit s _) = s
-  ann (NothingLit s _) = s
+instance SrcAnnotated (Literal a) where
+  ann (UnitLit s _) = s
+  ann (BoolLit s _ _) = s
+  ann (IntLit s _ _) = s
+  ann (FloatLit s _ _ _) = s
+  ann (StringLit s _ _) = s
+  ann (NothingLit s _ _) = s
 
 instance SrcAnnotated TypeS where
   ann (SrcTyUnit s) = s
@@ -61,10 +61,10 @@ instance SrcAnnotated TypeS where
 instance SrcAnnotated FunType where
   ann (FunType s _ _) = s
 
-instance SrcAnnotated (Declaration v) where
-  ann (Decl s _ _) = s
+instance SrcAnnotated (Declaration a) where
+  ann (Decl s _ _ _) = s
 
-instance SrcAnnotated (Init v) where
+instance SrcAnnotated (Init a) where
   ann (Init s _ _) = s
 
 instance SrcAnnotated VarBinder where

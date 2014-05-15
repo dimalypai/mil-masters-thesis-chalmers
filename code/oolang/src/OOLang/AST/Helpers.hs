@@ -11,26 +11,20 @@ getFunParams (FunType _ varBinders _) = varBinders
 getFunReturnType :: FunType s -> TypeS s
 getFunReturnType (FunType _ _ retType) = retType
 
-getInitOpS :: Init v s -> InitOpS s
+getInitOpS :: Init t s -> InitOpS s
 getInitOpS (Init _ initOpS _) = initOpS
 
-getDeclVarName :: Declaration v s -> VarS s
-getDeclVarName (Decl _ varBinder _) = getBinderVar varBinder
+getDeclVarName :: Declaration t s -> VarS s
+getDeclVarName (Decl _ _ varBinder _) = getBinderVar varBinder
 
-getDeclVarType :: Declaration v s -> TypeS s
-getDeclVarType (Decl _ varBinder _) = getBinderType varBinder
+getDeclVarType :: Declaration t s -> TypeS s
+getDeclVarType (Decl _ _ varBinder _) = getBinderType varBinder
 
 getBinderVar :: VarBinder s -> VarS s
 getBinderVar (VarBinder _ srcVar _ ) = srcVar
 
 getBinderType :: VarBinder s -> TypeS s
 getBinderType (VarBinder _ _ srcType) = srcType
-
-getVarTyVar :: VarTy -> Var
-getVarTyVar (VarTy (var,_)) = var
-
-getVarTyType :: VarTy -> Type
-getVarTyType (VarTy (_,t)) = t
 
 -- | Returns an underlying type. For Mutable A it is A, for everything else it
 -- is just the type itself. Used with assignment type checking.
@@ -42,7 +36,7 @@ getUnderType            t  = t
 
 -- | Implementation is stolen from 'Data.List.partition'. This is a specialised
 -- version of it.
-partitionClassMembers :: [MemberDecl v s] -> ([FieldDecl v s], [MethodDecl v s])
+partitionClassMembers :: [MemberDecl t s] -> ([FieldDecl t s], [MethodDecl t s])
 partitionClassMembers = foldr selectClassMember ([], [])
   where selectClassMember member ~(fs, ms) | FieldMemberDecl fd  <- member = (fd:fs, ms)
                                            | MethodMemberDecl md <- member = (fs, md:ms)
@@ -190,11 +184,11 @@ typeHasLowerPrecAssoc t1 t2 = getTypePrec t1 < getTypePrec t2
 
 -- * Parsing helpers
 
-isClassDef :: TopDef v s -> Bool
+isClassDef :: TopDef t s -> Bool
 isClassDef (TopClassDef _) = True
 isClassDef               _ = False
 
-isFunDef :: TopDef v s -> Bool
+isFunDef :: TopDef t s -> Bool
 isFunDef (TopFunDef _) = True
 isFunDef             _ = False
 
