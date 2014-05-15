@@ -102,6 +102,7 @@ instance Pretty Type where
 instance Pretty TypeM where
   prPrn (MTyMonad m) = prPrn m
   prPrn (MTyMonadCons m tm) = prPrn m <+> text ":::" <+> prPrn tm
+  prPrn (MTyAlias typeName) = prPrn typeName
 
 instance Pretty Kind where
   prPrn StarK = text "*"

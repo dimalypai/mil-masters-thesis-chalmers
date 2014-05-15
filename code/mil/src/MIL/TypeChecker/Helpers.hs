@@ -121,6 +121,14 @@ checkTypeMWithTypeVars typeVars (MTyMonad m) = checkMilMonadWithTypeVars typeVar
 checkTypeMWithTypeVars typeVars (MTyMonadCons m tm) = do
   checkMilMonadWithTypeVars typeVars m
   checkTypeMWithTypeVars typeVars tm
+checkTypeMWithTypeVars _ (MTyAlias typeName) =
+  (ifM (isAliasDefined typeName)
+      (do aliasType <- getAliasType typeName
+          -- Aliased types should be checked without the type variables we have
+          -- collected in scope, because they were defined in a different
+          -- scope. We specify kind *, since we are checking a monad alias.
+          checkTypeWithTypeVarsOfKind Set.empty StarK aliasType)
+      (throwError $ TypeNotDefined typeName))
 
 -- | For monads with type parameters: perform checking of those types (they
 -- must be of kind *). All the others are correct.
@@ -179,10 +187,20 @@ instance AlphaEq Type where
   alphaEq t1 t2@(TyTypeCon {}) = t2 `alphaEq` t1
   alphaEq _ _ = return False
 
+-- | When we have a type alias on either of the sides we expand it.
 instance AlphaEq TypeM where
   alphaEq (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
   alphaEq (MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
     (&&) <$> (m1 `alphaEq` m2) <*> (tm1 `alphaEq` tm2)
+  alphaEq (MTyAlias typeName1) (MTyAlias typeName2) = return (typeName1 == typeName2)
+  alphaEq (MTyAlias typeName) tm2 = do
+    ifM (isAliasDefined typeName)
+      (do aliasType <- getAliasType typeName
+          case aliasType of
+            TyMonad tm1 -> tm1 `alphaEq` tm2
+            _ -> return False)
+      (return False)
+  alphaEq tm1 tm2@(MTyAlias {}) = tm2 `alphaEq` tm1
   alphaEq _ _ = return False
 
 -- | For monads that have type arguments check that these arguments are alpha

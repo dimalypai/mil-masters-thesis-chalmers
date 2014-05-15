@@ -137,9 +137,11 @@ data Type = -- | May refer to both data types and type aliases.
   deriving (Show, Eq)
 
 -- | Monadic type. It is either a single monad or a monad on top of another
--- 'TypeM'. This represents a monad transformers stack, basically.
+-- 'TypeM'. This represents a monad transformers stack, basically. Monad can
+-- also be referred to using a type alias.
 data TypeM = MTyMonad MilMonad
            | MTyMonadCons MilMonad TypeM
+           | MTyAlias TypeName
   deriving (Show, Eq)
 
 -- | "Type of the type".
@@ -242,6 +244,7 @@ getTypePrec (TyTuple   {}) = 5
 -- Atomic monad doesn't get parentheses, but cons does.
 getTypePrec (TyMonad (MTyMonad {})) = 4
 getTypePrec (TyMonad (MTyMonadCons {})) = 3
+getTypePrec (TyMonad (MTyAlias {})) = 5
 
 -- | Returns whether the first type operator has a lower precedence than the
 -- second one. Convenient to use in infix form.
