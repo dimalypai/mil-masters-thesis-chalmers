@@ -87,7 +87,7 @@ codeGenFunDef :: TyFunDef -> CodeGenM MIL.FunDef
 codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
   let funName = getFunName srcFunName
   funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv . fst)
-  let isPure = isPureFunType funType
+  let isPure = isPureType funType
   let funBody = codeGenStmts tyStmts isPure
   let monadType = if isPure
                     then MIL.TyMonad idMonad

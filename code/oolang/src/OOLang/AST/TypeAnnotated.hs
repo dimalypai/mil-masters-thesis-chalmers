@@ -38,3 +38,6 @@ instance TypeAnnotated Literal where
 instance TypeAnnotated Declaration where
   getTypeOf (Decl _ t _ _) = t
 
+instance TypeAnnotated Init where
+  getTypeOf (Init _ _ e) = getTypeOf e
+

@@ -34,6 +34,11 @@ getUnderType :: Type -> Type
 getUnderType (TyMutable t) = t
 getUnderType            t  = t
 
+-- | Removes 'TyPure' on the top-level if there is one.
+stripPureType :: Type -> Type
+stripPureType (TyPure t) = t
+stripPureType         t  = t
+
 -- | Implementation is stolen from 'Data.List.partition'. This is a specialised
 -- version of it.
 partitionClassMembers :: [MemberDecl t s] -> ([FieldDecl t s], [MethodDecl t s])
@@ -92,6 +97,15 @@ varToMemberName (Var nameStr) = MemberName nameStr
 funNameToMemberName :: FunName -> MemberName
 funNameToMemberName (FunName nameStr) = MemberName nameStr
 
+-- * Constructors
+
+-- | Adds 'TyPure' on top of the given type if the flag is True.
+mkTypeWithPurity :: Bool -> Type -> Type
+mkTypeWithPurity shouldBePure t =
+  if shouldBePure
+    then TyPure t
+    else t
+
 -- * Type predicates
 
 -- | Entity of this type is either an already computed value or a global
@@ -105,15 +119,14 @@ isValueType :: Type -> Bool
 isValueType TyArrow {} = False
 isValueType _ = True
 
--- | It can be either a function which has type, for example Pure Int (it
--- doesn't have arguments and purely computes a value of type Int) or a
--- function with arguments like Int -> Float -> Pure Int, which takes arguments
--- and its return type signals that it is a pure function that delivers and
--- integer value.
-isPureFunType :: Type -> Bool
-isPureFunType (TyPure _) = True
-isPureFunType (TyArrow _ t2) = isPureFunType t2
-isPureFunType _ = False
+-- | It can be either, for example Pure Int (it doesn't have arguments and
+-- purely computes a value of type Int) or a function type with like Int ->
+-- Float -> Pure Int, which takes arguments and its return type signals that it
+-- is a pure function that delivers and integer value.
+isPureType :: Type -> Bool
+isPureType (TyPure _) = True
+isPureType (TyArrow _ t2) = isPureType t2
+isPureType _ = False
 
 isMutableType :: Type -> Bool
 isMutableType TyMutable {} = True
