@@ -319,3 +319,11 @@ General thoughts. Week 15
   6.2.8 to find recursive and groups of mutually recursive definitions + loops
   in OOLang.
 
+Meeting 2014-05-19
+==================
+
+* FunLang State: it should be possible to compile State to references, but
+  maybe go simpler way and have a "pure State" monad in MIL as well, which then
+  would be transformed to pure functions, for example.
+* OOLang class representation: reread TAPL.
+
