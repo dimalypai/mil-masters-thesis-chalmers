@@ -524,7 +524,9 @@ tcExpr insideClass srcExpr =
                      then return False
                      else return True)
                   (return True)
-      return $ VarE s (mkTypeWithPurity isPure varType) var
+      -- If it is already TyPure, we don't add TyPure.
+      let varTypeWithPurity = mkTypeWithPurity (not (isPureType varType) && isPure) varType
+      return $ VarE s varTypeWithPurity var
 
     MemberAccessE s _ srcObjExpr srcMemberName -> do
       tyObjExpr <- tcExpr insideClass srcObjExpr
