@@ -88,47 +88,41 @@ codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
   let funName = getFunName srcFunName
   funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv . fst)
   let isPure = isPureType funType
-  let funBody = codeGenStmts tyStmts isPure
-  let monadType = if isPure
-                    then MIL.TyMonad idMonad
-                    else MIL.TyMonad impureMonad
-  -- TODO: only return type
-  return $ MIL.FunDef (funNameMil funName) (MIL.TyApp monadType (typeMil funType)) funBody
+  let funMonad = if isPure
+                   then idMonad
+                   else impureMonad
+  let funBody = codeGenStmts tyStmts funMonad
+  return $ MIL.FunDef (funNameMil funName) (MIL.monadReturnType funMonad (typeMil funType)) funBody
 
 -- | List of statements is not empty.
--- Takes a purity indicator.
--- TODO: should purity indicator be only global or annotate every statement and
--- even expression?
+-- Takes a monad of the containing function.
 -- TODO: where and what do we return and in which monad?
-codeGenStmts :: [TyStmt] -> Bool -> MIL.Expr
+codeGenStmts :: [TyStmt] -> MIL.TypeM -> MIL.Expr
 
-codeGenStmts [tyStmt@(ExprS {})] isPure = fst $ codeGenStmt tyStmt isPure
+codeGenStmts [tyStmt@(ExprS {})] funMonad = fst $ codeGenStmt tyStmt funMonad
 
-codeGenStmts [tyStmt] isPure =
-  let (milExpr, milExprType) = codeGenStmt tyStmt isPure in
+codeGenStmts [tyStmt] funMonad =
+  let (milExpr, milExprType) = codeGenStmt tyStmt funMonad in
   MIL.LetE (MIL.VarBinder (MIL.Var "_", milExprType))  -- TODO: get monad result type
            milExpr
-           (if isPure
-              then MIL.ReturnE idMonad (MIL.LitE MIL.UnitLit)
-              else MIL.ReturnE impureMonad (MIL.LitE MIL.UnitLit))
+           (MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit))
 
-codeGenStmts (tyStmt:tyStmts) isPure =
-  let (milExpr, milExprType) = codeGenStmt tyStmt isPure in
+codeGenStmts (tyStmt:tyStmts) funMonad =
+  let (milExpr, milExprType) = codeGenStmt tyStmt funMonad in
   MIL.LetE (MIL.VarBinder (MIL.Var "_", milExprType))  -- TODO: get monad result type
            milExpr
-           (codeGenStmts tyStmts isPure)
+           (codeGenStmts tyStmts funMonad)
 
-codeGenStmt :: TyStmt -> Bool -> (MIL.Expr, MIL.Type)
-codeGenStmt tyStmt isPure =
+-- | Takes a monad of the containing function.
+codeGenStmt :: TyStmt -> MIL.TypeM -> (MIL.Expr, MIL.Type)
+codeGenStmt tyStmt funMonad =
   case tyStmt of
     -- TODO: It will be a bind introducing new variable
     DeclS _ tyDecl -> undefined
 
     ExprS _ tyExpr ->
-      let milExpr = codeGenExpr tyExpr isPure in
-      if isPure  -- TODO
-        then (MIL.ReturnE idMonad milExpr, MIL.unitType)
-        else (MIL.ReturnE impureMonad milExpr, MIL.unitType)
+      let milExpr = codeGenExpr tyExpr funMonad
+      in (MIL.ReturnE funMonad milExpr, MIL.unitType)  -- TODO
 
     -- TODO:
     -- + "then" with state putting operations
@@ -136,9 +130,9 @@ codeGenStmt tyStmt isPure =
     AssignS _ _ srcAssignOp tyExprLeft tyExprRight -> undefined
 
 -- | Expression code generation.
--- Takes a purity indicator.
-codeGenExpr :: TyExpr -> Bool -> MIL.Expr
-codeGenExpr tyExpr isPure =
+-- Takes a monad of the containing function.
+codeGenExpr :: TyExpr -> MIL.TypeM -> MIL.Expr
+codeGenExpr tyExpr funMonad =
   case tyExpr of
     LitE lit -> literalMil lit
 
@@ -146,9 +140,9 @@ codeGenExpr tyExpr isPure =
       MIL.VarE $ MIL.VarBinder (varMil var, typeMil varType)
 
     BinOpE _ _ srcBinOp tyExpr1 tyExpr2 ->
-      codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 isPure
+      codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 funMonad
 
-    ParenE _ tySubExpr -> codeGenExpr tySubExpr isPure
+    ParenE _ tySubExpr -> codeGenExpr tySubExpr funMonad
 
 literalMil :: Literal t s -> MIL.Expr
 literalMil UnitLit {} = MIL.LitE MIL.UnitLit
@@ -164,9 +158,10 @@ literalMil NothingLit {} =
     (MIL.TyForAll (MIL.TypeVar "A") $
        MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (MIL.mkTypeVar "A"))
 
-codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Bool -> MIL.Expr
-codeGenBinOp App tyExpr1 tyExpr2 isPure =
-  MIL.AppE (codeGenExpr tyExpr1 isPure) (codeGenExpr tyExpr2 isPure)
+-- | Takes a monad of the containing function.
+codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> MIL.TypeM -> MIL.Expr
+codeGenBinOp App tyExpr1 tyExpr2 funMonad =
+  MIL.AppE (codeGenExpr tyExpr1 funMonad) (codeGenExpr tyExpr2 funMonad)
 
 -- * Type conversions
 
