@@ -5,6 +5,9 @@
 -- definitions and annotates some syntax nodes with their types. So, when we
 -- say `type checked` and it is applicable to annotate something it also means
 -- `annotated`.
+--
+-- Purity of statements and expressions is encoded in their types (in type
+-- annotations), that's why sometimes we need to use 'stripPureType'.
 module OOLang.TypeChecker
   ( typeCheck
   , typeCheckStage
