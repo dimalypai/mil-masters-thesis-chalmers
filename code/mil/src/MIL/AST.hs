@@ -139,7 +139,7 @@ data Type = -- | May refer to both data types and type aliases.
 -- | Applies a monad type given as a first argument to the "return type"
 -- (right-most type of the type arrow) of the type given as a second argument.
 monadReturnType :: TypeM -> Type -> Type
-monadReturnType tm (TyArrow _ t2) = monadReturnType tm t2
+monadReturnType tm (TyArrow t1 t2) = TyArrow t1 (monadReturnType tm t2)
 monadReturnType tm t = TyApp (TyMonad tm) t
 
 -- | For monadic type `m a` returns a result type `a`.
