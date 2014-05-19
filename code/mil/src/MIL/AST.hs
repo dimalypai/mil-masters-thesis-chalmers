@@ -142,6 +142,11 @@ monadReturnType :: TypeM -> Type -> Type
 monadReturnType tm (TyArrow _ t2) = monadReturnType tm t2
 monadReturnType tm t = TyApp (TyMonad tm) t
 
+-- | For monadic type `m a` returns a result type `a`.
+-- Note: Unsafe. Make sure you pass a monadic type.
+getMonadResultType :: Type -> Type
+getMonadResultType (TyApp (TyMonad {}) t) = t
+
 -- | Monadic type. It is either a single monad or a monad on top of another
 -- 'TypeM'. This represents a monad transformers stack, basically. Monad can
 -- also be referred to using a type alias.

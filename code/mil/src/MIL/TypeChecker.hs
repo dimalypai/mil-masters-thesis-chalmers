@@ -254,6 +254,13 @@ tcExpr expr =
       retExprType <- tcExpr retExpr
       return $ TyApp (TyMonad tm) retExprType
 
+    LiftE e tm1 tm2 -> do
+      checkTypeM tm1
+      checkTypeM tm2
+      eType <- tcExpr e
+      -- TODO: check monads
+      return $ TyApp (TyMonad tm2) (getMonadResultType eType)
+
     TupleE tElems -> do
       elemTypes <- mapM tcExpr tElems
       return $ TyTuple elemTypes
