@@ -6,6 +6,7 @@ module OOLang.CodeGenMil
   ) where
 
 import Control.Monad.Reader
+import Control.Monad.State
 import Control.Applicative
 import qualified Data.Map as Map
 -- 'second' is used just to transform components of a pair
@@ -25,16 +26,19 @@ import qualified MIL.Transformations.IdExprMonadElimination as MIL
 -- Takes a type checked program in OOLang and a type environment and produces a
 -- program in MIL.
 codeGen :: TyProgram -> TypeEnv -> MIL.Program
-codeGen tyProgram typeEnv = runReader (runCG $ codeGenProgram tyProgram) (typeEnv, Map.empty)
+codeGen tyProgram typeEnv = runReaderFrom (typeEnv, Map.empty) $ evalStateTFrom 0 (runCG $ codeGenProgram tyProgram)
 
 -- | Code generation monad. Uses 'Reader' for querying the type environment and
 -- class types.
-newtype CodeGenM a = CG { runCG :: Reader (TypeEnv, ClassTypes) a }
-  deriving (Monad, MonadReader (TypeEnv, ClassTypes), Functor, Applicative)
+newtype CodeGenM a = CG { runCG :: StateT NameSupply (Reader (TypeEnv, ClassTypes)) a }
+  deriving (Monad, MonadState NameSupply, MonadReader (TypeEnv, ClassTypes), Functor, Applicative)
 
 -- | All field and method names accessible from the class and a MIL type of the
 -- object representation.
 type ClassTypes = Map.Map ClassName ([Var], [FunName], MIL.Type)
+
+-- | A counter for generating unique variable names.
+type NameSupply = Int
 
 -- | Entry point into the type checking of the program.
 -- There is a list of MIL functions generated for each class definition.
@@ -88,41 +92,43 @@ codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
   let funName = getFunName srcFunName
   funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv . fst)
   let isPure = isPureType funType
-  let funMonad = if isPure
-                   then idMonad
-                   else impureMonad
-  let funBody = codeGenStmts tyStmts funMonad
-  return $ MIL.FunDef (funNameMil funName) (MIL.monadReturnType funMonad (typeMil funType)) funBody
+  let (funMonad, milFunType) = if isPure
+                                 then (idMonad, typeMil funType)
+                                 else (impureMonad, MIL.monadReturnType impureMonad (typeMil funType))
+  funBody <- codeGenStmts tyStmts funMonad
+  return $ MIL.FunDef (funNameMil funName) milFunType funBody
 
 -- | List of statements is not empty.
 -- Takes a monad of the containing function.
--- TODO: where and what do we return and in which monad?
-codeGenStmts :: [TyStmt] -> MIL.TypeM -> MIL.Expr
+codeGenStmts :: [TyStmt] -> MIL.TypeM -> CodeGenM MIL.Expr
 
-codeGenStmts [tyStmt@(ExprS {})] funMonad = fst $ codeGenStmt tyStmt funMonad
+codeGenStmts [tyStmt@(ExprS {})] funMonad = fst <$> codeGenStmt tyStmt funMonad
 
-codeGenStmts [tyStmt] funMonad =
-  let (milExpr, milExprType) = codeGenStmt tyStmt funMonad in
-  MIL.LetE (MIL.VarBinder (MIL.Var "_", milExprType))  -- TODO: get monad result type
-           milExpr
-           (MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit))
+codeGenStmts [tyStmt] funMonad = do
+  (milExpr, milExprType) <- codeGenStmt tyStmt funMonad
+  return $ MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.getMonadResultType milExprType))
+             milExpr
+             (MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit))
 
-codeGenStmts (tyStmt:tyStmts) funMonad =
-  let (milExpr, milExprType) = codeGenStmt tyStmt funMonad in
-  MIL.LetE (MIL.VarBinder (MIL.Var "_", milExprType))  -- TODO: get monad result type
-           milExpr
-           (codeGenStmts tyStmts funMonad)
+codeGenStmts (tyStmt:tyStmts) funMonad = do
+  (milBindExpr, milBindExprType) <- codeGenStmt tyStmt funMonad
+  milBodyExpr <- codeGenStmts tyStmts funMonad
+  return $ MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.getMonadResultType milBindExprType))
+             milBindExpr
+             milBodyExpr
 
 -- | Takes a monad of the containing function.
-codeGenStmt :: TyStmt -> MIL.TypeM -> (MIL.Expr, MIL.Type)
+-- Returns an expression in MIL and its type.
+codeGenStmt :: TyStmt -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
 codeGenStmt tyStmt funMonad =
   case tyStmt of
     -- TODO: It will be a bind introducing new variable
     DeclS _ tyDecl -> undefined
 
-    ExprS _ tyExpr ->
-      let milExpr = codeGenExpr tyExpr funMonad
-      in (MIL.ReturnE funMonad milExpr, MIL.unitType)  -- TODO
+    ExprS _ tyExpr -> do
+      milExpr <- codeGenExpr tyExpr funMonad
+      let exprType = getTypeOf tyExpr
+      return (milExpr, typeMil exprType)
 
     -- TODO:
     -- + "then" with state putting operations
@@ -131,18 +137,30 @@ codeGenStmt tyStmt funMonad =
 
 -- | Expression code generation.
 -- Takes a monad of the containing function.
-codeGenExpr :: TyExpr -> MIL.TypeM -> MIL.Expr
-codeGenExpr tyExpr funMonad =
-  case tyExpr of
-    LitE lit -> literalMil lit
+codeGenExpr :: TyExpr -> MIL.TypeM -> CodeGenM MIL.Expr
+codeGenExpr tyExpr funMonad = do
+  milExpr <-
+    case tyExpr of
+      LitE lit -> return $ MIL.ReturnE idMonad (literalMil lit)
 
-    VarE _ varType var ->
-      MIL.VarE $ MIL.VarBinder (varMil var, typeMil varType)
+      VarE _ varType var ->
+        -- TODO: impure
+        return $ MIL.ReturnE idMonad (MIL.VarE $ MIL.VarBinder (varMil var, MIL.getMonadResultType $ typeMil varType))
 
-    BinOpE _ _ srcBinOp tyExpr1 tyExpr2 ->
-      codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 funMonad
+      BinOpE _ _ srcBinOp tyExpr1 tyExpr2 ->
+        codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 funMonad
 
-    ParenE _ tySubExpr -> codeGenExpr tySubExpr funMonad
+      ParenE _ tySubExpr -> codeGenExpr tySubExpr funMonad
+  let exprType = getTypeOf tyExpr
+      milExprType = typeMil exprType
+  exprVar <- newMilVar
+  return $
+    MIL.LetE (MIL.VarBinder (exprVar, MIL.getMonadResultType milExprType))
+      (case (isPureType exprType, funMonad == idMonad) of
+         (True, False) -> MIL.LiftE milExpr idMonad funMonad
+         -- (False, True) should not happen
+         (_, _) -> milExpr)
+      (MIL.ReturnE funMonad (MIL.VarE $ MIL.VarBinder (exprVar, MIL.getMonadResultType milExprType)))
 
 literalMil :: Literal t s -> MIL.Expr
 literalMil UnitLit {} = MIL.LitE MIL.UnitLit
@@ -159,9 +177,9 @@ literalMil NothingLit {} =
        MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (MIL.mkTypeVar "A"))
 
 -- | Takes a monad of the containing function.
-codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> MIL.TypeM -> MIL.Expr
+codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> MIL.TypeM -> CodeGenM MIL.Expr
 codeGenBinOp App tyExpr1 tyExpr2 funMonad =
-  MIL.AppE (codeGenExpr tyExpr1 funMonad) (codeGenExpr tyExpr2 funMonad)
+  MIL.AppE <$> codeGenExpr tyExpr1 funMonad <*> codeGenExpr tyExpr2 funMonad
 
 -- * Type conversions
 
@@ -174,7 +192,7 @@ typeMil TyFloat  = MIL.floatType
 typeMil TyString = MIL.stringType
 typeMil (TyClass className) = MIL.TyTypeCon $ typeNameMil className
 typeMil (TyArrow t1 t2)     = MIL.TyArrow (typeMil t1) (typeMil t2)
-typeMil (TyPure t)          = typeMil t
+typeMil (TyPure t)          = MIL.TyApp (MIL.TyMonad idMonad) (typeMil t)
 typeMil (TyMaybe t)         = MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (typeMil t)
 typeMil (TyMutable t)       = typeMil t
 
@@ -229,4 +247,12 @@ impureMonadType =
 -- TODO: should be a built-in Exception class type.
 exceptionType :: MIL.Type
 exceptionType = MIL.unitType
+
+-- * CodeGenM operations
+
+newMilVar :: CodeGenM MIL.Var
+newMilVar = do
+  i <- get
+  modify (+1)
+  return $ MIL.Var ("var_" ++ show i)
 

@@ -2,6 +2,7 @@
 module OOLang.Utils where
 
 import Control.Monad.State
+import Control.Monad.Reader
 
 -- | Monadic version of 'when'.
 whenM :: Monad m => m Bool -> m () -> m ()
@@ -24,6 +25,14 @@ ifM condM th el = do
 -- | Convenient version of 'runStateT' with the arguments flipped.
 runStateTFrom :: Monad m => s -> StateT s m a -> m (a, s)
 runStateTFrom = flip runStateT
+
+-- | Convenient version of 'evalStateT' with the arguments flipped.
+evalStateTFrom :: Monad m => s -> StateT s m a -> m a
+evalStateTFrom = flip evalStateT
+
+-- | Convenient version of 'runReader' with the arguments flipped.
+runReaderFrom :: r -> Reader r a -> a
+runReaderFrom = flip runReader
 
 -- | Postfix application. Inspired by OCaml/F#.
 -- Used with lexer and parser calls.
