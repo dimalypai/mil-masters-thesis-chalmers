@@ -99,7 +99,7 @@ instance Pretty TcError where
     tcErrorHeader <+> text "Name" <+> quotes (prPrn var) <+> text "is not bound"
 
   prPrn (VarIncorrectType var expType actType) =
-    tcErrorHeader <+> text "Name" <+> quotes (prPrn var) <+> text "has type" <+> quotes (prPrn expType) <>
+    tcErrorHeader <+> text "Name" <+> quotes (prPrn var) <+> text "has type" <+> quotes (prPrn expType) <+>
       text "in the environment, but it is annotated with type" <+> quotes (prPrn actType)
 
   prPrn (VarShadowing var) =
@@ -119,7 +119,7 @@ instance Pretty TcError where
     tcErrorHeader <+> text "Data constructor" <+> quotes (prPrn conName) <+> text "is not defined"
 
   prPrn (ConIncorrectType conName expType actType) =
-    tcErrorHeader <+> text "Data constructor" <+> quotes (prPrn conName) <+> text "has type" <+> quotes (prPrn expType) <>
+    tcErrorHeader <+> text "Data constructor" <+> quotes (prPrn conName) <+> text "has type" <+> quotes (prPrn expType) <+>
       text "in the environment, but it is annotated with type" <+> quotes (prPrn actType)
 
   prPrn (NotMonadicType exprType) =
