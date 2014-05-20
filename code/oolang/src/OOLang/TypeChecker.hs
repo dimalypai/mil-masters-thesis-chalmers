@@ -348,6 +348,8 @@ tcFunDef insideClass (FunDef s srcFunName srcFunType srcStmts) = do
       varType <- srcFunParamTypeToType (getBinderType vb)
       return $ addLocalVar var varType localTyEnv)
     emptyLocalTypeEnv varBinders
+  unless insideClass $  -- TODO
+    addFunctionParamsM (getFunName srcFunName) (getLocalEnvAssoc localTypeEnv)
 
   tyStmts <- locallyWithEnv localTypeEnv (mapM (tcStmt insideClass) srcStmts)
 

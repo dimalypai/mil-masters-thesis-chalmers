@@ -29,9 +29,11 @@ module OOLang.TypeChecker.TypeEnv
   , FunTypeInfo
   , ftiType
   , ftiSrcFunType
+  , ftiParams
   , getFunTypeEnv
   , isFunctionDefined
   , addFunction
+  , addFunctionParams
   , getFunTypeInfo
 
   , LocalTypeEnv
@@ -40,6 +42,7 @@ module OOLang.TypeChecker.TypeEnv
   , addLocalVar
   , getVarType
   , mergeLocalTypeEnv
+  , getLocalEnvAssoc
   ) where
 
 import qualified Data.Map as Map
@@ -245,8 +248,9 @@ type FunTypeEnv = Map.Map FunName FunTypeInfo
 -- | All the information about functions that we store in the type environment.
 -- Some of the fields are kept just for error messages.
 data FunTypeInfo = FunTypeInfo
-  { ftiType       :: Type        -- ^ Function type.
-  , ftiSrcFunType :: SrcFunType  -- ^ Source type. For error messages.
+  { ftiType       :: Type           -- ^ Function type.
+  , ftiSrcFunType :: SrcFunType     -- ^ Source type. For error messages.
+  , ftiParams     :: [(Var, Type)]  -- ^ Function parameters.
   }
 
 getFunTypeEnv :: TypeEnv -> FunTypeEnv
@@ -257,9 +261,17 @@ isFunctionDefined = Map.member
 
 -- | Doesn't check if the function is already in the environment.
 -- Will overwrite it in this case.
+--
+-- Note: function parameters are not available at this point.
 addFunction :: FunName -> Type -> SrcFunType -> FunTypeEnv -> FunTypeEnv
 addFunction funName funType srcFunType =
-  Map.insert funName (FunTypeInfo funType srcFunType)
+  Map.insert funName (FunTypeInfo funType srcFunType undefined)
+
+-- | Note: Unsafe. Should be used only after check that function is defined.
+addFunctionParams :: FunName -> [(Var, Type)] -> FunTypeEnv -> FunTypeEnv
+addFunctionParams funName funParams funTypeEnv =
+  let (FunTypeInfo funType srcFunType _) = getFunTypeInfo funName funTypeEnv
+  in Map.insert funName (FunTypeInfo funType srcFunType funParams) funTypeEnv
 
 -- | Returns all information about the function from the environment.
 --
@@ -268,7 +280,7 @@ getFunTypeInfo :: FunName -> FunTypeEnv -> FunTypeInfo
 getFunTypeInfo funName funTypeEnv = fromJust $ Map.lookup funName funTypeEnv
 
 builtInFunTypeInfo :: Type -> FunTypeInfo
-builtInFunTypeInfo funType = FunTypeInfo funType undefined
+builtInFunTypeInfo funType = FunTypeInfo funType undefined undefined
 
 -- * Local type environment
 
@@ -289,4 +301,7 @@ getVarType = Map.lookup
 
 mergeLocalTypeEnv :: LocalTypeEnv -> LocalTypeEnv -> LocalTypeEnv
 mergeLocalTypeEnv = Map.union
+
+getLocalEnvAssoc :: LocalTypeEnv -> [(Var, Type)]
+getLocalEnvAssoc = Map.assocs
 
