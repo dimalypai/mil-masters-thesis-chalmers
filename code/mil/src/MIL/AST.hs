@@ -146,6 +146,7 @@ monadReturnType tm t = TyApp (TyMonad tm) t
 -- Note: Unsafe. Make sure you pass a monadic type.
 getMonadResultType :: Type -> Type
 getMonadResultType (TyApp (TyMonad {}) t) = t
+getMonadResultType t = error $ "Type '" ++ show t ++ "' is not monadic"
 
 -- | Monadic type. It is either a single monad or a monad on top of another
 -- 'TypeM'. This represents a monad transformers stack, basically. Monad can
