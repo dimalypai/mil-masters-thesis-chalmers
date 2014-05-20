@@ -13,17 +13,17 @@ import OOLang.TypeAnnotated
 instance TypeAnnotated Stmt where
   getTypeOf (DeclS _ decl) = getTypeOf decl
   getTypeOf (ExprS _ e) = getTypeOf e
-  getTypeOf (AssignS _ t _ _ _) = t
+  getTypeOf (AssignS _ t _ _ _ _) = t
 
 instance TypeAnnotated Expr where
   getTypeOf (LitE lit) = getTypeOf lit
-  getTypeOf (VarE _ t _) = t
-  getTypeOf (MemberAccessE _ t _ _) = t
-  getTypeOf (MemberAccessMaybeE _ t _ _) = t
+  getTypeOf (VarE _ t _ _) = t
+  getTypeOf (MemberAccessE _ t _ _ _) = t
+  getTypeOf (MemberAccessMaybeE _ t _ _ _) = t
   getTypeOf (ClassAccessE _ t _ _) = t
   getTypeOf (NewRefE _ t _) = t
   getTypeOf (DerefE _ t _) = t
-  getTypeOf (BinOpE _ t _ _ _) = t
+  getTypeOf (BinOpE _ t _ _ _ _) = t
   getTypeOf (JustE _ t _) = t
   getTypeOf (ParenE _ e) = getTypeOf e
 
@@ -36,7 +36,7 @@ instance TypeAnnotated Literal where
   getTypeOf (NothingLit _ t _) = t
 
 instance TypeAnnotated Declaration where
-  getTypeOf (Decl _ t _ _) = t
+  getTypeOf (Decl _ t _ _ _) = t
 
 instance TypeAnnotated Init where
   getTypeOf (Init _ _ e) = getTypeOf e

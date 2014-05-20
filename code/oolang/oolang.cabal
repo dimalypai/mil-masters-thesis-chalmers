@@ -17,6 +17,7 @@ executable oolc
   other-modules:       OOLang.AST
                        OOLang.AST.Helpers
                        OOLang.AST.PrettyPrinter
+                       OOLang.AST.PureAnnotated
                        OOLang.AST.SrcAnnotated
                        OOLang.AST.TypeAnnotated
                        OOLang.BuiltIn
@@ -25,6 +26,7 @@ executable oolc
                        OOLang.Parser
                        OOLang.Parser.ParseError
                        OOLang.PrettyPrinter
+                       OOLang.PureAnnotated
                        OOLang.SrcAnnotated
                        OOLang.SrcSpan
                        OOLang.TypeAnnotated

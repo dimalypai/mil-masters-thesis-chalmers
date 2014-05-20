@@ -327,3 +327,9 @@ Meeting 2014-05-19
   would be transformed to pure functions, for example.
 * OOLang class representation: reread TAPL.
 
+General thoughts. Week 16
+=========================
+
+* OOLang: Give up on Pure types as purity annotations and introduce separate
+  purity annotation in the syntax tree (Bool field).
+

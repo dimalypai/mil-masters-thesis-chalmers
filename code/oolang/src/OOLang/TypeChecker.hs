@@ -5,9 +5,6 @@
 -- definitions and annotates some syntax nodes with their types. So, when we
 -- say `type checked` and it is applicable to annotate something it also means
 -- `annotated`.
---
--- Purity of statements and expressions is encoded in their types (in type
--- annotations), that's why sometimes we need to use 'stripPureType'.
 module OOLang.TypeChecker
   ( typeCheck
   , typeCheckStage
@@ -24,6 +21,7 @@ import Data.List (find)
 import Control.Applicative
 
 import OOLang.AST
+import OOLang.AST.PureAnnotated
 import OOLang.AST.SrcAnnotated
 import OOLang.AST.TypeAnnotated
 import OOLang.AST.Helpers
@@ -123,7 +121,7 @@ collectClassMembers className srcMembers = do
 -- members with `self` or `super`.
 -- Checks that the specified field type is correct (used types are defined).
 collectClassField :: ClassName -> SrcFieldDecl -> TypeCheckM ()
-collectClassField className (FieldDecl _ (Decl _ _ varBinder _) _) = do
+collectClassField className (FieldDecl _ (Decl _ _ varBinder _ _) _) = do
   let fieldName = getVar (getBinderVar varBinder)
   let fieldNameSrcSpan = getSrcSpan (getBinderVar varBinder)
 
@@ -283,7 +281,7 @@ tcClassMembers className srcMembers = do
 -- `super`, but mutual recursion and accessing current class members is *not*
 -- allowed.
 tcClassField :: ClassName -> SrcFieldDecl -> TypeCheckM TyFieldDecl
-tcClassField className (FieldDecl fs (Decl ds _ varBinder mSrcInit) _) = do
+tcClassField className (FieldDecl fs (Decl ds _ varBinder mSrcInit _) _) = do
   let fieldName = getVar (getBinderVar varBinder)
   fieldType <- getClassFieldTypeM className fieldName
   mTyInit <-
@@ -291,7 +289,7 @@ tcClassField className (FieldDecl fs (Decl ds _ varBinder mSrcInit) _) = do
       Just srcInit -> do
         tyInit <- tcInit True srcInit
         let initType = getTypeOf tyInit
-        unless (isPureType initType) $
+        unless (getPurityOf tyInit) $
           throwError $ FieldInitNotPure fieldName fs
         let initOp = getInitOp $ getInitOpS srcInit
         case initOp of
@@ -302,13 +300,13 @@ tcClassField className (FieldDecl fs (Decl ds _ varBinder mSrcInit) _) = do
             unless (isMutableType fieldType) $
               throwError $ IncorrectMutableOpUsage fs
         unlessM (initType `isSubTypeOf` fieldType) $
-          throwError $ DeclInitIncorrectType srcInit fieldType (stripPureType initType)
+          throwError $ DeclInitIncorrectType srcInit fieldType initType
         return $ Just tyInit
       Nothing -> do
         unless (hasMaybeType fieldType) $
           throwError $ NonMaybeVarNotInit fieldName fs
         return Nothing
-  let tyDecl = Decl ds (TyPure TyUnit) varBinder mTyInit
+  let tyDecl = Decl ds TyUnit varBinder mTyInit True
   return $ FieldDecl fs tyDecl []
 
 -- | Checks class method declaration.
@@ -358,10 +356,10 @@ tcFunDef insideClass (FunDef s srcFunName srcFunType srcStmts) = do
   -- type) is what function returns.
   let lastStmtType = getTypeOf $ last tyStmts
   unlessM (lastStmtType `isSubTypeOf` retType) $
-    throwError $ FunIncorrectReturnType srcFunName (last tyStmts) (stripPureType retType) (stripPureType lastStmtType)
+    throwError $ FunIncorrectReturnType srcFunName (last tyStmts) (stripPureType retType) lastStmtType
 
-  when (isPureType retType) $ do
-    let mFirstImpureStmt = find (not . isPureType . getTypeOf) tyStmts
+  when (isPureFunType retType) $ do
+    let mFirstImpureStmt = find (not . getPurityOf) tyStmts
     case mFirstImpureStmt of
       Just firstImpureStmt -> throwError $ FunctionNotPure srcFunName firstImpureStmt
       Nothing -> return ()
@@ -393,25 +391,23 @@ tcStmt insideClass srcStmt =
       ExprS s <$> tcExpr insideClass srcExpr
 
     -- See Note [Assignment purity]
-    AssignS s _ srcAssignOp srcExprLeft srcExprRight -> do
+    AssignS s _ srcAssignOp srcExprLeft srcExprRight _ -> do
       let assignOp = getAssignOp srcAssignOp
 
       (tyExprLeft, assignPurity) <-
         case srcExprLeft of
-          VarE varS _ var -> do
-            unlessM (isVarBoundM var) $
-              throwError $ VarNotBound var varS
+          VarE varS _ var _ -> do
+            tyVar <- tcExpr insideClass srcExprLeft
             whenM (isFunctionDefinedM $ varToFunName var) $
               throwError $ AssignToFunction varS
-            varType <- getVarTypeM var
-            return (VarE varS varType var, not $ isAssignRef assignOp)
+            return (tyVar, not $ isAssignRef assignOp)
 
-          MemberAccessE ms _ srcObjExpr srcMemberName -> do
+          MemberAccessE ms _ srcObjExpr srcMemberName _ -> do
             -- Check the whole member access expression: whether it is defined,
             -- and most importantly - for class field access check
             -- (visibility).
             -- TODO: can it be harmful to perform double checking?
-            void (tcExpr insideClass srcExprLeft)
+            tyMemberAccess <- tcExpr insideClass srcExprLeft
             tyObjExpr <- tcExpr insideClass srcObjExpr
             className <- tryGetClassName (getTypeOf tyObjExpr) srcObjExpr
             let fieldName = memberNameToVar (getMemberName srcMemberName)
@@ -420,7 +416,7 @@ tcStmt insideClass srcStmt =
             unlessM (isClassFieldDefinedM className fieldName) $
               throwError $ AssignNotField fieldName className (getSrcSpan srcMemberName)
             fieldType <- getClassFieldTypeM className fieldName
-            return (MemberAccessE ms fieldType tyObjExpr srcMemberName, False)
+            return (tyMemberAccess, False)
 
           _ -> throwError $ IncorrectAssignLeft (getSrcSpan srcExprLeft)
 
@@ -433,16 +429,16 @@ tcStmt insideClass srcStmt =
           unless (isMutableType exprLeftType) $
             throwError $ IncorrectMutableOpUsage (getSrcSpan srcStmt)
           unlessM (exprRightType `isSubTypeOf` exprLeftType) $
-            throwError $ AssignIncorrectType tyExprRight (getUnderType exprLeftType) (stripPureType exprRightType)
+            throwError $ AssignIncorrectType tyExprRight (getUnderType exprLeftType) exprRightType
         AssignRef ->
           case exprLeftType of
             TyRef exprLeftUnderType ->
               unlessM (exprRightType `isSubTypeOf` exprLeftUnderType) $
-                throwError $ AssignIncorrectType tyExprRight exprLeftUnderType (stripPureType exprRightType)
+                throwError $ AssignIncorrectType tyExprRight exprLeftUnderType exprRightType
             _ -> throwError $ IncorrectRefOpUsage (getSrcSpan srcStmt)
 
-      let exprRightPure = isPureType exprRightType
-      return $ AssignS s (mkTypeWithPurity (assignPurity && exprRightPure) TyUnit) srcAssignOp tyExprLeft tyExprRight
+      let exprRightPure = getPurityOf tyExprRight
+      return $ AssignS s TyUnit srcAssignOp tyExprLeft tyExprRight (assignPurity && exprRightPure)
 
 -- | Note [Purity of declarations]:
 --
@@ -455,7 +451,7 @@ tcStmt insideClass srcStmt =
 -- Takes a boolean indicator whether it is inside a class.
 -- Returns a type checked declaration.
 tcDecl :: Bool -> SrcDeclaration -> SrcStmt -> TypeCheckM TyDeclaration
-tcDecl insideClass (Decl s _ varBinder mSrcInit) srcDeclStmt = do
+tcDecl insideClass (Decl s _ varBinder mSrcInit _) srcDeclStmt = do
   let var = getVar $ getBinderVar varBinder
   whenM (isVarBoundM var) $
     throwError $ VarShadowing (getBinderVar varBinder)
@@ -475,13 +471,12 @@ tcDecl insideClass (Decl s _ varBinder mSrcInit) srcDeclStmt = do
             throwError $ IncorrectMutableOpUsage (getSrcSpan srcDeclStmt)
       let initType = getTypeOf tyInit
       unlessM (initType `isSubTypeOf` varType) $
-        throwError $ DeclInitIncorrectType srcInit (getUnderType varType) (stripPureType initType)
-      let initPure = isPureType $ getTypeOf tyInit
-      return $ Decl s (mkTypeWithPurity initPure TyUnit) varBinder (Just tyInit)
+        throwError $ DeclInitIncorrectType srcInit (getUnderType varType) initType
+      return $ Decl s TyUnit varBinder (Just tyInit) (getPurityOf tyInit)
     Nothing -> do
       unless (hasMaybeType varType) $
         throwError $ NonMaybeVarNotInit var (getSrcSpan srcDeclStmt)
-      return $ Decl s (TyPure TyUnit) varBinder Nothing
+      return $ Decl s TyUnit varBinder Nothing True
 
 -- | Initialisation expression type checking.
 -- Takes a boolean indicator whether it is inside a class.
@@ -515,22 +510,20 @@ tcExpr insideClass srcExpr =
   case srcExpr of
     LitE srcLit -> LitE <$> tcLit srcLit
 
-    VarE s _ var -> do
+    VarE s _ var _ -> do
       -- it can be both a local variable and a global function
       unlessM (isVarBoundM var) $
         throwError $ VarNotBound var s
       varType <- getVarTypeM var
       -- See Note [Purity of function and value types]
       isPure <- ifM (isFunctionDefinedM $ varToFunName var)
-                  (if isValueType varType && not (isPureType varType)
+                  (if isValueType varType && not (isPureFunType varType)
                      then return False
                      else return True)
                   (return True)
-      -- If it is already TyPure, we don't add TyPure.
-      let varTypeWithPurity = mkTypeWithPurity (not (isPureType varType) && isPure) varType
-      return $ VarE s varTypeWithPurity var
+      return $ VarE s varType var isPure
 
-    MemberAccessE s _ srcObjExpr srcMemberName -> do
+    MemberAccessE s _ srcObjExpr srcMemberName _ -> do
       tyObjExpr <- tcExpr insideClass srcObjExpr
       let objType = getTypeOf tyObjExpr
       className <- tryGetClassName objType srcObjExpr
@@ -543,16 +536,16 @@ tcExpr insideClass srcExpr =
       memberType <- getClassMemberTypeM className memberName
       -- See Note [Purity of function and value types]
       memberPure <- ifM (isClassMethodDefinedM className (memberNameToFunName memberName))
-                      (if isValueType memberType && not (isPureType memberType)
+                      (if isValueType memberType && not (isPureFunType memberType)
                          then return False
                          else return True)
                       (return True)
-      let objPure = isPureType objType
-      return $ MemberAccessE s (mkTypeWithPurity (objPure && memberPure) memberType) tyObjExpr srcMemberName
+      let objPure = getPurityOf tyObjExpr
+      return $ MemberAccessE s memberType tyObjExpr srcMemberName (objPure && memberPure)
 
-    MemberAccessMaybeE s _ srcMaybeObjExpr srcMemberName -> do
+    MemberAccessMaybeE s _ srcMaybeObjExpr srcMemberName _ -> do
       tyMaybeObjExpr <- tcExpr insideClass srcMaybeObjExpr
-      let objMaybeType = stripPureType $ getTypeOf tyMaybeObjExpr
+      let objMaybeType = getTypeOf tyMaybeObjExpr
       case objMaybeType of
         TyMaybe objType -> do
           className <- tryGetClassName objType srcMaybeObjExpr
@@ -561,11 +554,11 @@ tcExpr insideClass srcExpr =
             throwError $ MethodNotDefined methodName className srcExpr
           methodType <- getClassMethodTypeM className methodName
           -- See Note [Purity of function and value types]
-          methodPure <- if isValueType methodType && not (isPureType methodType)
+          methodPure <- if isValueType methodType && not (isPureFunType methodType)
                           then return False
                           else return True
-          let objPure = isPureType objType
-          return $ MemberAccessMaybeE s (mkTypeWithPurity (objPure && methodPure) (TyMaybe methodType)) tyMaybeObjExpr srcMemberName
+          let objPure = getPurityOf tyMaybeObjExpr
+          return $ MemberAccessMaybeE s (TyMaybe methodType) tyMaybeObjExpr srcMemberName (objPure && methodPure)
         _ -> throwError $ MemberAccessMaybeWithNonMaybe srcExpr objMaybeType
 
     ClassAccessE s _ srcClassName srcMethodName -> do
@@ -576,29 +569,28 @@ tcExpr insideClass srcExpr =
       -- Constructor is parameterless and pure and it is always "defined"
       -- (there is just the default one). Purity comes from the fact that all
       -- field initialisers are pure.
-      return $ ClassAccessE s (TyPure $ TyClass className) srcClassName srcMethodName
+      return $ ClassAccessE s (TyClass className) srcClassName srcMethodName
 
+    -- Reference operations are impure
     NewRefE s _ srcRefUnderExpr -> do
       tyRefUnderExpr <- tcExpr insideClass srcRefUnderExpr
-      let refUnderType = stripPureType $ getTypeOf tyRefUnderExpr
+      let refUnderType = getTypeOf tyRefUnderExpr
       when (isRefType refUnderType) $
         throwError $ NestedRefCreation s
-      -- Conservatively, mark reference creation as impure.
       return $ NewRefE s (TyRef refUnderType) tyRefUnderExpr
 
     DerefE s _ srcRefExpr -> do
       tyRefExpr <- tcExpr insideClass srcRefExpr
-      let refType = stripPureType $ getTypeOf tyRefExpr
+      let refType = getTypeOf tyRefExpr
       case refType of
         TyRef refUnderType ->
-          -- Conservatively, mark dereferencing as impure.
           return $ DerefE s refUnderType tyRefExpr
         _ -> throwError $ NonRefDeref s
 
-    BinOpE s _ srcBinOp srcExpr1 srcExpr2 -> do
+    BinOpE s _ srcBinOp srcExpr1 srcExpr2 _ -> do
       let op = getBinOp srcBinOp
-      (tyExpr1, tyExpr2, resultType) <- tcBinOp insideClass op srcExpr1 srcExpr2
-      return $ BinOpE s resultType srcBinOp tyExpr1 tyExpr2
+      (tyExpr1, tyExpr2, resultType, resultPure) <- tcBinOp insideClass op srcExpr1 srcExpr2
+      return $ BinOpE s resultType srcBinOp tyExpr1 tyExpr2 resultPure
 
     JustE s _ srcSubExpr -> do
       tySubExpr <- tcExpr insideClass srcSubExpr
@@ -618,16 +610,16 @@ tcLit srcLit =
     NothingLit s _ st -> NothingLit s <$> typeOfLiteral srcLit <*> return st
 
 typeOfLiteral :: SrcLiteral -> TypeCheckM Type
-typeOfLiteral UnitLit    {}     = return $ TyPure TyUnit
-typeOfLiteral (BoolLit   {})    = return $ TyPure TyBool
-typeOfLiteral (IntLit    {})    = return $ TyPure TyInt
-typeOfLiteral (FloatLit  {})    = return $ TyPure TyFloat
-typeOfLiteral (StringLit {})    = return $ TyPure TyString
+typeOfLiteral UnitLit    {}     = return TyUnit
+typeOfLiteral (BoolLit   {})    = return TyBool
+typeOfLiteral (IntLit    {})    = return TyInt
+typeOfLiteral (FloatLit  {})    = return TyFloat
+typeOfLiteral (StringLit {})    = return TyString
 typeOfLiteral (NothingLit _ _ st) = do
   nothingType <- srcTypeToType st
   unless (isMaybeType nothingType) $
     throwError $ IncorrectNothingType st
-  return $ TyPure nothingType
+  return nothingType
 
 -- | Returns a class name for 'TyClass', 'TyMutable' or 'TyPure' which contains
 -- 'TyClass' inside. Throws an error for Maybe (with a suggestion for using `?`
@@ -646,37 +638,39 @@ tryGetClassName objType srcExpr =
 
 -- | Type checks a given binary operation. Takes operands.
 -- Takes a boolean indicator whether it is inside a class.
--- Returns type checked operands and a type of the result.
-tcBinOp :: Bool -> BinOp -> SrcExpr -> SrcExpr -> TypeCheckM (TyExpr, TyExpr, Type)
+-- Returns type checked operands, a type of the result and its purity
+-- indicator.
+tcBinOp :: Bool -> BinOp -> SrcExpr -> SrcExpr -> TypeCheckM (TyExpr, TyExpr, Type, Bool)
 tcBinOp insideClass op srcExpr1 srcExpr2 = do
   tyExpr1 <- tcExpr insideClass srcExpr1
   tyExpr2 <- tcExpr insideClass srcExpr2
-  resultType <- case op of
+  (resultType, resultPure) <- case op of
     App -> tcApp tyExpr1 tyExpr2
-  return (tyExpr1, tyExpr2, resultType)
+  return (tyExpr1, tyExpr2, resultType, resultPure)
 
 -- | Type synonym for binary operation type checking functions.
--- They take type checked operands and return a type of the result.
-type BinOpTc = TyExpr -> TyExpr -> TypeCheckM Type
+-- They take type checked operands and return a type of the result and its
+-- purity indicator.
+type BinOpTc = TyExpr -> TyExpr -> TypeCheckM (Type, Bool)
 
 -- | Function application type checking.
 tcApp :: BinOpTc
 tcApp tyExpr1 tyExpr2 =
   let expr1Type = getTypeOf tyExpr1
       expr2Type = getTypeOf tyExpr2
-  in case stripPureType expr1Type of
+  in case expr1Type of
        TyArrow argType resultType ->
          ifM (not <$> expr2Type `isSubTypeOf` argType)
-           (throwError $ IncorrectFunArgType tyExpr2 argType (stripPureType expr2Type))
+           (throwError $ IncorrectFunArgType tyExpr2 argType expr2Type)
            (do
              -- function performs side effects only when fully applied, so
              -- if it does not take more arguments, then we check for purity,
              -- otherwise - postpone this check
-             let expr1Pure = if isValueType resultType && not (isPureType resultType)
+             let expr1Pure = if isValueType resultType && not (isPureFunType resultType)
                                then False
                                else True
-                 expr2Pure = isPureType expr2Type
+                 expr2Pure = getPurityOf tyExpr2
              -- application is pure iff both operands are pure
-             return $ mkTypeWithPurity (expr1Pure && expr2Pure) (stripPureType resultType))
-       _ -> throwError $ NotFunctionType tyExpr1 (stripPureType expr1Type)
+             return (resultType, expr1Pure && expr2Pure))
+       _ -> throwError $ NotFunctionType tyExpr1 expr1Type
 

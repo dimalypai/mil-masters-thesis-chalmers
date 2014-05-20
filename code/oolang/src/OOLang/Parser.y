@@ -166,7 +166,7 @@ stmt
   | expr assignop expr ';'
       {% withFileName $ \fileName ->
            AssignS (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $4] fileName) ()
-                   $2 $1 $3 }
+                   $2 $1 $3 False }
   | when expr do list(stmt) otherwise list(stmt) end ';'
       {% withFileName $ \fileName ->
            WhenS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $8] fileName) ()
@@ -204,14 +204,14 @@ appexpr
   | appexpr atomexpr
       {% withFileName $ \fileName ->
            BinOpE (combineSrcSpans [getSrcSpan $1, getSrcSpan $2] fileName) ()
-                  (App, srcSpanBetween (getSrcSpan $1) (getSrcSpan $2) fileName) $1 $2 }
+                  (App, srcSpanBetween (getSrcSpan $1) (getSrcSpan $2) fileName) $1 $2 False }
 
 atomexpr :: { SrcExpr }
 atomexpr
   : literal { LitE $1 }
   | lowerId {% withFileName $ \fileName ->
                  VarE (mkTokSrcSpan $1 fileName) ()
-                      (Var $ getTokId $1) }
+                      (Var $ getTokId $1) False }
   | '(' expr ')' {% withFileName $ \fileName ->
                       ParenE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                              $2 }
@@ -219,12 +219,12 @@ atomexpr
       {% withFileName $ \fileName ->
            MemberAccessE (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $3] fileName) ()
                          $1
-                         (MemberName $ getTokId $3, mkTokSrcSpan $3 fileName) }
+                         (MemberName $ getTokId $3, mkTokSrcSpan $3 fileName) False }
   | atomexpr '?' lowerId
       {% withFileName $ \fileName ->
            MemberAccessMaybeE (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $3] fileName) ()
                               $1
-                              (MemberName $ getTokId $3, mkTokSrcSpan $3 fileName) }
+                              (MemberName $ getTokId $3, mkTokSrcSpan $3 fileName) False }
   | upperId '.' lowerId
       {% withFileName $ \fileName ->
            ClassAccessE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName) ()
@@ -261,7 +261,7 @@ decl
   : varbinder opt(init)
       {% withFileName $ \fileName ->
            Decl (combineSrcSpans (getSrcSpan $1 : maybeToList (fmap getSrcSpan $2)) fileName) ()
-                $1 $2 }
+                $1 $2 False }
 
 init :: { SrcInit }
 init : initop expr {% withFileName $ \fileName ->
@@ -441,7 +441,7 @@ binOp e1 opTok e2 op =
   withFileName $ \fileName ->
     BinOpE (combineSrcSpans [getSrcSpan e1, getSrcSpan e2] fileName) ()
            (op, mkTokSrcSpan opTok fileName)
-           e1 e2
+           e1 e2 False
 
 }
 

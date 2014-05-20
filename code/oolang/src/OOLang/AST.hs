@@ -29,6 +29,10 @@
 -- 'Type' as t. Src variants result from parsing, Ty variants result from type
 -- checking.
 --
+-- Some of the data types have explicit boolean purity indicators.
+-- Conservatively, they are all False before the type checking. This is not so
+-- pervasive to have an additional type parameter.
+--
 -- newtypes are used quite extensively to have a strong distinction between
 -- different types of names.
 module OOLang.AST where
@@ -105,10 +109,13 @@ type TyMethodDecl  = MethodDecl Type SrcSpan
 -- | Statement representation.
 --
 -- Annotated with types, which become available after the type checking.
+--
+-- Some of the statements have explicit purity indicators, for others - purity
+-- can be inferred from their components.
 data Stmt t s = DeclS s (Declaration t s)
               | ExprS s (Expr t s)
                 -- | Left-hand side can only be 'VarE' or 'MemberAccessE'.
-              | AssignS s t (AssignOpS s) (Expr t s) (Expr t s)
+              | AssignS s t (AssignOpS s) (Expr t s) (Expr t s) Bool
               | WhileS s t (Expr t s) [Stmt t s]
               | WhenS s t (Expr t s) [Stmt t s] [Stmt t s]
               | ReturnS s (Expr t s)
@@ -124,11 +131,15 @@ type TyStmt  = Stmt Type SrcSpan
 -- Function names are represented as 'VarE'.
 --
 -- 'ParenE' is used for better source spans and pretty printing.
+--
+-- Some of the expressions have explicit purity indicators, for others - purity
+-- can be inferred from their components, or they are always pure (like
+-- literals) or impure (like reference operations).
 data Expr t s = LitE (Literal t s)
-              | VarE s t Var
+              | VarE s t Var Bool
               | LambdaE s t [VarBinder s] (Expr t s)  -- ^ Not empty.
-              | MemberAccessE s t (Expr t s) (MemberNameS s)
-              | MemberAccessMaybeE s t (Expr t s) (MemberNameS s)
+              | MemberAccessE s t (Expr t s) (MemberNameS s) Bool
+              | MemberAccessMaybeE s t (Expr t s) (MemberNameS s) Bool
                 -- | Class access is just for new (constructor) right now.
               | ClassAccessE s t (ClassNameS s) (FunNameS s)
               | ClassAccessStaticE s t (ClassNameS s) (MemberNameS s)
@@ -136,7 +147,7 @@ data Expr t s = LitE (Literal t s)
                 -- | This operator produces a value of type A from a value of
                 -- type Ref A.
               | DerefE s t (Expr t s)
-              | BinOpE s t (BinOpS s) (Expr t s) (Expr t s)
+              | BinOpE s t (BinOpS s) (Expr t s) (Expr t s) Bool
               | IfThenElseE s t (Expr t s) (Expr t s) (Expr t s)
               | JustE s t (Expr t s)
               | ParenE s (Expr t s)
@@ -230,7 +241,8 @@ type SrcFunType = FunType SrcSpan
 -- | Name (variable) declaration.
 -- Consists of var binder and an optional initialiser.
 -- Annotated with the type which becomes available after the type checking.
-data Declaration t s = Decl s t (VarBinder s) (Maybe (Init t s))
+-- Has a purity indicator.
+data Declaration t s = Decl s t (VarBinder s) (Maybe (Init t s)) Bool
   deriving Show
 
 type SrcDeclaration = Declaration ()   SrcSpan

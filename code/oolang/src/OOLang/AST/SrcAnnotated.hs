@@ -23,17 +23,17 @@ instance SrcAnnotated (FunDef a) where
 instance SrcAnnotated (Stmt a) where
   ann (DeclS s _) = s
   ann (ExprS s _) = s
-  ann (AssignS s _ _ _ _) = s
+  ann (AssignS s _ _ _ _ _) = s
 
 instance SrcAnnotated (Expr a) where
   ann (LitE lit) = ann lit
-  ann (VarE s _ _) = s
-  ann (MemberAccessE s _ _ _) = s
-  ann (MemberAccessMaybeE s _ _ _) = s
+  ann (VarE s _ _ _) = s
+  ann (MemberAccessE s _ _ _ _) = s
+  ann (MemberAccessMaybeE s _ _ _ _) = s
   ann (ClassAccessE s _ _ _) = s
   ann (NewRefE s _ _) = s
   ann (DerefE s _ _) = s
-  ann (BinOpE s _ _ _ _) = s
+  ann (BinOpE s _ _ _ _ _) = s
   ann (JustE s _ _) = s
   ann (ParenE s _) = s
 
@@ -62,7 +62,7 @@ instance SrcAnnotated FunType where
   ann (FunType s _ _) = s
 
 instance SrcAnnotated (Declaration a) where
-  ann (Decl s _ _ _) = s
+  ann (Decl s _ _ _ _) = s
 
 instance SrcAnnotated (Init a) where
   ann (Init s _ _) = s
