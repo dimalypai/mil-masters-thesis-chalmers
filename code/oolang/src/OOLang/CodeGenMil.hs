@@ -101,7 +101,10 @@ codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
                                  then (idMonad, typeMil funType)
                                  else (impureMonad, MIL.monadReturnType impureMonad (typeMil funType))
   funBody <- codeGenStmts tyStmts funMonad
-  return $ MIL.FunDef (funNameMil funName) milFunType funBody
+  funParams <- asks (ftiParams . getFunTypeInfo funName . getFunTypeEnv . fst)
+  let funBodyWithParams = foldr (\(p, t) e -> MIL.LambdaE (MIL.VarBinder (varMil p, typeMil t)) e)
+                            funBody funParams
+  return $ MIL.FunDef (funNameMil funName) milFunType funBodyWithParams
 
 -- | List of statements is not empty.
 -- Takes a monad of the containing function.
