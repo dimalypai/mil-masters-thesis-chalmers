@@ -1,6 +1,11 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 -- | Module responsible for MIL code generation.
+--
+-- All generated code operates in two monads: Id for pure computations and
+-- Impure_M for default (impure) computations. Impure_M is a fixed stack of
+-- monads, see 'impureMonadType'.
+-- Statement sequences are represented with monadic binds.
 module OOLang.CodeGenMil
   ( codeGen
   ) where
