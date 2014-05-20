@@ -96,7 +96,7 @@ codeGenFunDef :: TyFunDef -> CodeGenM MIL.FunDef
 codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
   let funName = getFunName srcFunName
   funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv . fst)
-  let isPure = isPureType funType
+  let isPure = isPureFunType funType
   let (funMonad, milFunType) = if isPure
                                  then (idMonad, typeMil funType)
                                  else (impureMonad, MIL.monadReturnType impureMonad (typeMil funType))
@@ -136,7 +136,7 @@ codeGenStmt tyStmt funMonad =
     -- TODO:
     -- + "then" with state putting operations
     -- + ANF/SSA construction
-    AssignS _ _ srcAssignOp tyExprLeft tyExprRight -> undefined
+    AssignS _ _ srcAssignOp tyExprLeft tyExprRight _ -> undefined
 
 -- | Expression code generation.
 -- Takes a monad of the containing function.
