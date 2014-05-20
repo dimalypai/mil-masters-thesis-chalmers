@@ -115,7 +115,7 @@ codeGenStmts [tyStmt@(ExprS {})] funMonad = codeGenStmt tyStmt funMonad
 codeGenStmts [tyStmt] funMonad = do
   milExpr <- codeGenStmt tyStmt funMonad
   let milExprType = typeMil $ getTypeOf tyStmt
-  return $ MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.getMonadResultType milExprType))
+  return $ MIL.LetE (MIL.VarBinder (MIL.Var "_", milExprType))
              milExpr
              (MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit))
 
@@ -123,7 +123,7 @@ codeGenStmts (tyStmt:tyStmts) funMonad = do
   milBindExpr <- codeGenStmt tyStmt funMonad
   let milBindExprType = typeMil $ getTypeOf tyStmt
   milBodyExpr <- codeGenStmts tyStmts funMonad
-  return $ MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.getMonadResultType milBindExprType))
+  return $ MIL.LetE (MIL.VarBinder (MIL.Var "_", milBindExprType))
              milBindExpr
              milBodyExpr
 
