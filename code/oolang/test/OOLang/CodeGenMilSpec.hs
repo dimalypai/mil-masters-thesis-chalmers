@@ -27,8 +27,8 @@ testDir = "test" </> "codegenmiltests"
 spec :: Spec
 spec =
   describe "codeGen" $ do
-    it "generates MIL code for functions" $
-      testCase "Functions"
+    it "generates MIL code for simple functions" $
+      testCase "SimpleFunctions"
 
 -- Infrastructure
 
