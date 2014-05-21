@@ -1,0 +1,15 @@
+def main : Unit =>
+  pureFun 1 true;
+end
+
+def pureFun : {a : Int} -> {b : Bool} -> Pure Unit =>
+  impureFun 0.01;
+  pureFun a b;
+  unit;
+end
+
+def impureFun : {a : Float} -> {b : Float} -> Unit =>
+  pureFun 1;
+  unit;
+end
+

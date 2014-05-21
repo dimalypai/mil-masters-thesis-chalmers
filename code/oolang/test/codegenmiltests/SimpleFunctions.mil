@@ -9,18 +9,12 @@ type Maybe A
 alias Impure_M = Error Unit ::: State ::: Lift ::: IO ::: Id;
 
 main : Impure_M Unit =
-  let (_ : Unit) <- let (var_0 : Unit) <- lift [Id -> Impure_M] (return [Id] unit) in
-                      return [Impure_M] var_0 in
-    let (_ : Int) <- let (var_1 : Int) <- lift [Id -> Impure_M] pureFun in
-                       return [Impure_M] var_1 in
-      let (var_2 : Unit) <- main in
-        return [Impure_M] var_2;
+  let (_ : Unit) <- return [Impure_M] unit in
+    let (_ : Int) <- lift [Id -> Impure_M] pureFun in
+      main;
 
 pureFun : Id Int =
-  let (_ : Unit) <- let (var_3 : Unit) <- return [Id] unit in
-                      return [Id] var_3 in
-    let (_ : Int) <- let (var_4 : Int) <- pureFun in
-                       return [Id] var_4 in
-      let (var_5 : Int) <- return [Id] 1 in
-        return [Id] var_5;
+  let (_ : Unit) <- return [Id] unit in
+    let (_ : Int) <- pureFun in
+      return [Id] 1;
 

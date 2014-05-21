@@ -35,8 +35,6 @@ getUnderType (TyMutable t) = t
 getUnderType            t  = t
 
 -- | Removes 'TyPure' on the top-level if there is one.
---
--- Note: Should be used only for error messages.
 stripPureType :: Type -> Type
 stripPureType (TyPure t) = t
 stripPureType         t  = t

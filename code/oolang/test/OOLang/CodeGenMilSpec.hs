@@ -30,6 +30,9 @@ spec =
     it "generates MIL code for simple functions" $
       testCase "SimpleFunctions"
 
+    it "generates MIL code for functions with parameters" $
+      testCase "FunctionsWithParams"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test (by comparing pretty printed
