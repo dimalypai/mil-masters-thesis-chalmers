@@ -8,82 +8,94 @@ type Maybe A
 
 alias Impure_M = Error Unit ::: State ::: Lift ::: IO ::: Id;
 
-alias Super = {{Int}, {Super -> Unit -> Id Int, Super -> Id Bool}};
+type Super_Data = Super_Data {Int};
 
-alias Child = {{Int, Float}, {Super -> Unit -> Id Int, Super -> Id Bool, Child -> Unit -> Id Int, Child -> Id Float}};
+type Super = Super {Unit -> Unit -> Id Int, Unit -> Id Bool, Super_Data};
+
+type Child_Data = Child_Data {Int, Float};
+
+type Child = Child {Unit -> Unit -> Id Int, Unit -> Id Bool, Unit -> Id Float, Child_Data};
+
+new_Super_Data : Super_Data =
+  Super_Data {1};
+
+class_Super : Super_Data -> Id Super =
+  \(self_data : Super_Data) ->
+    case self_data of
+      | Super_Data self_fields =>
+          case self_fields of
+            | {self_superField} =>
+                let rec (self : Super) =
+                  case self of
+                    | Super self_methods =>
+                        case self_methods of
+                          | {self_method, self_superMethod, var_0} =>
+                              Super {\(var_0 : Unit) ->
+                                       \(u : Unit) ->
+                                         return [Id] self_superField, \(var_1 : Unit) ->
+                                                                        return [Id] True, self_data} in return [Id] self
+                        end
+                  end
+          end
+    end;
 
 new_Super : Id Super =
-  return [Id] {{1}, {method_Super, superMethod_Super}};
+  class_Super new_Super_Data;
 
-method_Super : Super -> Unit -> Id Int =
-  \(self : Super) -> \(u : Unit) -> case self of
-                                      | {self_fields, self_methods} =>
-                                          case self_fields of
-                                            | {self_superField} =>
-                                                case self_methods of
-                                                  | {self_method, self_superMethod} =>
-                                                      return [Id] self_superField
-                                                end
-                                          end
-                                    end;
+class_Child : Child_Data -> Id Child =
+  \(self_data : Child_Data) ->
+    let (super : Super) <- class_Super self_data in
+      case super of
+        | Super super_methods =>
+            case super_methods of
+              | {super_method, super_superMethod} =>
+                  case self_data of
+                    | Child_Data self_fields =>
+                        case self_fields of
+                          | {self_superField, self_childField} =>
+                              let rec (self : Child) =
+                                case self of
+                                  | Child self_methods =>
+                                      case self_methods of
+                                        | {self_method, self_superMethod, self_childMethod} =>
+                                            Child {\(var_0 : Unit) ->
+                                                     \(u : Unit) ->
+                                                       super_method u, super_superMethod, \(var_1 : Unit) -> self_superField} in return [Id] self;
+                                      end
+                                end
+                        end
+                  end
+            end
+      end;
 
-superMethod_Super : Super -> Id Bool =
-  \(self : Super) -> case self of
-                       | {self_fields, self_methods} =>
-                           case self_fields of
-                             | {self_superField} =>
-                                 case self_methods of
-                                   | {self_method, self_superMethod} =>
-                                       return [Id] True
-                                 end
-                           end
-                     end;
+new_Child_Data : Child_Data =
+  case new_Super_Data of
+    | Super_Data {super_superField} => Child_Data {super_superField, 1.0e-2}
+  end;
 
 new_Child : Id Child =
-  return [Id] {{1, 1.0e-2}, {method_Super, superMethod_Super, method_Child, childMethod_Child}};
-
-method_Child : Child -> Unit -> Id Int =
-  \(self : Child) -> \(u : Unit) -> case self of
-                                      | {self_fields, self_methods} =>
-                                          case self_fields of
-                                            | {self_superField, self_childField} =>
-                                                case self_methods of
-                                                  | {super_method, self_superMethod, self_method, self_childMethod} =>
-                                                      let (_ : Float) <- return [Id] self_childField in
-                                                        return [Id] 2
-                                                end
-                                          end
-                                    end;
-
-childMethod_Child : Child -> Id Float =
-  \(self : Child) -> case self of
-                       | {self_fields, self_methods} =>
-                           case self_fields of
-                             | {self_superField, self_childField} =>
-                                 case self_methods of
-                                   | {super_method, self_superMethod, self_method, self_childMethod} =>
-                                       let (_ : Bool) <- in self_superMethod self
-                                         return [Id] self_childField
-                                 end
-                           end
-                     end;
+  class_Child new_Child_Data;
 
 main : Impure_M Unit =
   let (objSuper : Super) <- lift [Id -> Impure_M] new_Super in
     let (objChild : Child) <- lift [Id -> Impure_M] new_Child in
       let (_ : Int) <- lift [Id -> Impure_M] fun objSuper in
-        let (_ : Int) <- lift [Id -> Impure_M] fun objChild in
-          return [Impure_M] unit;
+        case objChild of
+          | Child objChild_methods =>
+              case objChild_methods of
+                | {objChild_method, objChild_superMethod, objChild_childMethod} =>
+                    let (_ : Int) <- lift [Id -> Impure_M] fun (Super {objChild_method, objChild_superMethod}) in
+                      return [Impure_M] unit;
+              end
+        end;
 
 fun : Super -> Id Int =
-  \(obj : Super) -> case obj of
-                      | {obj_fields, obj_methods} =>
-                          case obj_fields of
-                            | {obj_superField} =>
-                                case obj_methods of
-                                  | {obj_method obj_superMethod} =>
-                                      return [Id] obj_method obj
-                                end
-                          end
-                    end;
+  \(obj : Super) ->
+    case obj of
+      | Super obj_methods =>
+          case obj_methods of
+            | {obj_method, obj_superMethod} =>
+                obj_method unit unit
+          end
+    end;
 
