@@ -13,7 +13,7 @@ import OOLang.PureAnnotated
 instance PureAnnotated Stmt where
   getPurityOf (DeclS _ decl) = getPurityOf decl
   getPurityOf (ExprS _ e) = getPurityOf e
-  getPurityOf (AssignS _ _ _ _ _ p) = p
+  getPurityOf (AssignS _ _ _ _ p) = p
 
 instance PureAnnotated Expr where
   getPurityOf (LitE {}) = True
@@ -30,7 +30,7 @@ instance PureAnnotated Expr where
   getPurityOf (ParenE _ e) = getPurityOf e
 
 instance PureAnnotated Declaration where
-  getPurityOf (Decl _ _ _ _ p) = p
+  getPurityOf (Decl _ _ _ p) = p
 
 instance PureAnnotated Init where
   getPurityOf (Init _ _ e) = getPurityOf e

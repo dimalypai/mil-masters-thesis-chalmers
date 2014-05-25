@@ -11,9 +11,9 @@ import OOLang.AST
 import OOLang.TypeAnnotated
 
 instance TypeAnnotated Stmt where
-  getTypeOf (DeclS _ decl) = getTypeOf decl
+  getTypeOf (DeclS {}) = TyUnit
   getTypeOf (ExprS _ e) = getTypeOf e
-  getTypeOf (AssignS _ t _ _ _ _) = t
+  getTypeOf (AssignS {}) = TyUnit
 
 instance TypeAnnotated Expr where
   getTypeOf (LitE lit) = getTypeOf lit
@@ -34,9 +34,6 @@ instance TypeAnnotated Literal where
   getTypeOf (FloatLit _ t _ _) = t
   getTypeOf (StringLit _ t _) = t
   getTypeOf (NothingLit _ t _) = t
-
-instance TypeAnnotated Declaration where
-  getTypeOf (Decl _ t _ _ _) = t
 
 instance TypeAnnotated Init where
   getTypeOf (Init _ _ e) = getTypeOf e

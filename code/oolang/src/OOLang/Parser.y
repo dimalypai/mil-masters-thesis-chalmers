@@ -165,15 +165,15 @@ stmt
                  $1 }
   | expr assignop expr ';'
       {% withFileName $ \fileName ->
-           AssignS (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $4] fileName) ()
+           AssignS (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $4] fileName)
                    $2 $1 $3 False }
   | when expr do list(stmt) otherwise list(stmt) end ';'
       {% withFileName $ \fileName ->
-           WhenS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $8] fileName) ()
+           WhenS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $8] fileName)
                  $2 $4 $6 }
   | while expr do list(stmt) end ';'
       {% withFileName $ \fileName ->
-           WhileS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $6] fileName) ()
+           WhileS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $6] fileName)
                   $2 $4 }
 
 expr :: { SrcExpr }
@@ -260,7 +260,7 @@ decl :: { SrcDeclaration }
 decl
   : varbinder opt(init)
       {% withFileName $ \fileName ->
-           Decl (combineSrcSpans (getSrcSpan $1 : maybeToList (fmap getSrcSpan $2)) fileName) ()
+           Decl (combineSrcSpans (getSrcSpan $1 : maybeToList (fmap getSrcSpan $2)) fileName)
                 $1 $2 False }
 
 init :: { SrcInit }

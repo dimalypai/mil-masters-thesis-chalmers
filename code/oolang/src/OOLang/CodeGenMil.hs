@@ -145,7 +145,7 @@ codeGenStmt tyStmt funMonad =
     -- TODO:
     -- + "then" with state putting operations
     -- + ANF/SSA construction
-    AssignS _ _ srcAssignOp tyExprLeft tyExprRight _ -> undefined
+    AssignS _ srcAssignOp tyExprLeft tyExprRight _ -> undefined
 
 -- | Expression code generation.
 -- Takes a monad of the containing function.

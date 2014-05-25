@@ -15,10 +15,10 @@ getInitOpS :: Init t s -> InitOpS s
 getInitOpS (Init _ initOpS _) = initOpS
 
 getDeclVarName :: Declaration t s -> VarS s
-getDeclVarName (Decl _ _ varBinder _ _) = getBinderVar varBinder
+getDeclVarName (Decl _ varBinder _ _) = getBinderVar varBinder
 
 getDeclVarType :: Declaration t s -> TypeS s
-getDeclVarType (Decl _ _ varBinder _ _) = getBinderType varBinder
+getDeclVarType (Decl _ varBinder _ _) = getBinderType varBinder
 
 getBinderVar :: VarBinder s -> VarS s
 getBinderVar (VarBinder _ srcVar _ ) = srcVar

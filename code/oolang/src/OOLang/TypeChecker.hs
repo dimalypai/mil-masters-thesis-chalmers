@@ -121,7 +121,7 @@ collectClassMembers className srcMembers = do
 -- members with `self` or `super`.
 -- Checks that the specified field type is correct (used types are defined).
 collectClassField :: ClassName -> SrcFieldDecl -> TypeCheckM ()
-collectClassField className (FieldDecl _ (Decl _ _ varBinder _ _) _) = do
+collectClassField className (FieldDecl _ (Decl _ varBinder _ _) _) = do
   let fieldName = getVar (getBinderVar varBinder)
   let fieldNameSrcSpan = getSrcSpan (getBinderVar varBinder)
 
@@ -281,7 +281,7 @@ tcClassMembers className srcMembers = do
 -- `super`, but mutual recursion and accessing current class members is *not*
 -- allowed.
 tcClassField :: ClassName -> SrcFieldDecl -> TypeCheckM TyFieldDecl
-tcClassField className (FieldDecl fs (Decl ds _ varBinder mSrcInit _) _) = do
+tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit _) _) = do
   let fieldName = getVar (getBinderVar varBinder)
   fieldType <- getClassFieldTypeM className fieldName
   mTyInit <-
@@ -306,7 +306,7 @@ tcClassField className (FieldDecl fs (Decl ds _ varBinder mSrcInit _) _) = do
         unless (hasMaybeType fieldType) $
           throwError $ NonMaybeVarNotInit fieldName fs
         return Nothing
-  let tyDecl = Decl ds TyUnit varBinder mTyInit True
+  let tyDecl = Decl ds varBinder mTyInit True
   return $ FieldDecl fs tyDecl []
 
 -- | Checks class method declaration.
@@ -391,7 +391,7 @@ tcStmt insideClass srcStmt =
       ExprS s <$> tcExpr insideClass srcExpr
 
     -- See Note [Assignment purity]
-    AssignS s _ srcAssignOp srcExprLeft srcExprRight _ -> do
+    AssignS s srcAssignOp srcExprLeft srcExprRight _ -> do
       let assignOp = getAssignOp srcAssignOp
 
       (tyExprLeft, assignPurity) <-
@@ -438,7 +438,7 @@ tcStmt insideClass srcStmt =
             _ -> throwError $ IncorrectRefOpUsage (getSrcSpan srcStmt)
 
       let exprRightPure = getPurityOf tyExprRight
-      return $ AssignS s TyUnit srcAssignOp tyExprLeft tyExprRight (assignPurity && exprRightPure)
+      return $ AssignS s srcAssignOp tyExprLeft tyExprRight (assignPurity && exprRightPure)
 
 -- | Note [Purity of declarations]:
 --
@@ -451,7 +451,7 @@ tcStmt insideClass srcStmt =
 -- Takes a boolean indicator whether it is inside a class.
 -- Returns a type checked declaration.
 tcDecl :: Bool -> SrcDeclaration -> SrcStmt -> TypeCheckM TyDeclaration
-tcDecl insideClass (Decl s _ varBinder mSrcInit _) srcDeclStmt = do
+tcDecl insideClass (Decl s varBinder mSrcInit _) srcDeclStmt = do
   let var = getVar $ getBinderVar varBinder
   whenM (isVarBoundM var) $
     throwError $ VarShadowing (getBinderVar varBinder)
@@ -472,11 +472,11 @@ tcDecl insideClass (Decl s _ varBinder mSrcInit _) srcDeclStmt = do
       let initType = getTypeOf tyInit
       unlessM (initType `isSubTypeOf` varType) $
         throwError $ DeclInitIncorrectType srcInit (getUnderType varType) initType
-      return $ Decl s TyUnit varBinder (Just tyInit) (getPurityOf tyInit)
+      return $ Decl s varBinder (Just tyInit) (getPurityOf tyInit)
     Nothing -> do
       unless (hasMaybeType varType) $
         throwError $ NonMaybeVarNotInit var (getSrcSpan srcDeclStmt)
-      return $ Decl s TyUnit varBinder Nothing True
+      return $ Decl s varBinder Nothing True
 
 -- | Initialisation expression type checking.
 -- Takes a boolean indicator whether it is inside a class.

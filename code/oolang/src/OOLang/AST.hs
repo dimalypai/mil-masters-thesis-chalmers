@@ -108,16 +108,14 @@ type TyMethodDecl  = MethodDecl Type SrcSpan
 
 -- | Statement representation.
 --
--- Annotated with types, which become available after the type checking.
---
 -- Some of the statements have explicit purity indicators, for others - purity
 -- can be inferred from their components.
 data Stmt t s = DeclS s (Declaration t s)
               | ExprS s (Expr t s)
                 -- | Left-hand side can only be 'VarE' or 'MemberAccessE'.
-              | AssignS s t (AssignOpS s) (Expr t s) (Expr t s) Bool
-              | WhileS s t (Expr t s) [Stmt t s]
-              | WhenS s t (Expr t s) [Stmt t s] [Stmt t s]
+              | AssignS s (AssignOpS s) (Expr t s) (Expr t s) Bool
+              | WhileS s (Expr t s) [Stmt t s]
+              | WhenS s (Expr t s) [Stmt t s] [Stmt t s]
               | ReturnS s (Expr t s)
   deriving Show
 
@@ -240,9 +238,8 @@ type SrcFunType = FunType SrcSpan
 
 -- | Name (variable) declaration.
 -- Consists of var binder and an optional initialiser.
--- Annotated with the type which becomes available after the type checking.
 -- Has a purity indicator.
-data Declaration t s = Decl s t (VarBinder s) (Maybe (Init t s)) Bool
+data Declaration t s = Decl s (VarBinder s) (Maybe (Init t s)) Bool
   deriving Show
 
 type SrcDeclaration = Declaration ()   SrcSpan

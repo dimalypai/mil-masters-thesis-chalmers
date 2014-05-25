@@ -23,7 +23,7 @@ instance SrcAnnotated (FunDef a) where
 instance SrcAnnotated (Stmt a) where
   ann (DeclS s _) = s
   ann (ExprS s _) = s
-  ann (AssignS s _ _ _ _ _) = s
+  ann (AssignS s _ _ _ _) = s
 
 instance SrcAnnotated (Expr a) where
   ann (LitE lit) = ann lit
@@ -62,7 +62,7 @@ instance SrcAnnotated FunType where
   ann (FunType s _ _) = s
 
 instance SrcAnnotated (Declaration a) where
-  ann (Decl s _ _ _ _) = s
+  ann (Decl s _ _ _) = s
 
 instance SrcAnnotated (Init a) where
   ann (Init s _ _) = s

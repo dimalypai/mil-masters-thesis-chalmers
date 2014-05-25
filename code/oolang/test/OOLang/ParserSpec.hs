@@ -41,7 +41,7 @@ spec =
                       Nothing
                       [FieldMemberDecl $
                          FieldDecl (srcSp 2 3 2 18)
-                           (Decl (srcSp 2 3 2 17) ()
+                           (Decl (srcSp 2 3 2 17)
                               (VarBinder (srcSp 2 3 2 17)
                                  (Var "x", srcSp 2 3 2 3)
                                  (SrcTyMutable (srcSp 2 7 2 17)
@@ -176,7 +176,7 @@ spec =
                         []
                         (SrcTyUnit $ srcSp 1 11 1 14))
                      [ DeclS (srcSp 2 3 2 18)
-                         (Decl (srcSp 2 3 2 17) ()
+                         (Decl (srcSp 2 3 2 17)
                             (VarBinder (srcSp 2 3 2 17)
                                (Var "x", srcSp 2 3 2 3)
                                (SrcTyMutable (srcSp 2 7 2 17)
@@ -184,7 +184,7 @@ spec =
                             Nothing
                             False)
                      , DeclS (srcSp 3 3 3 14)
-                         (Decl (srcSp 3 3 3 13) ()
+                         (Decl (srcSp 3 3 3 13)
                             (VarBinder (srcSp 3 3 3 9)
                                (Var "y", srcSp 3 3 3 3)
                                (SrcTyInt $ srcSp 3 7 3 9))
@@ -193,7 +193,7 @@ spec =
                                (LitE (IntLit (srcSp 3 13 3 13) () 1)))
                             False)
                      , DeclS (srcSp 4 3 4 23)
-                         (Decl (srcSp 4 3 4 22) ()
+                         (Decl (srcSp 4 3 4 22)
                             (VarBinder (srcSp 4 3 4 17)
                                (Var "z", srcSp 4 3 4 3)
                                (SrcTyMutable (srcSp 4 7 4 17)
@@ -202,13 +202,13 @@ spec =
                                (InitMut, srcSp 4 19 4 20)
                                (LitE (IntLit (srcSp 4 22 4 22) () 1)))
                             False)
-                     , AssignS (srcSp 5 3 5 9) ()
+                     , AssignS (srcSp 5 3 5 9)
                          (AssignMut, srcSp 5 5 5 6)
                          (VarE (srcSp 5 3 5 3) () (Var "x") False)
                          (LitE (IntLit (srcSp 5 8 5 8) () 2))
                          False
                      , DeclS (srcSp 6 3 6 22)
-                         (Decl (srcSp 6 3 6 21) ()
+                         (Decl (srcSp 6 3 6 21)
                             (VarBinder (srcSp 6 3 6 13)
                                (Var "r", srcSp 6 3 6 3)
                                (SrcTyRef (srcSp 6 7 6 13)
@@ -218,7 +218,7 @@ spec =
                                (NewRefE (srcSp 6 17 6 21) ()
                                   (LitE (IntLit (srcSp 6 21 6 21) () 1))))
                             False)
-                     , AssignS (srcSp 7 3 7 9) ()
+                     , AssignS (srcSp 7 3 7 9)
                          (AssignRef, srcSp 7 5 7 6)
                          (VarE (srcSp 7 3 7 3) () (Var "r") False)
                          (LitE (IntLit (srcSp 7 8 7 8) () 2))
@@ -236,12 +236,12 @@ spec =
                      (FunType (srcSp 1 11 1 14)
                         []
                         (SrcTyUnit $ srcSp 1 11 1 14))
-                     [ WhenS (srcSp 2 3 5 6) ()
+                     [ WhenS (srcSp 2 3 5 6)
                          (VarE (srcSp 2 8 2 8) () (Var "b") False)
                          [ExprS (srcSp 3 5 3 9)
                             (LitE (UnitLit (srcSp 3 5 3 8) ()))]
                          []
-                     , WhileS (srcSp 6 3 7 6) ()
+                     , WhileS (srcSp 6 3 7 6)
                          (LitE (BoolLit (srcSp 6 9 6 12) () True))
                          []]]
       in successCase baseName ast
