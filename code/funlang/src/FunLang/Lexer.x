@@ -48,11 +48,13 @@ tokens :-
 
   -- Keywords
   case   { \p s -> (KW_Case,   posn p s) }
+  catch  { \p s -> (KW_Catch,  posn p s) }
   do     { \p s -> (KW_Do,     posn p s) }
   end    { \p s -> (KW_End,    posn p s) }
   forall { \p s -> (KW_Forall, posn p s) }
   of     { \p s -> (KW_Of,     posn p s) }
   return { \p s -> (KW_Return, posn p s) }
+  throw  { \p s -> (KW_Throw,  posn p s) }
   type   { \p s -> (KW_Type,   posn p s) }
   unit   { \p s -> (KW_Unit,   posn p s) }
 
@@ -106,11 +108,13 @@ tokens :-
 data Token =
   -- Keywords
     KW_Case
+  | KW_Catch
   | KW_Do
   | KW_End
   | KW_Forall
   | KW_Of
   | KW_Return
+  | KW_Throw
   | KW_Type
   | KW_Unit
   -- Symbols
@@ -159,11 +163,13 @@ data Token =
 instance Show Token where
   -- Keywords
   show KW_Case   = "case"
+  show KW_Catch  = "catch"
   show KW_Do     = "do"
   show KW_End    = "end"
   show KW_Forall = "forall"
   show KW_Of     = "of"
   show KW_Return = "return"
+  show KW_Throw  = "throw"
   show KW_Type   = "type"
   show KW_Unit   = "unit"
   -- Symbols

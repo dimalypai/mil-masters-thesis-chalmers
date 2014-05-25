@@ -25,10 +25,10 @@ spec =
 
     it "recognises all keywords correctly" $
       map getToken
-        (lexer "case do end forall of return type unit")
+        (lexer "case catch do end forall of return throw type unit")
         `shouldBe`
-      [ KW_Case, KW_Do, KW_End, KW_Forall
-      , KW_Of, KW_Return, KW_Type, KW_Unit
+      [ KW_Case, KW_Catch, KW_Do, KW_End, KW_Forall
+      , KW_Of, KW_Return, KW_Throw, KW_Type, KW_Unit
       ]
 
     it "recognises all symbols correctly" $
@@ -66,14 +66,14 @@ spec =
 
     it "shows tokens correctly" $
       intercalate " " (map (show . getToken)
-        (lexer "case do end forall of return type unit \
+        (lexer "case catch do end forall of return throw type unit \
               \ =  :  +  -  *  /  %  <  >  <=  >=  /= \
               \ \\  ->  /\\  .  =>  <- \
               \ |  _  &&  ||  (  )  [  ]  ; \
               \ 1 0.1 1.0e-2 1e-2 \"str\" \
               \ x T var123 True"))
         `shouldBe`
-      "case do end forall of return type unit\
+      "case catch do end forall of return throw type unit\
      \ = : + - * / % < > <= >= /=\
      \ \\ -> /\\ . => <-\
      \ | _ && || ( ) [ ] ;\

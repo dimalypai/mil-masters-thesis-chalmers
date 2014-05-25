@@ -347,6 +347,34 @@ spec =
                            ])]]
       in successCase baseName ast
 
+    it "parses exception-related expressions" $
+      let baseName = "ExceptionExpressions"
+          fileName = mkFileName baseName
+          srcSp = mkSrcSpan fileName
+          ast = Program (srcSp 1 1 5 26)
+                  []
+                  [ FunDef (srcSp 1 1 2 13)
+                      (FunName "fun", srcSp 1 1 1 3)
+                      (SrcTyCon (TypeName "Unit", srcSp 1 7 1 10))
+                      [FunEq (srcSp 2 1 2 12)
+                         (FunName "fun", srcSp 2 1 2 3)
+                         []
+                         (ThrowE $ srcSp 2 7 2 11)]
+                  , FunDef (srcSp 4 1 5 26)
+                      (FunName "fun2", srcSp 4 1 4 4)
+                      (SrcTyCon (TypeName "Unit", srcSp 4 8 4 11))
+                      [FunEq (srcSp 5 1 5 25)
+                         (FunName "fun2", srcSp 5 1 5 4)
+                         []
+                         (BinOpE (srcSp 5 8 5 24)
+                            (Catch, srcSp 5 18 5 22)
+                            (BinOpE (srcSp 5 8 5 16)
+                               (Catch, srcSp 5 10 5 14)
+                               (LitE (IntLit 1, srcSp 5 8 5 8))
+                               (LitE (IntLit 2, srcSp 5 16 5 16)))
+                            (LitE (IntLit 3, srcSp 5 24 5 24)))]]
+      in successCase baseName ast
+
     -- Failure
     describe "gives an error message when" $ do
       it "given an empty program" $

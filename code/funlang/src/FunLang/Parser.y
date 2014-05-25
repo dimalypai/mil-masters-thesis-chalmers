@@ -30,11 +30,13 @@ import FunLang.Parser.ParseError
 %token
   -- Keywords
   case   { $$@(KW_Case,   _) }
+  catch  { $$@(KW_Catch,  _) }
   do     { $$@(KW_Do,     _) }
   end    { $$@(KW_End,    _) }
   forall { $$@(KW_Forall, _) }
   of     { $$@(KW_Of,     _) }
   return { $$@(KW_Return, _) }
+  throw  { $$@(KW_Throw,  _) }
   type   { $$@(KW_Type,   _) }
   unit   { $$@(KW_Unit,   _) }
   -- Symbols
@@ -80,6 +82,7 @@ import FunLang.Parser.ParseError
   stringLit { $$@(Lex.StringLit  _, _) }
 
 %nonassoc '.' '->'  -- lambdas bind less tightly than others, go to the right as far as possible
+%left catch
 %left '<' '>' '<=' '>=' '=' '/='
 %left '+' '-'
 %left '*' '/'
@@ -168,6 +171,7 @@ expr
   | expr '>=' expr {% binOp $1 $2 $3 AST.GreaterEq }
   | expr '=' expr  {% binOp $1 $2 $3 AST.Equal }
   | expr '/=' expr {% binOp $1 $2 $3 AST.NotEq }
+  | expr catch expr {% binOp $1 $2 $3 AST.Catch }
 
 -- This production is introduced in order to avoid shift/reduce conflicts
 appexpr :: { SrcExpr }
@@ -189,6 +193,8 @@ atomexpr : literal { LitE $1 }
                              (Var $ getTokId $1) }
          | upperId {% withFileName $ \fileName ->
                         ConNameE (ConName $ getTokId $1, mkTokSrcSpan $1 fileName) }
+         | throw {% withFileName $ \fileName ->
+                      ThrowE (mkTokSrcSpan $1 fileName) }
          | '(' expr ')' {% withFileName $ \fileName ->
                              ParenE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                                     $2 }

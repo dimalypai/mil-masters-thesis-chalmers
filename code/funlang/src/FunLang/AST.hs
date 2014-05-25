@@ -156,6 +156,7 @@ data Expr v s = LitE (LiteralS s)
                 -- List of statements is not empty.
               | DoE s [Stmt v s]
               | BinOpE s (BinOpS s) (Expr v s) (Expr v s)
+              | ThrowE s
                 -- | Used for better source spans and pretty printing.
               | ParenE s (Expr v s)
   deriving Show
@@ -202,6 +203,7 @@ data BinOp = App
            | Greater
            | LessEq
            | GreaterEq
+           | Catch
   deriving Show
 
 type BinOpS s = (BinOp, s)
