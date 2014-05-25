@@ -28,3 +28,9 @@ Monads:
   we need to keep the monad in which we are currently operating.
 * Do we need an explicit or implicit lift?
 
+Exceptions:
+* Introduce throw and catch keywords (or functions). catch is infix.
+* Exceptions don't carry any value.
+* Exceptions don't work in a monad, so they can be combined with IO or State?
+* We can think as: throw is of type a, catch is of type a -> a -> a.
+

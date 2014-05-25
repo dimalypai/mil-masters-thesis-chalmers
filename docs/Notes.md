@@ -332,4 +332,23 @@ General thoughts. Week 16
 
 * OOLang: Give up on Pure types as purity annotations and introduce separate
   purity annotation in the syntax tree (Bool field).
+* Should Lift be renamed to NonTerm to avoid confusion with lift operation?
+* OOLang: I completely forgot about non-termination for Pure functions (Haskell
+  notion of purity). So, instead if Id we should have Pure_M (as an alias),
+  which should be an alias for Lift. Then, Impure_M becomes: Error ::: State
+  ::: Lift ::: IO. So, now, Pure_M is not at the bottom of Impure_M. To get
+  Error ::: State to the left, we can use lift. But what about IO on the right?
+  It seems that computation of type Lift is also a computation of type Lift :::
+  IO, since it is at the top and it has more effects. It is like, we don't need
+  to lift the computation in the monad on top of the stack (in Haskell).
+  Having IO ::: Lift for Impure_M seems wrong, since they don't commute (do
+  they?). When Lift (think MaybeT) is at the top we have an IO computation
+  which does IO and delivers a value or does not deliver a value: IO (Maybe a).
+  When we have IO ::: Lift, we have Maybe (IO a). So it is either does IO or it
+  does not.
+* The same problem comes for Error, but there it feels more involved, because
+  there is State in between.
+* Should Pure_M contain Error as well, so that everything can throw an
+  exception, basically? Then, some primitive operations will have Error in the
+  type, like division, for example.
 
