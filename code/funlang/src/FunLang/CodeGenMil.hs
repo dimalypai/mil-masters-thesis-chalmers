@@ -29,7 +29,7 @@ codeGenProgram :: TyProgram -> CodeGenM MIL.Program
 codeGenProgram (Program _ srcTypeDefs tyFunDefs) = do
   milTypeDefs <- mapM codeGenTypeDef srcTypeDefs
   milFunDefs <- mapM codeGenFunDef tyFunDefs
-  return $ MIL.Program (milTypeDefs, milFunDefs)
+  return $ MIL.Program (milTypeDefs, [], milFunDefs)
 
 codeGenTypeDef :: SrcTypeDef -> CodeGenM MIL.TypeDef
 codeGenTypeDef (TypeDef _ srcTypeName srcTypeVars srcConDefs) = do
