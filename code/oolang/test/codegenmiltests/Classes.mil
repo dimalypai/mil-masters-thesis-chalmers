@@ -82,10 +82,8 @@ main : Impure_M Unit =
       let (_ : Int) <- lift [Id -> Impure_M] fun objSuper in
         case objChild of
           | Child objChild_methods =>
-              case objChild_methods of
-                | {objChild_method, objChild_superMethod, objChild_childMethod} =>
-                    let (_ : Int) <- lift [Id -> Impure_M] fun (Super {objChild_method, objChild_superMethod}) in
-                      return [Impure_M] unit;
+              let (_ : Int) <- lift [Id -> Impure_M] fun (Super objChild_methods) in
+                return [Impure_M] unit;
               end
         end;
 
