@@ -352,3 +352,20 @@ General thoughts. Week 16
   exception, basically? Then, some primitive operations will have Error in the
   type, like division, for example.
 
+Meeting 2014-05-26 (cancelled)
+==============================
+
+* Classes representation: current state and recursive types.
+* Effects for Pure computations and their lifting.
+* Code generation at the moment.
+* Report structure.
+* State: Pure and Ref.
+
+General thoughts. Week 17
+=========================
+
+* OOLang: New monad stacks for Pure_M and Impure_M.
+* Problems with MIL type checking: monad cons prefix. Seems that it requires
+  polymorphism and/or type inference. Or maybe we could choose a highest
+  effect.
+
