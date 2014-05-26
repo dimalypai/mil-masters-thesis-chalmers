@@ -112,17 +112,7 @@ codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
 -- | List of statements is not empty.
 -- Takes a monad of the containing function.
 codeGenStmts :: [TyStmt] -> MIL.TypeM -> CodeGenM MIL.Expr
-
-codeGenStmts [tyStmt@(ExprS {})] funMonad = codeGenStmt tyStmt funMonad
-
-codeGenStmts [tyStmt] funMonad = do
-  milExpr <- codeGenStmt tyStmt funMonad
-  -- See Note [Variable type in bind].
-  let milExprType = typeMil $ stripPureType $ getTypeOf tyStmt
-  return $ MIL.LetE (MIL.VarBinder (MIL.Var "_", milExprType))
-             milExpr
-             (MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit))
-
+codeGenStmts [tyStmt] funMonad = codeGenStmt tyStmt funMonad
 codeGenStmts (tyStmt:tyStmts) funMonad = do
   milBindExpr <- codeGenStmt tyStmt funMonad
   -- See Note [Variable type in bind].
