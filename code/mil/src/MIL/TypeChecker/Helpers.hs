@@ -259,3 +259,52 @@ instance SubstType MilMonad where
   tvArg `substTypeIn` (Error t) = Error (tvArg `substTypeIn` t)
   _ `substTypeIn` m = m
 
+-- | Checks if two monads are compatible. This means if one of them is alpha
+-- equivalent to another or one of them is a prefix of another.
+-- For example, m1 is a prefix of m1 ::: m2.
+compatibleMonadTypes :: TypeM -> TypeM -> TypeCheckM Bool
+compatibleMonadTypes (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
+compatibleMonadTypes (MTyAlias typeName1) (MTyAlias typeName2) = do
+  aliasTypesCompatible <-
+    ifM ((&&) <$> isAliasDefined typeName1 <*> isAliasDefined typeName2)
+      (do aliasType1 <- getAliasType typeName1
+          aliasType2 <- getAliasType typeName2
+          case (aliasType1, aliasType2) of
+            (TyMonad tm1, TyMonad tm2) -> compatibleMonadTypes tm1 tm2
+            _ -> return False)
+      (return False)
+  return (typeName1 == typeName2 || aliasTypesCompatible)
+compatibleMonadTypes (MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
+  (&&) <$> (m1 `alphaEq` m2) <*> compatibleMonadTypes tm1 tm2
+compatibleMonadTypes (MTyMonad m1) (MTyMonadCons m2 _) = m1 `alphaEq` m2
+compatibleMonadTypes (MTyAlias typeName1) tm2@(MTyMonadCons {}) = do
+  ifM (isAliasDefined typeName1)
+    (do aliasType1 <- getAliasType typeName1
+        case aliasType1 of
+          TyMonad tm1 -> compatibleMonadTypes tm1 tm2
+          _ -> return False)
+    (return False)
+compatibleMonadTypes tm1@(MTyMonad {}) (MTyAlias typeName2) = do
+  ifM (isAliasDefined typeName2)
+    (do aliasType2 <- getAliasType typeName2
+        case aliasType2 of
+          TyMonad tm2 -> compatibleMonadTypes tm1 tm2
+          _ -> return False)
+    (return False)
+compatibleMonadTypes tm1 tm2 = compatibleMonadTypes tm2 tm1
+
+-- | Compares two monads in terms of their effects.
+-- Main idea: monad cons cell has more effects than a single monad.
+--
+-- Assumption: 'compatibleMonadTypes' returned True.
+hasMoreEffectsThan :: TypeM -> TypeM -> TypeCheckM Bool
+hasMoreEffectsThan (MTyMonadCons _ tm1) (MTyMonadCons _ tm2) = tm1 `hasMoreEffectsThan` tm2
+hasMoreEffectsThan (MTyMonadCons {}) (MTyMonad {}) = return True
+hasMoreEffectsThan t1 (MTyAlias typeName2) = do
+  aliasType2 <- getAliasType typeName2
+  case aliasType2 of
+    TyMonad t2 -> t1 `hasMoreEffectsThan` t2
+hasMoreEffectsThan (MTyMonad {}) (MTyMonad {}) = return False
+hasMoreEffectsThan t1@(MTyAlias {}) t2 = t2 `hasMoreEffectsThan` t1
+hasMoreEffectsThan t1@(MTyMonad {}) t2@(MTyMonadCons {}) = t2 `hasMoreEffectsThan` t1
+

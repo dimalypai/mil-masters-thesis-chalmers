@@ -243,11 +243,13 @@ tcExpr expr =
                   locallyWithEnv localTypeEnv (tcExpr bodyExpr)
           else tcExpr bodyExpr
       case bodyType of
-        TyApp (TyMonad bodyExprTm) _ ->
-          unlessM (bodyExprTm `alphaEq` bindExprTm) $  -- TODO: rising
+        TyApp (TyMonad bodyExprTm) bodyResultType -> do
+          unlessM (compatibleMonadTypes bodyExprTm bindExprTm) $
             throwError $ IncorrectMonad bindExprTm bodyExprTm
+          ifM (bindExprTm `hasMoreEffectsThan` bodyExprTm)
+            (return $ TyApp (TyMonad bindExprTm) bodyResultType)
+            (return $ TyApp (TyMonad bodyExprTm) bodyResultType)
         _ -> throwError $ NotMonadicType bodyType
-      return bodyType
 
     ReturnE tm retExpr -> do
       checkTypeM tm

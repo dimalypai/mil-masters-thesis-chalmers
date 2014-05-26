@@ -6,29 +6,31 @@ type Maybe A
   = Nothing
   | Just A;
 
-alias Impure_M = Error Unit ::: State ::: Lift ::: IO ::: Id;
+alias Pure_M = Error Unit ::: Lift;
+
+alias Impure_M = Error Unit ::: Lift ::: State ::: IO;
 
 main : Impure_M Unit =
-  let (var_2 : Bool -> Id Unit) <- let (var_0 : Int -> Bool -> Id Unit) <- return [Impure_M] pureFun in
-                                     let (var_1 : Int) <- return [Impure_M] 1 in
-                                       return [Impure_M] var_0 var_1 in
+  let (var_2 : Bool -> Pure_M Unit) <- let (var_0 : Int -> Bool -> Pure_M Unit) <- return [Impure_M] pureFun in
+                                         let (var_1 : Int) <- return [Impure_M] 1 in
+                                           return [Impure_M] var_0 var_1 in
     let (var_3 : Bool) <- return [Impure_M] True in
-      lift [Id -> Impure_M] var_2 var_3;
+      var_2 var_3;
 
-pureFun : Int -> Bool -> Id Unit =
-  \(a : Int) -> \(b : Bool) -> let (_ : Float -> Impure_M Unit) <- let (var_4 : Float -> Float -> Impure_M Unit) <- return [Id] impureFun in
-                                                                     let (var_5 : Float) <- return [Id] 1.0e-2 in
-                                                                       return [Id] var_4 var_5 in
-                                 let (_ : Unit) <- let (var_8 : Bool -> Id Unit) <- let (var_6 : Int -> Bool -> Id Unit) <- return [Id] pureFun in
-                                                                                      let (var_7 : Int) <- return [Id] a in
-                                                                                        return [Id] var_6 var_7 in
-                                                     let (var_9 : Bool) <- return [Id] b in
+pureFun : Int -> Bool -> Pure_M Unit =
+  \(a : Int) -> \(b : Bool) -> let (_ : Float -> Impure_M Unit) <- let (var_4 : Float -> Float -> Impure_M Unit) <- return [Pure_M] impureFun in
+                                                                     let (var_5 : Float) <- return [Pure_M] 1.0e-2 in
+                                                                       return [Pure_M] var_4 var_5 in
+                                 let (_ : Unit) <- let (var_8 : Bool -> Pure_M Unit) <- let (var_6 : Int -> Bool -> Pure_M Unit) <- return [Pure_M] pureFun in
+                                                                                          let (var_7 : Int) <- return [Pure_M] a in
+                                                                                            return [Pure_M] var_6 var_7 in
+                                                     let (var_9 : Bool) <- return [Pure_M] b in
                                                        var_8 var_9 in
-                                   return [Id] unit;
+                                   return [Pure_M] unit;
 
 impureFun : Float -> Float -> Impure_M Unit =
-  \(a : Float) -> \(b : Float) -> let (_ : Bool -> Id Unit) <- let (var_10 : Int -> Bool -> Id Unit) <- return [Impure_M] pureFun in
-                                                                 let (var_11 : Int) <- return [Impure_M] 1 in
-                                                                   return [Impure_M] var_10 var_11 in
+  \(a : Float) -> \(b : Float) -> let (_ : Bool -> Pure_M Unit) <- let (var_10 : Int -> Bool -> Pure_M Unit) <- return [Impure_M] pureFun in
+                                                                     let (var_11 : Int) <- return [Impure_M] 1 in
+                                                                       return [Impure_M] var_10 var_11 in
                                     return [Impure_M] unit;
 

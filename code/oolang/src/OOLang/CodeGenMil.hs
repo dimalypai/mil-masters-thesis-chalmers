@@ -2,9 +2,8 @@
 
 -- | Module responsible for MIL code generation.
 --
--- All generated code operates in two monads: Id for pure computations and
--- Impure_M for default (impure) computations. Impure_M is a fixed stack of
--- monads, see 'impureMonadType'.
+-- All generated code operates in two monads: Pure_M for pure computations and
+-- Impure_M for default (impure) computations.
 -- Statement sequences are represented with monadic binds.
 -- Basically, all expressions (even the simplest ones, like literals and
 -- variables) result in some sequence of binds (possibly empty) and return. We
@@ -101,7 +100,7 @@ codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
   funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv . fst)
   let isPure = isPureFunType funType
   let funMonad = if isPure
-                   then idMonad
+                   then pureMonad
                    else impureMonad
   let milFunType = funTypeMil funType
   funBody <- codeGenStmts tyStmts funMonad
@@ -156,16 +155,14 @@ codeGenExpr tyExpr funMonad =
 
     VarE _ varType var varPure -> do
       let varE = MIL.VarE $ MIL.VarBinder (varMil var, typeMil varType)
-      case (isValueType varType, isPureFunType varType, funMonad == idMonad) of
+      case (isValueType varType, isPureFunType varType, funMonad == pureMonad) of
         -- It is a function, so to make it monadic value, we need return.
         (False, _, _) -> return $ MIL.ReturnE funMonad varE
         -- It is an impure value type inside a pure function, so it is a local
         -- variable or parameter and it is pure, we need return.
         (True, False, True) -> return $ MIL.ReturnE funMonad varE
-        -- Id monad value inside an impure function, need lifting.
-        (True, True, False) -> return $ MIL.LiftE varE idMonad funMonad
-        -- Id monad value inside a pure function.
-        (True, True, True) -> return varE
+        -- Pure_M monad value inside a pure or impure function.
+        (True, True, _) -> return varE
         -- It is an impure value inside an impure function (must be global
         -- impure function), use 'funTypeMil' for type annotation.
         (True, False, False) -> return $ MIL.VarE $ MIL.VarBinder (varMil var, funTypeMil varType)
@@ -205,16 +202,13 @@ codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
              milExpr1
              (MIL.LetE (MIL.VarBinder (var2, var2Type))
                 milExpr2
-                (case (isValueType resultType, isPureFunType resultType, funMonad == idMonad) of
+                (case (isValueType resultType, isPureFunType resultType, funMonad == pureMonad) of
                    -- It is a partially applied function, so to make it monadic
                    -- value, we need return.
                    (False, _, _) -> MIL.ReturnE funMonad appE
                    --(True, False, True) -> MIL.ReturnE funMonad appE  -- TODO: should this be possible?
-                   -- Fully applied Pure function inside an impure function,
-                   -- need lifting.
-                   (True, True, False) -> MIL.LiftE appE idMonad funMonad
-                   -- Fully applied Pure function inside a pure function.
-                   (True, True, True) -> appE
+                   -- Fully applied Pure function inside a pure or impure function.
+                   (True, True, _) -> appE
                    -- Fully applied impure function inside an impure function.
                    (True, False, False) -> appE))
 
@@ -250,14 +244,14 @@ typeMil TyFloat  = MIL.floatType
 typeMil TyString = MIL.stringType
 typeMil (TyClass className) = MIL.TyTypeCon $ typeNameMil className
 typeMil (TyArrow t1 t2)     = MIL.TyArrow (typeMil t1) (funTypeMil t2)
-typeMil (TyPure t)          = MIL.TyApp (MIL.TyMonad idMonad) (typeMil t)
+typeMil (TyPure t)          = MIL.TyApp (MIL.TyMonad pureMonad) (typeMil t)
 typeMil (TyMaybe t)         = MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (typeMil t)
 typeMil (TyMutable t)       = typeMil t
 
 -- | See Note [Type transformation].
 funTypeMil :: Type -> MIL.Type
 funTypeMil (TyArrow t1 t2) = MIL.TyArrow (typeMil t1) (funTypeMil t2)
-funTypeMil (TyPure t)      = MIL.TyApp (MIL.TyMonad idMonad) (typeMil t)
+funTypeMil (TyPure t)      = MIL.TyApp (MIL.TyMonad pureMonad) (typeMil t)
 funTypeMil (TyMaybe t)     = MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (typeMil t)
 funTypeMil (TyMutable t)   = typeMil t
 funTypeMil               t = MIL.TyApp (MIL.TyMonad impureMonad) (typeMil t)
@@ -289,12 +283,21 @@ builtInTypeDefs =
 
 builtInAliasDefs :: [MIL.AliasDef]
 builtInAliasDefs =
-  [MIL.AliasDef impureMonadName $ MIL.TyMonad impureMonadType]
+  [ MIL.AliasDef pureMonadName   $ MIL.TyMonad pureMonadType
+  , MIL.AliasDef impureMonadName $ MIL.TyMonad impureMonadType]
 
 -- * Monads
 
-idMonad :: MIL.TypeM
-idMonad = MIL.MTyMonad MIL.Id
+pureMonadName :: MIL.TypeName
+pureMonadName = MIL.TypeName "Pure_M"
+
+pureMonad :: MIL.TypeM
+pureMonad = MIL.MTyAlias pureMonadName
+
+pureMonadType :: MIL.TypeM
+pureMonadType =
+  MIL.MTyMonadCons (MIL.Error exceptionType) $
+    MIL.MTyMonad MIL.Lift
 
 impureMonadName :: MIL.TypeName
 impureMonadName = MIL.TypeName "Impure_M"
@@ -305,12 +308,10 @@ impureMonad = MIL.MTyAlias impureMonadName
 impureMonadType :: MIL.TypeM
 impureMonadType =
   MIL.MTyMonadCons (MIL.Error exceptionType) $
-    MIL.MTyMonadCons MIL.State $
-      MIL.MTyMonadCons MIL.Lift $
-        MIL.MTyMonadCons MIL.IO $
-          MIL.MTyMonad MIL.Id
+    MIL.MTyMonadCons MIL.Lift $
+      MIL.MTyMonadCons MIL.State $
+        MIL.MTyMonad MIL.IO
 
--- TODO: should be a built-in Exception class type.
 exceptionType :: MIL.Type
 exceptionType = MIL.unitType
 
