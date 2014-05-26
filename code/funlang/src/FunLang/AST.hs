@@ -156,7 +156,8 @@ data Expr v s = LitE (LiteralS s)
                 -- List of statements is not empty.
               | DoE s [Stmt v s]
               | BinOpE s (BinOpS s) (Expr v s) (Expr v s)
-              | ThrowE s
+                -- | Annotated with the type on the source level.
+              | ThrowE s (TypeS s)
                 -- | Used for better source spans and pretty printing.
               | ParenE s (Expr v s)
   deriving Show

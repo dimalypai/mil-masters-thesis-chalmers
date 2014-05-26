@@ -1,5 +1,5 @@
 fun : Unit
-fun = throw;;
+fun = throw [Unit];;
 
 fun2 : Unit
 fun2 = 1 catch 2 catch 3;;

@@ -353,13 +353,13 @@ spec =
           srcSp = mkSrcSpan fileName
           ast = Program (srcSp 1 1 5 26)
                   []
-                  [ FunDef (srcSp 1 1 2 13)
+                  [ FunDef (srcSp 1 1 2 20)
                       (FunName "fun", srcSp 1 1 1 3)
                       (SrcTyCon (TypeName "Unit", srcSp 1 7 1 10))
-                      [FunEq (srcSp 2 1 2 12)
+                      [FunEq (srcSp 2 1 2 19)
                          (FunName "fun", srcSp 2 1 2 3)
                          []
-                         (ThrowE $ srcSp 2 7 2 11)]
+                         (ThrowE (srcSp 2 7 2 11) (SrcTyCon (TypeName "Unit", srcSp 2 14 2 17)))]
                   , FunDef (srcSp 4 1 5 26)
                       (FunName "fun2", srcSp 4 1 4 4)
                       (SrcTyCon (TypeName "Unit", srcSp 4 8 4 11))

@@ -193,8 +193,8 @@ atomexpr : literal { LitE $1 }
                              (Var $ getTokId $1) }
          | upperId {% withFileName $ \fileName ->
                         ConNameE (ConName $ getTokId $1, mkTokSrcSpan $1 fileName) }
-         | throw {% withFileName $ \fileName ->
-                      ThrowE (mkTokSrcSpan $1 fileName) }
+         | throw '[' srctype ']' {% withFileName $ \fileName ->
+                                      ThrowE (mkTokSrcSpan $1 fileName) $3 }
          | '(' expr ')' {% withFileName $ \fileName ->
                              ParenE (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName)
                                     $2 }
