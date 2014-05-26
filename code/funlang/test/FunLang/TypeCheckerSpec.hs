@@ -189,6 +189,12 @@ spec =
       it "given a constructor pattern of incorrect type" $
         failureCase "ConPatternIncorrectType"
 
+      it "given a throw annotated with incorrect type" $
+        failureCase "ThrowIncorrectType"
+
+      it "given a catch with two branches of different types" $
+        failureCase "CatchDifferentTypes"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

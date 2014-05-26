@@ -1,0 +1,2 @@
+FunLang type checking error at CatchDifferentTypes.fl:3,18-3,25:
+  The expression needs to have type 'Int', but it has type 'String'

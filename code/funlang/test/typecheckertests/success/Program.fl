@@ -102,3 +102,7 @@ caseExprPoly = /\A . \(tree : Tree A) ->
     | Node _ (left : Tree A) Empty => caseExprPoly [A] left
     | Node _ (Node (x : A) _ _) (Node _ _ _) => x
   end;;
+
+exceptions : Unit
+exceptions = throw [Unit] catch unit;;
+

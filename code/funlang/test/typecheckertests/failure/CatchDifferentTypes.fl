@@ -1,0 +1,5 @@
+main : IO Unit
+main = do
+  return 1 catch "String";
+end;;
+

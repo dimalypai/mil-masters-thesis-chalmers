@@ -268,6 +268,10 @@ tcExpr srcExpr =
       (tySubExpr, exprType) <- tcExpr srcSubExpr
       return (ParenE s tySubExpr, exprType)
 
+    ThrowE s srcThrowType -> do
+      throwType <- srcTypeToType srcThrowType
+      return (ThrowE s srcThrowType, throwType)
+
     DoE {} -> error "do-block is illegal in this context"
 
 -- | Takes a scrurinee (an expression we are pattern matching on) type and a
@@ -355,6 +359,7 @@ tcBinOp op srcExpr1 srcExpr2 = do
   tyExpr2WithType@(tyExpr2, _) <- tcExpr srcExpr2
   resultType <- case op of
     App -> tcApp tyExpr1WithType tyExpr2WithType
+    Catch -> tcCatch tyExpr1WithType tyExpr2WithType
   return (tyExpr1, tyExpr2, resultType)
 
 -- | Type synonym for binary operation type checking functions.
@@ -371,6 +376,12 @@ tcApp (tyExpr1, expr1Type) (tyExpr2, expr2Type) =
         then throwError $ IncorrectFunArgType tyExpr2 argType expr2Type
         else return resultType
     _ -> throwError $ NotFunctionType tyExpr1 expr1Type
+
+tcCatch :: BinOpTc
+tcCatch (_, expr1Type) (tyExpr2, expr2Type) =
+  if expr1Type `alphaEq` expr2Type
+    then return expr1Type
+    else throwError $ IncorrectExprType expr1Type expr2Type (getSrcSpan tyExpr2)
 
 -- | Do-block type checking.
 -- Takes a monad in which it should operate.
