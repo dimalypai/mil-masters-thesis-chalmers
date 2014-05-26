@@ -113,8 +113,17 @@ codeGenFunDef (FunDef _ srcFunName tyFunType tyStmts) = do
 
 -- | List of statements is not empty.
 -- Takes a monad of the containing function.
+--
+-- Declaration statement needs a special treatment to get variable scope right.
 codeGenStmts :: [TyStmt] -> MIL.TypeM -> CodeGenM MIL.Expr
+
+codeGenStmts [DeclS _ decl] funMonad =
+  codeGenDecl decl funMonad (MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit))
 codeGenStmts [tyStmt] funMonad = codeGenStmt tyStmt funMonad
+
+codeGenStmts ((DeclS _ decl):tyStmts) funMonad = do
+  milBodyExpr <- codeGenStmts tyStmts funMonad
+  codeGenDecl decl funMonad milBodyExpr
 codeGenStmts (tyStmt:tyStmts) funMonad = do
   milBindExpr <- codeGenStmt tyStmt funMonad
   -- See Note [Variable type in bind].
@@ -128,15 +137,29 @@ codeGenStmts (tyStmt:tyStmts) funMonad = do
 codeGenStmt :: TyStmt -> MIL.TypeM -> CodeGenM MIL.Expr
 codeGenStmt tyStmt funMonad =
   case tyStmt of
-    -- TODO: It will be a bind introducing new variable
-    DeclS _ tyDecl -> undefined
-
     ExprS _ tyExpr -> codeGenExpr tyExpr funMonad
 
     -- TODO:
     -- + "then" with state putting operations
     -- + ANF/SSA construction
     AssignS _ srcAssignOp tyExprLeft tyExprRight _ -> undefined
+
+    DeclS {} -> error "codeGenStmt: DeclS should have a special treatment."
+
+-- | Code generation for declarations.
+-- It takes an expression which will become a body of the monadic bind, where a
+-- declared variable will be in scope.
+codeGenDecl :: TyDeclaration -> MIL.TypeM -> MIL.Expr -> CodeGenM MIL.Expr
+codeGenDecl (Decl _ tyVarBinder mTyInit _) funMonad milBodyExpr = do
+  milInitExpr <- case mTyInit of
+                  Just tyInit -> codeGenExpr (getInitExpr tyInit) funMonad
+                  -- It may be a variable with Mutable type, so we need
+                  -- 'getUnderType'.
+                  Nothing -> codeGenExpr (maybeDefaultExpr $ getUnderType $ getTypeOf tyVarBinder) funMonad
+  return $ MIL.LetE ( MIL.VarBinder (varMil (getVar $ getBinderVar tyVarBinder)
+                    , typeMil $ getTypeOf tyVarBinder))
+             milInitExpr
+             milBodyExpr
 
 -- | Expression code generation.
 -- Takes a monad of the containing function.
@@ -155,16 +178,19 @@ codeGenExpr tyExpr funMonad =
         (True, False, True) -> return $ MIL.ReturnE funMonad varE
         -- Pure_M monad value inside a pure or impure function.
         (True, True, _) -> return varE
-        -- It is an impure value inside an impure function (must be global
-        -- impure function), use 'funTypeMil' for type annotation.
-        (True, False, False) -> return $ MIL.VarE $ MIL.VarBinder (varMil var, funTypeMil varType)
+        -- It can be an impure value inside an impure function (must be global
+        -- impure function), then use 'funTypeMil' for type annotation, or it
+        -- can be a local variable, look at its purity annotation.
+        (True, False, False) -> if varPure
+                                  then return $ MIL.ReturnE funMonad varE
+                                  else return $ MIL.VarE $ MIL.VarBinder (varMil var, funTypeMil varType)
 
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 _ ->
       codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
 
     ParenE _ tySubExpr -> codeGenExpr tySubExpr funMonad
 
-literalMil :: Literal t s -> MIL.Expr
+literalMil :: TyLiteral -> MIL.Expr
 literalMil UnitLit {} = MIL.LitE MIL.UnitLit
 literalMil (BoolLit _ _ b) =
   if b
@@ -173,10 +199,13 @@ literalMil (BoolLit _ _ b) =
 literalMil (IntLit _ _ i)     = MIL.LitE (MIL.IntLit i)
 literalMil (FloatLit _ _ f _) = MIL.LitE (MIL.FloatLit f)
 literalMil (StringLit _ _ s)  = MIL.LitE (MIL.StringLit s)
-literalMil NothingLit {} =
-  MIL.ConNameE (MIL.ConName "Nothing")
-    (MIL.TyForAll (MIL.TypeVar "A") $
-       MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (MIL.mkTypeVar "A"))
+literalMil (NothingLit _ t _) =
+  -- Monomorphise Nothing constructor.
+  MIL.TypeAppE
+    (MIL.ConNameE (MIL.ConName "Nothing")
+       (MIL.TyForAll (MIL.TypeVar "A") $
+          MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (MIL.mkTypeVar "A")))
+    (typeMil $ getMaybeUnderType t)
 
 -- | Takes a monad of the containing function.
 codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Type -> MIL.TypeM -> CodeGenM MIL.Expr
@@ -277,6 +306,10 @@ builtInAliasDefs :: [MIL.AliasDef]
 builtInAliasDefs =
   [ MIL.AliasDef pureMonadName   $ MIL.TyMonad pureMonadType
   , MIL.AliasDef impureMonadName $ MIL.TyMonad impureMonadType]
+
+maybeDefaultExpr :: Type -> TyExpr
+maybeDefaultExpr t@(TyRef mt) = NewRefE undefined t (LitE $ NothingLit undefined mt undefined)
+maybeDefaultExpr t = LitE $ NothingLit undefined t undefined
 
 -- * Monads
 

@@ -1,0 +1,10 @@
+def main : Unit =>
+  a : Unit = unit;
+  #b : Maybe Int = just 2;
+  c : Maybe Int;
+  d : Mutable Int <- 3;
+  #e : Mutable (Maybe Int) <- nothing [Maybe Int];
+  f : Mutable (Maybe (Maybe Bool));
+  a;
+end
+

@@ -14,6 +14,9 @@ getFunReturnType (FunType _ _ retType) = retType
 getInitOpS :: Init t s -> InitOpS s
 getInitOpS (Init _ initOpS _) = initOpS
 
+getInitExpr :: Init t s -> Expr t s
+getInitExpr (Init _ _ e) = e
+
 getDeclVarName :: Declaration t s -> VarS s
 getDeclVarName (Decl _ varBinder _ _) = getBinderVar varBinder
 
@@ -33,6 +36,13 @@ getBinderSrcType (VarBinder _ _ _ srcType) = srcType
 getUnderType :: Type -> Type
 getUnderType (TyMutable t) = t
 getUnderType            t  = t
+
+-- | For type `Maybe A` returns a type `A`.
+--
+-- Note: make sure that you pass 'TyMaybe'.
+getMaybeUnderType :: Type -> Type
+getMaybeUnderType (TyMaybe t) = t
+getMaybeUnderType t = error ("getMaybeUnderType: Not a Maybe type: " ++ show t)
 
 -- | Removes 'TyPure' on the top-level if there is one.
 stripPureType :: Type -> Type

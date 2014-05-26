@@ -1,0 +1,18 @@
+type Bool
+  = True
+  | False;
+
+type Maybe A
+  = Nothing
+  | Just A;
+
+alias Pure_M = Error Unit ::: Lift;
+
+alias Impure_M = Error Unit ::: Lift ::: State ::: IO;
+
+main : Impure_M Unit =
+  let (a : Unit) <- return [Impure_M] unit in
+    let (c : Maybe Int) <- return [Impure_M] Nothing [Int] in
+      let (d : Int) <- return [Impure_M] 3 in
+        let (f : Maybe (Maybe Bool)) <- return [Impure_M] Nothing [Maybe Bool] in
+          return [Impure_M] a;

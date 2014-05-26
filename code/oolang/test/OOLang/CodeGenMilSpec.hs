@@ -33,6 +33,10 @@ spec =
     it "generates MIL code for functions with parameters" $
       testCase "FunctionsWithParams"
 
+    -- TODO: test Refs
+    it "generates MIL code for declaration statements" $
+      testCase "DeclarationStatements"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test (by comparing pretty printed
