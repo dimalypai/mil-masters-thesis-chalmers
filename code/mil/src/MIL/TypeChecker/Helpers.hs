@@ -259,9 +259,13 @@ instance SubstType MilMonad where
   tvArg `substTypeIn` (Error t) = Error (tvArg `substTypeIn` t)
   _ `substTypeIn` m = m
 
+-- * 'TypeM' helpers
+
 -- | Checks if two monads are compatible. This means if one of them is alpha
 -- equivalent to another or one of them is a prefix of another.
 -- For example, m1 is a prefix of m1 ::: m2.
+--
+-- This operation is commutative.
 compatibleMonadTypes :: TypeM -> TypeM -> TypeCheckM Bool
 compatibleMonadTypes (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
 compatibleMonadTypes (MTyAlias typeName1) (MTyAlias typeName2) = do
@@ -277,18 +281,18 @@ compatibleMonadTypes (MTyAlias typeName1) (MTyAlias typeName2) = do
 compatibleMonadTypes (MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
   (&&) <$> (m1 `alphaEq` m2) <*> compatibleMonadTypes tm1 tm2
 compatibleMonadTypes (MTyMonad m1) (MTyMonadCons m2 _) = m1 `alphaEq` m2
-compatibleMonadTypes (MTyAlias typeName1) tm2@(MTyMonadCons {}) = do
+compatibleMonadTypes (MTyAlias typeName1) t2@(MTyMonadCons {}) = do
   ifM (isAliasDefined typeName1)
     (do aliasType1 <- getAliasType typeName1
         case aliasType1 of
-          TyMonad tm1 -> compatibleMonadTypes tm1 tm2
+          TyMonad tm1 -> compatibleMonadTypes tm1 t2
           _ -> return False)
     (return False)
-compatibleMonadTypes tm1@(MTyMonad {}) (MTyAlias typeName2) = do
+compatibleMonadTypes t1@(MTyMonad {}) (MTyAlias typeName2) = do
   ifM (isAliasDefined typeName2)
     (do aliasType2 <- getAliasType typeName2
         case aliasType2 of
-          TyMonad tm2 -> compatibleMonadTypes tm1 tm2
+          TyMonad tm2 -> compatibleMonadTypes t1 tm2
           _ -> return False)
     (return False)
 compatibleMonadTypes tm1 tm2 = compatibleMonadTypes tm2 tm1
