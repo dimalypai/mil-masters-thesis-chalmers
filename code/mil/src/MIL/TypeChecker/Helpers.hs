@@ -312,3 +312,55 @@ hasMoreEffectsThan (MTyMonad {}) (MTyMonad {}) = return False
 hasMoreEffectsThan t1@(MTyAlias {}) t2 = t2 `hasMoreEffectsThan` t1
 hasMoreEffectsThan t1@(MTyMonad {}) t2@(MTyMonadCons {}) = t2 `hasMoreEffectsThan` t1
 
+-- | Checks if the first monad is a suffix of the second one or if they are
+-- alpha equivalent.
+-- For example, m2 is a suffix of m1 ::: m2.
+--
+-- This operation is *not* commutative.
+isMonadSuffixOf :: TypeM -> TypeM -> TypeCheckM Bool
+isMonadSuffixOf (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
+isMonadSuffixOf (MTyAlias typeName1) (MTyAlias typeName2) = do
+  aliasTypesSuffix <-
+    ifM ((&&) <$> isAliasDefined typeName1 <*> isAliasDefined typeName2)
+      (do aliasType1 <- getAliasType typeName1
+          aliasType2 <- getAliasType typeName2
+          case (aliasType1, aliasType2) of
+            (TyMonad tm1, TyMonad tm2) -> tm1 `isMonadSuffixOf` tm2
+            _ -> return False)
+      (return False)
+  return (typeName1 == typeName2 || aliasTypesSuffix)
+isMonadSuffixOf t1@(MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) = do
+  isSuffix <- (&&) <$> (m1 `alphaEq` m2) <*> tm1 `isMonadSuffixOf` tm2
+  isShiftedSuffix <- t1 `isMonadSuffixOf` tm2
+  return (isSuffix || isShiftedSuffix)
+isMonadSuffixOf t1@(MTyMonad {}) (MTyMonadCons _ tm2) = t1 `isMonadSuffixOf` tm2
+isMonadSuffixOf (MTyAlias typeName1) t2@(MTyMonadCons {}) = do
+  ifM (isAliasDefined typeName1)
+    (do aliasType1 <- getAliasType typeName1
+        case aliasType1 of
+          TyMonad tm1 -> tm1 `isMonadSuffixOf` t2
+          _ -> return False)
+    (return False)
+isMonadSuffixOf t1@(MTyMonadCons {}) (MTyAlias typeName2) = do
+  ifM (isAliasDefined typeName2)
+    (do aliasType2 <- getAliasType typeName2
+        case aliasType2 of
+          TyMonad tm2 -> t1 `isMonadSuffixOf` tm2
+          _ -> return False)
+    (return False)
+isMonadSuffixOf t1@(MTyMonad {}) (MTyAlias typeName2) = do
+  ifM (isAliasDefined typeName2)
+    (do aliasType2 <- getAliasType typeName2
+        case aliasType2 of
+          TyMonad tm2 -> t1 `isMonadSuffixOf` tm2
+          _ -> return False)
+    (return False)
+isMonadSuffixOf (MTyAlias typeName1) t2@(MTyMonad {}) = do
+  ifM (isAliasDefined typeName1)
+    (do aliasType1 <- getAliasType typeName1
+        case aliasType1 of
+          TyMonad tm1 -> tm1 `isMonadSuffixOf` t2
+          _ -> return False)
+    (return False)
+isMonadSuffixOf (MTyMonadCons {}) (MTyMonad {}) = return False
+

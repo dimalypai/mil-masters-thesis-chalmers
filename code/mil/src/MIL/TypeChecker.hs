@@ -259,8 +259,9 @@ tcExpr expr =
     LiftE e tm1 tm2 -> do
       checkTypeM tm1
       checkTypeM tm2
+      unlessM (tm1 `isMonadSuffixOf` tm2) $
+        throwError $ IncorrectLifting tm1 tm2
       eType <- tcExpr e
-      -- TODO: check monads
       return $ TyApp (TyMonad tm2) (getMonadResultType eType)
 
     TupleE tElems -> do

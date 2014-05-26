@@ -36,6 +36,7 @@ data TcError =
   | NotMonadicType Type
   | IncorrectExprType Type Type
   | IncorrectMonad TypeM TypeM
+  | IncorrectLifting TypeM TypeM
   {-
   | MainNotDefined
   | MainIncorrectType SrcType
@@ -132,6 +133,9 @@ instance Pretty TcError where
   prPrn (IncorrectMonad expType actType) =
     tcErrorHeader <+> text "The expression needs to operate in the" <+> quotes (prPrn expType) <+>
       text "monad, but it operates in the" <+> quotes (prPrn actType) <+> text "monad"
+
+  prPrn (IncorrectLifting tm1 tm2) =
+    tcErrorHeader <+> text "Incorrect lifting. Can not lift from" <+> quotes (prPrn tm1) <+> text "to" <+> quotes (prPrn tm2) <> text "."
 {-
   prPrn MainNotDefined = tcErrorHeader <> colon <+> text "Function 'main' is not defined"
 
