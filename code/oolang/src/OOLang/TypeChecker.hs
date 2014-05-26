@@ -121,9 +121,9 @@ collectClassMembers className srcMembers = do
 -- members with `self` or `super`.
 -- Checks that the specified field type is correct (used types are defined).
 collectClassField :: ClassName -> SrcFieldDecl -> TypeCheckM ()
-collectClassField className (FieldDecl _ (Decl _ varBinder _ _) _) = do
-  let fieldName = getVar (getBinderVar varBinder)
-  let fieldNameSrcSpan = getSrcSpan (getBinderVar varBinder)
+collectClassField className (FieldDecl _ (Decl _ srcVarBinder _ _) _) = do
+  let fieldName = getVar (getBinderVar srcVarBinder)
+  let fieldNameSrcSpan = getSrcSpan (getBinderVar srcVarBinder)
 
   when (fieldName == Var "self") $
     throwError $ SelfMemberName fieldNameSrcSpan
@@ -136,7 +136,7 @@ collectClassField className (FieldDecl _ (Decl _ varBinder _ _) _) = do
   whenM (isClassMemberDefinedM className memberName) $
     throwError $ MemberAlreadyDefined memberName fieldNameSrcSpan
 
-  fieldType <- srcTypeToType (getBinderType varBinder)
+  fieldType <- srcTypeToType (getBinderSrcType srcVarBinder)
   addClassFieldM className fieldName fieldType
 
 -- | Checks if a field with the same name is already defined.
@@ -281,8 +281,9 @@ tcClassMembers className srcMembers = do
 -- `super`, but mutual recursion and accessing current class members is *not*
 -- allowed.
 tcClassField :: ClassName -> SrcFieldDecl -> TypeCheckM TyFieldDecl
-tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit _) _) = do
-  let fieldName = getVar (getBinderVar varBinder)
+tcClassField className (FieldDecl fs (Decl ds srcVarBinder mSrcInit _) _) = do
+  let (VarBinder vs _ srcFieldName srcFieldType) = srcVarBinder
+  let fieldName = getVar srcFieldName
   fieldType <- getClassFieldTypeM className fieldName
   mTyInit <-
     case mSrcInit of
@@ -306,7 +307,8 @@ tcClassField className (FieldDecl fs (Decl ds varBinder mSrcInit _) _) = do
         unless (hasMaybeType fieldType) $
           throwError $ NonMaybeVarNotInit fieldName fs
         return Nothing
-  let tyDecl = Decl ds varBinder mTyInit True
+  let tyVarBinder = VarBinder vs fieldType srcFieldName srcFieldType
+  let tyDecl = Decl ds tyVarBinder mTyInit True
   return $ FieldDecl fs tyDecl []
 
 -- | Checks class method declaration.
@@ -335,19 +337,20 @@ tcClassMethod (MethodDecl s srcFunDef _) = do
 tcFunDef :: Bool -> SrcFunDef -> TypeCheckM TyFunDef
 tcFunDef insideClass (FunDef s srcFunName srcFunType srcStmts) = do
   -- collect function parameters and check for variable shadowing
-  let varBinders = getFunParams srcFunType
-  localTypeEnv <- foldM (\localTyEnv vb -> do
-      let var = getVar (getBinderVar vb)
+  let (FunType fts srcVarBinders srcRetType) = srcFunType
+  (localTypeEnv, revTyVarBinders) <- foldM (\(localTyEnv, revTyVbs) svb -> do
+      let (VarBinder vs _ srcVar srcVarType) = svb
+      let var = getVar srcVar
       isBound <- isVarBoundM var
       -- it is important to check in both places, since localTyEnv
       -- is not queried by 'isVarBoundM', see `FunParamsDup` test case
       when (isBound || isVarBound var localTyEnv) $
-        throwError $ VarShadowing (getBinderVar vb)
-      varType <- srcFunParamTypeToType (getBinderType vb)
-      return $ addLocalVar var varType localTyEnv)
-    emptyLocalTypeEnv varBinders
-  unless insideClass $  -- TODO
-    addFunctionParamsM (getFunName srcFunName) (getLocalEnvAssoc localTypeEnv)
+        throwError $ VarShadowing srcVar
+      varType <- srcFunParamTypeToType srcVarType
+      let tyVarBinder = VarBinder vs varType srcVar srcVarType
+      return (addLocalVar var varType localTyEnv, tyVarBinder:revTyVbs))
+    (emptyLocalTypeEnv, []) srcVarBinders
+  let tyFunType = FunType fts (reverse revTyVarBinders) srcRetType
 
   tyStmts <- locallyWithEnv localTypeEnv (mapM (tcStmt insideClass) srcStmts)
 
@@ -364,7 +367,7 @@ tcFunDef insideClass (FunDef s srcFunName srcFunType srcStmts) = do
       Just firstImpureStmt -> throwError $ FunctionNotPure srcFunName firstImpureStmt
       Nothing -> return ()
 
-  return $ FunDef s srcFunName srcFunType tyStmts
+  return $ FunDef s srcFunName tyFunType tyStmts
 
 -- | Note [Assignment purity]:
 --
@@ -451,12 +454,14 @@ tcStmt insideClass srcStmt =
 -- Takes a boolean indicator whether it is inside a class.
 -- Returns a type checked declaration.
 tcDecl :: Bool -> SrcDeclaration -> SrcStmt -> TypeCheckM TyDeclaration
-tcDecl insideClass (Decl s varBinder mSrcInit _) srcDeclStmt = do
-  let var = getVar $ getBinderVar varBinder
+tcDecl insideClass (Decl s srcVarBinder mSrcInit _) srcDeclStmt = do
+  let (VarBinder vs _ srcVar varSrcType) = srcVarBinder
+  let var = getVar srcVar
   whenM (isVarBoundM var) $
-    throwError $ VarShadowing (getBinderVar varBinder)
-  varType <- srcTypeToType (getBinderType varBinder)
+    throwError $ VarShadowing srcVar
+  varType <- srcTypeToType varSrcType
   addLocalVarM var varType
+  let tyVarBinder = VarBinder vs varType srcVar varSrcType
   -- See Note [Purity of declarations]
   case mSrcInit of
     Just srcInit -> do
@@ -472,11 +477,11 @@ tcDecl insideClass (Decl s varBinder mSrcInit _) srcDeclStmt = do
       let initType = getTypeOf tyInit
       unlessM (initType `isSubTypeOf` varType) $
         throwError $ DeclInitIncorrectType srcInit (getUnderType varType) initType
-      return $ Decl s varBinder (Just tyInit) (getPurityOf tyInit)
+      return $ Decl s tyVarBinder (Just tyInit) (getPurityOf tyInit)
     Nothing -> do
       unless (hasMaybeType varType) $
         throwError $ NonMaybeVarNotInit var (getSrcSpan srcDeclStmt)
-      return $ Decl s varBinder Nothing True
+      return $ Decl s tyVarBinder Nothing True
 
 -- | Initialisation expression type checking.
 -- Takes a boolean indicator whether it is inside a class.

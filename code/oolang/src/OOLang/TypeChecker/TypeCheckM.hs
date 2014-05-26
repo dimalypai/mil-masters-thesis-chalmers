@@ -24,7 +24,6 @@ module OOLang.TypeChecker.TypeCheckM
 
   , isFunctionDefinedM
   , addFunctionM
-  , addFunctionParamsM
   , getFunTypeInfoM
 
   , isVarBoundM
@@ -202,11 +201,6 @@ isFunctionDefinedM funName = isFunctionDefined funName <$> getFunTypeEnvM
 addFunctionM :: FunName -> Type -> SrcFunType -> TypeCheckM ()
 addFunctionM funName funType srcFunType =
   modifyFunTypeEnv $ addFunction funName funType srcFunType
-
--- | Note: Unsafe. Should be used only after check that function is defined.
-addFunctionParamsM :: FunName -> [(Var, Type)] -> TypeCheckM ()
-addFunctionParamsM funName funParams =
-  modifyFunTypeEnv $ addFunctionParams funName funParams
 
 -- | Returns all information about the function from the environment.
 --

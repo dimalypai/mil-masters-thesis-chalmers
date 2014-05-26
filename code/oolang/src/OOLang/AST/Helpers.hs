@@ -5,10 +5,10 @@ import OOLang.AST
 
 -- * Getters
 
-getFunParams :: FunType s -> [VarBinder s]
+getFunParams :: FunType t s -> [VarBinder t s]
 getFunParams (FunType _ varBinders _) = varBinders
 
-getFunReturnType :: FunType s -> TypeS s
+getFunReturnType :: FunType t s -> TypeS s
 getFunReturnType (FunType _ _ retType) = retType
 
 getInitOpS :: Init t s -> InitOpS s
@@ -17,14 +17,14 @@ getInitOpS (Init _ initOpS _) = initOpS
 getDeclVarName :: Declaration t s -> VarS s
 getDeclVarName (Decl _ varBinder _ _) = getBinderVar varBinder
 
-getDeclVarType :: Declaration t s -> TypeS s
-getDeclVarType (Decl _ varBinder _ _) = getBinderType varBinder
+getDeclVarSrcType :: Declaration t s -> TypeS s
+getDeclVarSrcType (Decl _ varBinder _ _) = getBinderSrcType varBinder
 
-getBinderVar :: VarBinder s -> VarS s
-getBinderVar (VarBinder _ srcVar _ ) = srcVar
+getBinderVar :: VarBinder t s -> VarS s
+getBinderVar (VarBinder _ _ srcVar _) = srcVar
 
-getBinderType :: VarBinder s -> TypeS s
-getBinderType (VarBinder _ _ srcType) = srcType
+getBinderSrcType :: VarBinder t s -> TypeS s
+getBinderSrcType (VarBinder _ _ _ srcType) = srcType
 
 -- | Returns an underlying type. For Mutable A it is A, for everything else it
 -- is just the type itself. Used with assignment type checking.
@@ -48,8 +48,8 @@ partitionClassMembers = foldr selectClassMember ([], [])
 
 -- * Setters
 
-setVarBinderAnn :: VarBinder s -> s -> VarBinder s
-setVarBinderAnn (VarBinder _ v t) s = VarBinder s v t
+setVarBinderAnn :: VarBinder t s -> s -> VarBinder t s
+setVarBinderAnn (VarBinder _ t v st) s = VarBinder s t v st
 
 -- * Predicates
 

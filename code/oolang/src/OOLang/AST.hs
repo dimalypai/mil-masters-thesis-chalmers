@@ -78,7 +78,7 @@ type TyClassDef  = ClassDef Type SrcSpan
 -- * function type
 --
 -- * list of statements (body) - not empty
-data FunDef t s = FunDef s (FunNameS s) (FunType s) [Stmt t s]
+data FunDef t s = FunDef s (FunNameS s) (FunType t s) [Stmt t s]
   deriving Show
 
 type SrcFunDef = FunDef ()   SrcSpan
@@ -135,7 +135,7 @@ type TyStmt  = Stmt Type SrcSpan
 -- literals) or impure (like reference operations).
 data Expr t s = LitE (Literal t s)
               | VarE s t Var Bool
-              | LambdaE s t [VarBinder s] (Expr t s)  -- ^ Not empty.
+              | LambdaE s t [VarBinder t s] (Expr t s)  -- ^ Not empty.
               | MemberAccessE s t (Expr t s) (MemberNameS s) Bool
               | MemberAccessMaybeE s t (Expr t s) (MemberNameS s) Bool
                 -- | Class access is just for new (constructor) right now.
@@ -231,15 +231,16 @@ type SrcType = TypeS SrcSpan
 --
 -- Note: used in parsing. Later will be transformed to the internal
 -- representation (using 'Type').
-data FunType s = FunType s [VarBinder s] (TypeS s)
+data FunType t s = FunType s [VarBinder t s] (TypeS s)
   deriving Show
 
-type SrcFunType = FunType SrcSpan
+type SrcFunType = FunType ()   SrcSpan
+type TyFunType  = FunType Type SrcSpan
 
 -- | Name (variable) declaration.
 -- Consists of var binder and an optional initialiser.
 -- Has a purity indicator.
-data Declaration t s = Decl s (VarBinder s) (Maybe (Init t s)) Bool
+data Declaration t s = Decl s (VarBinder t s) (Maybe (Init t s)) Bool
   deriving Show
 
 type SrcDeclaration = Declaration ()   SrcSpan
@@ -289,12 +290,15 @@ newtype Var = Var String
 type VarS s = (Var, s)
 type SrcVar = VarS SrcSpan
 
--- | Var binder is a pair of variable name and a type (in their source representations).
--- Used in function parameters.
-data VarBinder s = VarBinder s (VarS s) (TypeS s)
+-- | Var binder is a pair of variable name and a type (in their source
+-- representations).
+-- After the type checking becomes annotated with an internal type
+-- representation.
+data VarBinder t s = VarBinder s t (VarS s) (TypeS s)
   deriving Show
 
-type SrcVarBinder = VarBinder SrcSpan
+type SrcVarBinder = VarBinder ()   SrcSpan
+type TyVarBinder  = VarBinder Type SrcSpan
 
 newtype ClassName = ClassName String
   deriving (Show, Eq, Ord)

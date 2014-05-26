@@ -95,7 +95,7 @@ codeGenClassMethod :: TyMethodDecl -> CodeGenM MIL.FunDef
 codeGenClassMethod (MethodDecl _ tyFunDef _) = codeGenFunDef tyFunDef
 
 codeGenFunDef :: TyFunDef -> CodeGenM MIL.FunDef
-codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
+codeGenFunDef (FunDef _ srcFunName tyFunType tyStmts) = do
   let funName = getFunName srcFunName
   funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv . fst)
   let isPure = isPureFunType funType
@@ -104,8 +104,10 @@ codeGenFunDef (FunDef _ srcFunName _ tyStmts) = do
                    else impureMonad
   let milFunType = funTypeMil funType
   funBody <- codeGenStmts tyStmts funMonad
-  funParams <- asks (ftiParams . getFunTypeInfo funName . getFunTypeEnv . fst)
-  let funBodyWithParams = foldr (\(p, t) e -> MIL.LambdaE (MIL.VarBinder (varMil p, typeMil t)) e)
+  let funParams = getFunParams tyFunType
+  let funBodyWithParams = foldr (\tyVarBinder e ->
+                                   MIL.LambdaE ( MIL.VarBinder (varMil (getVar $ getBinderVar tyVarBinder)
+                                               , typeMil $ getTypeOf tyVarBinder)) e)
                             funBody funParams
   return $ MIL.FunDef (funNameMil funName) milFunType funBodyWithParams
 

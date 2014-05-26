@@ -38,3 +38,6 @@ instance TypeAnnotated Literal where
 instance TypeAnnotated Init where
   getTypeOf (Init _ _ e) = getTypeOf e
 
+instance TypeAnnotated VarBinder where
+  getTypeOf (VarBinder _ t _ _) = t
+

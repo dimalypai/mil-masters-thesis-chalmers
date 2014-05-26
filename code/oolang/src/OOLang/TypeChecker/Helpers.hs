@@ -140,7 +140,7 @@ isMutableOrRefNested                 _ = False
 srcFunTypeToType :: SrcFunType -> TypeCheckM Type
 srcFunTypeToType (FunType _ varBinders srcRetType) = do
   retType <- srcFunReturnTypeToType srcRetType
-  paramTypes <- mapM (srcFunParamTypeToType . getBinderType) varBinders
+  paramTypes <- mapM (srcFunParamTypeToType . getBinderSrcType) varBinders
   return $ tyArrowFromList retType paramTypes
 
 -- | Transforms function return type to the internal representation.

@@ -315,7 +315,7 @@ varbinder :: { SrcVarBinder }
 varbinder
   : lowerId ':' type
       {% withFileName $ \fileName ->
-           VarBinder (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $3] fileName)
+           VarBinder (combineSrcSpans [getTokSrcSpan $1, getSrcSpan $3] fileName) ()
                      (Var $ getTokId $1, mkTokSrcSpan $1 fileName)
                      $3 }
 
