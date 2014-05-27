@@ -150,7 +150,7 @@ typeMil (TyApp typeName typeArgs) =
       MIL.TyApp (MIL.TyMonad $ MIL.MTyMonad MIL.IO) (typeMil ioResultType)
     (TypeName "IO", _) -> error "IO type is ill-formed"
 
-    (TypeName "State", [stateResultType]) ->
+    (TypeName "State", [_, stateResultType]) ->
       MIL.TyApp (MIL.TyMonad $ MIL.MTyMonad MIL.State) (typeMil stateResultType)
     (TypeName "State", _) -> error "State type is ill-formed"
 
