@@ -368,4 +368,7 @@ General thoughts. Week 17
 * Problems with MIL type checking: monad cons prefix. Seems that it requires
   polymorphism and/or type inference. Or maybe we could choose a highest
   effect.
+* OOLang and FunLang notion of purity is probably Error and NonTerm and not Id.
+  Would be good to do effect inference (for NonTerm for example), but for now
+  it may be more conservative.
 
