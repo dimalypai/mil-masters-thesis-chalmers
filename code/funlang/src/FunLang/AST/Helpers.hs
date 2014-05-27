@@ -8,17 +8,11 @@ import FunLang.AST
 getFunEqBody :: FunEq v s -> Expr v s
 getFunEqBody (FunEq _ _ _ bodyExpr) = bodyExpr
 
-getVarTyVar :: VarTy -> Var
-getVarTyVar (VarTy (var, _)) = var
+getBinderVar :: VarBinder t s -> VarS s
+getBinderVar (VarBinder _ _ srcVar _) = srcVar
 
-getVarTyType :: VarTy -> Type
-getVarTyType (VarTy (_, varType)) = varType
-
-getBinderVar :: VarBinder s -> VarS s
-getBinderVar (VarBinder _ srcVar _) = srcVar
-
-getBinderType :: VarBinder s -> TypeS s
-getBinderType (VarBinder _ _ srcType) = srcType
+getBinderSrcType :: VarBinder t s -> TypeS s
+getBinderSrcType (VarBinder _ _ _ srcType) = srcType
 
 -- | Unsafe. Make sure that you pass 'TyApp'.
 getTyAppTypeName :: Type -> TypeName
@@ -38,9 +32,6 @@ getMonadResultType (TyApp _ typeArgs) = last typeArgs
 getMonadResultType _ = error "getMonadResultType: not a monadic type"
 
 -- * Synonyms
-
-getLiteral :: LiteralS s -> Literal
-getLiteral = fst
 
 getBinOp :: BinOpS s -> BinOp
 getBinOp = fst

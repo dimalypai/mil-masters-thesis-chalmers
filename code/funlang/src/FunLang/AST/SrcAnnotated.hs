@@ -10,7 +10,7 @@ module FunLang.AST.SrcAnnotated
 import FunLang.AST
 import FunLang.SrcAnnotated
 
-instance SrcAnnotated (TopDef v) where
+instance SrcAnnotated (TopDef a) where
   ann (TopTypeDef typeDef) = ann typeDef
   ann (TopFunDef funDef)   = ann funDef
 
@@ -20,29 +20,35 @@ instance SrcAnnotated TypeDef where
 instance SrcAnnotated ConDef where
   ann (ConDef s _ _) = s
 
-instance SrcAnnotated (FunDef v) where
+instance SrcAnnotated (FunDef a) where
   ann (FunDef s _ _ _) = s
 
-instance SrcAnnotated Pattern where
+instance SrcAnnotated (Pattern a) where
   ann (LitP lit) = ann lit
   ann (VarP varBinder) = ann varBinder
-  ann (ConP s _ _) = s
-  ann (DefaultP s) = s
+  ann (ConP s _ _ _) = s
+  ann (DefaultP s _) = s
   ann (ParenP s _) = s
 
-instance SrcAnnotated (Expr v) where
+instance SrcAnnotated (Expr a) where
   ann (LitE lit) = ann lit
-  ann (VarE s _) = s
-  ann (LambdaE s _ _) = s
-  ann (TypeLambdaE s _ _) = s
-  ann (TypeAppE s _ _) = s
-  ann (ConNameE conName) = ann conName
-  ann (CaseE s _ _) = s
-  ann (DoE s _) = s
-  ann (BinOpE s _ _ _) = s
+  ann (VarE s _ _) = s
+  ann (LambdaE s _ _ _) = s
+  ann (TypeLambdaE s _ _ _) = s
+  ann (TypeAppE s _ _ _) = s
+  ann (ConNameE _ conName) = ann conName
+  ann (CaseE s _ _ _) = s
+  ann (DoE s _ _) = s
+  ann (BinOpE s _ _ _ _) = s
   ann (ParenE s _) = s
 
-instance SrcAnnotated (CaseAlt v) where
+instance SrcAnnotated (Literal a) where
+  ann (UnitLit s _) = s
+  ann (IntLit s _ _) = s
+  ann (FloatLit s _ _ _) = s
+  ann (StringLit s _ _) = s
+
+instance SrcAnnotated (CaseAlt a) where
   ann (CaseAlt s _ _) = s
 
 instance SrcAnnotated TypeS where
@@ -52,6 +58,6 @@ instance SrcAnnotated TypeS where
   ann (SrcTyForAll s _ _) = s
   ann (SrcTyParen s _) = s
 
-instance SrcAnnotated VarBinder where
-  ann (VarBinder s _ _) = s
+instance SrcAnnotated (VarBinder a) where
+  ann (VarBinder s _ _ _) = s
 

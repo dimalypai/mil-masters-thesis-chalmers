@@ -34,8 +34,8 @@ ioType t = TyApp (TypeName "IO") [t]
 stateType :: Type -> Type -> Type
 stateType s a = TyApp (TypeName "State") [s, a]
 
-typeOfLiteral :: Literal -> Type
-typeOfLiteral UnitLit      = unitType
+typeOfLiteral :: Literal t s -> Type
+typeOfLiteral UnitLit   {} = unitType
 typeOfLiteral IntLit    {} = intType
 typeOfLiteral FloatLit  {} = floatType
 typeOfLiteral StringLit {} = stringType
