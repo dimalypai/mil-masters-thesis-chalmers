@@ -21,11 +21,11 @@ import Control.Applicative ((<$>))
 
 import FunLang.AST
 import FunLang.AST.Helpers
+import FunLang.AST.SrcAnnotated
 import FunLang.TypeChecker.TypeCheckM
 import FunLang.TypeChecker.TypeEnv
 import FunLang.TypeChecker.TcError
 import FunLang.TypeChecker.Helpers
-import FunLang.SrcAnnotated
 import FunLang.BuiltIn
 import FunLang.Utils
 
