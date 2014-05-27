@@ -153,7 +153,7 @@ typeMil (TyArrow t1 t2) = MIL.TyArrow (typeMil t1) (typeMil t2)
 typeMil (TyApp typeName typeArgs) =
   case (typeName, typeArgs) of
     (TypeName "IO", [ioResultType]) ->
-      MIL.TyApp (MIL.TyMonad $ MIL.MTyMonad MIL.IO) (typeMil ioResultType)
+      MIL.TyApp (MIL.TyMonad ioMonad) (typeMil ioResultType)
     (TypeName "IO", _) -> error "IO type is ill-formed"
 
     (TypeName "State", [_, stateResultType]) ->
@@ -171,7 +171,7 @@ typeMil (TyForAll typeVar t) = MIL.TyForAll (typeVarMil typeVar) (typeMil t)
 srcTypeToMilType :: SrcType -> CodeGenM MIL.Type
 srcTypeToMilType (SrcTyCon srcTypeName) =
   case getTypeName srcTypeName of
-    TypeName "IO" -> return $ MIL.TyMonad (MIL.MTyMonad MIL.IO)
+    TypeName "IO" -> return $ MIL.TyMonad ioMonad
     TypeName "State" -> return $ MIL.TyMonad (MIL.MTyMonad MIL.State)
     typeName -> do
       -- 'SrcTyCon' can represent both type names and type variables, so we
@@ -210,7 +210,8 @@ typeVarMil (TypeVar typeVarStr) = MIL.TypeVar typeVarStr
 
 builtInAliasDefs :: [MIL.AliasDef]
 builtInAliasDefs =
-  [MIL.AliasDef pureMonadName $ MIL.TyMonad pureMonadType]
+  [ MIL.AliasDef pureMonadName $ MIL.TyMonad pureMonadType
+  , MIL.AliasDef ioMonadName   $ MIL.TyMonad ioMonadType ]
 
 -- * Monads
 
@@ -224,6 +225,18 @@ pureMonadType :: MIL.TypeM
 pureMonadType =
   MIL.MTyMonadCons (MIL.Error exceptionType) $
     MIL.MTyMonad MIL.NonTerm
+
+ioMonadName :: MIL.TypeName
+ioMonadName = MIL.TypeName "IO_M"
+
+ioMonad :: MIL.TypeM
+ioMonad = MIL.MTyAlias ioMonadName
+
+ioMonadType :: MIL.TypeM
+ioMonadType =
+  MIL.MTyMonadCons (MIL.Error exceptionType) $
+    MIL.MTyMonadCons MIL.NonTerm $
+      MIL.MTyMonad MIL.IO
 
 exceptionType :: MIL.Type
 exceptionType = MIL.unitType
