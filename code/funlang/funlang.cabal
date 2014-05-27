@@ -18,6 +18,7 @@ executable flc
                        FunLang.AST.Helpers
                        FunLang.AST.PrettyPrinter
                        FunLang.AST.SrcAnnotated
+                       FunLang.AST.TypeAnnotated
                        FunLang.BuiltIn
                        FunLang.CodeGenMil
                        FunLang.Lexer
@@ -26,6 +27,7 @@ executable flc
                        FunLang.PrettyPrinter
                        FunLang.SrcAnnotated
                        FunLang.SrcSpan
+                       FunLang.TypeAnnotated
                        FunLang.TypeChecker
                        FunLang.TypeChecker.Helpers
                        FunLang.TypeChecker.TcError
