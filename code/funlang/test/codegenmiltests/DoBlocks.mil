@@ -1,3 +1,5 @@
+alias Pure_M = Error Unit ::: NonTerm;
+
 main : (IO ::: Id) Unit =
   let (_ : Unit) <- printString "Hello from main" in
     let (i : Int) <- readInt in

@@ -5,6 +5,8 @@ type T
 type Pair A B
   = MkPair A B;
 
+alias Pure_M = Error Unit ::: NonTerm;
+
 main : IO Unit =
   return [IO] unit;
 

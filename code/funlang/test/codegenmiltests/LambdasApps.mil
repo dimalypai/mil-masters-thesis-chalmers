@@ -1,3 +1,5 @@
+alias Pure_M = Error Unit ::: NonTerm;
+
 main : IO Unit =
   return [IO] unit;
 

@@ -14,6 +14,7 @@ import FunLang.AST.Helpers
 import FunLang.TypeChecker
 import FunLang.TypeChecker.TypeEnv
 import qualified MIL.AST as MIL
+import qualified MIL.BuiltIn as MIL
 
 -- | Entry point to the code generator.
 -- Takes a type checked program in FunLang and a type environment and produces
@@ -29,7 +30,7 @@ codeGenProgram :: TyProgram -> CodeGenM MIL.Program
 codeGenProgram (Program _ srcTypeDefs tyFunDefs) = do
   milTypeDefs <- mapM codeGenTypeDef srcTypeDefs
   milFunDefs <- mapM codeGenFunDef tyFunDefs
-  return $ MIL.Program (milTypeDefs, [], milFunDefs)
+  return $ MIL.Program (milTypeDefs, builtInAliasDefs, milFunDefs)
 
 codeGenTypeDef :: SrcTypeDef -> CodeGenM MIL.TypeDef
 codeGenTypeDef (TypeDef _ srcTypeName srcTypeVars srcConDefs) = do
@@ -198,4 +199,26 @@ varMil (Var varStr) = MIL.Var varStr
 
 typeVarMil :: TypeVar -> MIL.TypeVar
 typeVarMil (TypeVar typeVarStr) = MIL.TypeVar typeVarStr
+
+-- * Built-ins
+
+builtInAliasDefs :: [MIL.AliasDef]
+builtInAliasDefs =
+  [MIL.AliasDef pureMonadName $ MIL.TyMonad pureMonadType]
+
+-- * Monads
+
+pureMonadName :: MIL.TypeName
+pureMonadName = MIL.TypeName "Pure_M"
+
+pureMonad :: MIL.TypeM
+pureMonad = MIL.MTyAlias pureMonadName
+
+pureMonadType :: MIL.TypeM
+pureMonadType =
+  MIL.MTyMonadCons (MIL.Error exceptionType) $
+    MIL.MTyMonad MIL.NonTerm
+
+exceptionType :: MIL.Type
+exceptionType = MIL.unitType
 
