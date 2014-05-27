@@ -274,7 +274,7 @@ tcExpr srcExpr =
 
     DoE {} -> error "do-block is illegal in this context"
 
--- | Takes a scrurinee (an expression we are pattern matching on) type and a
+-- | Takes a scrutinee (an expression we are pattern matching on) type and a
 -- list of case alternatives (which is not empty). Returns a list of type
 -- checked case alternatives and a type of their bodies and so of the whole
 -- case expression (they all must agree).
