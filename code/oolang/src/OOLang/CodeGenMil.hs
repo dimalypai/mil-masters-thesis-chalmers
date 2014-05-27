@@ -35,8 +35,8 @@ import qualified MIL.Transformations.IdExprMonadElimination as MIL
 codeGen :: TyProgram -> TypeEnv -> MIL.Program
 codeGen tyProgram typeEnv = runReaderFrom (typeEnv, Map.empty) $ evalStateTFrom 0 (runCG $ codeGenProgram tyProgram)
 
--- | Code generation monad. Uses 'Reader' for querying the type environment and
--- class types.
+-- | Code generation monad. Uses 'StateT' for providing fresh variable names
+-- and 'Reader' for querying the type environment and class types.
 newtype CodeGenM a = CG { runCG :: StateT NameSupply (Reader (TypeEnv, ClassTypes)) a }
   deriving (Monad, MonadState NameSupply, MonadReader (TypeEnv, ClassTypes), Functor, Applicative)
 
