@@ -121,7 +121,8 @@ data Pattern t s =
   | ParenP s (Pattern t s)
   deriving Show
 
-type SrcPattern = Pattern SrcSpan
+type SrcPattern = Pattern ()   SrcSpan
+type TyPattern  = Pattern Type SrcSpan
 
 -- | Expression representation.
 --
