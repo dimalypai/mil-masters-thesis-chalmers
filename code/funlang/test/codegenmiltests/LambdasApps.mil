@@ -1,26 +1,40 @@
 alias Pure_M = Error Unit ::: NonTerm;
 
-main : IO Unit =
-  return [IO] unit;
+alias IO_M = Error Unit ::: NonTerm ::: IO;
 
-lamFun : Int -> Unit -> Float =
-  \(x : Int) -> \(y : Unit) -> 1.0e-2;
+main : IO_M Unit =
+  return [IO_M] unit;
 
-lamFun2 : Int -> Unit -> Float =
-  \(x : Int) -> \(y : Unit) -> 2.0e-2;
+lamFun : Pure_M (Int -> Pure_M (Unit -> Pure_M Float)) =
+  return [Pure_M] \(x : Int) -> return [Pure_M] \(y : Unit) -> return [Pure_M] 1.0e-2;
 
-lamApp1 : Unit -> Float =
-  lamFun 1;
+lamFun2 : Pure_M (Int -> Pure_M (Unit -> Pure_M Float)) =
+  return [Pure_M] \(x : Int) -> return [Pure_M] \(y : Unit) -> return [Pure_M] 2.0e-2;
 
-lamApp2 : Float =
-  lamApp1 unit;
+lamApp1 : Pure_M (Unit -> Pure_M Float) =
+  let (var_0 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun in
+    let (var_1 : Int) <- return [Pure_M] 1 in
+      var_0 var_1;
 
-lamApp3 : Unit -> Float =
-  lamFun2 1;
+lamApp2 : Pure_M Float =
+  let (var_0 : Unit -> Pure_M Float) <- lamApp1 in
+    let (var_1 : Unit) <- return [Pure_M] unit in
+      var_0 var_1;
 
-lamApp4 : Float =
-  lamFun2 1 unit;
+lamApp3 : Pure_M (Unit -> Pure_M Float) =
+  let (var_0 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun2 in
+    let (var_1 : Int) <- return [Pure_M] 1 in
+      var_0 var_1;
 
-lamFun3 : Unit -> Unit =
-  (\(x : Unit -> Unit) -> x) (\(x : Unit) -> x);
+lamApp4 : Pure_M Float =
+  let (var_0 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun2 in
+    let (var_1 : Int) <- return [Pure_M] 1 in
+      let (var_2 : Unit -> Pure_M Float) <- var_0 var_1 in
+        let (var_3 : Unit) <- return [Pure_M] unit in
+          var_2 var_3;
+
+lamFun3 : Pure_M (Unit -> Pure_M Unit) =
+  let (var_0 : (Unit -> Pure_M Unit) -> Pure_M (Unit -> Pure_M Unit)) <- return [Pure_M] (\(x : Unit -> Pure_M Unit) -> return [Pure_M] x) in
+    let (var_1 : Unit -> Pure_M Unit) <- return [Pure_M] (\(x : Unit) -> return [Pure_M] x) in
+      var_0 var1;
 

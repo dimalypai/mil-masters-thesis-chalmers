@@ -3,7 +3,7 @@ main = do
   return unit;
 end;;
 
-type T = MkT | MkTT
+type T = MkT (Int -> Unit) | MkTT
 
 type Pair A B = MkPair A B
 

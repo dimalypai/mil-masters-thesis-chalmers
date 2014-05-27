@@ -1,5 +1,5 @@
 type T
-  = MkT
+  = MkT (Pure_M (Int -> Pure_M Unit))
   | MkTT;
 
 type Pair A B
@@ -7,6 +7,9 @@ type Pair A B
 
 alias Pure_M = Error Unit ::: NonTerm;
 
-main : IO Unit =
-  return [IO] unit;
+alias IO_M = Error Unit ::: NonTerm ::: IO;
+
+main : IO_M Unit =
+  let (var_0 : Unit) <- return [IO_M] unit in
+    return [IO_M] var_0;
 
