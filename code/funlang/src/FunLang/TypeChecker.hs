@@ -2,9 +2,9 @@
 -- Built using the API from 'TypeCheckM'.
 --
 -- Type checking produces a type environment with information about global
--- definitions and annotates local variable occurences with their types. So,
--- when we say type checked and it is applicable to annotate something it also
--- means `annotated`.
+-- definitions and annotates some syntax nodes with their types. So, when we
+-- say type checked and it is applicable to annotate something it also means
+-- `annotated`.
 module FunLang.TypeChecker
   ( typeCheck
   , typeCheckStage
@@ -22,6 +22,7 @@ import Control.Applicative ((<$>))
 import FunLang.AST
 import FunLang.AST.Helpers
 import FunLang.AST.SrcAnnotated
+import FunLang.AST.TypeAnnotated
 import FunLang.TypeChecker.TypeCheckM
 import FunLang.TypeChecker.TypeEnv
 import FunLang.TypeChecker.TcError
@@ -44,7 +45,7 @@ typeCheckStage srcProgram typeEnv = runTypeCheckM (tcProgram srcProgram) typeEnv
 -- | Type checks a given source expression in a given type environment.
 -- In the case of success - returns its type.
 typeOf :: SrcExpr -> TypeEnv -> Either TcError Type
-typeOf srcExpr typeEnv = fmap (snd . fst) $ runTypeCheckM (tcExpr srcExpr) typeEnv
+typeOf srcExpr typeEnv = fmap (getTypeOf . fst) $ runTypeCheckM (tcExpr srcExpr) typeEnv
 
 -- | Entry point into the type checking of the program.
 -- Returns a type checked program.
@@ -159,57 +160,60 @@ tcFunEq :: FunName -> Type -> SrcType -> SrcFunEq -> TypeCheckM TyFunEq
 tcFunEq funName funType funSrcType (FunEq s srcFunName patterns srcBodyExpr) = do
   when (getFunName srcFunName /= funName) $
     throwError $ FunEqIncorrectName srcFunName funName
-  (tyBodyExpr, bodyType) <-
+  tyBodyExpr <-
     case srcBodyExpr of
-      DoE ds srcStmts -> do
+      DoE ds _ srcStmts -> do
         unless (isMonadType funType) $
           throwError $ DoBlockNotMonad funType (getSrcSpan funSrcType)
         -- kinds have been checked, so it should not fail
         let funMonad = getMonadType funType
         (tyStmts, lastStmtType) <- tcDoBlock srcStmts funMonad
-        return (DoE ds tyStmts, lastStmtType)
+        return $ DoE ds lastStmtType tyStmts
       _ -> tcExpr srcBodyExpr
+  let bodyType = getTypeOf tyBodyExpr
   unless (bodyType `alphaEq` funType) $
     throwError $ FunEqBodyIncorrectType srcBodyExpr funName funType bodyType
   return $ FunEq s srcFunName [] tyBodyExpr
 
 -- | Expression type checking.
--- Returns a type checked expression together with its type.
-tcExpr :: SrcExpr -> TypeCheckM (TyExpr, Type)
+-- Returns a type checked expression.
+tcExpr :: SrcExpr -> TypeCheckM TyExpr
 tcExpr srcExpr =
   case srcExpr of
-    LitE srcLit -> return (LitE srcLit, typeOfLiteral $ getLiteral srcLit)
+    LitE srcLit -> LitE <$> tcLit srcLit
 
-    VarE s var -> do
+    VarE s _ var -> do
       -- it can be both a local variable and a global function
       unlessM (isVarBoundM var) $
         throwError $ VarNotBound var s
       varType <- getVarTypeM var
-      return (VarE s (VarTy (var, varType)), varType)
+      return $ VarE s varType var
 
-    LambdaE s varBinders srcBodyExpr -> do
+    LambdaE s _ srcVarBinders srcBodyExpr -> do
       -- collect variables bound by the lambda together with their types
-      (localTypeEnv, revParamTypes) <-
-        foldM (\(localTyEnv, revTyList) vb -> do
-            let var = getVar (getBinderVar vb)
+      (localTypeEnv, revParamTypes, revTyVarBinders) <-
+        foldM (\(localTyEnv, revTyList, revTyVbs) svb -> do
+            let (VarBinder vs _ srcVar srcVarType) = svb
+            let var = getVar srcVar
             isBound <- isVarBoundM var
             -- it is important to check in both places, since localTyEnv
             -- is not queried by 'isVarBoundM', see `LambdaParamsDup` test case
             when (isBound || isVarBound var localTyEnv) $
-              throwError $ VarShadowing (getBinderVar vb)
-            varType <- srcTypeToType (getBinderType vb)
-            return $ (addLocalVar var varType localTyEnv, varType : revTyList))
-          (emptyLocalTypeEnv, []) varBinders
+              throwError $ VarShadowing srcVar
+            varType <- srcTypeToType srcVarType
+            let tyVarBinder = VarBinder vs varType srcVar srcVarType
+            return $ (addLocalVar var varType localTyEnv, varType : revTyList, tyVarBinder : revTyVbs))
+          (emptyLocalTypeEnv, [], []) srcVarBinders
 
       -- extend local type environment with variables introduced by the lambda
       -- this is safe, since we ensure above that all variable and function names are distinct
       -- perform the type checking of the body in this extended environment
-      (tyBodyExpr, bodyType) <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
+      tyBodyExpr <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
       let paramTypes = reverse revParamTypes
-      let lambdaType = tyArrowFromList bodyType paramTypes
-      return (LambdaE s varBinders tyBodyExpr, lambdaType)
+      let lambdaType = tyArrowFromList (getTypeOf tyBodyExpr) paramTypes
+      return $ LambdaE s lambdaType (reverse revTyVarBinders) tyBodyExpr
 
-    TypeLambdaE s srcTypeVars srcBodyExpr -> do
+    TypeLambdaE s _ srcTypeVars srcBodyExpr -> do
       -- collect type variables bound by the type lambda
       localTypeEnv <-
         foldM (\localTyEnv stv -> do
@@ -229,50 +233,59 @@ tcExpr srcExpr =
       -- extend local type environment with type variables introduced by the type lambda
       -- this is safe, since we ensure that all type variables and type names in scope are distinct
       -- perform the type checking of the body in this extended environment
-      (tyBodyExpr, bodyType) <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
+      tyBodyExpr <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
       let typeVars = map getTypeVar srcTypeVars
-      let tyLambdaType = tyForAllFromList bodyType typeVars
-      return (TypeLambdaE s srcTypeVars tyBodyExpr, tyLambdaType)
+      let tyLambdaType = tyForAllFromList (getTypeOf tyBodyExpr) typeVars
+      return $ TypeLambdaE s tyLambdaType srcTypeVars tyBodyExpr
 
-    TypeAppE s srcAppExpr srcArgType -> do
+    TypeAppE s _ srcAppExpr srcArgType -> do
       -- type application can be performed only with forall on the left-hand
       -- side
       -- we replace free occurences of the type variable bound by the forall
       -- inside its body with the right-hand side type
-      (tyAppExpr, appType) <- tcExpr srcAppExpr
+      tyAppExpr <- tcExpr srcAppExpr
+      let appType = getTypeOf tyAppExpr
       case appType of
         TyForAll typeVar forallBodyType -> do
           argType <- srcTypeToType srcArgType
           let resultType = (typeVar, argType) `substTypeIn` forallBodyType
-          return (TypeAppE s tyAppExpr srcArgType, resultType)
+          return $ TypeAppE s resultType tyAppExpr srcArgType
         _ -> throwError $ NotForallTypeApp appType (getSrcSpan srcAppExpr)
 
-    ConNameE srcConName -> do
+    ConNameE _ srcConName -> do
       let conName = getConName srcConName
       unlessM (isDataConDefinedM conName) $
         throwError $ ConNotDefined srcConName
       dataConTypeInfo <- getDataConTypeInfoM conName
-      return (ConNameE srcConName, dcontiType dataConTypeInfo)
+      return $ ConNameE (dcontiType dataConTypeInfo) srcConName
 
-    CaseE s srcScrutExpr srcCaseAlts -> do
-      (tyScrutExpr, scrutType) <- tcExpr srcScrutExpr
-      (tyCaseAlts, caseExprType) <- tcCaseAlts scrutType srcCaseAlts
-      return (CaseE s tyScrutExpr tyCaseAlts, caseExprType)
+    CaseE s _ srcScrutExpr srcCaseAlts -> do
+      tyScrutExpr <- tcExpr srcScrutExpr
+      (tyCaseAlts, caseExprType) <- tcCaseAlts (getTypeOf tyScrutExpr) srcCaseAlts
+      return $ CaseE s caseExprType tyScrutExpr tyCaseAlts
 
-    BinOpE s srcBinOp srcExpr1 srcExpr2 -> do
+    BinOpE s _ srcBinOp srcExpr1 srcExpr2 -> do
       let op = getBinOp srcBinOp
       (tyExpr1, tyExpr2, resultType) <- tcBinOp op srcExpr1 srcExpr2
-      return (BinOpE s srcBinOp tyExpr1 tyExpr2, resultType)
+      return $ BinOpE s resultType srcBinOp tyExpr1 tyExpr2
 
     ParenE s srcSubExpr -> do
-      (tySubExpr, exprType) <- tcExpr srcSubExpr
-      return (ParenE s tySubExpr, exprType)
+      tySubExpr <- tcExpr srcSubExpr
+      return $ ParenE s tySubExpr
 
-    ThrowE s srcThrowType -> do
+    ThrowE s _ srcThrowType -> do
       throwType <- srcTypeToType srcThrowType
-      return (ThrowE s srcThrowType, throwType)
+      return $ ThrowE s throwType srcThrowType
 
     DoE {} -> error "do-block is illegal in this context"
+
+tcLit :: SrcLiteral -> TypeCheckM TyLiteral
+tcLit srcLit =
+  case srcLit of
+    UnitLit s _ -> return $ UnitLit s (typeOfLiteral srcLit)
+    IntLit s _ i -> return $ IntLit s (typeOfLiteral srcLit) i
+    FloatLit s _ f str -> return $ FloatLit s (typeOfLiteral srcLit) f str
+    StringLit s _ str -> return $ StringLit s (typeOfLiteral srcLit) str
 
 -- | Takes a scrutinee (an expression we are pattern matching on) type and a
 -- list of case alternatives (which is not empty). Returns a list of type
@@ -295,37 +308,41 @@ tcCaseAlts scrutType srcCaseAlts = do
 -- variables bound by the pattern added to the local type environment.
 -- Returns the type checked case alternative and its body type.
 tcCaseAlt :: Type -> SrcCaseAlt -> TypeCheckM (TyCaseAlt, Type)
-tcCaseAlt scrutType (CaseAlt s pat srcExpr) = do
-  localTypeEnv <- tcPattern scrutType pat emptyLocalTypeEnv
-  (tyExpr, exprType) <- locallyWithEnvM localTypeEnv (tcExpr srcExpr)
-  return (CaseAlt s pat tyExpr, exprType)
+tcCaseAlt scrutType (CaseAlt s srcPat srcExpr) = do
+  (tyPat, localTypeEnv) <- tcPattern scrutType srcPat emptyLocalTypeEnv
+  tyExpr <- locallyWithEnvM localTypeEnv (tcExpr srcExpr)
+  return (CaseAlt s tyPat tyExpr, getTypeOf tyExpr)
 
 -- | Takes a scrutinee type, a pattern and a local type environment. Type
--- checks the pattern against the scrutinee type and returns the extended local
--- type environment (with variables bound by the pattern).
+-- checks the pattern against the scrutinee type and returns a type checked
+-- pattern and the extended local type environment (with variables bound by the
+-- pattern).
 -- The most interesting case is 'ConP'.
-tcPattern :: Type -> SrcPattern -> LocalTypeEnv -> TypeCheckM LocalTypeEnv
-tcPattern scrutType pat localTypeEnv =
-  case pat of
+tcPattern :: Type -> SrcPattern -> LocalTypeEnv -> TypeCheckM (TyPattern, LocalTypeEnv)
+tcPattern scrutType srcPat localTypeEnv =
+  case srcPat of
     LitP srcLit -> do
-      let litType = typeOfLiteral $ getLiteral srcLit
+      tyLit <- tcLit srcLit
+      let litType = getTypeOf tyLit
       unless (litType `alphaEq` scrutType) $
         throwError $ PatternIncorrectType scrutType litType (getSrcSpan srcLit)
-      return localTypeEnv
+      return (LitP tyLit, localTypeEnv)
 
-    VarP varBinder -> do
-      let var = getVar (getBinderVar varBinder)
+    VarP srcVarBinder -> do
+      let (VarBinder vs _ srcVar srcVarType) = srcVarBinder
+      let var = getVar srcVar
       isBound <- isVarBoundM var
       -- it is important to check in both places, since localTypeEnv is not
       -- queried by 'isVarBoundM', see `VarPatternShadowsNested` test case
       when (isBound || isVarBound var localTypeEnv) $
-        throwError $ VarShadowing (getBinderVar varBinder)
-      varType <- srcTypeToType (getBinderType varBinder)
+        throwError $ VarShadowing srcVar
+      varType <- srcTypeToType srcVarType
       unless (varType `alphaEq` scrutType) $
-        throwError $ PatternIncorrectType scrutType varType (getSrcSpan varBinder)
-      return $ addLocalVar var varType localTypeEnv
+        throwError $ PatternIncorrectType scrutType varType vs
+      let tyVarBinder = VarBinder vs varType srcVar srcVarType
+      return (VarP tyVarBinder, addLocalVar var varType localTypeEnv)
 
-    ConP s srcConName subPats -> do
+    ConP s _ srcConName subPats -> do
       let conName = getConName srcConName
       unlessM (isDataConDefinedM conName) $
         throwError $ ConNotDefined srcConName
@@ -339,15 +356,19 @@ tcPattern scrutType pat localTypeEnv =
           let conFieldTypes = conFieldTypesFromType conType scrutTypeArgs
           when (length subPats /= length conFieldTypes) $
             throwError $ ConPatternIncorrectNumberOfFields (length conFieldTypes) (length subPats) s
-          foldM (\localTyEnv (p, fieldType) -> tcPattern fieldType p localTyEnv)
-            localTypeEnv (zip subPats conFieldTypes)
+          (revTySubPats, localTypeEnv') <-
+            foldM (\(revTyPats, localTyEnv) (sp, fieldType) -> do
+                (tp, localTyEnv') <- tcPattern fieldType sp localTyEnv
+                return (tp:revTyPats, localTyEnv'))
+              ([], localTypeEnv) (zip subPats conFieldTypes)
+          return (ConP s conType srcConName (reverse revTySubPats), localTypeEnv')
         -- If the scrutinee has a type other than a type application, then this
         -- pattern can not be type correct. Data constructors have a
         -- monomorphic fully applied type constructor type.
         _ -> throwError $ PatternIncorrectType scrutType conType s
 
-    DefaultP _ -> return localTypeEnv
-    ParenP _ pat' -> tcPattern scrutType pat' localTypeEnv
+    DefaultP s _ -> return (DefaultP s scrutType, localTypeEnv)
+    ParenP _ srcPat' -> tcPattern scrutType srcPat' localTypeEnv
 
 -- Binary operations type checking
 
@@ -355,21 +376,22 @@ tcPattern scrutType pat localTypeEnv =
 -- Returns a triple of type checked operands and a type of the result.
 tcBinOp :: BinOp -> SrcExpr -> SrcExpr -> TypeCheckM (TyExpr, TyExpr, Type)
 tcBinOp op srcExpr1 srcExpr2 = do
-  tyExpr1WithType@(tyExpr1, _) <- tcExpr srcExpr1
-  tyExpr2WithType@(tyExpr2, _) <- tcExpr srcExpr2
+  tyExpr1 <- tcExpr srcExpr1
+  tyExpr2 <- tcExpr srcExpr2
   resultType <- case op of
-    App -> tcApp tyExpr1WithType tyExpr2WithType
-    Catch -> tcCatch tyExpr1WithType tyExpr2WithType
+    App -> tcApp tyExpr1 tyExpr2
+    Catch -> tcCatch tyExpr1 tyExpr2
   return (tyExpr1, tyExpr2, resultType)
 
 -- | Type synonym for binary operation type checking functions.
--- They take two pairs of type checked operands with their types and return a
--- type of the result.
-type BinOpTc = (TyExpr, Type) -> (TyExpr, Type) -> TypeCheckM Type
+-- They take two type checked operands and return a type of the result.
+type BinOpTc = TyExpr -> TyExpr -> TypeCheckM Type
 
 -- | Function application type checking.
 tcApp :: BinOpTc
-tcApp (tyExpr1, expr1Type) (tyExpr2, expr2Type) =
+tcApp tyExpr1 tyExpr2 =
+  let expr1Type = getTypeOf tyExpr1
+      expr2Type = getTypeOf tyExpr2 in
   case expr1Type of
     TyArrow argType resultType ->
       if not (expr2Type `alphaEq` argType)
@@ -378,7 +400,9 @@ tcApp (tyExpr1, expr1Type) (tyExpr2, expr2Type) =
     _ -> throwError $ NotFunctionType tyExpr1 expr1Type
 
 tcCatch :: BinOpTc
-tcCatch (_, expr1Type) (tyExpr2, expr2Type) =
+tcCatch tyExpr1 tyExpr2 =
+  let expr1Type = getTypeOf tyExpr1
+      expr2Type = getTypeOf tyExpr2 in
   if expr1Type `alphaEq` expr2Type
     then return expr1Type
     else throwError $ IncorrectExprType expr1Type expr2Type (getSrcSpan tyExpr2)
@@ -393,7 +417,8 @@ tcDoBlock [BindS s _ _] _ = throwError $ BindLastStmt s
 tcDoBlock (srcStmt:srcStmts) funMonad = do
   case srcStmt of
     ExprS s srcExpr -> do
-      (tyExpr, exprType) <- tcExpr srcExpr
+      tyExpr <- tcExpr srcExpr
+      let exprType = getTypeOf tyExpr
       unless (isMonadType exprType) $
         throwError $ NotMonadicType funMonad exprType (getSrcSpan srcExpr)
       -- kind checking has already been done, should not fail
@@ -408,13 +433,15 @@ tcDoBlock (srcStmt:srcStmts) funMonad = do
           else tcDoBlock srcStmts funMonad
       return (tyStmt : tyStmts, lastStmtType)
 
-    BindS s varBinder srcExpr -> do
-      let var = getVar (getBinderVar varBinder)
+    BindS s srcVarBinder srcExpr -> do
+      let (VarBinder vs _ srcVar srcVarType) = srcVarBinder
+      let var = getVar srcVar
       whenM (isVarBoundM var) $
-        throwError $ VarShadowing (getBinderVar varBinder)
-      varType <- srcTypeToType (getBinderType varBinder)
+        throwError $ VarShadowing srcVar
+      varType <- srcTypeToType srcVarType
 
-      (tyExpr, exprType) <- tcExpr srcExpr
+      tyExpr <- tcExpr srcExpr
+      let exprType = getTypeOf tyExpr
 
       unless (isMonadType exprType) $
         throwError $ NotMonadicType funMonad exprType (getSrcSpan srcExpr)
@@ -430,16 +457,18 @@ tcDoBlock (srcStmt:srcStmts) funMonad = do
                             (getSrcSpan srcExpr)
 
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
-      let tyStmt = BindS s varBinder tyExpr
+      let tyVarBinder = VarBinder vs varType srcVar srcVarType
+      let tyStmt = BindS s tyVarBinder tyExpr
       -- srcStmts is not empty, otherwise we would have thrown an error in the
       -- first equation
       (tyStmts, lastStmtType) <- locallyWithEnvM localTypeEnv (tcDoBlock srcStmts funMonad)
       return (tyStmt : tyStmts, lastStmtType)
 
-    ReturnS s srcExpr -> do
-      (tyExpr, exprType) <- tcExpr srcExpr
-      let tyStmt = ReturnS s tyExpr
+    ReturnS s _ srcExpr -> do
+      tyExpr <- tcExpr srcExpr
+      let exprType = getTypeOf tyExpr
           stmtType = applyMonadType funMonad exprType
+          tyStmt = ReturnS s stmtType tyExpr
       (tyStmts, lastStmtType) <-
         if null srcStmts
           then return ([], stmtType)
