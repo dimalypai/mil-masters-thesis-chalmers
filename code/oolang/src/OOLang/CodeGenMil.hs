@@ -322,7 +322,7 @@ pureMonad = MIL.MTyAlias pureMonadName
 pureMonadType :: MIL.TypeM
 pureMonadType =
   MIL.MTyMonadCons (MIL.Error exceptionType) $
-    MIL.MTyMonad MIL.Lift
+    MIL.MTyMonad MIL.NonTerm
 
 impureMonadName :: MIL.TypeName
 impureMonadName = MIL.TypeName "Impure_M"
@@ -333,7 +333,7 @@ impureMonad = MIL.MTyAlias impureMonadName
 impureMonadType :: MIL.TypeM
 impureMonadType =
   MIL.MTyMonadCons (MIL.Error exceptionType) $
-    MIL.MTyMonadCons MIL.Lift $
+    MIL.MTyMonadCons MIL.NonTerm $
       MIL.MTyMonadCons MIL.State $
         MIL.MTyMonad MIL.IO
 

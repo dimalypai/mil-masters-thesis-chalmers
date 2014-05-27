@@ -6,9 +6,9 @@ type Maybe A
   = Nothing
   | Just A;
 
-alias Pure_M = Error Unit ::: Lift;
+alias Pure_M = Error Unit ::: NonTerm;
 
-alias Impure_M = Error Unit ::: Lift ::: State ::: IO;
+alias Impure_M = Error Unit ::: NonTerm ::: State ::: IO;
 
 main : Impure_M Unit =
   let (var_2 : Bool -> Pure_M Unit) <- let (var_0 : Int -> Bool -> Pure_M Unit) <- return [Impure_M] pureFun in

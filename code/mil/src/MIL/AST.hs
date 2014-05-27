@@ -200,7 +200,7 @@ newtype FunName = FunName String
 data MilMonad = Id
               | State
               | Error Type
-              | Lift
+              | NonTerm
               | IO
   deriving (Show, Eq)
 
