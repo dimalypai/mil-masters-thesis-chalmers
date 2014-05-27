@@ -137,11 +137,17 @@ compiler flags args = do
     exitFailure
   let filePath = head args
   src <- readFile filePath
-  let p = lexer src |>
-          parse (takeFileName filePath)
-  case p of
+  case lexer src |> parse (takeFileName filePath) of
     Left parseErr -> putStrLn (prPrint parseErr) >> exitFailure
-    Right srcProgram -> putStrLn (ppShow srcProgram) >> exitSuccess
+    Right srcProgram ->
+      case typeCheck srcProgram of
+        Left tcErr -> putStrLn (prPrint tcErr) >> exitFailure
+        Right (tyProgram, programTypeEnv) -> do
+          when (DumpAst `elem` flags) $
+            putStrLn (ppShow tyProgram)
+          let milProgram = codeGen tyProgram programTypeEnv
+          putStrLn (MIL.prPrint milProgram)
+          exitSuccess
 
 -- | Compiler flags.
 data Flag = Interactive | DumpAst | Help
