@@ -6,6 +6,7 @@ module FunLang.CodeGenMil
   ) where
 
 import Control.Monad.Reader
+import Control.Monad.State
 import Control.Applicative
 import Data.List (foldl')
 
@@ -13,6 +14,7 @@ import FunLang.AST
 import FunLang.AST.Helpers
 import FunLang.TypeChecker
 import FunLang.TypeChecker.TypeEnv
+import FunLang.Utils
 import qualified MIL.AST as MIL
 import qualified MIL.BuiltIn as MIL
 
@@ -20,11 +22,15 @@ import qualified MIL.BuiltIn as MIL
 -- Takes a type checked program in FunLang and a type environment and produces
 -- a program in MIL.
 codeGen :: TyProgram -> TypeEnv -> MIL.Program
-codeGen tyProgram typeEnv = runReader (runCG $ codeGenProgram tyProgram) typeEnv
+codeGen tyProgram typeEnv = runReaderFrom typeEnv $ evalStateTFrom 0 (runCG $ codeGenProgram tyProgram)
 
--- | Code generation monad. Uses 'Reader' for querying the type environment.
-newtype CodeGenM a = CG { runCG :: Reader TypeEnv a }
-  deriving (Monad, MonadReader TypeEnv, Functor, Applicative)
+-- | Code generation monad. Uses 'StateT' for providing fresh variable names
+-- and 'Reader' for querying the type environment.
+newtype CodeGenM a = CG { runCG :: StateT NameSupply (Reader TypeEnv) a }
+  deriving (Monad, MonadState NameSupply, MonadReader TypeEnv, Functor, Applicative)
+
+-- | A counter for generating unique variable names.
+type NameSupply = Int
 
 codeGenProgram :: TyProgram -> CodeGenM MIL.Program
 codeGenProgram (Program _ srcTypeDefs tyFunDefs) = do
@@ -221,4 +227,12 @@ pureMonadType =
 
 exceptionType :: MIL.Type
 exceptionType = MIL.unitType
+
+-- * CodeGenM operations
+
+newMilVar :: CodeGenM MIL.Var
+newMilVar = do
+  i <- get
+  modify (+1)
+  return $ MIL.Var ("var_" ++ show i)
 

@@ -1,7 +1,6 @@
 -- | Common utility functions.
 module FunLang.Utils where
 
-import Control.Monad (when, unless)
 import Control.Monad.State
 import Control.Monad.Reader
 
@@ -26,6 +25,10 @@ ifM condM th el = do
 -- | Convenient version of 'runStateT' with the arguments flipped.
 runStateTFrom :: Monad m => s -> StateT s m a -> m (a, s)
 runStateTFrom = flip runStateT
+
+-- | Convenient version of 'evalStateT' with the arguments flipped.
+evalStateTFrom :: Monad m => s -> StateT s m a -> m a
+evalStateTFrom = flip evalStateT
 
 -- | Convenient version of 'runReader' with the arguments flipped.
 runReaderFrom :: r -> Reader r a -> a
