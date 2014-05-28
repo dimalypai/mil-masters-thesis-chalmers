@@ -168,6 +168,7 @@ codeGenExpr tyExpr funMonad =
   case tyExpr of
     LitE lit -> return $ MIL.ReturnE funMonad (literalMil lit)
 
+    -- TODO: built-ins
     VarE _ varType var varPure -> do
       let varE = MIL.VarE $ MIL.VarBinder (varMil var, typeMil varType)
       case (isValueType varType, isPureFunType varType, funMonad == pureMonad) of
@@ -246,7 +247,7 @@ codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
 -- Usually, on the top-level, 'typeMil' should be used, except for the cases,
 -- where it is known that the type being transformed is a type of the function.
 -- Another case, where 'funTypeMil' is used is when it is known that the type
--- being transformed is the type of the impure value.
+-- being transformed is the type of the global impure function.
 --
 -- 'typeMil' introduces Impure_M only for function return type.
 -- 'funTypeMil' introduces Impure_M also for atomic types, which are not Pure.
