@@ -7,3 +7,9 @@ type T = MkT (Int -> Unit) | MkTT
 
 type Pair A B = MkPair A B
 
+f : T
+f = MkT g;;
+
+g : Int -> Unit
+g = \(x : Int) -> unit;;
+

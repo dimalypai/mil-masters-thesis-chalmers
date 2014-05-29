@@ -252,6 +252,9 @@ instance SubstType TypeM where
   tvArg `substTypeIn` (MTyMonad m) = MTyMonad (tvArg `substTypeIn` m)
   tvArg `substTypeIn` (MTyMonadCons m tm) =
     MTyMonadCons (tvArg `substTypeIn` m) (tvArg `substTypeIn` tm)
+  -- Type aliases are defined in a completely separate scope, so we don't
+  -- expand them to perform substitution and just keep them unchanged.
+  _ `substTypeIn` tm@(MTyAlias {}) = tm
 
 -- | Perform substitution on type parameters if there are any, otherwise, just
 -- return a monad.

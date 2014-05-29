@@ -1,44 +1,22 @@
 alias Pure_M = Error Unit ::: NonTerm;
 
-main : (IO ::: Id) Unit =
-  let (_ : Unit) <- printString "Hello from main" in
-    let (i : Int) <- readInt in
-      let (_ : Unit) <- printInt i in
-        let (f : Float) <- readFloat in
-          let (_ : Unit) <- printFloat f in
-            let (v : Int) <- lift [Id -> IO ::: Id] execState [Int] [Unit] stateManip 1 in
-              let (_ : Unit) <- printInt v in
-                lift [Id -> IO ::: Id] evalState [Int] [Unit] stateManip 0;
+alias IO_M = Error Unit ::: NonTerm ::: IO;
 
-stateManip : Int -> Id {Unit, Int} =
-  \(state1 : Int) -> let (get_res : {Int, Int}) <- stateManip_get state1 [Int] in
-                       case get_res of
-                         | {a1 : Int, state2 : Int} =>
-                             let (put_res : {Unit, Int}) <- stateManip_put [Int] i in
-                               case put_res of
-                                 | {a2 : Unit, state3 : Int} =>
-                                     stateManip_modify state2 [Int] (\(s : Int) -> s)
-                               end
-                       end;
+main : IO_M Unit =
+  let (_ : Unit) <- let (var_0 : String -> IO Unit) <- return [IO_M] printString in
+                      let (var_1 : String) <- return [IO_M] "Hello from main" in
+                        lift [IO -> IO_M] var_0 var_1 in
+    let (i : Int) <- getInt in
+      let (_ : Unit) <- let (var_2 : Int -> IO Unit) <- return [IO_M] printInt in
+                          let (var_3 : Int) <- return [IO_M] i in
+                            lift [IO -> IO_M] var_2 var_3 in
+        let (f : Float) <- lift [IO -> IO_M] readFloat in
+          let (var_4 : Float -> IO Unit) <- return [IO_M] printFloat in
+            let (var_5 : Float) <- return [IO_M] f in
+              lift [IO -> IO_M] var_4 var_5;
 
-stateManip_get : Int -> forall S . Id {Int, Int} =
-  \(s : Int) -> /\S . return [Id] {s, s};
-
-stateManip_put : forall S . Int -> Id {Unit, Int} =
-  /\S . \(s : Int) -> return [Id] {unit, s};
-
-stateManip_modify : Int -> forall S . (Int -> Int) -> Id {Unit, Int} =
-  \(s : Int) -> /\S . \(f : Int -> Int) -> return [Id] {unit, f s};
-
-execState : forall S . forall A . (S -> Id {A, S}) -> S -> Id S =
-  /\S . /\A . \(f : S -> Id {A, S}) -> \(s : S) -> let (res : {A, S}) <- f s in
-                                                     case res of
-                                                       | {a : A, s1 : S} => return [Id] s1
-                                                     end;
-
-evalState : forall S . forall A . (S -> Id {A, S}) -> S -> Id A =
-  /\S . /\A . \(f : S -> Id {A, S}) -> \(s : S) -> let (res : {A, S}) <- f s in
-                                                     case res of
-                                                       | {a : A, s1 : S} => return [Id] a
-                                                     end;
+getInt : IO_M Int =
+  let (_ : Int) <- return [IO_M] 0 in
+    let (var_6 : Int) <- return [IO_M] 1 in
+      return [IO_M] var_6;
 

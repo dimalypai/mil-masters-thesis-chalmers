@@ -1,6 +1,7 @@
 module FunLang.BuiltIn where
 
 import qualified Data.Set as Set
+import Data.Maybe (isJust)
 
 import FunLang.AST
 import FunLang.AST.Helpers
@@ -70,6 +71,9 @@ builtInFunctions =
   , (FunName "modify", TyForAll (TypeVar "S") $ TyArrow (TyArrow (mkTypeVar "S") (mkTypeVar "S"))
                                                         (stateType (mkTypeVar "S") unitType))
   ]
+
+isBuiltInFunction :: FunName -> Bool
+isBuiltInFunction funName = isJust $ lookup funName builtInFunctions
 
 -- * Monads
 

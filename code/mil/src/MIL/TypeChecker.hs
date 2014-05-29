@@ -209,8 +209,8 @@ tcExpr expr =
           return resultType
         _ -> throwError $ NotForallTypeApp appType
 
+    -- See Note [Data constructor type checking].
     ConNameE conName conType -> do
-      checkType conType
       unlessM (isDataConDefined conName) $
         throwError $ ConNotDefined conName
       dataConTypeInfo <- getDataConTypeInfo conName
@@ -267,4 +267,16 @@ tcExpr expr =
     TupleE tElems -> do
       elemTypes <- mapM tcExpr tElems
       return $ TyTuple elemTypes
+
+-- | Note [Data constructor type checking]:
+--
+-- The first intention is to perform 'checkType' on the type a data constructor
+-- is annotated with. But there is a problem with type variables scope.
+-- Function types of the data constructors from polymorphic data types contain
+-- forall types. If there is a type lambda and an occurence of such a data
+-- constructor inside it and there is a clash between type variable names,
+-- 'checkType' will throw a shadowing error.
+-- It seems to be safe to not perform this check, since later we do a check for
+-- alpha-equivalence against the constructor type from the environment, and so
+-- incorrectly annotated constructors will be caught.
 
