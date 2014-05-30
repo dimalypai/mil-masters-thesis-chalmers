@@ -371,4 +371,5 @@ General thoughts. Week 17
 * OOLang and FunLang notion of purity is probably Error and NonTerm and not Id.
   Would be good to do effect inference (for NonTerm for example), but for now
   it may be more conservative.
+* Aliases turn out to be very nice for reading but tricky for implementation.
 
