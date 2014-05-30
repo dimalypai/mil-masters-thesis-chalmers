@@ -3,8 +3,7 @@ alias Pure_M = Error Unit ::: NonTerm;
 alias IO_M = Error Unit ::: NonTerm ::: IO;
 
 main : IO_M Unit =
-  let (var_0 : Unit) <- return [IO_M] unit in
-    return [IO_M] var_0;
+  return [IO_M] unit;
 
 lamFun : Pure_M (Int -> Pure_M (Unit -> Pure_M Float)) =
   return [Pure_M] \(x : Int) -> return [Pure_M] \(y : Unit) -> return [Pure_M] 1.0e-2;
@@ -13,31 +12,31 @@ lamFun2 : Pure_M (Int -> Pure_M (Unit -> Pure_M Float)) =
   return [Pure_M] \(x : Int) -> return [Pure_M] \(y : Unit) -> return [Pure_M] 2.0e-2;
 
 lamApp1 : Pure_M (Unit -> Pure_M Float) =
-  let (var_1 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun in
-    let (var_2 : Int) <- return [Pure_M] 1 in
-      var_1 var_2;
+  let (var_0 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun in
+    let (var_1 : Int) <- return [Pure_M] 1 in
+      var_0 var_1;
 
 lamApp2 : Pure_M Float =
-  let (var_3 : Unit -> Pure_M Float) <- lamApp1 in
-    let (var_4 : Unit) <- return [Pure_M] unit in
-      var_3 var_4;
+  let (var_2 : Unit -> Pure_M Float) <- lamApp1 in
+    let (var_3 : Unit) <- return [Pure_M] unit in
+      var_2 var_3;
 
 lamApp3 : Pure_M (Unit -> Pure_M Float) =
-  let (var_5 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun2 in
-    let (var_6 : Int) <- return [Pure_M] 1 in
-      var_5 var_6;
+  let (var_4 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun2 in
+    let (var_5 : Int) <- return [Pure_M] 1 in
+      var_4 var_5;
 
 lamApp4 : Pure_M Float =
-  let (var_9 : Unit -> Pure_M Float) <- let (var_7 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun2 in
-                                          let (var_8 : Int) <- return [Pure_M] 1 in
-                                            var_7 var_8 in
-    let (var_10 : Unit) <- return [Pure_M] unit in
-      var_9 var_10;
+  let (var_8 : Unit -> Pure_M Float) <- let (var_6 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun2 in
+                                          let (var_7 : Int) <- return [Pure_M] 1 in
+                                            var_6 var_7 in
+    let (var_9 : Unit) <- return [Pure_M] unit in
+      var_8 var_9;
 
 lamFun3 : Pure_M (Unit -> Pure_M Unit) =
-  let (var_11 : (Unit -> Pure_M Unit) -> Pure_M (Unit -> Pure_M Unit)) <- return [Pure_M] \(x : Unit -> Pure_M Unit) -> return [Pure_M] x in
-    let (var_12 : Unit -> Pure_M Unit) <- return [Pure_M] \(x : Unit) -> return [Pure_M] x in
-      var_11 var_12;
+  let (var_10 : (Unit -> Pure_M Unit) -> Pure_M (Unit -> Pure_M Unit)) <- return [Pure_M] \(x : Unit -> Pure_M Unit) -> return [Pure_M] x in
+    let (var_11 : Unit -> Pure_M Unit) <- return [Pure_M] \(x : Unit) -> return [Pure_M] x in
+      var_10 var_11;
 
 ioFun : Pure_M (IO_M Int -> IO_M Int) =
   return [Pure_M] \(f : IO_M Int) -> f;

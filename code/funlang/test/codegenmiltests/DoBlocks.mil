@@ -17,6 +17,5 @@ main : IO_M Unit =
 
 getInt : IO_M Int =
   let (_ : Int) <- return [IO_M] 0 in
-    let (var_6 : Int) <- return [IO_M] 1 in
-      return [IO_M] var_6;
+    return [IO_M] 1;
 

@@ -19,13 +19,12 @@ con_MkPair : Pure_M (forall A . Pure_M (forall B . Pure_M (A -> Pure_M (B -> Pur
   return [Pure_M] /\A . return [Pure_M] /\B . return [Pure_M] \(var_1 : A) -> return [Pure_M] \(var_2 : B) -> return [Pure_M] MkPair [A] [B] var_1 var_2;
 
 main : IO_M Unit =
-  let (var_3 : Unit) <- return [IO_M] unit in
-    return [IO_M] var_3;
+  return [IO_M] unit;
 
 f : Pure_M T =
-  let (var_4 : (Int -> Pure_M Unit) -> Pure_M T) <- con_MkT in
-    let (var_5 : Int -> Pure_M Unit) <- g in
-      var_4 var_5;
+  let (var_3 : (Int -> Pure_M Unit) -> Pure_M T) <- con_MkT in
+    let (var_4 : Int -> Pure_M Unit) <- g in
+      var_3 var_4;
 
 g : Pure_M (Int -> Pure_M Unit) =
   return [Pure_M] \(x : Int) -> return [Pure_M] unit;

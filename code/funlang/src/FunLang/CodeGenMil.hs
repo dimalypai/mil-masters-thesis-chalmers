@@ -242,15 +242,8 @@ codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
 
 codeGenDoBlock :: [TyStmt] -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
 codeGenDoBlock [ExprS _ tyExpr] funMonad = codeGenExpr funMonad tyExpr
-codeGenDoBlock [ReturnS _ _ tyExpr] funMonad = do
-  -- To avoid double return, we need an intermediate bind here.
-  var <- newMilVar
-  (milExpr, milBindType) <- codeGenExpr funMonad tyExpr
-  let varType = MIL.getMonadResultType milBindType
-  return ( MIL.LetE (MIL.VarBinder (var, varType))
-                    milExpr
-                    (MIL.ReturnE funMonad (MIL.VarE $ MIL.VarBinder (var, varType)))
-         , MIL.applyMonadType funMonad varType)
+-- Every expression code generation results in return.
+codeGenDoBlock [ReturnS _ _ tyExpr] funMonad = codeGenExpr funMonad tyExpr
 codeGenDoBlock (tyStmt:tyStmts) funMonad =
   case tyStmt of
     ExprS _ tyExpr -> do
