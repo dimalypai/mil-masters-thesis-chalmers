@@ -34,3 +34,8 @@ evalStateTFrom = flip evalStateT
 runReaderFrom :: r -> Reader r a -> a
 runReaderFrom = flip runReader
 
+-- | Postfix application. Inspired by OCaml/F#.
+-- Used with lexer and parser calls.
+(|>) :: a -> (a -> b) -> b
+a |> f = f a
+

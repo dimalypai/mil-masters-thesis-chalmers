@@ -14,6 +14,7 @@ import FunLang.Lexer
 import FunLang.Parser
 import FunLang.TypeChecker
 import FunLang.CodeGenMil
+import FunLang.Utils
 
 import qualified MIL.AST.PrettyPrinter as MIL
 import qualified MIL.TypeChecker as MIL
@@ -173,9 +174,4 @@ compilerOpts argv =
 printHelp :: IO ()
 printHelp = putStr $ usageInfo header options
   where header = "Usage: flc [OPTIONS] file"
-
--- | Postfix application. Inspired by OCaml/F#.
--- Used with lexer and parser calls.
-(|>) :: a -> (a -> b) -> b
-a |> f = f a
 
