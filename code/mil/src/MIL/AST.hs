@@ -81,9 +81,6 @@ data Expr = LitE Literal
             -- | 'ConNameE' stands on its own because constructors act as
             -- functions.
           | ConNameE ConName Type
-          | NewRefE Expr
-          | DerefE Expr
-          | AssignRefE Expr Expr
           | LetE VarBinder Expr Expr
           | ReturnE TypeM Expr
           | LiftE Expr TypeM TypeM
@@ -227,9 +224,6 @@ getExprPrec ConNameE    {} = 6
 getExprPrec LetE        {} = 2
 getExprPrec ReturnE     {} = 2
 getExprPrec LiftE       {} = 2
-getExprPrec NewRefE     {} = 6
-getExprPrec DerefE      {} = 6
-getExprPrec AssignRefE  {} = 4
 getExprPrec TupleE      {} = 6
 
 -- | Returns whether the first expression has a lower precedence than the

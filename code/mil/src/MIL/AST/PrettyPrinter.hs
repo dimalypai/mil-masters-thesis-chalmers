@@ -60,12 +60,6 @@ instance Pretty Expr where
     prPrnParens (e1 `exprHasLowerPrecAssoc` e) e1 <+>
     brackets (prPrn t)
   prPrn (ConNameE conName _) = prPrn conName
-  prPrn e@(NewRefE e1) = text "new" <+> prPrnParens (e1 `exprHasLowerPrec` e) e1
-  prPrn e@(DerefE e1) = text "!" <+> prPrnParens (e1 `exprHasLowerPrec` e) e1
-  prPrn e@(AssignRefE e1 e2) =
-    prPrnParens (e1 `exprHasLowerPrec` e) e1 <+>
-    text ":=" <+>
-    prPrnParens (e2 `exprHasLowerPrecAssoc` e) e2
   prPrn (LetE varBind e1 e2) =
     text "let" <+> prPrn varBind <+> text "<-" <+> prPrn e1 <+> text "in" $+$
     nest indLvl (prPrn e2)

@@ -65,9 +65,6 @@ tokens :-
   "{" { const OpenCurly   }
   "}" { const CloseCurly  }
 
-  ":=" { const ColonEq }
-  "!"  { const Bang    }
-
   ":::" { const TripleColon }
 
   "," { const Comma     }
@@ -116,9 +113,6 @@ data Token =
   | OpenCurly
   | CloseCurly
 
-  | ColonEq
-  | Bang
-
   | TripleColon
 
   | Comma
@@ -162,9 +156,6 @@ instance Show Token where
   show CloseSquare = "]"
   show OpenCurly   = "{"
   show CloseCurly  = "}"
-
-  show ColonEq = ":="
-  show Bang    = "!"
 
   show TripleColon = ":::"
 

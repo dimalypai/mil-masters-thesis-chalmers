@@ -27,11 +27,11 @@ spec =
 
     it "recognises all symbols correctly" $
       lexer "=  :  \\  ->  /\\  .  <- \
-           \ |  _  (  )  [  ]  {  }  :=  !  :::  ,  ;"
+           \ |  _  (  )  [  ]  {  }  :::  ,  ;"
         `shouldBe`
       [ Equal, Colon, Lambda, Arrow, BigLambda, Dot, LeftArrow
       , Bar, Underscore, OpenParen, CloseParen, OpenSquare, CloseSquare
-      , OpenCurly, CloseCurly, ColonEq, Bang, TripleColon, Comma, SemiColon
+      , OpenCurly, CloseCurly, TripleColon, Comma, SemiColon
       ]
 
     it "recognises all literals correctly" $
@@ -48,13 +48,13 @@ spec =
       intercalate " " (map show
         (lexer "case forall let lift in of rec return type unit \
               \ =  :  \\  ->  /\\  .  <- \
-              \ |  _  (  )  [  ]  {  }  :=  !  :::  ,  ; \
+              \ |  _  (  )  [  ]  {  }  :::  ,  ; \
               \ 1 0.1 1.0e-2 1e-2 \
               \ x T var123 True"))
         `shouldBe`
       "case forall let lift in of rec return type unit\
      \ = : \\ -> /\\ . <-\
-     \ | _ ( ) [ ] { } := ! ::: , ;\
+     \ | _ ( ) [ ] { } ::: , ;\
      \ 1 0.1 1.0e-2 1e-2\
      \ x T var123 True"
 
