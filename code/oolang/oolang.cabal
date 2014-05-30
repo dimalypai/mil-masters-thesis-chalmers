@@ -23,6 +23,7 @@ executable oolc
                        OOLang.BuiltIn
                        OOLang.CodeGenMil
                        OOLang.Lexer
+                       OOLang.Optimiser
                        OOLang.Parser
                        OOLang.Parser.ParseError
                        OOLang.PrettyPrinter

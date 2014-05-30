@@ -14,10 +14,12 @@ import OOLang.Lexer
 import OOLang.Parser
 import OOLang.TypeChecker
 import OOLang.CodeGenMil
+import OOLang.Optimiser
 import OOLang.Utils
 
+import qualified MIL.AST as MIL
 import qualified MIL.AST.PrettyPrinter as MIL
-import qualified MIL.Transformations.MonadLaws as MILTrans
+import qualified MIL.TypeChecker as MIL
 
 -- | Main entry point.
 -- Gets compiler arguments.
@@ -92,7 +94,14 @@ interactive flags typeEnv revProgramStrs = do
               when (DumpAst `elem` flags) $
                 putStrLn (ppShow tyProgram)
               let milProgram = codeGen tyProgram programTypeEnv
+              when (CheckMil `elem` flags) $
+                checkMil milProgram "Before Optimiser"
               putStrLn (MIL.prPrint milProgram)
+              when (Opt `elem` flags) $ do
+                let optMilProgram = optimiseMil milProgram
+                when (CheckMil `elem` flags) $
+                  checkMil optMilProgram "After Optimiser"
+                putStrLn (MIL.prPrint optMilProgram)
     -- All commands with arguments go here
     command -> do
       let processCommand cmd | Just fileName <- stripPrefix ":save " cmd =
@@ -124,6 +133,16 @@ readProgram = readProgram' 1 []
             then return $ intercalate "\n" $ reverse revProgram
             else readProgram' (line + 1) (input : revProgram)
 
+-- | Performs MIL type checking and prints an error message if it fails.
+-- Takes a string for a phase to improve error message.
+checkMil :: MIL.Program -> String -> IO ()
+checkMil milProgram phase =
+  case MIL.typeCheck milProgram of
+    Left milTcErr -> do
+      putStrLn (phase ++ ":")
+      putStrLn (MIL.prPrint milTcErr)
+    Right _ -> return ()
+
 -- | Main compilation function.
 -- Takes compiler flags and a list of non-options. We currently use it just for
 -- one file name.
@@ -143,17 +162,18 @@ compiler flags args = do
           when (DumpAst `elem` flags) $
             putStrLn (ppShow tyProgram)
           let milProgram = codeGen tyProgram programTypeEnv
-          let outMilProgram = if (Opt `elem` flags)
-                                then milProgram
-                                  |> MILTrans.associativity
-                                  |> MILTrans.leftIdentity
-                                  |> MILTrans.rightIdentity
+          when (CheckMil `elem` flags) $
+            checkMil milProgram "Before Optimiser"
+          let outMilProgram = if Opt `elem` flags
+                                then optimiseMil milProgram
                                 else milProgram
+          when (CheckMil `elem` flags) $
+            checkMil outMilProgram "After Optimiser"
           putStrLn (MIL.prPrint outMilProgram)
           exitSuccess
 
 -- | Compiler flags.
-data Flag = Interactive | DumpAst | Opt | Help
+data Flag = Interactive | DumpAst | Opt | CheckMil | Help
   deriving Eq
 
 -- | Description and mapping of compiler flags.
@@ -162,6 +182,7 @@ options =
   [ Option ['i'] ["interactive"] (NoArg Interactive) "Interactive mode (REPL)"
   , Option []    ["dump-ast"]    (NoArg DumpAst)     "Write AST to a file"
   , Option ['O'] []              (NoArg Opt)         "Perform optimisations"
+  , Option ['c'] ["check-mil"]   (NoArg CheckMil)    "Perform MIL type checking"
   , Option ['h'] ["help"]        (NoArg Help)        "Prints this help information"
   ]
 
