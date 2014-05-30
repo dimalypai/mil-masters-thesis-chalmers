@@ -167,7 +167,7 @@ compiler flags args = do
           let outMilProgram = if Opt `elem` flags
                                 then optimiseMil milProgram
                                 else milProgram
-          when (CheckMil `elem` flags) $
+          when (Opt `elem` flags && CheckMil `elem` flags) $
             checkMil outMilProgram "After Optimiser"
           putStrLn (MIL.prPrint outMilProgram)
           exitSuccess
