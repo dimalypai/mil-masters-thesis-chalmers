@@ -66,7 +66,11 @@ associativityExpr expr =
     AppE e1 e2 -> AppE (associativityExpr e1) (associativityExpr e2)
     TypeLambdaE typeVar e -> TypeLambdaE typeVar (associativityExpr e)
     TypeAppE e t -> TypeAppE (associativityExpr e) t
-    LetE {} -> undefined
+    LetE varBinder e1 e2 ->
+      case e1 of
+        LetE varBinder' e1' e2' ->
+          LetE varBinder' (associativityExpr e1') (LetE varBinder (associativityExpr e2') (associativityExpr e2))
+        _ -> LetE varBinder (associativityExpr e1) (associativityExpr e2)
     ReturnE tm e -> ReturnE tm (associativityExpr e)
     LiftE e tm1 tm2 -> LiftE (associativityExpr e) tm1 tm2
     _ -> expr

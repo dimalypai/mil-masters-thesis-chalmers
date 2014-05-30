@@ -145,6 +145,7 @@ compiler flags args = do
           let milProgram = codeGen tyProgram programTypeEnv
           let outMilProgram = if (Opt `elem` flags)
                                 then milProgram
+                                  |> MILTrans.associativity
                                   |> MILTrans.leftIdentity
                                   |> MILTrans.rightIdentity
                                 else milProgram
