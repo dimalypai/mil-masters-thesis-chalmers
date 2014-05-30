@@ -27,7 +27,6 @@ import OOLang.TypeChecker.TypeEnv
 import OOLang.Utils
 import qualified MIL.AST as MIL
 import qualified MIL.BuiltIn as MIL
-import qualified MIL.Transformations.IdExprMonadElimination as MIL
 
 -- | Entry point to the code generator.
 -- Takes a type checked program in OOLang and a type environment and produces a

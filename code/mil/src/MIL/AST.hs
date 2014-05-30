@@ -93,7 +93,7 @@ data Expr = LitE Literal
             -- | Patterns must be exhaustive.
           | CaseE Expr [CaseAlt]
           | TupleE [Expr]
-  deriving Show
+  deriving (Show, Eq)
 
 -- | Literal constants.
 data Literal = UnitLit
@@ -101,10 +101,10 @@ data Literal = UnitLit
              | FloatLit Double
                -- | Can be used only as global constants. Not first class.
              | StringLit String
-  deriving Show
+  deriving (Show, Eq)
 
 newtype CaseAlt = CaseAlt (Pattern, Expr)
-  deriving Show
+  deriving (Show, Eq)
 
 -- | Patterns.
 data Pattern =
@@ -118,7 +118,7 @@ data Pattern =
   | TupleP [VarBinder]
     -- | Default alternative: underscore.
   | DefaultP
-  deriving Show
+  deriving (Show, Eq)
 
 -- | Types representation.
 --
@@ -170,7 +170,7 @@ data Kind = StarK
   deriving (Show, Eq)
 
 newtype VarBinder = VarBinder (Var, Type)
-  deriving Show
+  deriving (Show, Eq)
 
 getBinderVar :: VarBinder -> Var
 getBinderVar (VarBinder (v,_)) = v

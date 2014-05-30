@@ -15,7 +15,9 @@ import OOLang.Parser
 import OOLang.TypeChecker
 import OOLang.CodeGenMil
 import OOLang.Utils
+
 import qualified MIL.AST.PrettyPrinter as MIL
+import qualified MIL.Transformations.MonadLaws as MILTrans
 
 -- | Main entry point.
 -- Gets compiler arguments.
@@ -141,11 +143,16 @@ compiler flags args = do
           when (DumpAst `elem` flags) $
             putStrLn (ppShow tyProgram)
           let milProgram = codeGen tyProgram programTypeEnv
-          putStrLn (MIL.prPrint milProgram)
+          let outMilProgram = if (Opt `elem` flags)
+                                then milProgram
+                                  |> MILTrans.leftIdentity
+                                  |> MILTrans.rightIdentity
+                                else milProgram
+          putStrLn (MIL.prPrint outMilProgram)
           exitSuccess
 
 -- | Compiler flags.
-data Flag = Interactive | DumpAst | Help
+data Flag = Interactive | DumpAst | Opt | Help
   deriving Eq
 
 -- | Description and mapping of compiler flags.
@@ -153,6 +160,7 @@ options :: [OptDescr Flag]
 options =
   [ Option ['i'] ["interactive"] (NoArg Interactive) "Interactive mode (REPL)"
   , Option []    ["dump-ast"]    (NoArg DumpAst)     "Write AST to a file"
+  , Option ['O'] []              (NoArg Opt)         "Perform optimisations"
   , Option ['h'] ["help"]        (NoArg Help)        "Prints this help information"
   ]
 
