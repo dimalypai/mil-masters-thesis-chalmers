@@ -22,6 +22,7 @@ executable flc
                        FunLang.BuiltIn
                        FunLang.CodeGenMil
                        FunLang.Lexer
+                       FunLang.Optimiser
                        FunLang.Parser
                        FunLang.Parser.ParseError
                        FunLang.PrettyPrinter
