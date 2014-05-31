@@ -1,0 +1,9 @@
+def main : Unit =>
+  try
+    unit;
+  catch
+    1;
+  finally
+  end;
+end
+

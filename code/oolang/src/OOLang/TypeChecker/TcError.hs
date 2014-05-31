@@ -56,6 +56,8 @@ data TcError =
   | OutsideFieldAccess SrcSpan
   | NestedRefCreation SrcSpan
   | NonRefDeref SrcSpan
+  | EmptyCatchBlockNonUnit Type SrcSpan
+  | CatchIncorrectType Type Type SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -240,6 +242,15 @@ instance Pretty TcError where
   prPrn (NonRefDeref srcSpan) =
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Incorrect usage of '!' operator. It can be used only with Ref variables/fields")
+
+  prPrn (EmptyCatchBlockNonUnit expType srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Catch block has to return a value of type" <+> quotes (prPrn expType) <> text ", but it is empty")
+
+  prPrn (CatchIncorrectType expType actType srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Catch block has to return a value of type" <+> quotes (prPrn expType) <>
+      text ", but it returns a value of type" <+> quotes (prPrn actType))
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

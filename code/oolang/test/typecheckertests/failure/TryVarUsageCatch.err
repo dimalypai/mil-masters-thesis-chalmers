@@ -1,0 +1,2 @@
+OOLang type checking error at TryVarUsageCatch.ool:6,5-6,5:
+  Name 'x' is not bound

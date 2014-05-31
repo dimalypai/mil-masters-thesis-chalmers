@@ -150,3 +150,25 @@ def justFun : Maybe Int =>
   just 1;
 end
 
+def exceptionsFun : Pure Int =>
+  x : Int = 1;
+  try
+    1;
+    y : Int = 2;
+    x;
+  catch
+    y : Int = 3;
+    2;
+  finally
+  end;
+end
+
+def exceptionsFunEmptyCatch : Pure Unit =>
+  try
+    unit;
+  catch
+  finally
+    1;
+  end;
+end
+

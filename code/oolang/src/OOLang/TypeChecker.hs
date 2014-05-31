@@ -443,6 +443,21 @@ tcStmt insideClass srcStmt =
       let exprRightPure = getPurityOf tyExprRight
       return $ AssignS s srcAssignOp tyExprLeft tyExprRight (assignPurity && exprRightPure)
 
+    TryS s srcTryStmts srcCatchStmts srcFinallyStmts -> do
+      tyTryStmts <- locally $ mapM (tcStmt insideClass) srcTryStmts
+      tyCatchStmts <- locally $ mapM (tcStmt insideClass) srcCatchStmts
+      tyFinallyStmts <- locally $ mapM (tcStmt insideClass) srcFinallyStmts
+
+      let tryBlockType = getTypeOf $ last tyTryStmts
+      if null tyCatchStmts
+        then when (tryBlockType /= TyUnit) $
+               throwError $ EmptyCatchBlockNonUnit tryBlockType s
+        else do let catchBlockType = getTypeOf (last tyCatchStmts)
+                when (tryBlockType /= catchBlockType) $
+                  throwError $ CatchIncorrectType tryBlockType catchBlockType (getSrcSpan $ last tyCatchStmts)
+
+      return $ TryS s tyTryStmts tyCatchStmts tyFinallyStmts
+
 -- | Note [Purity of declarations]:
 --
 -- Mark declarations without initialisation as pure.

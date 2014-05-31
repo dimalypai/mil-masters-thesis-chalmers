@@ -1,0 +1,2 @@
+OOLang type checking error at EmptyCatchNonUnitTry.ool:2,3-6,6:
+  Catch block has to return a value of type 'Int', but it is empty

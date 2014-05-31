@@ -370,6 +370,21 @@ spec =
       it "given a Maybe member access to a class field" $
         failureCase "MemberAccessMaybeField"
 
+      it "given a variable redeclaration inside try block" $
+        failureCase "TryBlockVarRedeclaration"
+
+      it "given an empty catch block with non-Unit try block" $
+        failureCase "EmptyCatchNonUnitTry"
+
+      it "given an incorrect return type in catch block" $
+        failureCase "CatchIncorrectType"
+
+      it "given a catch block usage of a variable defined inside try block" $
+        failureCase "TryVarUsageCatch"
+
+      it "given an outside usage of a variable defined inside try block" $
+        failureCase "TryVarUsageOutside"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.
