@@ -29,7 +29,8 @@ module OOLang.TypeChecker.TypeCheckM
   , isVarBoundM
   , addLocalVarM
   , getVarTypeM
-  , locallyWithEnv
+  , locallyWithContext
+  , locally
 
   , module Control.Monad.Error
   ) where
@@ -222,7 +223,8 @@ isVarBoundM var = do
 -- Doesn't check if the variable is already in the environment.
 -- Will overwrite it in this case.
 addLocalVarM :: Var -> Type -> TypeCheckM ()
-addLocalVarM var varType = modifyLocalTypeEnv $ addLocalVar var varType
+addLocalVarM var varType =
+  modifyLocalTypeEnv (modifyLocalTypeContext $ addLocalVar var varType)
 
 -- | Returns variable type. First looks for locals and then for functions.
 --
@@ -236,15 +238,25 @@ getVarTypeM var = do
       funTypeInfo <- getFunTypeInfoM (varToFunName var)
       return $ ftiType funTypeInfo
 
--- | Takes a separate local type environment and merges it with what is already
--- in the local type environment and performs a given computation in this new
--- environment. Then restores the local environment.
--- Should be safe, since we don't allow shadowing.
-locallyWithEnv :: LocalTypeEnv -> TypeCheckM a -> TypeCheckM a
-locallyWithEnv localTypeEnv tcm = do
-  currentLocalTypeEnv <- gets getLocalTypeEnv
-  modifyLocalTypeEnv (mergeLocalTypeEnv localTypeEnv)
+-- | Takes a separate local type context and puts it on top of the current
+-- local type environment and performs a given computation in this new
+-- environment. Then restores the local environment (by removing the top
+-- context).
+locallyWithContext :: LocalTypeContext -> TypeCheckM a -> TypeCheckM a
+locallyWithContext localTypeContext tcm = do
+  modifyLocalTypeEnv (addLocalTypeContext localTypeContext)
   a <- tcm
-  modifyLocalTypeEnv (const currentLocalTypeEnv)
+  modifyLocalTypeEnv removeLocalTypeContext
+  return a
+
+-- | Creates a new empty local type context on top of the current local type
+-- environment and performs a given computation in this new environment. Then
+-- restores the local environment (by removing the top context). Thus, all
+-- variables declared in the block dissapear at the end.
+locally :: TypeCheckM a -> TypeCheckM a
+locally tcm = do
+  modifyLocalTypeEnv addEmptyLocalTypeContext
+  a <- tcm
+  modifyLocalTypeEnv removeLocalTypeContext
   return a
 

@@ -35,11 +35,17 @@ module OOLang.TypeChecker.TypeEnv
   , getFunTypeInfo
 
   , LocalTypeEnv
+  , LocalTypeContext
   , emptyLocalTypeEnv
+  , emptyLocalTypeContext
   , isVarBound
+  , isVarBoundInTypeContext
   , addLocalVar
   , getVarType
-  , mergeLocalTypeEnv
+  , addEmptyLocalTypeContext
+  , addLocalTypeContext
+  , removeLocalTypeContext
+  , modifyLocalTypeContext
   ) where
 
 import qualified Data.Map as Map
@@ -272,21 +278,52 @@ builtInFunTypeInfo funType = FunTypeInfo funType undefined
 
 -- * Local type environment
 
+-- | Local type environment is a stack of type contexts (for handling scopes
+-- introduced by blocks like try, when, while etc.).
+-- There should always be at least one local type context.
+type LocalTypeEnv = [LocalTypeContext]
+
 -- | Local variables, parameters etc. and their types.
-type LocalTypeEnv = Map.Map Var Type
+type LocalTypeContext = Map.Map Var Type
 
 emptyLocalTypeEnv :: LocalTypeEnv
-emptyLocalTypeEnv = Map.empty
+emptyLocalTypeEnv = [emptyLocalTypeContext]
 
+emptyLocalTypeContext :: LocalTypeContext
+emptyLocalTypeContext = Map.empty
+
+-- | Looks through all type contexts in the environment from top to bottom.
 isVarBound :: Var -> LocalTypeEnv -> Bool
-isVarBound var = Map.member var
+isVarBound var = or . map (isVarBoundInTypeContext var)
 
-addLocalVar :: Var -> Type -> LocalTypeEnv -> LocalTypeEnv
+isVarBoundInTypeContext :: Var -> LocalTypeContext -> Bool
+isVarBoundInTypeContext = Map.member
+
+addLocalVar :: Var -> Type -> LocalTypeContext -> LocalTypeContext
 addLocalVar = Map.insert
 
+-- | Looks through all type contexts in the environment from top to bottom.
 getVarType :: Var -> LocalTypeEnv -> Maybe Type
-getVarType = Map.lookup
+getVarType _ [] = Nothing
+getVarType var (ctx:ctxs) =
+  case Map.lookup var ctx of
+    Just varType -> Just varType
+    Nothing -> getVarType var ctxs
 
-mergeLocalTypeEnv :: LocalTypeEnv -> LocalTypeEnv -> LocalTypeEnv
-mergeLocalTypeEnv = Map.union
+-- | Adds an empty local type context on top.
+addEmptyLocalTypeContext :: LocalTypeEnv -> LocalTypeEnv
+addEmptyLocalTypeContext = (emptyLocalTypeContext :)
+
+-- | Adds a given local type context on top.
+addLocalTypeContext :: LocalTypeContext -> LocalTypeEnv -> LocalTypeEnv
+addLocalTypeContext = (:)
+
+-- | Removes the top local type context.
+removeLocalTypeContext :: LocalTypeEnv -> LocalTypeEnv
+removeLocalTypeContext = tail
+
+-- | Modifies the top local type context.
+modifyLocalTypeContext :: (LocalTypeContext -> LocalTypeContext)
+                       -> LocalTypeEnv -> LocalTypeEnv
+modifyLocalTypeContext f (ctx:ctxs) = f ctx : ctxs
 

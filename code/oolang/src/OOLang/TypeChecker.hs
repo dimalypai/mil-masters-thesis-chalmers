@@ -249,12 +249,12 @@ traverseHierarchy className marked onStack = do
 tcClassDef :: SrcClassDef -> TypeCheckM TyClassDef
 tcClassDef (ClassDef s srcClassName mSuperSrcClassName srcMembers) = do
   let className = getClassName srcClassName
-  let localTypeEnv = case mSuperSrcClassName of
-                       Nothing -> emptyLocalTypeEnv
-                       Just superSrcClassName ->
-                         addLocalVar (Var "super") (TyClass $ getClassName superSrcClassName)
-                           emptyLocalTypeEnv
-  tyMembers <- locallyWithEnv localTypeEnv (tcClassMembers className srcMembers)
+  let localTypeContext = case mSuperSrcClassName of
+                           Nothing -> emptyLocalTypeContext
+                           Just superSrcClassName ->
+                             addLocalVar (Var "super") (TyClass $ getClassName superSrcClassName)
+                               emptyLocalTypeContext
+  tyMembers <- locallyWithContext localTypeContext (tcClassMembers className srcMembers)
   return $ ClassDef s srcClassName mSuperSrcClassName tyMembers
 
 -- | Checks all class members.
@@ -267,9 +267,9 @@ tcClassMembers :: ClassName -> [SrcMemberDecl] -> TypeCheckM [TyMemberDecl]
 tcClassMembers className srcMembers = do
   let (srcFieldDecls, srcMethodDecls) = partitionClassMembers srcMembers
   tyFieldDecls <- mapM (tcClassField className) srcFieldDecls
-  let localTypeEnvSelf = addLocalVar (Var "self") (TyClass className)
-                           emptyLocalTypeEnv
-  tyMethodDecls <- locallyWithEnv localTypeEnvSelf (mapM tcClassMethod srcMethodDecls)
+  let localTypeContextSelf = addLocalVar (Var "self") (TyClass className)
+                               emptyLocalTypeContext
+  tyMethodDecls <- locallyWithContext localTypeContextSelf (mapM tcClassMethod srcMethodDecls)
   return (map FieldMemberDecl tyFieldDecls ++ map MethodMemberDecl tyMethodDecls)
 
 -- | Checks class field initialiser.
@@ -338,21 +338,21 @@ tcFunDef :: Bool -> SrcFunDef -> TypeCheckM TyFunDef
 tcFunDef insideClass (FunDef s srcFunName srcFunType srcStmts) = do
   -- collect function parameters and check for variable shadowing
   let (FunType fts srcVarBinders srcRetType) = srcFunType
-  (localTypeEnv, revTyVarBinders) <- foldM (\(localTyEnv, revTyVbs) svb -> do
+  (localTypeContext, revTyVarBinders) <- foldM (\(localTyCtx, revTyVbs) svb -> do
       let (VarBinder vs _ srcVar srcVarType) = svb
       let var = getVar srcVar
       isBound <- isVarBoundM var
-      -- it is important to check in both places, since localTyEnv
+      -- it is important to check in both places, since localTyCtx
       -- is not queried by 'isVarBoundM', see `FunParamsDup` test case
-      when (isBound || isVarBound var localTyEnv) $
+      when (isBound || isVarBoundInTypeContext var localTyCtx) $
         throwError $ VarShadowing srcVar
       varType <- srcFunParamTypeToType srcVarType
       let tyVarBinder = VarBinder vs varType srcVar srcVarType
-      return (addLocalVar var varType localTyEnv, tyVarBinder:revTyVbs))
-    (emptyLocalTypeEnv, []) srcVarBinders
+      return (addLocalVar var varType localTyCtx, tyVarBinder:revTyVbs))
+    (emptyLocalTypeContext, []) srcVarBinders
   let tyFunType = FunType fts (reverse revTyVarBinders) srcRetType
 
-  tyStmts <- locallyWithEnv localTypeEnv (mapM (tcStmt insideClass) srcStmts)
+  tyStmts <- locallyWithContext localTypeContext (mapM (tcStmt insideClass) srcStmts)
 
   retType <- srcFunReturnTypeToType $ getFunReturnType srcFunType
   -- There is at least one statement, the value of the last one (and hence the
