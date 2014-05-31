@@ -25,14 +25,14 @@ spec =
 
     it "recognises all keywords correctly" $
       map getToken
-        (lexer "class def do else end false if just nothing \
+        (lexer "catch class def do else end false finally if just nothing \
               \ otherwise private public ref return \
-              \ static then true unit when while \
+              \ static then true try unit when while \
               \ Bool Float Int Maybe Mutable Pure Ref Unit")
         `shouldBe`
-      [ KW_Class, KW_Def, KW_Do, KW_Else, KW_End, KW_False, KW_If, KW_Just, KW_Nothing
+      [ KW_Catch, KW_Class, KW_Def, KW_Do, KW_Else, KW_End, KW_False, KW_Finally, KW_If, KW_Just, KW_Nothing
       , KW_Otherwise, KW_Private, KW_Public, KW_Ref, KW_Return
-      , KW_Static, KW_Then, KW_True, KW_Unit, KW_When, KW_While
+      , KW_Static, KW_Then, KW_True, KW_Try, KW_Unit, KW_When, KW_While
       , KW_TyBool, KW_TyFloat, KW_TyInt, KW_TyMaybe, KW_TyMutable, KW_TyPure, KW_TyRef, KW_TyUnit
       ]
 
@@ -71,9 +71,9 @@ spec =
 
     it "shows tokens correctly" $
       intercalate " " (map (show . getToken)
-        (lexer "class def do else end false if just nothing \
+        (lexer "catch class def do else end false finally if just nothing \
               \ otherwise private public ref return \
-              \ static then true unit when while \
+              \ static then true try unit when while \
               \ Bool Float Int Maybe Mutable Pure Ref Unit \
               \ =  :  +  -  *  /  %  <  >  <=  >=  /= \
               \ =>  ->  \\  .  ::  ?  ??  <-  :=  ! \
@@ -81,9 +81,9 @@ spec =
               \ 1 0.1 1.0e-2 1e-2 \"str\" \
               \ x C var123 Shape"))
         `shouldBe`
-      "class def do else end false if just nothing\
+      "catch class def do else end false finally if just nothing\
      \ otherwise private public ref return\
-     \ static then true unit when while\
+     \ static then true try unit when while\
      \ Bool Float Int Maybe Mutable Pure Ref Unit\
      \ = : + - * / % < > <= >= /=\
      \ => -> \\ . :: ? ?? <- := !\

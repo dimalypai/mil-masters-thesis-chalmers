@@ -47,12 +47,14 @@ tokens :-
   @comment ;
 
   -- Keywords
+  catch     { \p s -> (KW_Catch,     posn p s) }
   class     { \p s -> (KW_Class,     posn p s) }
   def       { \p s -> (KW_Def,       posn p s) }
   do        { \p s -> (KW_Do,        posn p s) }
   else      { \p s -> (KW_Else,      posn p s) }
   end       { \p s -> (KW_End,       posn p s) }
   false     { \p s -> (KW_False,     posn p s) }
+  finally   { \p s -> (KW_Finally,   posn p s) }
   if        { \p s -> (KW_If,        posn p s) }
   just      { \p s -> (KW_Just,      posn p s) }
   nothing   { \p s -> (KW_Nothing,   posn p s) }
@@ -64,6 +66,7 @@ tokens :-
   static    { \p s -> (KW_Static,    posn p s) }
   then      { \p s -> (KW_Then,      posn p s) }
   true      { \p s -> (KW_True,      posn p s) }
+  try       { \p s -> (KW_Try,       posn p s) }
   unit      { \p s -> (KW_Unit,      posn p s) }
   when      { \p s -> (KW_When,      posn p s) }
   while     { \p s -> (KW_While,     posn p s) }
@@ -132,12 +135,14 @@ tokens :-
 -- | Tokens.
 data Token =
   -- Keywords
-    KW_Class
+    KW_Catch
+  | KW_Class
   | KW_Def
   | KW_Do
   | KW_Else
   | KW_End
   | KW_False
+  | KW_Finally
   | KW_If
   | KW_Just
   | KW_Nothing
@@ -149,6 +154,7 @@ data Token =
   | KW_Static
   | KW_Then
   | KW_True
+  | KW_Try
   | KW_Unit
   | KW_When
   | KW_While
@@ -211,12 +217,14 @@ data Token =
 
 instance Show Token where
   -- Keywords
+  show KW_Catch     = "catch"
   show KW_Class     = "class"
   show KW_Def       = "def"
   show KW_Do        = "do"
   show KW_Else      = "else"
   show KW_End       = "end"
   show KW_False     = "false"
+  show KW_Finally   = "finally"
   show KW_If        = "if"
   show KW_Just      = "just"
   show KW_Nothing   = "nothing"
@@ -228,6 +236,7 @@ instance Show Token where
   show KW_Static    = "static"
   show KW_Then      = "then"
   show KW_True      = "true"
+  show KW_Try       = "try"
   show KW_Unit      = "unit"
   show KW_When      = "when"
   show KW_While     = "while"
