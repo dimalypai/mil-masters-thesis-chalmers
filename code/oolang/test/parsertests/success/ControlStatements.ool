@@ -5,5 +5,11 @@ def fun : Unit =>
   end;
   while true do
   end;
+  try
+    unit;
+  catch
+    1;
+  finally
+  end;
 end
 

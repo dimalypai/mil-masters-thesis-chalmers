@@ -229,9 +229,9 @@ spec =
       let baseName = "ControlStatements"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 8 3)
+          ast = Program (srcSp 1 1 14 3)
                   []
-                  [FunDef (srcSp 1 1 8 3)
+                  [FunDef (srcSp 1 1 14 3)
                      (FunName "fun", srcSp 1 5 1 7)
                      (FunType (srcSp 1 11 1 14)
                         []
@@ -243,6 +243,12 @@ spec =
                          []
                      , WhileS (srcSp 6 3 7 6)
                          (LitE (BoolLit (srcSp 6 9 6 12) () True))
+                         []
+                     , TryS (srcSp 8 3 13 6)
+                         [ExprS (srcSp 9 5 9 9)
+                            (LitE $ UnitLit (srcSp 9 5 9 8) ())]
+                         [ExprS (srcSp 11 5 11 6)
+                            (LitE $ IntLit (srcSp 11 5 11 5) () 1)]
                          []]]
       in successCase baseName ast
 

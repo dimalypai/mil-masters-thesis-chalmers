@@ -30,12 +30,14 @@ import OOLang.Parser.ParseError
 
 %token
   -- Keywords
+  catch     { $$@(KW_Catch,     _) }
   class     { $$@(KW_Class,     _) }
   def       { $$@(KW_Def,       _) }
   do        { $$@(KW_Do,        _) }
   else      { $$@(KW_Else,      _) }
   end       { $$@(KW_End,       _) }
   false     { $$@(KW_False,     _) }
+  finally   { $$@(KW_Finally,   _) }
   if        { $$@(KW_If,        _) }
   just      { $$@(KW_Just,      _) }
   nothing   { $$@(KW_Nothing,   _) }
@@ -47,6 +49,7 @@ import OOLang.Parser.ParseError
   static    { $$@(KW_Static,    _) }
   then      { $$@(KW_Then,      _) }
   true      { $$@(KW_True,      _) }
+  try       { $$@(KW_Try,       _) }
   unit      { $$@(KW_Unit,      _) }
   when      { $$@(KW_When,      _) }
   while     { $$@(KW_While,     _) }
@@ -175,6 +178,10 @@ stmt
       {% withFileName $ \fileName ->
            WhileS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $6] fileName)
                   $2 $4 }
+  | try list1(stmt) catch list(stmt) finally list(stmt) end ';'
+      {% withFileName $ \fileName ->
+           TryS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $8] fileName)
+                $2 $4 $6 }
 
 expr :: { SrcExpr }
 expr
