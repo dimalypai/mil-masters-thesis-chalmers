@@ -304,6 +304,8 @@ compatibleMonadTypes tm1 tm2 = compatibleMonadTypes tm2 tm1
 -- Main idea: monad cons cell has more effects than a single monad.
 --
 -- Assumption: 'compatibleMonadTypes' returned True.
+--
+-- This operation is *not* commutative.
 hasMoreEffectsThan :: TypeM -> TypeM -> TypeCheckM Bool
 hasMoreEffectsThan (MTyMonadCons _ tm1) (MTyMonadCons _ tm2) = tm1 `hasMoreEffectsThan` tm2
 hasMoreEffectsThan (MTyMonadCons {}) (MTyMonad {}) = return True
@@ -312,8 +314,8 @@ hasMoreEffectsThan t1 (MTyAlias typeName2) = do
   case aliasType2 of
     TyMonad t2 -> t1 `hasMoreEffectsThan` t2
 hasMoreEffectsThan (MTyMonad {}) (MTyMonad {}) = return False
-hasMoreEffectsThan t1@(MTyAlias {}) t2 = t2 `hasMoreEffectsThan` t1
-hasMoreEffectsThan t1@(MTyMonad {}) t2@(MTyMonadCons {}) = t2 `hasMoreEffectsThan` t1
+hasMoreEffectsThan t1@(MTyAlias {}) t2 = not <$> t2 `hasMoreEffectsThan` t1
+hasMoreEffectsThan t1@(MTyMonad {}) t2@(MTyMonadCons {}) = not <$> t2 `hasMoreEffectsThan` t1
 
 -- | Checks if the first monad is a suffix of the second one or if they are
 -- alpha equivalent.
