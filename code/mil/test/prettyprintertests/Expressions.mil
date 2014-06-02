@@ -4,3 +4,12 @@ fun : Unit =
 fun2 : Unit =
   let (x : {Int, Float}) <- return [IO] {1, 1.0e-2} in
     x;
+
+fun3 : Unit =
+  case unit of
+    | 0 => unit
+    | (y : Int) => unit
+    | MkA (a : Int) (b : Unit) => unit
+    | {(a : Int), (b : Unit)} => unit
+    | _ => unit
+  end;

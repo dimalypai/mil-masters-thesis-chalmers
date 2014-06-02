@@ -161,7 +161,20 @@ spec =
                            (ReturnE
                               (MTyMonad IO)
                               (TupleE [LitE $ IntLit 1, LitE $ FloatLit 0.01]))
-                           (VarE $ VarBinder (Var "x", undefined)))])
+                           (VarE $ VarBinder (Var "x", undefined)))
+                    , FunDef
+                        (FunName "fun3")
+                        (mkSimpleType "Unit")
+                        (CaseE (LitE UnitLit)
+                           [ CaseAlt (LitP $ IntLit 0, LitE UnitLit)
+                           , CaseAlt (VarP $ VarBinder (Var "y", mkSimpleType "Int"), LitE UnitLit)
+                           , CaseAlt ( ConP (ConName "MkA") [ VarBinder (Var "a", mkSimpleType "Int")
+                                                            , VarBinder (Var "b", mkSimpleType "Unit")]
+                                     , LitE UnitLit)
+                           , CaseAlt ( TupleP [ VarBinder (Var "a", mkSimpleType "Int")
+                                              , VarBinder (Var "b", mkSimpleType "Unit")]
+                                     , LitE UnitLit)
+                           , CaseAlt (DefaultP, LitE UnitLit)])])
       in testCase baseName ast
 
 -- Infrastructure

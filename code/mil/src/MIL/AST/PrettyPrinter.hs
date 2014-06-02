@@ -69,6 +69,10 @@ instance Pretty Expr where
   prPrn e@(LiftE e1 tm1 tm2) =
     text "lift" <+> brackets (prPrn tm1 <+> text "->" <+> prPrn tm2) <+>
     prPrnParens (e1 `exprHasLowerPrec` e) e1
+  prPrn (CaseE e caseAlts) =
+    text "case" <+> prPrn e <+> text "of" $+$
+    nest indLvl (vsep $ map prPrn caseAlts) $+$
+    text "end"
   prPrn (TupleE tElems) = braces (hsep $ punctuate comma $ map prPrn tElems)
 
 instance Pretty Literal where
@@ -76,6 +80,16 @@ instance Pretty Literal where
   prPrn (IntLit i)    = int i
   prPrn (FloatLit f)  = double f
   prPrn (StringLit s) = text (show s)
+
+instance Pretty CaseAlt where
+  prPrn (CaseAlt (pat, e)) = text "|" <+> prPrn pat <+> text "=>" <+> prPrn e
+
+instance Pretty Pattern where
+  prPrn (LitP lit) = prPrn lit
+  prPrn (VarP varBinder) = prPrn varBinder
+  prPrn (ConP conName varBinders) = prPrn conName <+> hsep (map prPrn varBinders)
+  prPrn (TupleP varBinders) = braces (hsep $ punctuate comma $ map prPrn varBinders)
+  prPrn DefaultP = text "_"
 
 -- See Note [Precedences and associativity]
 instance Pretty Type where
