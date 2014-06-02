@@ -110,7 +110,7 @@ data Pattern =
     -- | Variable pattern. Needs to contain type.
   | VarP VarBinder
     -- | Constructor pattern. Can't be nested.
-  | ConP [VarBinder]
+  | ConP ConName [VarBinder]
     -- | Tuple pattern. Can't be nested.
   | TupleP [VarBinder]
     -- | Default alternative: underscore.
