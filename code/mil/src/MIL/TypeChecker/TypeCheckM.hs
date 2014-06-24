@@ -141,7 +141,7 @@ dataConsStub = error "Data constructors are not available yet"
 type DataConTypeEnv = Map.Map ConName DataConTypeInfo
 
 data DataConTypeInfo = DataConTypeInfo
-  { dcontiType     :: Type  -- ^ Function type of the data constructor.
+  { dcontiType     :: Type      -- ^ Function type of the data constructor.
   , dcontiTypeName :: TypeName  -- ^ Type name of the data type constructor is defined in.
   }
 
