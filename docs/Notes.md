@@ -372,4 +372,38 @@ General thoughts. Week 17
   Would be good to do effect inference (for NonTerm for example), but for now
   it may be more conservative.
 * Aliases turn out to be very nice for reading but tricky for implementation.
+* MIL type annotations for expressions? More likely no than yes.
+
+General thoughts. Week 18
+=========================
+
+* Types of built-in read* functions in MIL should contain Error: Error Unit :::
+  IO. Than it is quite problematic to use them inside Impure_M monad, we need a
+  way to insert effects between the Error and IO. Also, MIL built-in functions
+  may use a different type of error from the source language Error effect.
+  Maybe we could add one more Error with a built-in error type at the bottom
+  right on top of the IO? This almost works, but there is a problem that this
+  effect ordering is not very good for the language semantics. Ideally, there
+  probably should be something like Error MilError ::: m ::: IO for any m, but
+  this complicates things.
+* Effects ordering and read function problems.
+* Thoughts on why "monad prefixing works":
+  We can think that ::: always has an implicit m at the end, and so it is sort
+  of polymorphic in the suffix, namely, Error Unit ::: IO is actually Error
+  Unit ::: IO ::: m, where m can be any monadic thing (single monad or cons).
+  Also, we can imagine that there is always an implicit sequence of returns
+  that makes the resulting types isomorphic (to complete the monads from the
+  suffix).
+
+Meeting 2014-06-05
+==================
+
+* Fix types of built-in functions for each source language (by providing their
+  types).
+* Read about monad morphism.
+
+Meeting 2014-06-23
+==================
+
+* Performance evaluation. Write interpreter for MIL and count reductions?
 
