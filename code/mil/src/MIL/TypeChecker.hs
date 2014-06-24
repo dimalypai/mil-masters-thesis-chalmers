@@ -24,7 +24,7 @@ import MIL.BuiltIn
 import MIL.Utils
 
 -- | Main batch entry point to the TypeChecker.
--- In the case of success returns a typed program and a type environment.
+-- In the case of success returns a completed type environment.
 typeCheck :: Program -> Either TcError TypeEnv
 typeCheck program = runTypeCheckM (tcProgram program) initTypeEnv
 
