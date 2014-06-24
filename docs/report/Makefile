@@ -23,7 +23,8 @@ all:
 		05_FunLang.md \
 		06_OOLang.md \
 		07_Optimisations.md \
-		08_Conclusions.md > ReportText.tex
+		08_Conclusions.md \
+		09_Bibliography.md > ReportText.tex
 	xelatex ReportText.tex
 	xelatex ReportText.tex
 	bibtex ReportText.aux

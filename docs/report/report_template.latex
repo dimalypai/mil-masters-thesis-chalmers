@@ -130,6 +130,8 @@ $if(lang)$
 \fi
 $endif$
 
+\usepackage[nottoc]{tocbibind}
+
 $if(title)$
 \title{$title$}
 $endif$
