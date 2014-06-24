@@ -12,6 +12,7 @@ all:
 			--variable geometry:margin=1in \
 			--latex-engine=xelatex \
 			--chapters --toc \
+			--number-sections \
 			--parse-raw -t latex -s \
 			--template=report_template.latex \
 		  --include-before=Acknowledgements.tex \
