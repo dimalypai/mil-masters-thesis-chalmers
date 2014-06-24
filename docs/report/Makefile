@@ -1,5 +1,5 @@
 all:
-	pandoc
+	pandoc \
 			--variable documentclass=report \
 			--variable mainfont=Palatino \
 			--variable monofont=Monaco \
