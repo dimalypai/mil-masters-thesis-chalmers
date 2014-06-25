@@ -6,6 +6,9 @@ import Data.Maybe (isJust)
 import FunLang.AST
 import FunLang.AST.Helpers
 
+import qualified MIL.AST as MIL
+import qualified MIL.BuiltIn as MIL
+
 -- * Built-in types
 
 builtInDataTypes :: [(TypeName, Kind)]
@@ -75,6 +78,12 @@ builtInFunctions =
 isBuiltInFunction :: FunName -> Bool
 isBuiltInFunction funName = isJust $ lookup funName builtInFunctions
 
+builtInFunctionsMil :: [(MIL.FunName, MIL.Type)]
+builtInFunctionsMil =
+  [ (MIL.FunName "read_int",   MIL.TyApp (MIL.TyMonad ioMonadMil) MIL.intType)
+  , (MIL.FunName "read_float", MIL.TyApp (MIL.TyMonad ioMonadMil) MIL.floatType)
+  ]
+
 -- * Monads
 
 monadKind :: Kind
@@ -85,4 +94,30 @@ monadTypes = Set.fromList
   [ TypeName "IO"
   , TypeName "State"
   ]
+
+pureMonadMilName :: MIL.TypeName
+pureMonadMilName = MIL.TypeName "Pure_M"
+
+pureMonadMil :: MIL.TypeM
+pureMonadMil = MIL.MTyAlias pureMonadMilName
+
+pureMonadMilType :: MIL.TypeM
+pureMonadMilType =
+  MIL.MTyMonadCons (MIL.Error exceptionType) $
+    MIL.MTyMonad MIL.NonTerm
+
+ioMonadMilName :: MIL.TypeName
+ioMonadMilName = MIL.TypeName "IO_M"
+
+ioMonadMil :: MIL.TypeM
+ioMonadMil = MIL.MTyAlias ioMonadMilName
+
+ioMonadMilType :: MIL.TypeM
+ioMonadMilType =
+  MIL.MTyMonadCons (MIL.Error exceptionType) $
+    MIL.MTyMonadCons MIL.NonTerm $
+      MIL.MTyMonad MIL.IO
+
+exceptionType :: MIL.Type
+exceptionType = MIL.unitType
 

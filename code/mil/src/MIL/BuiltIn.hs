@@ -1,5 +1,7 @@
 module MIL.BuiltIn where
 
+import Data.Maybe (fromJust)
+
 import MIL.AST
 
 -- * Built-in types
@@ -56,11 +58,9 @@ builtInFunctions :: [(FunName, Type)]
 builtInFunctions =
   [
   -- IO functions
-    (FunName "printString", TyArrow stringType (ioType unitType))
-  , (FunName "printInt",    TyArrow intType    (ioType unitType))
-  , (FunName "readInt",     ioType intType)
-  , (FunName "printFloat",  TyArrow floatType  (ioType unitType))
-  , (FunName "readFloat",   ioType floatType)
+    (FunName "print_string", TyArrow stringType (ioType unitType))
+  , (FunName "print_int",    TyArrow intType    (ioType unitType))
+  , (FunName "print_float",  TyArrow floatType  (ioType unitType))
   -- Ref functions
   , (FunName "new_ref",   TyForAll (TypeVar "A")
       (TyArrow (mkTypeVar "A") (stateType (refType $ mkTypeVar "A"))))
@@ -69,4 +69,10 @@ builtInFunctions =
   , (FunName "write_ref", TyForAll (TypeVar "A")
       (TyArrow (refType $ mkTypeVar "A") (TyArrow (mkTypeVar "A") (stateType unitType))))
   ]
+
+-- | It takes a list of built-in functions to search in. This is done, because
+-- MIL can get additional supply of them from the source language.
+-- Unsafe. Make sure that there exists such a built-in function.
+getBuiltInFunctionType :: FunName -> [(FunName, Type)] -> Type
+getBuiltInFunctionType funName = fromJust . lookup funName
 

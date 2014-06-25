@@ -150,7 +150,7 @@ codeGenExpr funMonad tyExpr =
     VarE _ varType var -> do
       let funName = varToFunName var
       if isBuiltInFunction funName
-        then codeGenBuiltInFunction funMonad var varType
+        then codeGenBuiltInFunction funMonad var
         else do let milVar = varMil var
                 isGlobalFunction <- asks (isFunctionDefined funName . getFunTypeEnv)
                 if isGlobalFunction || isMonadType varType
@@ -269,22 +269,41 @@ codeGenDoBlock (tyStmt:tyStmts) funMonad =
              , milBodyType)
 
 -- | Built-in functions need a special treatment.
-codeGenBuiltInFunction :: MIL.TypeM -> Var -> Type -> CodeGenM (MIL.Expr, MIL.Type)
-codeGenBuiltInFunction funMonad funNameVar funType = do
-  let milFunType = typeMil funType
-      milVar = varMil funNameVar
-  if isMonadType funType
-    then let (MIL.TyApp (MIL.TyMonad resultMonad) monadResultType) = milFunType in
-         if resultMonad == funMonad
-           then return ( MIL.VarE $ MIL.VarBinder (milVar, milFunType)
-                       , milFunType)
-           else if True  -- TODO: resultMonad `MIL.isMonadSuffixOf` funMonad?
-                  then return ( MIL.LiftE (MIL.VarE $ MIL.VarBinder (milVar, milFunType)) resultMonad funMonad
-                              , MIL.applyMonadType funMonad monadResultType)
-                  else return ( MIL.ReturnE funMonad (MIL.VarE $ MIL.VarBinder (milVar, milFunType))
-                              , MIL.applyMonadType funMonad milFunType)
-    else return ( MIL.ReturnE funMonad (MIL.VarE $ MIL.VarBinder (milVar, milFunType))
-                , MIL.applyMonadType funMonad milFunType)
+codeGenBuiltInFunction :: MIL.TypeM -> Var -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenBuiltInFunction funMonad funNameVar =
+  case funNameVar of
+    Var "printString" -> codeGenArgBuiltInFunction (MIL.FunName "print_string") funMonad
+    Var "printInt"    -> codeGenArgBuiltInFunction (MIL.FunName "print_int") funMonad
+    Var "printFloat"  -> codeGenArgBuiltInFunction (MIL.FunName "print_float") funMonad
+
+    Var "readInt"     -> codeGenNoArgBuiltInFunction (MIL.FunName "read_int") funMonad
+    Var "readFloat"   -> codeGenNoArgBuiltInFunction (MIL.FunName "read_float") funMonad
+
+    -- TODO: state functions
+
+    _ -> error (prPrint funNameVar ++ "is not a built-in function")
+
+-- | These functions have at least on parameter, so we just return them in the
+-- function monad.
+codeGenArgBuiltInFunction :: MIL.FunName -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenArgBuiltInFunction milFunName funMonad = do
+  let milFunNameVar = MIL.funNameToVar milFunName
+      milFunType = MIL.getBuiltInFunctionType milFunName (MIL.builtInFunctions ++ builtInFunctionsMil)
+  return $ ( MIL.ReturnE funMonad (MIL.VarE $ MIL.VarBinder (milFunNameVar, milFunType))
+           , MIL.applyMonadType funMonad milFunType)
+
+-- | These functions don't expect arguments. We must lift them if they are in a
+-- different monad. Type checking ensured that they are in the correct monad.
+codeGenNoArgBuiltInFunction :: MIL.FunName -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenNoArgBuiltInFunction milFunName funMonad = do
+  let milFunNameVar = MIL.funNameToVar milFunName
+      milFunType = MIL.getBuiltInFunctionType milFunName (MIL.builtInFunctions ++ builtInFunctionsMil)
+      (MIL.TyApp (MIL.TyMonad resultMonad) monadResultType) = milFunType
+  if (resultMonad /= funMonad)
+    then return $ ( MIL.LiftE (MIL.VarE $ MIL.VarBinder (milFunNameVar, milFunType)) resultMonad funMonad
+                  , MIL.applyMonadType funMonad monadResultType)
+    else return $ ( MIL.VarE $ MIL.VarBinder (milFunNameVar, milFunType)
+                  , MIL.applyMonadType funMonad monadResultType)
 
 -- * Type conversions
 
@@ -351,7 +370,7 @@ monadTypeMil (TyArrow t1 t2) = MIL.TyArrow (monadTypeMil t1) (monadFunTypeMil t2
 monadTypeMil (TyApp typeName typeArgs) =
   case (typeName, typeArgs) of
     (TypeName "IO", [ioResultType]) ->
-      MIL.applyMonadType ioMonad (monadTypeMil ioResultType)
+      MIL.applyMonadType ioMonadMil (monadTypeMil ioResultType)
     (TypeName "IO", _) -> error "IO type is ill-formed"
 
     (TypeName "State", [_, stateResultType]) ->
@@ -369,8 +388,8 @@ monadFunTypeMil t@(TyApp typeName typeArgs) =
   case typeName of
     TypeName "IO" -> monadTypeMil t
     TypeName "State" -> monadTypeMil t
-    _ -> MIL.applyMonadType pureMonad (monadTypeMil t)
-monadFunTypeMil t = MIL.applyMonadType pureMonad (monadTypeMil t)
+    _ -> MIL.applyMonadType pureMonadMil (monadTypeMil t)
+monadFunTypeMil t = MIL.applyMonadType pureMonadMil (monadTypeMil t)
 
 -- | Data constructor type conversion.
 -- See Note [Type conversion].
@@ -385,7 +404,7 @@ conTypeMil t = typeMil t
 monadSrcTypeMil :: SrcType -> CodeGenM MIL.Type
 monadSrcTypeMil (SrcTyCon srcTypeName) =
   case getTypeName srcTypeName of
-    TypeName "IO" -> return $ MIL.TyMonad ioMonad
+    TypeName "IO" -> return $ MIL.TyMonad ioMonadMil
     TypeName "State" -> return $ MIL.TyMonad (MIL.MTyMonad MIL.State)
     typeName -> do
       -- 'SrcTyCon' can represent both type names and type variables, so we
@@ -409,8 +428,8 @@ monadSrcFunTypeMil t@(SrcTyCon srcTypeName) =
   case getTypeName srcTypeName of
     TypeName "IO" -> monadSrcTypeMil t
     TypeName "State" -> monadSrcTypeMil t
-    _ -> MIL.applyMonadType pureMonad <$> monadSrcTypeMil t
-monadSrcFunTypeMil st = MIL.applyMonadType pureMonad <$> monadSrcTypeMil st
+    _ -> MIL.applyMonadType pureMonadMil <$> monadSrcTypeMil t
+monadSrcFunTypeMil st = MIL.applyMonadType pureMonadMil <$> monadSrcTypeMil st
 
 -- * Conversion utils
 
@@ -439,36 +458,8 @@ typeVarMil (TypeVar typeVarStr) = MIL.TypeVar typeVarStr
 
 builtInAliasDefs :: [MIL.AliasDef]
 builtInAliasDefs =
-  [ MIL.AliasDef pureMonadName $ MIL.TyMonad pureMonadType
-  , MIL.AliasDef ioMonadName   $ MIL.TyMonad ioMonadType ]
-
--- * Monads
-
-pureMonadName :: MIL.TypeName
-pureMonadName = MIL.TypeName "Pure_M"
-
-pureMonad :: MIL.TypeM
-pureMonad = MIL.MTyAlias pureMonadName
-
-pureMonadType :: MIL.TypeM
-pureMonadType =
-  MIL.MTyMonadCons (MIL.Error exceptionType) $
-    MIL.MTyMonad MIL.NonTerm
-
-ioMonadName :: MIL.TypeName
-ioMonadName = MIL.TypeName "IO_M"
-
-ioMonad :: MIL.TypeM
-ioMonad = MIL.MTyAlias ioMonadName
-
-ioMonadType :: MIL.TypeM
-ioMonadType =
-  MIL.MTyMonadCons (MIL.Error exceptionType) $
-    MIL.MTyMonadCons MIL.NonTerm $
-      MIL.MTyMonad MIL.IO
-
-exceptionType :: MIL.Type
-exceptionType = MIL.unitType
+  [ MIL.AliasDef pureMonadMilName $ MIL.TyMonad pureMonadMilType
+  , MIL.AliasDef ioMonadMilName   $ MIL.TyMonad ioMonadMilType ]
 
 -- * CodeGenM operations
 

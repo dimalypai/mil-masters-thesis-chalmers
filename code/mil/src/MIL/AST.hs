@@ -196,6 +196,9 @@ newtype ConName = ConName String
 newtype FunName = FunName String
   deriving (Show, Eq, Ord)
 
+funNameToVar :: FunName -> Var
+funNameToVar (FunName funName) = Var funName
+
 -- | Built-in monads (effects).
 data MilMonad = Id
               | State
