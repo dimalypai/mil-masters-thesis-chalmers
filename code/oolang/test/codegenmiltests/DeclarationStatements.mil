@@ -1,7 +1,3 @@
-type Bool
-  = True
-  | False;
-
 type Maybe A
   = Nothing
   | Just A;

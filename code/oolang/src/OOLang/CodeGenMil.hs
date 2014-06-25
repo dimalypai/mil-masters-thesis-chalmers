@@ -194,8 +194,8 @@ literalMil :: TyLiteral -> MIL.Expr
 literalMil UnitLit {} = MIL.LitE MIL.UnitLit
 literalMil (BoolLit _ _ b) =
   if b
-    then MIL.ConNameE (MIL.ConName "True")  (MIL.mkSimpleType "Bool")
-    else MIL.ConNameE (MIL.ConName "False") (MIL.mkSimpleType "Bool")
+    then MIL.ConNameE (MIL.ConName "True")  MIL.boolType
+    else MIL.ConNameE (MIL.ConName "False") MIL.boolType
 literalMil (IntLit _ _ i)     = MIL.LitE (MIL.IntLit i)
 literalMil (FloatLit _ _ f _) = MIL.LitE (MIL.FloatLit f)
 literalMil (StringLit _ _ s)  = MIL.LitE (MIL.StringLit s)
@@ -259,7 +259,7 @@ codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
 -- | See Note [Type transformation].
 typeMil :: Type -> MIL.Type
 typeMil TyUnit   = MIL.unitType
-typeMil TyBool   = MIL.mkSimpleType "Bool"
+typeMil TyBool   = MIL.boolType
 typeMil TyInt    = MIL.intType
 typeMil TyFloat  = MIL.floatType
 typeMil TyString = MIL.stringType
@@ -295,9 +295,7 @@ varMil (Var varStr) = MIL.Var varStr
 
 builtInTypeDefs :: [MIL.TypeDef]
 builtInTypeDefs =
-  [ MIL.TypeDef (MIL.TypeName "Bool") [] [ MIL.ConDef (MIL.ConName "True")  []
-                                         , MIL.ConDef (MIL.ConName "False") []]
-  , MIL.TypeDef (MIL.TypeName "Maybe") [MIL.TypeVar "A"]
+  [ MIL.TypeDef (MIL.TypeName "Maybe") [MIL.TypeVar "A"]
       [ MIL.ConDef (MIL.ConName "Nothing") []
       , MIL.ConDef (MIL.ConName "Just")    [MIL.mkTypeVar "A"]]
   ]
