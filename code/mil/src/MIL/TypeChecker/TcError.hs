@@ -167,5 +167,5 @@ instance Pretty TcError where
     nest indLvl (text "The constructor pattern needs to have" <+> int expNum <+> text "argument(s)" <>
       text ", but it was given" <+> int actNum)
 -}
-  prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
+  prPrn (OtherError errMsg) = tcErrorHeader <+> text errMsg
 
