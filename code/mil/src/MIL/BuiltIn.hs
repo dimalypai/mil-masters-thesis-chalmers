@@ -7,14 +7,24 @@ import MIL.AST
 builtInDataTypes :: [(TypeName, Kind)]
 builtInDataTypes =
   [ (TypeName "Unit",   StarK)
+  , (TypeName "Bool",   StarK)
   , (TypeName "Int",    StarK)
   , (TypeName "Float",  StarK)
   , (TypeName "String", StarK)
   , (TypeName "Ref",    StarK :=>: StarK)
   ]
 
+builtInDataCons :: [(ConName, (Type, TypeName))]
+builtInDataCons =
+  [ (ConName "True", (mkSimpleType "Bool", TypeName "Bool"))
+  , (ConName "False", (mkSimpleType "Bool", TypeName "Bool"))
+  ]
+
 unitType :: Type
 unitType = mkSimpleType "Unit"
+
+boolType :: Type
+boolType = mkSimpleType "Bool"
 
 intType :: Type
 intType = mkSimpleType "Int"
