@@ -1,0 +1,10 @@
+def main : Unit =>
+  printString "Hello from main";
+  b : Bool = readBool;
+  printBool b;
+  i : Int = readInt;
+  printInt i;
+  f : Float = readFloat;
+  printFloat f;
+end
+

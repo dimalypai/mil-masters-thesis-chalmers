@@ -1,0 +1,43 @@
+type Bool
+  = True
+  | False;
+
+type Maybe A
+  = Nothing
+  | Just A;
+
+alias Pure_M = Error Unit ::: NonTerm;
+
+alias Impure_M = Error Unit ::: NonTerm ::: State ::: IO;
+
+readBool : Impure_M Bool =
+  let (bool_str : String) <- read_string in
+    case bool_str of
+      | "true" => return [Impure_M] True
+      | "false" => return [Impure_M] False
+      | _ => throw_error [Unit] [Bool] unit
+    end;
+
+printBool : Bool -> IO Unit =
+  \(b : Bool) -> case b of
+                   | True => print_string "true"
+                   | False => print_string "false"
+                 end;
+
+main : Impure_M Unit =
+  let (_ : Unit) <- let (var_0 : String -> IO Unit) <- return [Impure_M] print_string in
+                      let (var_1 : String) <- return [Impure_M] "Hello from main" in
+                        lift [IO -> Impure_M] var_0 var_1 in
+    let (b : Bool) <- readBool in
+      let (_ : Unit) <- let (var_2 : Bool -> IO Unit) <- return [Impure_M] printBool in
+                          let (var_3 : Bool) <- return [Impure_M] b in
+                            lift [IO -> Impure_M] var_2 var_3 in
+        let (i : Int) <- read_int in
+          let (_ : Unit) <- let (var_4 : Int -> IO Unit) <- return [Impure_M] print_int in
+                              let (var_5 : Int) <- return [Impure_M] i in
+                                lift [IO -> Impure_M] var_4 var_5 in
+            let (f : Float) <- read_float in
+              let (var_6 : Float -> IO Unit) <- return [Impure_M] print_float in
+                let (var_7 : Float) <- return [Impure_M] f in
+                  lift [IO -> Impure_M] var_6 var_7;
+
