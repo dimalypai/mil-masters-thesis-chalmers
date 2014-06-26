@@ -94,6 +94,10 @@ builtInFunctionsMil =
   , (MIL.FunName "read_float", MIL.TyApp (MIL.TyMonad ioMonadMil) MIL.floatType)
   ]
 
+-- | Unsafe. Make sure that there exists such a built-in function.
+getMilBuiltInFunctionType :: MIL.FunName -> MIL.Type
+getMilBuiltInFunctionType milFunName = MIL.getBuiltInFunctionType milFunName builtInFunctionsMil
+
 -- * Monads
 
 monadKind :: Kind

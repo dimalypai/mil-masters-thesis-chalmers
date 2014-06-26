@@ -288,7 +288,7 @@ codeGenBuiltInFunction funMonad funNameVar =
 codeGenArgBuiltInFunction :: MIL.FunName -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
 codeGenArgBuiltInFunction milFunName funMonad = do
   let milFunNameVar = MIL.funNameToVar milFunName
-      milFunType = MIL.getBuiltInFunctionType milFunName (MIL.builtInFunctions ++ builtInFunctionsMil)
+      milFunType = getMilBuiltInFunctionType milFunName
   return $ ( MIL.ReturnE funMonad (MIL.VarE $ MIL.VarBinder (milFunNameVar, milFunType))
            , MIL.applyMonadType funMonad milFunType)
 
@@ -297,7 +297,7 @@ codeGenArgBuiltInFunction milFunName funMonad = do
 codeGenNoArgBuiltInFunction :: MIL.FunName -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
 codeGenNoArgBuiltInFunction milFunName funMonad = do
   let milFunNameVar = MIL.funNameToVar milFunName
-      milFunType = MIL.getBuiltInFunctionType milFunName (MIL.builtInFunctions ++ builtInFunctionsMil)
+      milFunType = getMilBuiltInFunctionType milFunName
       (MIL.TyApp (MIL.TyMonad resultMonad) monadResultType) = milFunType
   if (resultMonad /= funMonad)
     then return $ ( MIL.LiftE (MIL.VarE $ MIL.VarBinder (milFunNameVar, milFunType)) resultMonad funMonad
