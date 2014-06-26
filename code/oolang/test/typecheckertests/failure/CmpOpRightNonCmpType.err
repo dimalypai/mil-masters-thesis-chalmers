@@ -1,0 +1,2 @@
+OOLang type checking error at CmpOpRightNonCmpType.ool:6,7-6,7:
+  Expression needs to have a comparable type, but it has type 'Int -> Int'

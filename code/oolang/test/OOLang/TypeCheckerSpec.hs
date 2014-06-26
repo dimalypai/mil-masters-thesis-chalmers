@@ -385,6 +385,30 @@ spec =
       it "given an outside usage of a variable defined inside try block" $
         failureCase "TryVarUsageOutside"
 
+      it "given an arithmetic operation with the left operand of non-arithmetic type" $
+        failureCase "ArithOpLeftNonArithType"
+
+      it "given an arithmetic operation with the right operand of non-arithmetic type" $
+        failureCase "ArithOpRightNonArithType"
+
+      it "given an arithmetic operation with different types of operands" $
+        failureCase "ArithOpDiffTypes"
+
+      it "given a comparison operation with the left operand of non-comparable type" $
+        failureCase "CmpOpLeftNonCmpType"
+
+      it "given a comparison operation with the right operand of non-comparable type" $
+        failureCase "CmpOpRightNonCmpType"
+
+      it "given a comparison operation with different types of operands" $
+        failureCase "CmpOpDiffTypes"
+
+      it "given a nothing coalesce operator with incompatible types" $
+        failureCase "NothingCoalesceIncompatibleTypes"
+
+      it "given a nothing coalesce operator with non-Maybe type" $
+        failureCase "NothingCoalesceNonMaybe"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

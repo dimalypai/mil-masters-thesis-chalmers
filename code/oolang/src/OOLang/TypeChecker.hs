@@ -666,6 +666,17 @@ tcBinOp insideClass op srcExpr1 srcExpr2 = do
   tyExpr2 <- tcExpr insideClass srcExpr2
   (resultType, resultPure) <- case op of
     App -> tcApp tyExpr1 tyExpr2
+    NothingCoalesce -> tcNothingCoalesce tyExpr1 tyExpr2
+    Add -> tcArith tyExpr1 tyExpr2
+    Sub -> tcArith tyExpr1 tyExpr2
+    Mul -> tcArith tyExpr1 tyExpr2
+    Div -> tcArith tyExpr1 tyExpr2
+    Equal -> tcCompare tyExpr1 tyExpr2
+    NotEq -> tcCompare tyExpr1 tyExpr2
+    Less -> tcCompare tyExpr1 tyExpr2
+    Greater -> tcCompare tyExpr1 tyExpr2
+    LessEq -> tcCompare tyExpr1 tyExpr2
+    GreaterEq -> tcCompare tyExpr1 tyExpr2
   return (tyExpr1, tyExpr2, resultType, resultPure)
 
 -- | Type synonym for binary operation type checking functions.
@@ -693,4 +704,34 @@ tcApp tyExpr1 tyExpr2 =
              -- application is pure iff both operands are pure
              return (resultType, expr1Pure && expr2Pure))
        _ -> throwError $ NotFunctionType tyExpr1 expr1Type
+
+tcNothingCoalesce :: BinOpTc
+tcNothingCoalesce tyExpr1 tyExpr2 =
+  let expr1Type = getTypeOf tyExpr1
+      expr2Type = getTypeOf tyExpr2
+  in case expr1Type of
+       TyMaybe t -> ifM (not <$> expr2Type `isSubTypeOf` t)
+                      (throwError $ IncorrectExprType t expr2Type (getSrcSpan tyExpr2))
+                      (return (t, getPurityOf tyExpr1 && getPurityOf tyExpr2))
+       _ -> throwError $ NothingCoalesceNonMaybe expr1Type (getSrcSpan tyExpr2)
+
+tcArith :: BinOpTc
+tcArith tyExpr1 tyExpr2 =
+  let expr1Type = getTypeOf tyExpr1
+      expr2Type = getTypeOf tyExpr2 in
+  case (isArithType expr1Type, isArithType expr2Type, expr2Type == expr1Type) of
+    (False, _, _) -> throwError $ NotArithType expr1Type (getSrcSpan tyExpr1)
+    (True, False, _) -> throwError $ NotArithType expr2Type (getSrcSpan tyExpr2)
+    (True, True, False) -> throwError $ IncorrectExprType expr1Type expr2Type (getSrcSpan tyExpr2)
+    (True, True, True) -> return (expr1Type, getPurityOf tyExpr1 && getPurityOf tyExpr2)
+
+tcCompare :: BinOpTc
+tcCompare tyExpr1 tyExpr2 =
+  let expr1Type = getTypeOf tyExpr1
+      expr2Type = getTypeOf tyExpr2 in
+  case (isComparableType expr1Type, isComparableType expr2Type, expr2Type == expr1Type) of
+    (False, _, _) -> throwError $ NotComparableType expr1Type (getSrcSpan tyExpr1)
+    (True, False, _) -> throwError $ NotComparableType expr2Type (getSrcSpan tyExpr2)
+    (True, True, False) -> throwError $ IncorrectExprType expr1Type expr2Type (getSrcSpan tyExpr2)
+    (True, True, True) -> return (TyBool, getPurityOf tyExpr1 && getPurityOf tyExpr2)
 

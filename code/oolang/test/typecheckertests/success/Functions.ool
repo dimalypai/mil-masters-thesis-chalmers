@@ -172,3 +172,15 @@ def exceptionsFunEmptyCatch : Pure Unit =>
   end;
 end
 
+def arithOp : Int =>
+  1 + 2 * arithOp;
+end
+
+def cmpOp : Pure Bool =>
+  unit = unit;
+end
+
+def nothingCoalesce : Int =>
+  just 1 ?? 0;
+end
+

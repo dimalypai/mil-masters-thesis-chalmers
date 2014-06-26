@@ -1,0 +1,2 @@
+OOLang type checking error at ArithOpRightNonArithType.ool:6,10-6,13:
+  Expression needs to have an arithmetic type, but it has type 'Unit'

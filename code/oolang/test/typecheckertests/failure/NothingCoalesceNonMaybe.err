@@ -1,0 +1,2 @@
+OOLang type checking error at NothingCoalesceNonMaybe.ool:6,8-6,8:
+  Incorrect usage of the nothing coalesce operator (`??`) with the expression of type 'Int'. It can be used only with an expression of Maybe type on the left-hand side.

@@ -1,0 +1,2 @@
+OOLang type checking error at NothingCoalesceIncompatibleTypes.ool:6,13-6,16:
+  The expression needs to have type 'Int', but it has type 'Bool'

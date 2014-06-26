@@ -173,3 +173,20 @@ isSelfOrSuper (VarE _ _ (Var varName) _) =
   varName == "self" || varName == "super"
 isSelfOrSuper _ = False
 
+isArithType :: Type -> Bool
+isArithType TyInt   = True
+isArithType TyFloat = True
+isArithType       _ = False
+
+isComparableType :: Type -> Bool
+isComparableType TyUnit        = True
+isComparableType TyBool        = True
+isComparableType TyInt         = True
+isComparableType TyFloat       = True
+isComparableType TyClass {}    = True
+isComparableType (TyPure t)    = isComparableType t
+isComparableType (TyMaybe t)   = isComparableType t
+isComparableType (TyMutable t) = isComparableType t
+isComparableType TyRef {}      = True
+isComparableType             _ = False
+

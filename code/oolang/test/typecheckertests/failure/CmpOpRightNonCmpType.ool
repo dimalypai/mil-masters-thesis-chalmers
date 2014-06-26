@@ -1,0 +1,12 @@
+def main : Unit =>
+  unit;
+end
+
+def f : Bool =>
+  1 < g;
+end
+
+def g : {a : Int} -> Int =>
+  1;
+end
+

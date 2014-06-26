@@ -1,0 +1,8 @@
+def main : Unit =>
+  unit;
+end
+
+def f : Int =>
+  just 1 ?? true;
+end
+

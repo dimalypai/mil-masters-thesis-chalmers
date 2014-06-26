@@ -1,0 +1,8 @@
+def main : Unit =>
+  unit;
+end
+
+def f : Float =>
+  0.01 + unit;
+end
+

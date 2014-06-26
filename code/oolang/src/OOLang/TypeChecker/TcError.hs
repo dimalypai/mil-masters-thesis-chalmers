@@ -58,6 +58,10 @@ data TcError =
   | NonRefDeref SrcSpan
   | EmptyCatchBlockNonUnit Type SrcSpan
   | CatchIncorrectType Type Type SrcSpan
+  | IncorrectExprType Type Type SrcSpan
+  | NotArithType Type SrcSpan
+  | NotComparableType Type SrcSpan
+  | NothingCoalesceNonMaybe Type SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -251,6 +255,24 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Catch block has to return a value of type" <+> quotes (prPrn expType) <>
       text ", but it returns a value of type" <+> quotes (prPrn actType))
+
+  prPrn (IncorrectExprType expType actType srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "The expression needs to have type" <+> quotes (prPrn expType) <>
+      text ", but it has type" <+> quotes (prPrn actType))
+
+  prPrn (NotArithType t srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Expression needs to have an arithmetic type, but it has type" <+> quotes (prPrn t))
+
+  prPrn (NotComparableType t srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Expression needs to have a comparable type, but it has type" <+> quotes (prPrn t))
+
+  prPrn (NothingCoalesceNonMaybe t srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Incorrect usage of the nothing coalesce operator (`??`) with the expression of type" <+> quotes (prPrn t) <>
+      text ". It can be used only with an expression of Maybe type on the left-hand side.")
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

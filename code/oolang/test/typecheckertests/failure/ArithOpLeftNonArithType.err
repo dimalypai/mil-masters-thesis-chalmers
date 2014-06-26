@@ -1,0 +1,2 @@
+OOLang type checking error at ArithOpLeftNonArithType.ool:6,3-6,6:
+  Expression needs to have an arithmetic type, but it has type 'Bool'
