@@ -1,0 +1,2 @@
+FunLang type checking error at ArithOpDiffTypes.fl:7,9-7,12:
+  The expression needs to have type 'Int', but it has type 'Float'

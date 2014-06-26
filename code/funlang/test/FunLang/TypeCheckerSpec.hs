@@ -195,6 +195,24 @@ spec =
       it "given a catch with two branches of different types" $
         failureCase "CatchDifferentTypes"
 
+      it "given an arithmetic operation with the left operand of non-arithmetic type" $
+        failureCase "ArithOpLeftNonArithType"
+
+      it "given an arithmetic operation with the right operand of non-arithmetic type" $
+        failureCase "ArithOpRightNonArithType"
+
+      it "given an arithmetic operation with different types of operands" $
+        failureCase "ArithOpDiffTypes"
+
+      it "given a comparison operation with the left operand of non-comparable type" $
+        failureCase "CmpOpLeftNonCmpType"
+
+      it "given a comparison operation with the right operand of non-comparable type" $
+        failureCase "CmpOpRightNonCmpType"
+
+      it "given a comparison operation with different types of operands" $
+        failureCase "CmpOpDiffTypes"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

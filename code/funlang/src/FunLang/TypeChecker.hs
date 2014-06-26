@@ -380,6 +380,16 @@ tcBinOp op srcExpr1 srcExpr2 = do
   tyExpr2 <- tcExpr srcExpr2
   resultType <- case op of
     App -> tcApp tyExpr1 tyExpr2
+    Add -> tcArith tyExpr1 tyExpr2
+    Sub -> tcArith tyExpr1 tyExpr2
+    Mul -> tcArith tyExpr1 tyExpr2
+    Div -> tcArith tyExpr1 tyExpr2
+    Equal -> tcCompare tyExpr1 tyExpr2
+    NotEq -> tcCompare tyExpr1 tyExpr2
+    Less -> tcCompare tyExpr1 tyExpr2
+    Greater -> tcCompare tyExpr1 tyExpr2
+    LessEq -> tcCompare tyExpr1 tyExpr2
+    GreaterEq -> tcCompare tyExpr1 tyExpr2
     Catch -> tcCatch tyExpr1 tyExpr2
   return (tyExpr1, tyExpr2, resultType)
 
@@ -398,6 +408,26 @@ tcApp tyExpr1 tyExpr2 =
         then throwError $ IncorrectFunArgType tyExpr2 argType expr2Type
         else return resultType
     _ -> throwError $ NotFunctionType tyExpr1 expr1Type
+
+tcArith :: BinOpTc
+tcArith tyExpr1 tyExpr2 =
+  let expr1Type = getTypeOf tyExpr1
+      expr2Type = getTypeOf tyExpr2 in
+  case (isArithType expr1Type, isArithType expr2Type, expr2Type `alphaEq` expr1Type) of
+    (False, _, _) -> throwError $ NotArithType expr1Type (getSrcSpan tyExpr1)
+    (True, False, _) -> throwError $ NotArithType expr2Type (getSrcSpan tyExpr2)
+    (True, True, False) -> throwError $ IncorrectExprType expr1Type expr2Type (getSrcSpan tyExpr2)
+    (True, True, True) -> return expr1Type
+
+tcCompare :: BinOpTc
+tcCompare tyExpr1 tyExpr2 =
+  let expr1Type = getTypeOf tyExpr1
+      expr2Type = getTypeOf tyExpr2 in
+  case (isComparableType expr1Type, isComparableType expr2Type, expr2Type `alphaEq` expr1Type) of
+    (False, _, _) -> throwError $ NotComparableType expr1Type (getSrcSpan tyExpr1)
+    (True, False, _) -> throwError $ NotComparableType expr2Type (getSrcSpan tyExpr2)
+    (True, True, False) -> throwError $ IncorrectExprType expr1Type expr2Type (getSrcSpan tyExpr2)
+    (True, True, True) -> return boolType
 
 tcCatch :: BinOpTc
 tcCatch tyExpr1 tyExpr2 =

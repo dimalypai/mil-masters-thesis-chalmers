@@ -43,6 +43,8 @@ data TcError =
   | CaseAltIncorrectType Type Type SrcSpan
   | PatternIncorrectType Type Type SrcSpan
   | ConPatternIncorrectNumberOfFields Int Int SrcSpan
+  | NotArithType Type SrcSpan
+  | NotComparableType Type SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -176,6 +178,14 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "The constructor pattern needs to have" <+> int expNum <+> text "argument(s)" <>
       text ", but it was given" <+> int actNum)
+
+  prPrn (NotArithType t srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Expression needs to have an arithmetic type, but it has type" <+> quotes (prPrn t))
+
+  prPrn (NotComparableType t srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Expression needs to have a comparable type, but it has type" <+> quotes (prPrn t))
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

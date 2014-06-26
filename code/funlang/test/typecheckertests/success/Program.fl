@@ -112,3 +112,9 @@ boolTypeTrue = True;;
 boolTypeFalse : Bool
 boolTypeFalse = False;;
 
+arithOp : Int
+arithOp = 1 + 2 * arithOp;;
+
+cmpOp : Bool
+cmpOp = True >= False;;
+

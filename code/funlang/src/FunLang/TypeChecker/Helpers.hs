@@ -201,3 +201,15 @@ isMonadType :: Type -> Bool
 isMonadType (TyApp typeName _) = typeName `Set.member` monadTypes
 isMonadType                  _ = False
 
+isArithType :: Type -> Bool
+isArithType (TyApp typeName []) = typeName == TypeName "Int"
+                               || typeName == TypeName "Float"
+isArithType _ = False
+
+isComparableType :: Type -> Bool
+isComparableType (TyApp typeName []) = typeName == TypeName "Unit"
+                                    || typeName == TypeName "Bool"
+                                    || typeName == TypeName "Int"
+                                    || typeName == TypeName "Float"
+isComparableType _ = False
+

@@ -1,0 +1,8 @@
+main : IO Unit
+main = do
+  return unit;
+end;;
+
+f : Bool
+f = 1 < main;;
+

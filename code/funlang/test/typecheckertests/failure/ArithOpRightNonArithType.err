@@ -1,0 +1,2 @@
+FunLang type checking error at ArithOpRightNonArithType.fl:7,12-7,15:
+  Expression needs to have an arithmetic type, but it has type 'Unit'

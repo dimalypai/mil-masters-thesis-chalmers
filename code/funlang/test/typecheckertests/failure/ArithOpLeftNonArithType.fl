@@ -1,0 +1,8 @@
+main : IO Unit
+main = do
+  return unit;
+end;;
+
+f : Int
+f = True + 1;;
+

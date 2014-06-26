@@ -1,0 +1,2 @@
+FunLang type checking error at CmpOpRightNonCmpType.fl:7,9-7,12:
+  Expression needs to have a comparable type, but it has type 'IO Unit'
