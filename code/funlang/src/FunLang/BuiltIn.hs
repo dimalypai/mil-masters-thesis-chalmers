@@ -13,15 +13,25 @@ import qualified MIL.BuiltIn as MIL
 
 builtInDataTypes :: [(TypeName, Kind)]
 builtInDataTypes =
-  [ (TypeName "Unit",   StarK)
-  , (TypeName "Int",    StarK)
-  , (TypeName "Float",  StarK)
-  , (TypeName "IO",     StarK :=>: StarK)
-  , (TypeName "State",  StarK :=>: (StarK :=>: StarK))
+  [ (TypeName "Unit",  StarK)
+  , (TypeName "Bool",  StarK)
+  , (TypeName "Int",   StarK)
+  , (TypeName "Float", StarK)
+  , (TypeName "IO",    StarK :=>: StarK)
+  , (TypeName "State", StarK :=>: (StarK :=>: StarK))
+  ]
+
+builtInDataCons :: [(ConName, (Type, TypeName))]
+builtInDataCons =
+  [ (ConName "True", (boolType, TypeName "Bool"))
+  , (ConName "False", (boolType, TypeName "Bool"))
   ]
 
 unitType :: Type
 unitType = mkSimpleType "Unit"
+
+boolType :: Type
+boolType = mkSimpleType "Bool"
 
 intType :: Type
 intType = mkSimpleType "Int"

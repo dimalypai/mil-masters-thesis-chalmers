@@ -58,7 +58,7 @@ newtype TypeEnv = TypeEnv { unTypeEnv :: (DataTypeEnv, DataConTypeEnv, FunTypeEn
 -- | Initial type environment.
 initTypeEnv :: TypeEnv
 initTypeEnv = mkTypeEnv (Map.fromList $ map (second builtInDataTypeInfo) builtInDataTypes)
-                        Map.empty
+                        (Map.fromList $ map (second $ uncurry DataConTypeInfo) builtInDataCons)
                         (Map.fromList $ map (second builtInFunTypeInfo) builtInFunctions)
 
 -- | Smart constructor for 'TypeEnv'.

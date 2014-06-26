@@ -106,3 +106,9 @@ caseExprPoly = /\A . \(tree : Tree A) ->
 exceptions : Unit
 exceptions = throw [Unit] catch unit;;
 
+boolTypeTrue : Bool
+boolTypeTrue = True;;
+
+boolTypeFalse : Bool
+boolTypeFalse = False;;
+
