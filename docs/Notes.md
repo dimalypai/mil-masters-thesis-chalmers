@@ -423,4 +423,7 @@ General thoughts
   conversion for OOLang, more similar to the FunLang, namely Pure_M and each
   function arrow level and not only at the end if there is Pure in the source
   program.
+* What about type checking MIL function definitions which are (mutually)
+  recursive and a NonTerm effect? Need to check that they contain NonTerm
+  somewhere in their type.
 
