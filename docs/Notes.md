@@ -407,3 +407,20 @@ Meeting 2014-06-23
 
 * Performance evaluation. Write interpreter for MIL and count reductions?
 
+General thoughts
+================
+
+* There is a problem with OOLang code generation, involving built-in functions.
+  When we fully apply it at the end, we need to lift the result. First problem
+  is that there seems to be not enough information in terms of which monad to
+  lift from. And the second is that, say we have a function with State type
+  inside Impure_M, which is Error ::: NonTerm ::: State ::: IO. Can we just
+  lift [State -> Impure_M]? We should be able to, it is a matter of number of
+  lifts implicitly hidden in our lift operation.
+* The first problem seems to be solved by looking at the type of the left
+  operand in the application.
+* Now it seems that there should be more things happening in the type
+  conversion for OOLang, more similar to the FunLang, namely Pure_M and each
+  function arrow level and not only at the end if there is Pure in the source
+  program.
+
