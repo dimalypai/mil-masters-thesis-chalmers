@@ -5,7 +5,7 @@ have been designed.
 
 ## Overview
 
-Inspiration for the design, main principles.
+Inspiration for the design (Haskell), main principles.
 
 ## FunLang by example
 
@@ -25,6 +25,8 @@ Inspiration for the design, main principles.
 ## Code generation
 
 * General outline
+    + Monads
+    + Type conversions
 * Examples
     + Simple expressions
     + do-blocks (IO)
@@ -33,4 +35,7 @@ Inspiration for the design, main principles.
 * Problems
 
 ## Conclusions
+
+* Rather straight-forward code generation, because FunLang and MIL are rather
+  close to each other.
 

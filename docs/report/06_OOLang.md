@@ -4,6 +4,8 @@
 
 Inspiration, design philosophy
 
+* Haskell, C# and Ruby
+
 ## OOLang by example
 
 * Purity
@@ -22,6 +24,8 @@ Inspiration, design philosophy
 ## Code generation
 
 * General outline
+    + Monads
+    + Type conversions
 * Examples
     + Pure functions
     + Impure functions
@@ -29,4 +33,8 @@ Inspiration, design philosophy
 * Problems
 
 ## Conclusions
+
+* Introduced tuples with subtyping to the MIL
+* Rather complex type system increases the complexity of getting the
+  type-correct MIL
 
