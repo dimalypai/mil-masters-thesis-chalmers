@@ -427,3 +427,17 @@ General thoughts
   recursive and a NonTerm effect? Need to check that they contain NonTerm
   somewhere in their type.
 
+Meeting 2014-06-30
+==================
+
+* Built-in functions in MIL. Maybe go with just read_char or something like
+  that and implement "primitive" functions in MIL.
+* Future work: checked arithmetic operations.
+* Integer type in MIL: bounded vs unbounded.
+* let rec: NonTerm at the bottom.
+* NonTerm as Maybe? Probably not really. It is not Nothing, is Just forever.
+* Haskell intuition: be clear in the report.
+* Monad transformers: we always need a monad at the bottom to get going. Lift
+  puts more restrictions, since it requires not a monad but a monad
+  transformer. But implicit prefix rule is about polymorphism in the monad.
+
