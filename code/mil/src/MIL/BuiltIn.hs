@@ -12,7 +12,7 @@ builtInDataTypes =
   , (TypeName "Bool",   StarK)
   , (TypeName "Int",    StarK)
   , (TypeName "Float",  StarK)
-  , (TypeName "String", StarK)
+  , (TypeName "Char",   StarK)
   , (TypeName "Ref",    StarK :=>: StarK)
   ]
 
@@ -34,8 +34,8 @@ intType = mkSimpleType "Int"
 floatType :: Type
 floatType = mkSimpleType "Float"
 
-stringType :: Type
-stringType = mkSimpleType "String"
+charType :: Type
+charType = mkSimpleType "Char"
 
 ioType :: Type -> Type
 ioType t = TyApp (TyMonad $ MTyMonad IO) t
@@ -50,7 +50,7 @@ typeOfLiteral :: Literal -> Type
 typeOfLiteral UnitLit      = unitType
 typeOfLiteral IntLit    {} = intType
 typeOfLiteral FloatLit  {} = floatType
-typeOfLiteral StringLit {} = stringType
+typeOfLiteral CharLit   {} = charType
 
 -- * Built-in functions
 
@@ -58,9 +58,10 @@ builtInFunctions :: [(FunName, Type)]
 builtInFunctions =
   [
   -- IO functions
-    (FunName "print_string", TyArrow stringType (ioType unitType))
-  , (FunName "print_int",    TyArrow intType    (ioType unitType))
+    (FunName "print_int",    TyArrow intType    (ioType unitType))
   , (FunName "print_float",  TyArrow floatType  (ioType unitType))
+  , (FunName "print_char",   TyArrow charType   (ioType unitType))
+  , (FunName "read_char",    ioType  charType)
   -- Ref functions
   , (FunName "new_ref",   TyForAll (TypeVar "A")
       (TyArrow (mkTypeVar "A") (stateType (refType $ mkTypeVar "A"))))

@@ -96,8 +96,7 @@ data Expr = LitE Literal
 data Literal = UnitLit
              | IntLit Int
              | FloatLit Double
-               -- | Can be used only as global constants. Not first class.
-             | StringLit String
+             | CharLit Char
   deriving (Show, Eq)
 
 newtype CaseAlt = CaseAlt (Pattern, Expr)

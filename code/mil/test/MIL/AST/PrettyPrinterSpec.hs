@@ -152,7 +152,7 @@ spec =
                                        (ConNameE (ConName "MkT") undefined)
                                        (mkSimpleType "Int"))
                                     (VarE $ VarBinder (Var "x", undefined)))
-                                 (LitE $ IntLit 1))))
+                                 (LitE $ CharLit 'c'))))
                     , FunDef
                         (FunName "fun2")
                         (mkSimpleType "Unit")

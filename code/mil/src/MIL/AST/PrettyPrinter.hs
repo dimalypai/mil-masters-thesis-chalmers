@@ -79,7 +79,7 @@ instance Pretty Literal where
   prPrn UnitLit       = text "unit"
   prPrn (IntLit i)    = int i
   prPrn (FloatLit f)  = double f
-  prPrn (StringLit s) = text (show s)
+  prPrn (CharLit c)   = quotes (char c)
 
 instance Pretty CaseAlt where
   prPrn (CaseAlt (pat, e)) = text "|" <+> prPrn pat <+> text "=>" <+> prPrn e

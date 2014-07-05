@@ -1,5 +1,5 @@
 fun : Unit =
-  /\A . \(x : A) -> MkT [Int] x 1;
+  /\A . \(x : A) -> MkT [Int] x 'c';
 
 fun2 : Unit =
   let (x : {Int, Float}) <- return [IO] {1, 1.0e-2} in
