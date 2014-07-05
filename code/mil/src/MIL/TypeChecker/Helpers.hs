@@ -151,6 +151,37 @@ tyAppFromList typeName = foldl' (\acc tv -> TyApp acc (TyVar tv)) (TyTypeCon typ
 tyForAllFromList :: Type -> [TypeVar] -> Type
 tyForAllFromList bodyType = foldr (\tv acc -> TyForAll tv acc) bodyType
 
+-- | Takes a scrutinee type and a type of the data constructor (for error
+-- message) and transforms a series of type applications and eventual type
+-- constructor to a pair of type constructor name and a list of its type
+-- arguments. If it encounters other types, it throws an error. Used when
+-- checking data constructor pattern.
+transformScrutType :: Type -> Type -> TypeCheckM (TypeName, [Type])
+transformScrutType scrutType conType = transformScrutType' scrutType []
+  where transformScrutType' :: Type -> [Type] -> TypeCheckM (TypeName, [Type])
+        transformScrutType' scrutT typeArgs =
+          case scrutT of
+            TyTypeCon typeName -> return (typeName, typeArgs)
+            TyApp t1 t2 -> transformScrutType' t1 (t2:typeArgs)
+            -- If the scrutinee has a type other than a type application, then this
+            -- pattern can not be type correct. Data constructors have a
+            -- monomorphic fully applied type constructor type.
+            _ -> throwError $ PatternIncorrectType scrutType conType
+
+-- | Given a data constructor function type, recovers its field types.
+-- Takes a list of type arguments to the type constructor (which is fully
+-- applied). It is used for substitution when coming across forall types.
+conFieldTypesFromType :: Type -> [Type] -> [Type]
+conFieldTypesFromType t typeArgs = init $ conFieldTypesFromType' t typeArgs
+  where conFieldTypesFromType' (TyForAll typeVar forallBodyType) (tyArg:tyArgs) =
+          conFieldTypesFromType' ((typeVar, tyArg) `substTypeIn` forallBodyType) tyArgs
+        conFieldTypesFromType' (TyArrow t1 t2)  [] =
+          conFieldTypesFromType' t1 [] ++ conFieldTypesFromType' t2 []
+        conFieldTypesFromType' tyCon@(TyTypeCon {}) [] = [tyCon]
+        conFieldTypesFromType' tyApp@(TyApp {}) [] = [tyApp]
+        conFieldTypesFromType' tyVar@(TyVar {}) [] = [tyVar]
+        conFieldTypesFromType'          _ _ = error "conFieldTypesFromType: kind checking must have gone wrong"
+
 -- * Alpha equivalence of types.
 
 -- | Decides if two types are equivalent up to a change of type variables bound

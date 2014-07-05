@@ -37,15 +37,9 @@ data TcError =
   | IncorrectExprType Type Type
   | IncorrectMonad TypeM TypeM
   | IncorrectLifting TypeM TypeM
-  {-
-  | MainNotDefined
-  | MainIncorrectType SrcType
-  | FunEqIncorrectName SrcFunName FunName
-  | DoBlockNotMonad Type SrcSpan
-  | BindLastStmt SrcSpan
-  | CaseAltIncorrectType Type Type SrcSpan
-  | PatternIncorrectType Type Type SrcSpan
-  | ConPatternIncorrectNumberOfFields Int Int SrcSpan-}
+  | CaseAltIncorrectType Type Type
+  | PatternIncorrectType Type Type
+  | ConPatternIncorrectNumberOfFields Int Int
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -136,36 +130,18 @@ instance Pretty TcError where
 
   prPrn (IncorrectLifting tm1 tm2) =
     tcErrorHeader <+> text "Incorrect lifting. Can not lift from" <+> quotes (prPrn tm1) <+> text "to" <+> quotes (prPrn tm2) <> text "."
-{-
-  prPrn MainNotDefined = tcErrorHeader <> colon <+> text "Function 'main' is not defined"
 
-  prPrn (MainIncorrectType srcType) =
-    tcErrorHeaderSpan <> prPrn (getSrcSpan srcType) <> colon $+$
-    nest indLvl (text "Function 'main' has to have type" <+> quotes (prPrn (TyApp (TypeName "IO") [TyApp (TypeName "Unit") []])) <>
-      text ", but it has type" <+> quotes (prPrn srcType))
+  prPrn (CaseAltIncorrectType expType actType) =
+    tcErrorHeader <+> text "The case alternative expression needs to have type" <+> quotes (prPrn expType) <>
+      text ", but it has type" <+> quotes (prPrn actType)
 
-  prPrn (DoBlockNotMonad t srcSpan) =
-    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
-    nest indLvl (text "Do-blocks can be used only in functions with monadic types. Type" <+> quotes (prPrn t) <+> text "is not monadic")
+  prPrn (PatternIncorrectType expType actType) =
+    tcErrorHeader <+> text "The pattern needs to have type" <+> quotes (prPrn expType) <>
+      text ", but it has type" <+> quotes (prPrn actType)
 
-  prPrn (BindLastStmt srcSpan) =
-    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
-    nest indLvl (text "Bind can not be the last statement in the do-block. The last statement has to return a value")
+  prPrn (ConPatternIncorrectNumberOfFields expNum actNum) =
+    tcErrorHeader <+> text "The constructor pattern needs to have" <+> int expNum <+> text "argument(s)" <>
+      text ", but it was given" <+> int actNum
 
-  prPrn (CaseAltIncorrectType expType actType srcSpan) =
-    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
-    nest indLvl (text "The case alternative expression needs to have type" <+> quotes (prPrn expType) <>
-      text ", but it has type" <+> quotes (prPrn actType))
-
-  prPrn (PatternIncorrectType expType actType srcSpan) =
-    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
-    nest indLvl (text "The pattern needs to have type" <+> quotes (prPrn expType) <>
-      text ", but it has type" <+> quotes (prPrn actType))
-
-  prPrn (ConPatternIncorrectNumberOfFields expNum actNum srcSpan) =
-    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
-    nest indLvl (text "The constructor pattern needs to have" <+> int expNum <+> text "argument(s)" <>
-      text ", but it was given" <+> int actNum)
--}
   prPrn (OtherError errMsg) = tcErrorHeader <+> text errMsg
 

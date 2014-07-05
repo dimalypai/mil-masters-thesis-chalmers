@@ -271,9 +271,78 @@ tcExpr expr =
       eType <- tcExpr e
       return $ TyApp (TyMonad tm2) (getMonadResultType eType)
 
+    CaseE scrutExpr caseAlts -> do
+      scrutExprType <- tcExpr scrutExpr
+      tcCaseAlts scrutExprType caseAlts
+
     TupleE tElems -> do
       elemTypes <- mapM tcExpr tElems
       return $ TyTuple elemTypes
+
+-- | Takes a scrutinee (an expression we are pattern matching on) type and a
+-- list of case alternatives (which is not empty). Returns a type of their
+-- bodies and so of the whole case expression (they all must agree).
+tcCaseAlts :: Type -> [CaseAlt] -> TypeCheckM Type
+tcCaseAlts scrutType caseAlts = do
+  caseAltTypes <- mapM (tcCaseAlt scrutType) caseAlts
+  -- There is at least one case alternative and all types should be the same
+  let caseExprType = head caseAltTypes
+  mIncorrectTypeAlt <- findM (\t -> not <$> (t `alphaEq` caseExprType)) caseAltTypes
+  case mIncorrectTypeAlt of
+    Just incorrectAltType ->
+      throwError $ CaseAltIncorrectType caseExprType incorrectAltType
+    Nothing -> return ()
+  return caseExprType
+
+-- | Takes a scrutinee type and a case alternative, type checkes a pattern
+-- against the scrutinee type and type checks the alternative's body with
+-- variables bound by the pattern added to the local type environment.
+-- Returns the type of the case alternative body.
+tcCaseAlt :: Type -> CaseAlt -> TypeCheckM Type
+tcCaseAlt scrutType (CaseAlt (pat, expr)) = do
+  localTypeEnv <- tcPattern scrutType pat emptyLocalTypeEnv
+  locallyWithEnv localTypeEnv (tcExpr expr)
+
+-- | Takes a scrutinee type, a pattern and a local type environment. Type
+-- checks the pattern against the scrutinee type and returns an extended local
+-- type environment (with variables bound by the pattern).
+-- The most interesting case is 'ConP'.
+tcPattern :: Type -> Pattern -> LocalTypeEnv -> TypeCheckM LocalTypeEnv
+tcPattern scrutType pat localTypeEnv =
+  case pat of
+    LitP lit -> do
+      let litType = typeOfLiteral lit
+      unlessM (litType `alphaEq` scrutType) $
+        throwError $ PatternIncorrectType scrutType litType
+      return localTypeEnv
+
+    VarP varBinder -> do
+      let (VarBinder (var, varType)) = varBinder
+      isBound <- isVarBound var
+      -- it is important to check in both places, since localTypeEnv is not
+      -- queried by 'isVarBound'
+      when (isBound || isVarInLocalEnv var localTypeEnv) $
+        throwError $ VarShadowing var
+      unlessM (varType `alphaEq` scrutType) $
+        throwError $ PatternIncorrectType scrutType varType
+      return $ addLocalVar var varType localTypeEnv
+
+    ConP conName varBinders -> do
+      unlessM (isDataConDefined conName) $
+        throwError $ ConNotDefined conName
+      dataConTypeInfo <- getDataConTypeInfo conName
+      let conType = dcontiType dataConTypeInfo
+          conTypeName = dcontiTypeName dataConTypeInfo
+      (scrutTypeName, scrutTypeArgs) <- transformScrutType scrutType conType
+      when (conTypeName /= scrutTypeName) $
+        throwError $ PatternIncorrectType scrutType conType
+      let conFieldTypes = conFieldTypesFromType conType scrutTypeArgs
+      when (length varBinders /= length conFieldTypes) $
+        throwError $ ConPatternIncorrectNumberOfFields (length conFieldTypes) (length varBinders)
+      foldM (\localTyEnv (vb, fieldType) -> tcPattern fieldType (VarP vb) localTyEnv)
+        localTypeEnv (zip varBinders conFieldTypes)
+
+    DefaultP -> return localTypeEnv
 
 -- | Note [Data constructor type checking]:
 --
