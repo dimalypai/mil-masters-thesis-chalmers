@@ -1,9 +1,14 @@
 # Functional programming language (FunLang)
 
-This chapter introduces the first of the two source programming languages which
-have been designed.
+> *This chapter introduces a first source programming language which has been
+> designed during this work -- FunLang. It starts from a language overview and
+> example programs. Then interesting parts of the type system and MIL code
+> generation are described. Finally, we make conclusions regarding
+> implementation of the FunLang compiler using MIL.*
 
 ## Overview
+
+Functional programming experiences a significant increase in popularity.
 
 Inspiration for the design (Haskell), main principles.
 
