@@ -9,7 +9,6 @@ module MIL.TypeChecker.TypeCheckM
 
   , TypeEnv
   , initTypeEnv
-  , initTypeEnvWithBuiltInFunctions
 
   , dtiKind
   , getDataTypeInfo
@@ -82,16 +81,6 @@ initTypeEnv = mkTypeEnv (Map.fromList $ map (second builtInDataTypeInfo) builtIn
                         (Map.fromList $ map (second $ uncurry DataConTypeInfo) builtInDataCons)
                         Map.empty
                         (Map.fromList builtInFunctions)
-
--- | MIL has a way to supply additional built-in functions and their types.
--- This is mostly done for functions that need to have a source language
--- specific monad in their type (like read functions).
-initTypeEnvWithBuiltInFunctions :: [(FunName, Type)] -> TypeEnv
-initTypeEnvWithBuiltInFunctions builtInFuns =
-  mkTypeEnv (Map.fromList $ map (second builtInDataTypeInfo) builtInDataTypes)
-            (Map.fromList $ map (second $ uncurry DataConTypeInfo) builtInDataCons)
-            Map.empty
-            (Map.fromList (builtInFunctions ++ builtInFuns))
 
 -- | Smart constructor for 'TypeEnv'.
 mkTypeEnv :: DataTypeEnv -> DataConTypeEnv -> AliasTypeEnv -> FunTypeEnv -> TypeEnv

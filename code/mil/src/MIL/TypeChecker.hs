@@ -8,9 +8,7 @@
 -- transformations preserve typing.
 module MIL.TypeChecker
   ( typeCheck
-  , typeCheckFromEnv
   , TypeEnv
-  , initTypeEnvWithBuiltInFunctions
   , TcError
   , prPrint
   ) where
@@ -29,11 +27,6 @@ import MIL.Utils
 -- In the case of success returns a completed type environment.
 typeCheck :: Program -> Either TcError TypeEnv
 typeCheck program = runTypeCheckM (tcProgram program) initTypeEnv
-
--- | Type checks an MIL program starting from a given type environment.
--- In the case of success returns a completed type environment.
-typeCheckFromEnv :: Program -> TypeEnv -> Either TcError TypeEnv
-typeCheckFromEnv program typeEnv = runTypeCheckM (tcProgram program) typeEnv
 
 -- | Entry point into the type checking of the program.
 tcProgram :: Program -> TypeCheckM ()
