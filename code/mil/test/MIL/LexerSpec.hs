@@ -19,10 +19,10 @@ spec =
       [KW_Type, KW_Case]
 
     it "recognises all keywords correctly" $
-      lexer "case forall let lift in of rec return type unit"
+      lexer "alias case end forall let lift in of rec return type unit"
         `shouldBe`
-      [ KW_Case, KW_Forall, KW_Let, KW_Lift, KW_In, KW_Of
-      , KW_Rec, KW_Return, KW_Type, KW_Unit
+      [ KW_Alias, KW_Case, KW_End, KW_Forall, KW_Let, KW_Lift
+      , KW_In, KW_Of, KW_Rec, KW_Return, KW_Type, KW_Unit
       ]
 
     it "recognises all symbols correctly" $
@@ -35,26 +35,26 @@ spec =
       ]
 
     it "recognises all literals correctly" $
-      lexer "1  0.1  1e-2  1.0e-2"
+      lexer "1  0.1  1e-2  1.0e-2 '\n'"
         `shouldBe`
-      [ IntLit 1, FloatLit 0.1 "0.1", FloatLit 0.01 "1e-2", FloatLit 0.01 "1.0e-2" ]
+      [ IntLit 1, FloatLit 0.1 "0.1", FloatLit 0.01 "1e-2", FloatLit 0.01 "1.0e-2", CharLit '\n' ]
 
     it "recognises identifiers correctly" $
-      lexer "x T var123 True"
+      lexer "x T var_123 True"
         `shouldBe`
-      [ LowerId "x", UpperId "T", LowerId "var123", UpperId "True" ]
+      [ LowerId "x", UpperId "T", LowerId "var_123", UpperId "True" ]
 
     it "shows tokens correctly" $
       intercalate " " (map show
-        (lexer "case forall let lift in of rec return type unit \
+        (lexer "case end forall let lift in of rec return type unit \
               \ =  :  \\  ->  /\\  .  <- \
               \ |  _  (  )  [  ]  {  }  :::  ,  ; \
               \ 1 0.1 1.0e-2 1e-2 \
-              \ x T var123 True"))
+              \ x T var_123 True '\n'"))
         `shouldBe`
-      "case forall let lift in of rec return type unit\
+      "case end forall let lift in of rec return type unit\
      \ = : \\ -> /\\ . <-\
      \ | _ ( ) [ ] { } ::: , ;\
      \ 1 0.1 1.0e-2 1e-2\
-     \ x T var123 True"
+     \ x T var_123 True '\\n'"
 

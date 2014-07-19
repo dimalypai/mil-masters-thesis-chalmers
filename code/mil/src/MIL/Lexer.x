@@ -22,11 +22,12 @@ $lower = [a-z]
 $upper = [A-Z]
 $digit = [0-9]
 
-@lowerId = $lower [$alpha $digit]*
-@upperId = $upper [$alpha $digit]*
+@lowerId = $lower [$alpha $digit \_]*
+@upperId = $upper [$alpha $digit \_]*
 
 @lineterm = [\n\r] | \r\n
 @comment = "#" .* @lineterm
+@char = ' [$printable \n \r \t \v] '
 
 tokens :-
 
@@ -34,7 +35,9 @@ tokens :-
   @comment ;
 
   -- Keywords
+  alias  { const KW_Alias  }
   case   { const KW_Case   }
+  end    { const KW_End    }
   forall { const KW_Forall }
   let    { const KW_Let    }
   lift   { const KW_Lift   }
@@ -77,13 +80,16 @@ tokens :-
   -- Literals
   $digit+                                   { \s -> IntLit $ read s }
   $digit+(\.$digit+)? (e (\+|\-)? $digit+)? { \s -> FloatLit (read s) s }
+  @char { \s -> CharLit $ read s }
 
 {
 
 -- | Tokens.
 data Token =
   -- Keywords
-    KW_Case
+    KW_Alias
+  | KW_Case
+  | KW_End
   | KW_Forall
   | KW_Let
   | KW_Lift
@@ -123,11 +129,14 @@ data Token =
   -- Literals
   | IntLit Int
   | FloatLit Double String  -- ^ The user string (for displaying)
+  | CharLit Char
   deriving Eq
 
 instance Show Token where
   -- Keywords
+  show KW_Alias  = "alias"
   show KW_Case   = "case"
+  show KW_End    = "end"
   show KW_Forall = "forall"
   show KW_Let    = "let"
   show KW_Lift   = "lift"
@@ -167,6 +176,7 @@ instance Show Token where
   -- Literals
   show (IntLit n)     = show n
   show (FloatLit f s) = s
+  show (CharLit c)    = show c
 
 -- | Top-level lexing function.
 lexer :: String -> [Token]
