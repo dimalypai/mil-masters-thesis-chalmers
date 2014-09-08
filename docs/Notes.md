@@ -441,3 +441,20 @@ Meeting 2014-06-30
   puts more restrictions, since it requires not a monad but a monad
   transformer. But implicit prefix rule is about polymorphism in the monad.
 
+General thoughts
+================
+
+* Strings. We now will have only characters in MIL and other built-in things
+  will be constructed using character primitives. What to do with String type
+  (literals)? We can have a list-like data type, but the problem is that, for
+  example, printString will be recursive in MIL and thus potentially
+  non-terminating. This will spoil its type.
+* MIL type checking. We usually use alpha equivalence for checking types
+  compatibility.  We probably need to do more, like checking monads
+  compatibility as well (prefix). Do we need to do it everywhere?
+* MIL parsing effort: it will be very nice for working on MIL in terms of
+  testing and experimenting. Problems: as in FunLang parsing: type variables
+  and type constructors plus monads. Have a separate source type
+  representation? Probably, TypeChecker needs to do additional work, tracking
+  type variables and converting special type constructors to built-in monads.
+
