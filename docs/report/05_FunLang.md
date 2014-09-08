@@ -14,12 +14,47 @@ Inspiration for the design (Haskell), main principles.
 
 ## FunLang by example
 
-* Data types
-* Function definitions
-* Polymorphism
-* Pattern matching
-* Monads (do-blocks)
-* throw-catch
+### Data types
+
+~~~
+type Bool = True | False
+
+type Tree A
+  = Empty
+  | Node A (Tree A) (Tree A)
+~~~
+
+### Function definitions
+
+~~~
+~~~
+
+### Polymorphism
+
+~~~
+~~~
+
+### Pattern matching
+
+~~~
+~~~
+
+### Monads
+
+~~~
+main : IO Unit
+main = do
+  printInt 1;
+  (i : Int) <- readInt;
+  printInt i;
+end;;
+~~~
+
+### Exceptions
+
+~~~
+throw [Int] catch 1
+~~~
 
 ## Type system highlights
 

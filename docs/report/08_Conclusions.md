@@ -21,6 +21,7 @@ paradigms.
     + Interpreter with reductions counter
 * More parametricity in effects
     + Be able to be polymorphic in effects in the middle of the stack
+    + Built-in functions example
 * Explore different monads
     + Backtracking (Logic)
     + Par monad \cite{ParMonad}

@@ -16,12 +16,45 @@ General ideas and approach behind the design of MIL.
 
 ## MIL by example
 
-* Data types
-* Bind and return
-* lift
-* case
-* let rec
-* Built-in functions
+### Data types
+
+~~~
+type Bool = True | False;
+
+type List A = Nil | Cons A (List A);
+~~~
+
+### Bind and Return
+
+~~~
+let (c : Char) <- read_char in
+  return [IO] c
+~~~
+
+### Lifting
+
+~~~
+lift [IO -> State ::: IO] unit
+~~~
+
+### Pattern matching
+
+~~~
+case x of
+  | True => 0
+  | False => 1
+end
+~~~
+
+### Recursive binding
+
+### Built-in functions
+
+~~~
+read_char : IO Char
+
+print_char : Char -> IO Unit
+~~~
 
 ## Type system
 

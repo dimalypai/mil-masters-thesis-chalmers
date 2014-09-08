@@ -23,11 +23,15 @@ from Haskell.
 
 This section will introduce most of the OOLang features using example programs.
 
-* Purity
-* Mutability
-* References
-* Maybe
-* Classes
+### Purity
+
+### Mutability
+
+### References
+
+### Maybe
+
+### Classes
 
 ## Type system highlights
 
