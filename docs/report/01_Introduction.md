@@ -6,7 +6,7 @@ same structure known for many years, which is called *compiler pipeline*.
 
 * Compiler pipeline
 Terms representation and language will be used interchangeably.
-    + Why IR is important?
+    + Why IR is important? (\cite{DragonBook})
     + Different IRs (RTL in GCC, SSA/ANF, Core, STG \cite{STG})
 * Problem statement
     + Managing effects and optimisations
