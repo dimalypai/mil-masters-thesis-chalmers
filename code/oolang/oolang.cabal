@@ -38,7 +38,7 @@ executable oolc
                        OOLang.TypeChecker.TypeCheckM
                        OOLang.Utils
   -- other-extensions:    
-  build-depends:       base >= 4.6 && < 4.7
+  build-depends:       base >= 4.6
                      , array
                      , pretty
                      , pretty-show
@@ -57,7 +57,7 @@ test-suite spec
   main-is:           Spec.hs
   type:              exitcode-stdio-1.0
   hs-source-dirs:    src, test
-  build-depends:     base >= 4.6 && < 4.7
+  build-depends:     base >= 4.6
                    , array
                    , pretty
                    , pretty-show

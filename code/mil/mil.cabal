@@ -27,7 +27,7 @@ library
                        MIL.TypeChecker.TypeCheckM
                        MIL.Utils
   -- other-extensions:    
-  build-depends:       base >= 4.6 && < 4.7
+  build-depends:       base >= 4.6
                      , array
                      , pretty
                      , mtl
@@ -43,7 +43,7 @@ test-suite spec
   main-is:           Spec.hs
   type:              exitcode-stdio-1.0
   hs-source-dirs:    src, test
-  build-depends:     base >= 4.6 && < 4.7
+  build-depends:     base >= 4.6
                    , array
                    , pretty
                    , hspec
