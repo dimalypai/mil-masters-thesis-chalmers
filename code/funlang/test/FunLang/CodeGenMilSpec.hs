@@ -9,7 +9,6 @@ import Control.Applicative ((<$>))
 import FunLang.Parser
 import FunLang.TypeChecker
 import FunLang.CodeGenMil
-import FunLang.BuiltIn
 import FunLang.TestUtils
 
 import qualified MIL.AST.PrettyPrinter as MIL
@@ -50,8 +49,7 @@ testCase baseName = do
   let Right srcProgram = parseFunLang (mkFileName baseName) input
   let Right (tyProgram, typeEnv) = typeCheck srcProgram
   let milProgram = codeGen tyProgram typeEnv
-  let milInitTypeEnv = MIL.initTypeEnvWithBuiltInFunctions builtInFunctionsMil
-  case MIL.typeCheckFromEnv milProgram milInitTypeEnv of
+  case MIL.typeCheck milProgram of
     Right _ -> (dropNewLine $ MIL.prPrint milProgram) `shouldBe` output
     Left milTcErr -> MIL.prPrint milTcErr `shouldBe` ""
 
