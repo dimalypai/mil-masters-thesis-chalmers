@@ -88,17 +88,6 @@ builtInFunctions =
 isBuiltInFunction :: FunName -> Bool
 isBuiltInFunction funName = isJust $ lookup funName builtInFunctions
 
-builtInFunctionsMil :: [(MIL.FunName, MIL.Type)]
-builtInFunctionsMil =
-  [ (MIL.FunName "read_string", MIL.TyApp (MIL.TyMonad ioMonadMil) MIL.stringType)
-  , (MIL.FunName "read_int",    MIL.TyApp (MIL.TyMonad ioMonadMil) MIL.intType)
-  , (MIL.FunName "read_float",  MIL.TyApp (MIL.TyMonad ioMonadMil) MIL.floatType)
-  ]
-
--- | Unsafe. Make sure that there exists such a built-in function.
-getMilBuiltInFunctionType :: MIL.FunName -> MIL.Type
-getMilBuiltInFunctionType milFunName = MIL.getBuiltInFunctionType milFunName builtInFunctionsMil
-
 -- * Monads
 
 monadKind :: Kind

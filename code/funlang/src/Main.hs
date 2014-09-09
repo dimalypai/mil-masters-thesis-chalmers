@@ -15,7 +15,6 @@ import FunLang.Parser
 import FunLang.TypeChecker
 import FunLang.CodeGenMil
 import FunLang.Optimiser
-import FunLang.BuiltIn
 import FunLang.Utils
 
 import qualified MIL.AST as MIL
@@ -138,8 +137,7 @@ readProgram = readProgram' 1 []
 -- Takes a string for a phase to improve error message.
 checkMil :: MIL.Program -> String -> IO ()
 checkMil milProgram phase =
-  let milInitTypeEnv = MIL.initTypeEnvWithBuiltInFunctions builtInFunctionsMil in
-  case MIL.typeCheckFromEnv milProgram milInitTypeEnv of
+  case MIL.typeCheck milProgram of
     Left milTcErr -> do
       putStrLn (phase ++ ":")
       putStrLn (MIL.prPrint milTcErr)
