@@ -71,11 +71,8 @@ builtInFunctions =
       (TyArrow (refType $ mkTypeVar "A") (TyArrow (mkTypeVar "A") (stateType unitType))))
   ]
 
--- | It takes a list of additional built-in functions to search in as well.
--- This is done, because MIL can get additional supply of them from the source
--- language.
 -- Unsafe. Make sure that there exists such a built-in function.
-getBuiltInFunctionType :: FunName -> [(FunName, Type)] -> Type
-getBuiltInFunctionType funName addBuiltInFuns =
-  fromJust $ lookup funName (builtInFunctions ++ addBuiltInFuns)
+getBuiltInFunctionType :: FunName -> Type
+getBuiltInFunctionType funName =
+  fromJust $ lookup funName builtInFunctions
 
