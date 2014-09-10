@@ -9,6 +9,7 @@ import Control.Applicative ((<$>))
 import OOLang.Parser
 import OOLang.TypeChecker
 import OOLang.CodeGenMil
+import OOLang.BuiltIn
 import OOLang.TestUtils
 
 import qualified MIL.AST.PrettyPrinter as MIL
@@ -36,6 +37,9 @@ spec =
     -- TODO: test Refs
     it "generates MIL code for declaration statements" $
       testCase "DeclarationStatements"
+
+    it "generates MIL code for built-in functions" $
+      testCase "BuiltInFunctions"
 
 -- Infrastructure
 
