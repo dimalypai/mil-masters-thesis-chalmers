@@ -26,10 +26,10 @@ spec =
       ]
 
     it "recognises all symbols correctly" $
-      lexer "=  :  \\  ->  /\\  .  <- \
+      lexer "=  :  \\  ->  /\\  .  =>  <- \
            \ |  _  (  )  [  ]  {  }  :::  ,  ;"
         `shouldBe`
-      [ Equal, Colon, Lambda, Arrow, BigLambda, Dot, LeftArrow
+      [ Equal, Colon, Lambda, Arrow, BigLambda, Dot, FatArrow, LeftArrow
       , Bar, Underscore, OpenParen, CloseParen, OpenSquare, CloseSquare
       , OpenCurly, CloseCurly, TripleColon, Comma, SemiColon
       ]
@@ -47,13 +47,13 @@ spec =
     it "shows tokens correctly" $
       intercalate " " (map show
         (lexer "case end forall let lift in of rec return type unit \
-              \ =  :  \\  ->  /\\  .  <- \
+              \ =  :  \\  ->  /\\  .  =>  <- \
               \ |  _  (  )  [  ]  {  }  :::  ,  ; \
               \ 1 0.1 1.0e-2 1e-2 \
               \ x T var_123 True '\n'"))
         `shouldBe`
       "case end forall let lift in of rec return type unit\
-     \ = : \\ -> /\\ . <-\
+     \ = : \\ -> /\\ . => <-\
      \ | _ ( ) [ ] { } ::: , ;\
      \ 1 0.1 1.0e-2 1e-2\
      \ x T var_123 True '\\n'"

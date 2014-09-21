@@ -56,6 +56,7 @@ tokens :-
   "->" { const Arrow     }
   "/\" { const BigLambda }
   "."  { const Dot       }
+  "=>" { const FatArrow  }
   "<-" { const LeftArrow }
 
   "|"  { const Bar        }
@@ -107,6 +108,7 @@ data Token =
   | Arrow
   | BigLambda
   | Dot
+  | FatArrow
   | LeftArrow
 
   | Bar
@@ -154,6 +156,7 @@ instance Show Token where
   show Arrow     = "->"
   show BigLambda = "/\\"
   show Dot       = "."
+  show FatArrow  = "=>"
   show LeftArrow = "<-"
 
   show Bar        = "|"
