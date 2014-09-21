@@ -128,9 +128,11 @@ tcConDef typeName typeVars (ConDef conName conFields) = do
 
 -- | Checks that the type of the body is consistent with the specified function
 -- type.
+-- TODO: dependency analysis, NonTerm
 tcFunDef :: FunDef -> TypeCheckM ()
 tcFunDef (FunDef funName funType bodyExpr) = do
   bodyType <- tcExpr bodyExpr
+  -- TODO: more than alphaEq?
   unlessM (bodyType `alphaEq` funType) $
     throwError $ FunBodyIncorrectType funName funType bodyType
 
@@ -259,10 +261,17 @@ tcExpr expr =
     LiftE e tm1 tm2 -> do
       checkTypeM tm1
       checkTypeM tm2
+      -- TODO: not really suffix? just somewhere inside?
       unlessM (tm1 `isMonadSuffixOf` tm2) $
         throwError $ IncorrectLifting tm1 tm2
       eType <- tcExpr e
-      return $ TyApp (TyMonad tm2) (getMonadResultType eType)
+      let (TyApp (TyMonad eMonad) eMonadResultType) = eType
+      -- TODO: something more than alphaEq?
+      unlessM (eMonad `alphaEq` tm1) $
+        throwError $ OtherError "Incorrect lifting"
+      return $ TyApp (TyMonad tm2) eMonadResultType
+
+    LetRecE bindings bodyExpr -> undefined
 
     CaseE scrutExpr caseAlts -> do
       scrutExprType <- tcExpr scrutExpr
@@ -280,6 +289,7 @@ tcCaseAlts scrutType caseAlts = do
   caseAltTypes <- mapM (tcCaseAlt scrutType) caseAlts
   -- There is at least one case alternative and all types should be the same
   let caseExprType = head caseAltTypes
+  -- TODO: more than alphaEq: monad prefix
   mIncorrectTypeAlt <- findM (\t -> not <$> (t `alphaEq` caseExprType)) caseAltTypes
   case mIncorrectTypeAlt of
     Just incorrectAltType ->

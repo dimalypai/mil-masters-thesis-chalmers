@@ -183,6 +183,7 @@ conFieldTypesFromType t typeArgs = init $ conFieldTypesFromType' t typeArgs
         conFieldTypesFromType'          _ _ = error "conFieldTypesFromType: kind checking must have gone wrong"
 
 -- * Alpha equivalence of types.
+-- TODO: Pure alpha equivalence with supplied aliases.
 
 -- | Decides if two types are equivalent up to a change of type variables bound
 -- by forall. It is monadic to be able to expand type aliases.
@@ -205,6 +206,7 @@ instance AlphaEq Type where
   alphaEq (TyApp t11 t12) (TyApp t21 t22) =
     (&&) <$> (t11 `alphaEq` t21) <*> (t12 `alphaEq` t22)
   alphaEq (TyForAll tv1 t1) (TyForAll tv2 t2) = t1 `alphaEq` ((tv2, TyVar tv1) `substTypeIn` t2)
+  -- TODO: width subtyping
   alphaEq (TyTuple elemTypes1) (TyTuple elemTypes2) = do
     let lengthEq = length elemTypes1 == length elemTypes2
     elemsAlphaEq <- mapM (uncurry alphaEq) (zip elemTypes1 elemTypes2)
@@ -399,4 +401,8 @@ isMonadSuffixOf (MTyAlias typeName1) t2@(MTyMonad {}) = do
           _ -> return False)
     (return False)
 isMonadSuffixOf (MTyMonadCons {}) (MTyMonad {}) = return False
+
+-- TODO
+containsMonad :: Type -> TypeM -> TypeCheckM Bool
+containsMonad = undefined
 
