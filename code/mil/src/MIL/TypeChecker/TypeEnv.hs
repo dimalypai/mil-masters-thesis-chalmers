@@ -15,6 +15,8 @@ module MIL.TypeChecker.TypeEnv
 
   , DataConTypeEnv
   , DataConTypeInfo
+  , dcontiType
+  , dcontiTypeName
   , getDataConTypeEnv
   , getDataConTypeInfo
   , isDataConDefined

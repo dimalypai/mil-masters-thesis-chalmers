@@ -86,7 +86,7 @@ collectTypeDef (TypeDef typeName typeVars _) = do
 -- Note: type aliases can *not* be recursive.
 collectAliasDef :: AliasDef -> TypeCheckM ()
 collectAliasDef (AliasDef typeName t) = do
-  whenM (isTypeOrAliasDefined typeName) $
+  whenM (isTypeOrAliasDefinedM typeName) $
     throwError $ TypeOrAliasAlreadyDefined typeName
   checkType t
   addAlias typeName t
@@ -185,7 +185,7 @@ tcExpr expr =
     TypeLambdaE typeVar bodyExpr -> do
       -- it is important to check in all these places, since it can shadow a
       -- type, type alias or another type variable
-      whenM (isTypeOrAliasDefined $ typeVarToTypeName typeVar) $
+      whenM (isTypeOrAliasDefinedM $ typeVarToTypeName typeVar) $
         throwError $ TypeVarShadowsType typeVar
       whenM (isTypeVarBound typeVar) $
         throwError $ TypeVarShadowsTypeVar typeVar
@@ -216,9 +216,9 @@ tcExpr expr =
     ConNameE conName conType -> do
       unlessM (isDataConDefined conName) $
         throwError $ ConNotDefined conName
-      dataConTypeInfo <- getDataConTypeInfo conName
-      unlessM (conType `alphaEq` dcontiType dataConTypeInfo) $
-        throwError $ ConIncorrectType conName (dcontiType dataConTypeInfo) conType
+      dataConType <- getDataConTypeM conName
+      unlessM (conType `alphaEq` dataConType) $
+        throwError $ ConIncorrectType conName dataConType conType
       return conType
 
     LetE varBinder bindExpr bodyExpr -> do
@@ -334,9 +334,8 @@ tcPattern scrutType pat localTypeEnv =
     ConP conName varBinders -> do
       unlessM (isDataConDefined conName) $
         throwError $ ConNotDefined conName
-      dataConTypeInfo <- getDataConTypeInfo conName
-      let conType = dcontiType dataConTypeInfo
-          conTypeName = dcontiTypeName dataConTypeInfo
+      conType <- getDataConTypeM conName
+      conTypeName <- getDataConTypeNameM conName
       (scrutTypeName, scrutTypeArgs) <- transformScrutType scrutType conType
       when (conTypeName /= scrutTypeName) $
         throwError $ PatternIncorrectType scrutType conType

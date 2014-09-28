@@ -14,6 +14,8 @@ module MIL.TypeChecker.TypeCheckM
 
   , isDataConDefinedM
   , addDataConM
+  , getDataConTypeM
+  , getDataConTypeNameM
 
   , isAliasDefinedM
   , addAliasM
@@ -103,6 +105,18 @@ isDataConDefinedM conName = gets (isDataConDefined conName . getDataConTypeEnv)
 addDataConM :: ConName -> Type -> TypeName -> TypeCheckM ()
 addDataConM conName conType typeName =
   modifyDataConTypeEnv $ addDataCon conName conType typeName
+
+-- | Returns a data constructor type from the environment.
+--
+-- Note: Unsafe. Should be used only after check that data constructor is defined.
+getDataConTypeM :: ConName -> TypeCheckM Type
+getDataConTypeM conName = gets (dcontiType . getDataConTypeInfo conName . getDataConTypeEnv)
+
+-- | Returns a type name that contains a given data constructor from the environment.
+--
+-- Note: Unsafe. Should be used only after check that data constructor is defined.
+getDataConTypeNameM :: ConName -> TypeCheckM TypeName
+getDataConTypeNameM conName = gets (dcontiTypeName . getDataConTypeInfo conName . getDataConTypeEnv)
 
 -- * Type alias type environment
 
