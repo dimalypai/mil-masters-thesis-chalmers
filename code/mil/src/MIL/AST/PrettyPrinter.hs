@@ -17,13 +17,13 @@ module MIL.AST.PrettyPrinter
 import MIL.AST
 import MIL.PrettyPrinter
 
-instance Pretty Program where
+instance (IsType t, Pretty v, Pretty mt, Pretty t) => Pretty (Program v ct mt t) where
   prPrn (Program (typeDefs, aliasDefs, funDefs)) =
     vsepBig (map prPrn typeDefs) $+$
     vsepBig (map prPrn aliasDefs) $+$
     vsepBig (map prPrn funDefs)
 
-instance Pretty TypeDef where
+instance (IsType t, Pretty t) => Pretty (TypeDef t) where
   prPrn (TypeDef typeName typeVars conDefs) =
       text "type" <+> prPrn typeName <+> hsep (map prPrn typeVars) $+$
       nest indLvl prConDefs <> semi
@@ -34,23 +34,23 @@ instance Pretty TypeDef where
               else vsep ((equals <+> head consWithBars) : tail consWithBars)
           consWithBars = intersperse (text "| ") (map prPrn conDefs)
 
-instance Pretty ConDef where
+instance (IsType t, Pretty t) => Pretty (ConDef t) where
   prPrn (ConDef conName conFields) =
     prPrn conName <+> hsep (map (\t -> prPrnParens (not $ isAtomicType t) t) conFields)
 
-instance Pretty AliasDef where
+instance Pretty t => Pretty (AliasDef t) where
   prPrn (AliasDef typeName t) =
     text "alias" <+> prPrn typeName <+> equals <+> prPrn t <> semi
 
-instance Pretty FunDef where
+instance (Pretty v, Pretty mt, Pretty t) => Pretty (FunDef v ct mt t) where
   prPrn (FunDef funName funType expr) =
     prPrn funName <+> colon <+> prPrn funType <+> equals $+$
     nest indLvl (prPrn expr <> semi)
 
 -- See Note [Precedences and associativity]
-instance Pretty Expr where
+instance (Pretty v, Pretty mt, Pretty t) => Pretty (Expr v ct mt t) where
   prPrn (LitE lit) = prPrn lit
-  prPrn (VarE (VarBinder (v, _))) = prPrn v
+  prPrn (VarE v) = prPrn v
   prPrn (LambdaE varBind e) = text "\\" <> prPrn varBind <+> text "->" <+> prPrn e
   prPrn e@(AppE e1 e2) =
     prPrnParens (e1 `exprHasLowerPrecAssoc` e) e1 <+>
@@ -81,10 +81,10 @@ instance Pretty Literal where
   prPrn (FloatLit f)  = double f
   prPrn (CharLit c)   = quotes (char c)
 
-instance Pretty CaseAlt where
+instance (Pretty v, Pretty mt, Pretty t) => Pretty (CaseAlt v ct mt t) where
   prPrn (CaseAlt (pat, e)) = text "|" <+> prPrn pat <+> text "=>" <+> prPrn e
 
-instance Pretty Pattern where
+instance Pretty t => Pretty (Pattern t) where
   prPrn (LitP lit) = prPrn lit
   prPrn (VarP varBinder) = prPrn varBinder
   prPrn (ConP conName varBinders) = prPrn conName <+> hsep (map prPrn varBinders)
@@ -116,7 +116,7 @@ instance Pretty Kind where
   prPrn StarK = text "*"
   prPrn (k1 :=>: k2) = prPrn k1 <+> text "=>" <+> prPrn k2  -- TODO: parens
 
-instance Pretty VarBinder where
+instance Pretty t => Pretty (VarBinder t) where
   prPrn (VarBinder (v, t)) = parens $ prPrn v <+> colon <+> prPrn t
 
 instance Pretty Var where

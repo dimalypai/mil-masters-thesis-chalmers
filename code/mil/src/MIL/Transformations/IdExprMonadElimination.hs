@@ -4,12 +4,12 @@ module MIL.Transformations.IdExprMonadElimination
 
 import MIL.AST
 
-idExprMonadElimination :: Program -> Program
+idExprMonadElimination :: TyProgram -> TyProgram
 idExprMonadElimination (Program (typeDefs, aliasDefs, funDefs)) =
   Program (typeDefs, aliasDefs, map idExprMEliminateFunDef funDefs)
 
 -- TODO: very very naive
-idExprMEliminateFunDef :: FunDef -> FunDef
+idExprMEliminateFunDef :: TyFunDef -> TyFunDef
 idExprMEliminateFunDef funDef@(FunDef funName funType bodyExpr) =
   case funType of
     TyApp (TyMonad (MTyMonad Id)) funResType ->

@@ -3,15 +3,15 @@ module MIL.Transformations.MonadLaws where
 
 import MIL.AST
 
-leftIdentity :: Program -> Program
+leftIdentity :: TyProgram -> TyProgram
 leftIdentity (Program (typeDefs, aliasDefs, funDefs)) =
   Program (typeDefs, aliasDefs, map leftIdentityFun funDefs)
 
-leftIdentityFun :: FunDef -> FunDef
+leftIdentityFun :: TyFunDef -> TyFunDef
 leftIdentityFun (FunDef funName funType funBody) =
   FunDef funName funType (leftIdentityExpr funBody)
 
-leftIdentityExpr :: Expr -> Expr
+leftIdentityExpr :: TyExpr -> TyExpr
 leftIdentityExpr expr =
   case expr of
     LambdaE varBinder e -> LambdaE varBinder (leftIdentityExpr e)
@@ -28,15 +28,15 @@ leftIdentityExpr expr =
     LiftE e tm1 tm2 -> LiftE (leftIdentityExpr e) tm1 tm2
     _ -> expr
 
-rightIdentity :: Program -> Program
+rightIdentity :: TyProgram -> TyProgram
 rightIdentity (Program (typeDefs, aliasDefs, funDefs)) =
   Program (typeDefs, aliasDefs, map rightIdentityFun funDefs)
 
-rightIdentityFun :: FunDef -> FunDef
+rightIdentityFun :: TyFunDef -> TyFunDef
 rightIdentityFun (FunDef funName funType funBody) =
   FunDef funName funType (rightIdentityExpr funBody)
 
-rightIdentityExpr :: Expr -> Expr
+rightIdentityExpr :: TyExpr -> TyExpr
 rightIdentityExpr expr =
   case expr of
     LambdaE varBinder e -> LambdaE varBinder (rightIdentityExpr e)
@@ -51,15 +51,15 @@ rightIdentityExpr expr =
     LiftE e tm1 tm2 -> LiftE (rightIdentityExpr e) tm1 tm2
     _ -> expr
 
-associativity :: Program -> Program
+associativity :: TyProgram -> TyProgram
 associativity (Program (typeDefs, aliasDefs, funDefs)) =
   Program (typeDefs, aliasDefs, map associativityFun funDefs)
 
-associativityFun :: FunDef -> FunDef
+associativityFun :: TyFunDef -> TyFunDef
 associativityFun (FunDef funName funType funBody) =
   FunDef funName funType (associativityExpr funBody)
 
-associativityExpr :: Expr -> Expr
+associativityExpr :: TyExpr -> TyExpr
 associativityExpr expr =
   case expr of
     LambdaE varBinder e -> LambdaE varBinder (associativityExpr e)
@@ -76,7 +76,7 @@ associativityExpr expr =
     _ -> expr
 
 -- | TODO: name capturing
-replaceExprIn :: (Expr, Expr) -> Expr -> Expr
+replaceExprIn :: (TyExpr, TyExpr) -> TyExpr -> TyExpr
 re@(oldExpr, newExpr) `replaceExprIn` expr =
   if (expr == oldExpr)
     then newExpr

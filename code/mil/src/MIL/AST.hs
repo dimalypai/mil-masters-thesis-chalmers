@@ -1,12 +1,23 @@
 -- | Main AST module. Defines data types and type synonyms representing syntax
 -- tree and some helper functions.
 --
--- We don't have source annotations for MIL because it is not user-facing
--- language.  When it comes to parsing MIL, we will probably need to change the
--- AST to make it parameterised over variable occurence type: just variable
--- after parsing and variable with its type after type checking. But for now,
--- we assume that source language compiler generates typed MIL and type
--- checking is only used to transformation checking.
+-- We don't have source annotations for MIL because it is not a user-facing
+-- language.
+--
+-- AST is highly parameterised. Parameterised places are: variable occurence,
+-- constructor type annotation, monadic type annotation and all other type
+-- annotations. For the most parameterised type, look at the 'Expr' data type.
+-- Naming convention for type parameters: v stands for Variable, ct - for
+-- Constructor Type, mt - for Monad Type, t - for Type.
+--
+-- There are two different representations for types: 'SrcType' for the Parser
+-- view of types and 'Type' for the types representation after the type
+-- checking.
+--
+-- For most of the data types there are type synonyms: Src and Ty versions.
+-- Src uses 'SrcType' for the majority of type annotation related parameters,
+-- Ty mostly uses 'Type' there. Src variants result from parsing, Ty variants
+-- result from type checking.
 --
 -- newtypes are used quite extensively to have a strong distinction between
 -- different types of names.
@@ -21,13 +32,16 @@ module MIL.AST where
 -- * list of function definitions
 --
 -- Note: they must be in the same order on the source level.
-newtype Program = Program ([TypeDef], [AliasDef], [FunDef])
+newtype Program v ct mt t = Program ([TypeDef t], [AliasDef t], [FunDef v ct mt t])
   deriving Show
 
-getMilTypeDefs :: Program -> [TypeDef]
+type SrcProgram = Program Var () SrcType SrcType
+type TyProgram  = Program TyVarBinder Type TypeM Type
+
+getMilTypeDefs :: Program v ct mt t -> [TypeDef t]
 getMilTypeDefs (Program (typeDefs, _, _)) = typeDefs
 
-getMilFunDefs :: Program -> [FunDef]
+getMilFunDefs :: Program v ct mt t -> [FunDef v ct mt t]
 getMilFunDefs (Program (_, _, funDefs)) = funDefs
 
 -- | Type definition:
@@ -37,20 +51,29 @@ getMilFunDefs (Program (_, _, funDefs)) = funDefs
 -- * list of type variables (type parameters)
 --
 -- * list of constructor definitions
-data TypeDef = TypeDef TypeName [TypeVar] [ConDef]
+data TypeDef t = TypeDef TypeName [TypeVar] [ConDef t]
   deriving Show
+
+type SrcTypeDef = TypeDef SrcType
+type TyTypeDef  = TypeDef Type
 
 -- | Constructor definition:
 --
 -- * constructor name
 --
 -- * constructor fields (expressed as types)
-data ConDef = ConDef ConName [Type]
+data ConDef t = ConDef ConName [t]
   deriving Show
 
+type SrcConDef = ConDef SrcType
+type TyConDef  = ConDef Type
+
 -- | Type alias definition. Gives a name to a type.
-data AliasDef = AliasDef TypeName Type
+data AliasDef t = AliasDef TypeName t
   deriving Show
+
+type SrcAliasDef = AliasDef SrcType
+type TyAliasDef  = AliasDef Type
 
 -- | Function definition:
 --
@@ -61,8 +84,11 @@ data AliasDef = AliasDef TypeName Type
 -- * expression (body)
 --
 -- Note: there is only one function equation and it is without patterns.
-data FunDef = FunDef FunName Type Expr
+data FunDef v ct mt t = FunDef FunName t (Expr v ct mt t)
   deriving Show
+
+type SrcFunDef = FunDef Var () SrcType SrcType
+type TyFunDef  = FunDef TyVarBinder Type TypeM Type
 
 -- | Expression representation.
 --
@@ -71,26 +97,39 @@ data FunDef = FunDef FunName Type Expr
 --
 -- 'LetE' (bind), 'ReturnE' and 'LiftE' are monadic operations.
 --
--- Constructors and variables (functions) are annotated with their types.
-data Expr = LitE Literal
-          | VarE VarBinder
-          | LambdaE VarBinder Expr
-          | AppE Expr Expr
-          | TypeLambdaE TypeVar Expr
-          | TypeAppE Expr Type
-            -- | 'ConNameE' stands on its own because constructors act as
-            -- functions.
-          | ConNameE ConName Type
-          | LetE VarBinder Expr Expr
-          | ReturnE TypeM Expr
-          | LiftE Expr TypeM TypeM
-            -- | 'LetRecE' has a list of definitions in order to be able to
-            -- handle mutually recursive definitions.
-          | LetRecE [(VarBinder, Expr)] Expr
-            -- | Patterns must be exhaustive.
-          | CaseE Expr [CaseAlt]
-          | TupleE [Expr]
+-- Many things are represented differently after parsing and after type
+-- checking:
+-- * variable occurences
+--
+-- * constructor type annotations
+--
+-- * monad type annotations (for 'ReturnE' and 'LiftE')
+--
+-- * other type annotations ('TypeAppE' etc.)
+--
+-- For more on this, look at 'SrcExpr' and 'TyExpr'.
+data Expr v ct mt t
+  = LitE Literal
+  | VarE v
+  | LambdaE (VarBinder t) (Expr v ct mt t)
+  | AppE (Expr v ct mt t) (Expr v ct mt t)
+  | TypeLambdaE TypeVar (Expr v ct mt t)
+  | TypeAppE (Expr v ct mt t) t
+    -- | 'ConNameE' stands on its own because constructors act as
+    -- functions.
+  | ConNameE ConName ct
+  | LetE (VarBinder t) (Expr v ct mt t) (Expr v ct mt t)
+  | ReturnE mt (Expr v ct mt t)
+  | LiftE (Expr v ct mt t) mt mt
+    -- | 'LetRecE' has a list of definitions in order to be able to
+    -- handle mutually recursive definitions.
+  | LetRecE [(VarBinder t, Expr v ct mt t)] (Expr v ct mt t)
+  | CaseE (Expr v ct mt t) [CaseAlt v ct mt t]
+  | TupleE [Expr v ct mt t]
   deriving (Show, Eq)
+
+type SrcExpr = Expr Var () SrcType SrcType
+type TyExpr  = Expr TyVarBinder Type TypeM Type
 
 -- | Literal constants.
 data Literal = UnitLit
@@ -99,22 +138,40 @@ data Literal = UnitLit
              | CharLit Char
   deriving (Show, Eq)
 
-newtype CaseAlt = CaseAlt (Pattern, Expr)
+newtype CaseAlt v ct mt t = CaseAlt (Pattern t, Expr v ct mt t)
   deriving (Show, Eq)
 
+type SrcCaseAlt = CaseAlt Var () SrcType SrcType
+type TyCaseAlt  = CaseAlt TyVarBinder Type TypeM Type
+
 -- | Patterns.
-data Pattern =
+data Pattern t
     -- | Literal pattern (constant).
-    LitP Literal
+  = LitP Literal
     -- | Variable pattern. Needs to contain type.
-  | VarP VarBinder
+  | VarP (VarBinder t)
     -- | Constructor pattern. Can't be nested.
-  | ConP ConName [VarBinder]
+  | ConP ConName [VarBinder t]
     -- | Tuple pattern. Can't be nested.
-  | TupleP [VarBinder]
+  | TupleP [VarBinder t]
     -- | Default alternative: underscore.
   | DefaultP
   deriving (Show, Eq)
+
+type SrcPattern = Pattern SrcType
+type TyPattern  = Pattern Type
+
+-- | Source representation of types. Very general.
+-- 'SrcTyTypeCon' can represent type constructors, type variables, aliases, MIL
+-- monads. 'SrcTyMonadCons' allows much more types to be represented, which
+-- then will be rejected by the TypeChecker.
+data SrcType
+  = SrcTyTypeCon TypeName
+  | SrcTyArrow SrcType SrcType
+  | SrcTyForAll TypeVar SrcType
+  | SrcTyApp SrcType SrcType
+  | SrcTyTuple [SrcType]
+  | SrcTyMonadCons TypeName SrcType
 
 -- | Types representation.
 --
@@ -165,13 +222,16 @@ data Kind = StarK
           | Kind :=>: Kind
   deriving (Show, Eq)
 
-newtype VarBinder = VarBinder (Var, Type)
+newtype VarBinder t = VarBinder (Var, t)
   deriving (Show, Eq)
 
-getBinderVar :: VarBinder -> Var
+type SrcVarBinder = VarBinder SrcType
+type TyVarBinder  = VarBinder Type
+
+getBinderVar :: VarBinder t -> Var
 getBinderVar (VarBinder (v,_)) = v
 
-getBinderType :: VarBinder -> Type
+getBinderType :: VarBinder t -> t
 getBinderType (VarBinder (_,t)) = t
 
 newtype Var = Var String
@@ -206,16 +266,9 @@ data MilMonad = Id
               | IO
   deriving (Show, Eq)
 
--- | Type constructors, type variables and tuple types are atomic types.
-isAtomicType :: Type -> Bool
-isAtomicType (TyTypeCon {}) = True
-isAtomicType (TyVar     {}) = True
-isAtomicType (TyTuple   {}) = True
-isAtomicType              _ = False
-
 -- Precedences
 
-getExprPrec :: Expr -> Int
+getExprPrec :: Expr v ct mt t -> Int
 getExprPrec LitE        {} = 6
 getExprPrec VarE        {} = 6
 getExprPrec LambdaE     {} = 3
@@ -232,7 +285,7 @@ getExprPrec TupleE      {} = 6
 -- second one. Convenient to use in infix form.
 --
 -- Note: It is reflexive: e `exprHasLowerPrec` e ==> True
-exprHasLowerPrec :: Expr -> Expr -> Bool
+exprHasLowerPrec :: Expr v ct mt t -> Expr v ct mt t -> Bool
 exprHasLowerPrec e1 e2 = getExprPrec e1 <= getExprPrec e2
 
 -- | Returns whether the first expression has a lower precedence than the
@@ -241,7 +294,7 @@ exprHasLowerPrec e1 e2 = getExprPrec e1 <= getExprPrec e2
 -- operations, function application. See "MIL.AST.PrettyPrinter".
 --
 -- Note: It is *not* reflexive: e `exprHasLowerPrecAssoc` e ==> False
-exprHasLowerPrecAssoc :: Expr -> Expr -> Bool
+exprHasLowerPrecAssoc :: Expr v ct mt t -> Expr v ct mt t -> Bool
 exprHasLowerPrecAssoc e1 e2 = getExprPrec e1 < getExprPrec e2
 
 getTypePrec :: Type -> Int
@@ -286,4 +339,19 @@ mkSimpleType typeName = TyTypeCon (TypeName typeName)
 mkKind :: Int -> Kind
 mkKind 0 = StarK
 mkKind n = StarK :=>: mkKind (n - 1)
+
+class IsType t where
+  isAtomicType :: t -> Bool
+
+instance IsType SrcType where
+  isAtomicType (SrcTyTypeCon {}) = True
+  isAtomicType (SrcTyTuple   {}) = True
+  isAtomicType                 _ = False
+
+instance IsType Type where
+  -- | Type constructors, type variables and tuple types are atomic types.
+  isAtomicType (TyTypeCon {}) = True
+  isAtomicType (TyVar     {}) = True
+  isAtomicType (TyTuple   {}) = True
+  isAtomicType              _ = False
 
