@@ -10,6 +10,7 @@ module MIL.TypeChecker.TypeCheckM
 
   , isTypeDefinedM
   , addTypeM
+  , getDataTypeKindM
 
   , isDataConDefinedM
   , addDataConM
@@ -76,6 +77,12 @@ isTypeDefinedM typeName = gets (isTypeDefined typeName . getDataTypeEnv)
 -- Note: data constructors are not available at this point.
 addTypeM :: TypeName -> Kind -> TypeCheckM ()
 addTypeM typeName kind = modifyDataTypeEnv $ addType typeName kind
+
+-- | Returns a kind of the data type.
+--
+-- Note: Unsafe. Should be used only after check that data type is defined.
+getDataTypeKindM :: TypeName -> TypeCheckM Kind
+getDataTypeKindM typeName = gets (dtiKind . getDataTypeInfo typeName . getDataTypeEnv)
 
 -- * Data constructor type environment
 

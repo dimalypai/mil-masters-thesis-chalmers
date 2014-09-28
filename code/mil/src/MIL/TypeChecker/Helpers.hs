@@ -7,6 +7,7 @@ import Control.Applicative
 
 import MIL.AST
 import MIL.TypeChecker.TypeCheckM
+import MIL.TypeChecker.TypeEnv
 import MIL.TypeChecker.TcError
 import MIL.Utils
 
@@ -43,12 +44,12 @@ checkTypeWithTypeVarsOfKind :: Set.Set TypeVar -> Kind -> Type -> TypeCheckM ()
 checkTypeWithTypeVarsOfKind typeVars kind t =
   case t of
     TyTypeCon typeName -> do
-      ifM (isTypeDefined typeName)
-        (do dataTypeInfo <- getDataTypeInfo typeName
-            when (dtiKind dataTypeInfo /= kind) $
-              throwError $ TypeConIncorrectApp typeName (dtiKind dataTypeInfo) kind)
-        (ifM (isAliasDefined typeName)
-           (do aliasType <- getAliasType typeName
+      ifM (isTypeDefinedM typeName)
+        (do dataTypeKind <- getDataTypeKindM typeName
+            when (dataTypeKind /= kind) $
+              throwError $ TypeConIncorrectApp typeName dataTypeKind kind)
+        (ifM (isAliasDefinedM typeName)
+           (do aliasType <- getAliasTypeM typeName
                -- Aliased types should be checked without the type variables we
                -- have collected in scope, because they were defined in a
                -- different scope.
@@ -57,9 +58,9 @@ checkTypeWithTypeVarsOfKind typeVars kind t =
            (throwError $ TypeNotDefined typeName))
 
     TyVar typeVar -> do
-      isTyVarBound <- isTypeVarBound typeVar
+      isTyVarBound <- isTypeVarBoundM typeVar
       -- It is important to check in both places, since typeVars is not queried
-      -- by 'isTypeVarBound'.
+      -- by 'isTypeVarBoundM'.
       unless (isTyVarBound || typeVar `Set.member` typeVars) $
         throwError $ TypeVarNotInScope typeVar
 
@@ -72,10 +73,10 @@ checkTypeWithTypeVarsOfKind typeVars kind t =
     TyForAll typeVar bodyT -> do
       -- It is important to check in all these places, since it can shadow a
       -- type, type alias or another type variable and typeVars is not queried
-      -- by 'isTypeOrAliasDefined' and 'isTypeVarBound'.
-      whenM (isTypeOrAliasDefined $ typeVarToTypeName typeVar) $
+      -- by 'isTypeOrAliasDefinedM' and 'isTypeVarBoundM'.
+      whenM (isTypeOrAliasDefinedM $ typeVarToTypeName typeVar) $
         throwError $ TypeVarShadowsType typeVar
-      isTyVarBound <- isTypeVarBound typeVar
+      isTyVarBound <- isTypeVarBoundM typeVar
       when (isTyVarBound || typeVar `Set.member` typeVars) $
         throwError $ TypeVarShadowsTypeVar typeVar
       let typeVars' = Set.insert typeVar typeVars
@@ -122,8 +123,8 @@ checkTypeMWithTypeVars typeVars (MTyMonadCons m tm) = do
   checkMilMonadWithTypeVars typeVars m
   checkTypeMWithTypeVars typeVars tm
 checkTypeMWithTypeVars _ (MTyAlias typeName) =
-  (ifM (isAliasDefined typeName)
-      (do aliasType <- getAliasType typeName
+  (ifM (isAliasDefinedM typeName)
+      (do aliasType <- getAliasTypeM typeName
           -- Aliased types should be checked without the type variables we have
           -- collected in scope, because they were defined in a different
           -- scope. We specify kind *, since we are checking a monad alias.
@@ -213,8 +214,8 @@ instance AlphaEq Type where
     return (lengthEq && and elemsAlphaEq)
   alphaEq (TyMonad tm1) (TyMonad tm2) = tm1 `alphaEq` tm2
   alphaEq (TyTypeCon typeName) t = do
-    ifM (isAliasDefined typeName)
-      (do aliasType <- getAliasType typeName
+    ifM (isAliasDefinedM typeName)
+      (do aliasType <- getAliasTypeM typeName
           aliasType `alphaEq` t)
       (return False)
   alphaEq t1 t2@(TyTypeCon {}) = t2 `alphaEq` t1
@@ -227,8 +228,8 @@ instance AlphaEq TypeM where
     (&&) <$> (m1 `alphaEq` m2) <*> (tm1 `alphaEq` tm2)
   alphaEq (MTyAlias typeName1) (MTyAlias typeName2) = return (typeName1 == typeName2)
   alphaEq (MTyAlias typeName) tm2 = do
-    ifM (isAliasDefined typeName)
-      (do aliasType <- getAliasType typeName
+    ifM (isAliasDefinedM typeName)
+      (do aliasType <- getAliasTypeM typeName
           case aliasType of
             TyMonad tm1 -> tm1 `alphaEq` tm2
             _ -> return False)
@@ -306,9 +307,9 @@ compatibleMonadTypes :: TypeM -> TypeM -> TypeCheckM Bool
 compatibleMonadTypes (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
 compatibleMonadTypes (MTyAlias typeName1) (MTyAlias typeName2) = do
   aliasTypesCompatible <-
-    ifM ((&&) <$> isAliasDefined typeName1 <*> isAliasDefined typeName2)
-      (do aliasType1 <- getAliasType typeName1
-          aliasType2 <- getAliasType typeName2
+    ifM ((&&) <$> isAliasDefinedM typeName1 <*> isAliasDefinedM typeName2)
+      (do aliasType1 <- getAliasTypeM typeName1
+          aliasType2 <- getAliasTypeM typeName2
           case (aliasType1, aliasType2) of
             (TyMonad tm1, TyMonad tm2) -> compatibleMonadTypes tm1 tm2
             _ -> return False)
@@ -318,15 +319,15 @@ compatibleMonadTypes (MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
   (&&) <$> (m1 `alphaEq` m2) <*> compatibleMonadTypes tm1 tm2
 compatibleMonadTypes (MTyMonad m1) (MTyMonadCons m2 _) = m1 `alphaEq` m2
 compatibleMonadTypes (MTyAlias typeName1) t2@(MTyMonadCons {}) = do
-  ifM (isAliasDefined typeName1)
-    (do aliasType1 <- getAliasType typeName1
+  ifM (isAliasDefinedM typeName1)
+    (do aliasType1 <- getAliasTypeM typeName1
         case aliasType1 of
           TyMonad tm1 -> compatibleMonadTypes tm1 t2
           _ -> return False)
     (return False)
 compatibleMonadTypes t1@(MTyMonad {}) (MTyAlias typeName2) = do
-  ifM (isAliasDefined typeName2)
-    (do aliasType2 <- getAliasType typeName2
+  ifM (isAliasDefinedM typeName2)
+    (do aliasType2 <- getAliasTypeM typeName2
         case aliasType2 of
           TyMonad tm2 -> compatibleMonadTypes t1 tm2
           _ -> return False)
@@ -343,7 +344,7 @@ hasMoreEffectsThan :: TypeM -> TypeM -> TypeCheckM Bool
 hasMoreEffectsThan (MTyMonadCons _ tm1) (MTyMonadCons _ tm2) = tm1 `hasMoreEffectsThan` tm2
 hasMoreEffectsThan (MTyMonadCons {}) (MTyMonad {}) = return True
 hasMoreEffectsThan t1 (MTyAlias typeName2) = do
-  aliasType2 <- getAliasType typeName2
+  aliasType2 <- getAliasTypeM typeName2
   case aliasType2 of
     TyMonad t2 -> t1 `hasMoreEffectsThan` t2
 hasMoreEffectsThan (MTyMonad {}) (MTyMonad {}) = return False
@@ -359,9 +360,9 @@ isMonadSuffixOf :: TypeM -> TypeM -> TypeCheckM Bool
 isMonadSuffixOf (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
 isMonadSuffixOf (MTyAlias typeName1) (MTyAlias typeName2) = do
   aliasTypesSuffix <-
-    ifM ((&&) <$> isAliasDefined typeName1 <*> isAliasDefined typeName2)
-      (do aliasType1 <- getAliasType typeName1
-          aliasType2 <- getAliasType typeName2
+    ifM ((&&) <$> isAliasDefinedM typeName1 <*> isAliasDefinedM typeName2)
+      (do aliasType1 <- getAliasTypeM typeName1
+          aliasType2 <- getAliasTypeM typeName2
           case (aliasType1, aliasType2) of
             (TyMonad tm1, TyMonad tm2) -> tm1 `isMonadSuffixOf` tm2
             _ -> return False)
@@ -373,29 +374,29 @@ isMonadSuffixOf t1@(MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) = do
   return (isSuffix || isShiftedSuffix)
 isMonadSuffixOf t1@(MTyMonad {}) (MTyMonadCons _ tm2) = t1 `isMonadSuffixOf` tm2
 isMonadSuffixOf (MTyAlias typeName1) t2@(MTyMonadCons {}) = do
-  ifM (isAliasDefined typeName1)
-    (do aliasType1 <- getAliasType typeName1
+  ifM (isAliasDefinedM typeName1)
+    (do aliasType1 <- getAliasTypeM typeName1
         case aliasType1 of
           TyMonad tm1 -> tm1 `isMonadSuffixOf` t2
           _ -> return False)
     (return False)
 isMonadSuffixOf t1@(MTyMonadCons {}) (MTyAlias typeName2) = do
-  ifM (isAliasDefined typeName2)
-    (do aliasType2 <- getAliasType typeName2
+  ifM (isAliasDefinedM typeName2)
+    (do aliasType2 <- getAliasTypeM typeName2
         case aliasType2 of
           TyMonad tm2 -> t1 `isMonadSuffixOf` tm2
           _ -> return False)
     (return False)
 isMonadSuffixOf t1@(MTyMonad {}) (MTyAlias typeName2) = do
-  ifM (isAliasDefined typeName2)
-    (do aliasType2 <- getAliasType typeName2
+  ifM (isAliasDefinedM typeName2)
+    (do aliasType2 <- getAliasTypeM typeName2
         case aliasType2 of
           TyMonad tm2 -> t1 `isMonadSuffixOf` tm2
           _ -> return False)
     (return False)
 isMonadSuffixOf (MTyAlias typeName1) t2@(MTyMonad {}) = do
-  ifM (isAliasDefined typeName1)
-    (do aliasType1 <- getAliasType typeName1
+  ifM (isAliasDefinedM typeName1)
+    (do aliasType1 <- getAliasTypeM typeName1
         case aliasType1 of
           TyMonad tm1 -> tm1 `isMonadSuffixOf` t2
           _ -> return False)
