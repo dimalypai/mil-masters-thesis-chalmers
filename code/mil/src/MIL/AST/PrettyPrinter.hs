@@ -69,6 +69,12 @@ instance (Pretty v, Pretty mt, Pretty t) => Pretty (Expr v ct mt t) where
   prPrn e@(LiftE e1 tm1 tm2) =
     text "lift" <+> brackets (prPrn tm1 <+> text "->" <+> prPrn tm2) <+>
     prPrnParens (e1 `exprHasLowerPrec` e) e1
+  prPrn (LetRecE varBinds e) =
+    text "let rec" <+>
+      (hsep $ punctuate semi $
+         map (\(varBind, bindE) -> prPrn varBind <+> text "<-" <+> prPrn bindE) varBinds) <+>
+      text "in" $+$
+      nest indLvl (prPrn e)
   prPrn (CaseE e caseAlts) =
     text "case" <+> prPrn e <+> text "of" $+$
     nest indLvl (vsep $ map prPrn caseAlts) $+$
