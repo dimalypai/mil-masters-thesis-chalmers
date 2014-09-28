@@ -1,7 +1,8 @@
 -- | Common utility functions.
 module MIL.Utils where
 
-import Control.Monad (when, unless, liftM, filterM)
+import Control.Monad.State
+import Control.Monad.Reader
 import Data.Maybe (listToMaybe)
 
 -- | Monadic version of 'when'.
@@ -24,4 +25,12 @@ ifM condM th el = do
 
 findM :: Monad m => (a -> m Bool) -> [a] -> m (Maybe a)
 findM p xs = liftM listToMaybe (filterM p xs)
+
+-- | Convenient version of 'execStateT' with the arguments flipped.
+execStateTFrom :: Monad m => s -> StateT s m a -> m s
+execStateTFrom = flip execStateT
+
+-- | Convenient version of 'runReader' with the arguments flipped.
+runReaderFrom :: r -> Reader r a -> a
+runReaderFrom = flip runReader
 

@@ -18,6 +18,7 @@ import Control.Applicative
 
 import MIL.AST
 import MIL.TypeChecker.TypeCheckM
+import MIL.TypeChecker.TypeEnv
 import MIL.TypeChecker.TcError
 import MIL.TypeChecker.Helpers
 import MIL.BuiltIn
