@@ -178,15 +178,20 @@ data SrcType
 -- Note: we don't have data constructors for built-in types. They all are
 -- handled uniformly with user-defined data types.
 --
--- TODO: monads
-data Type = -- | May refer to both data types and type aliases.
-            TyTypeCon TypeName
-          | TyVar TypeVar
-          | TyArrow Type Type
-          | TyForAll TypeVar Type
-          | TyApp Type Type
-          | TyTuple [Type]
-          | TyMonad TypeM
+-- Monads are represented as follows:
+--
+-- * separately standing monad is the 'TyMonad'
+--
+-- * applied monadic type is 'TyApp' where the first component is 'TyMonad'
+data Type
+  -- | May refer to both data types and type aliases.
+  = TyTypeCon TypeName
+  | TyVar TypeVar
+  | TyArrow Type Type
+  | TyForAll TypeVar Type
+  | TyApp Type Type
+  | TyTuple [Type]
+  | TyMonad TypeM
   deriving (Show, Eq)
 
 -- | Applies a monad type given as a first argument to the "return type"
@@ -205,11 +210,15 @@ applyMonadType :: TypeM -> Type -> Type
 applyMonadType tm t = TyApp (TyMonad tm) t
 
 -- | Monadic type. It is either a single monad or a monad on top of another
--- 'TypeM'. This represents a monad transformers stack, basically. Monad can
--- also be referred to using a type alias.
-data TypeM = MTyMonad MilMonad
-           | MTyMonadCons MilMonad TypeM
-           | MTyAlias TypeName
+-- 'TypeM'. This represents a monad transformers stack, basically.
+data TypeM = MTyMonad TypeMMonad
+           | MTyMonadCons TypeMMonad TypeM
+  deriving (Show, Eq)
+
+-- | Monad can be a built-in MIL monad or refered to with a type alias.
+data TypeMMonad
+  = TypeMMilMonad MilMonad
+  | TypeMMonadAlias TypeName
   deriving (Show, Eq)
 
 -- | "Type of the type".
@@ -306,9 +315,8 @@ getTypePrec (TyApp     {}) = 4
 getTypePrec (TyTuple   {}) = 5
 -- Dirty hacking for nice pretty printing:
 -- Atomic monad doesn't get parentheses, but cons does.
-getTypePrec (TyMonad (MTyMonad {})) = 4
+getTypePrec (TyMonad (MTyMonad {})) = 5
 getTypePrec (TyMonad (MTyMonadCons {})) = 3
-getTypePrec (TyMonad (MTyAlias {})) = 5
 
 -- | Returns whether the first type operator has a lower precedence than the
 -- second one. Convenient to use in infix form.
