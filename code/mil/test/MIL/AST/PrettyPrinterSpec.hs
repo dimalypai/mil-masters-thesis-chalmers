@@ -122,10 +122,10 @@ spec =
                         (TyApp
                            (TyMonad
                               (MTyMonadCons
-                                 State
+                                 (TypeMMilMonad State)
                                  (MTyMonadCons
-                                    (Error (TyTypeCon (TypeName "String")))
-                                    (MTyMonad Id))))
+                                    (TypeMMilMonad $ Error (TyTypeCon (TypeName "String")))
+                                    (MTyMonad (TypeMMilMonad Id)))))
                            (mkTypeVar "A"))
                         (LitE UnitLit)
                     , FunDef
@@ -159,7 +159,7 @@ spec =
                         (LetE
                            (VarBinder (Var "x", TyTuple [mkSimpleType "Int", mkSimpleType "Float"]))
                            (ReturnE
-                              (MTyMonad IO)
+                              (MTyMonad $ TypeMMilMonad IO)
                               (TupleE [LitE $ IntLit 1, LitE $ FloatLit 0.01]))
                            (VarE $ VarBinder (Var "x", undefined)))
                     , FunDef
@@ -177,9 +177,9 @@ spec =
                            , CaseAlt (DefaultP, LitE UnitLit)])])
       in testCase baseName ast
 
--- Infrastructure
+-- * Infrastructure
 
-testCase :: Pretty ast => String -> ast -> IO ()
+testCase :: String -> TyProgram -> IO ()
 testCase baseName ast = do
   result <- readFile (testDir </> mkFileName baseName)
   prPrint ast `shouldBe` result
