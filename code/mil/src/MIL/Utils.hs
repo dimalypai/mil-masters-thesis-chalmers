@@ -26,9 +26,9 @@ ifM condM th el = do
 findM :: Monad m => (a -> m Bool) -> [a] -> m (Maybe a)
 findM p xs = liftM listToMaybe (filterM p xs)
 
--- | Convenient version of 'execStateT' with the arguments flipped.
-execStateTFrom :: Monad m => s -> StateT s m a -> m s
-execStateTFrom = flip execStateT
+-- | Convenient version of 'runStateT' with the arguments flipped.
+runStateTFrom :: Monad m => s -> StateT s m a -> m (a, s)
+runStateTFrom = flip runStateT
 
 -- | Convenient version of 'runReader' with the arguments flipped.
 runReaderFrom :: r -> Reader r a -> a

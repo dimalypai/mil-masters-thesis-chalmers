@@ -51,12 +51,12 @@ newtype TypeCheckM a = TC { runTC :: StateT TypeEnv (ErrorT TcError (Reader Loca
   deriving (Monad, MonadState TypeEnv, MonadError TcError, MonadReader LocalTypeEnv, Functor, Applicative)
 
 -- | Main entry point to the type checking monad.
--- Get a type/lint checking computation and a type environment to begin with.
-runTypeCheckM :: TypeCheckM a -> TypeEnv -> Either TcError TypeEnv
+-- Gets a type/lint checking computation and a type environment to begin with.
+runTypeCheckM :: TypeCheckM a -> TypeEnv -> Either TcError (a, TypeEnv)
 runTypeCheckM tcm typeEnv =
   runReaderFrom emptyLocalTypeEnv $
   runErrorT $
-  execStateTFrom typeEnv $
+  runStateTFrom typeEnv $
   runTC tcm
 
 -- * Data type environment
