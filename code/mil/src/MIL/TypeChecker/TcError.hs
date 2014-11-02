@@ -24,6 +24,7 @@ data TcError =
   | TypeVarShadowsTypeVar TypeVar
   | TypeVarApp TypeVar
   | IllFormedType Type
+  | IllFormedSrcType SrcType
   | FunBodyIncorrectType FunName Type Type
   | VarNotBound Var
   | VarIncorrectType Var Type Type
@@ -41,6 +42,7 @@ data TcError =
   | PatternIncorrectType Type Type
   | ConPatternIncorrectNumberOfFields Int Int
   | OtherError String  -- ^ Contains error message.
+  deriving (Show, Eq)
 
 instance Error TcError where
   strMsg = OtherError
@@ -85,6 +87,9 @@ instance Pretty TcError where
 
   prPrn (IllFormedType t) =
     tcErrorHeader <+> text "Type" <+> quotes (prPrn t) <+> text "is ill-formed"
+
+  prPrn (IllFormedSrcType st) =
+    tcErrorHeader <+> text "Type" <+> quotes (prPrn st) <+> text "is ill-formed"
 
   prPrn (FunBodyIncorrectType funName funType bodyType) =
     tcErrorHeader <+> text "Function body of the function" <+> quotes (prPrn funName) <+>
