@@ -59,6 +59,7 @@ import MIL.BuiltIn
 
 -- | Type environment.
 newtype TypeEnv = TypeEnv { unTypeEnv :: (DataTypeEnv, DataConTypeEnv, AliasTypeEnv, FunTypeEnv) }
+  deriving (Show, Eq)
 
 -- | Smart constructor for 'TypeEnv'.
 mkTypeEnv :: DataTypeEnv -> DataConTypeEnv -> AliasTypeEnv -> FunTypeEnv -> TypeEnv
@@ -80,6 +81,7 @@ data DataTypeInfo = DataTypeInfo
   { dtiKind        :: Kind
   , dtiCons        :: [ConName]
   }
+  deriving (Show, Eq)
 
 getDataTypeEnv :: TypeEnv -> DataTypeEnv
 getDataTypeEnv typeEnv =
@@ -119,6 +121,7 @@ data DataConTypeInfo = DataConTypeInfo
   { dcontiType     :: Type      -- ^ Function type of the data constructor.
   , dcontiTypeName :: TypeName  -- ^ Type name of the data type constructor is defined in.
   }
+  deriving (Show, Eq)
 
 getDataConTypeEnv :: TypeEnv -> DataConTypeEnv
 getDataConTypeEnv typeEnv =
