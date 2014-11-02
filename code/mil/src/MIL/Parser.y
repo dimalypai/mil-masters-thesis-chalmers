@@ -148,7 +148,7 @@ srctype
   | appsrctype '->' srctype { SrcTyArrow $1 $3 }
   | forall typevar '.' srctype { SrcTyForAll $2 $4 }
   | '{' seplist1(srctype, ',') '}' { SrcTyTuple $2 }
-  | upperId ':::' srctype { SrcTyMonadCons (TypeName $1) $3 }
+  | appsrctype ':::' appsrctype { SrcTyMonadCons $1 $3 }
 
 -- This production is introduced in order to avoid shift/reduce conflicts
 appsrctype :: { SrcType }

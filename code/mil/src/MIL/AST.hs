@@ -171,7 +171,7 @@ data SrcType
   | SrcTyForAll TypeVar SrcType
   | SrcTyApp SrcType SrcType
   | SrcTyTuple [SrcType]
-  | SrcTyMonadCons TypeName SrcType
+  | SrcTyMonadCons SrcType SrcType
 
 -- | Types representation.
 --
