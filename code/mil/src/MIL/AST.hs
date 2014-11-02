@@ -172,6 +172,7 @@ data SrcType
   | SrcTyApp SrcType SrcType
   | SrcTyTuple [SrcType]
   | SrcTyMonadCons SrcType SrcType
+  deriving (Show, Eq)
 
 -- | Types representation.
 --

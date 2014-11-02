@@ -97,6 +97,20 @@ instance Pretty t => Pretty (Pattern t) where
   prPrn (TupleP varBinders) = braces (hsep $ punctuate comma $ map prPrn varBinders)
   prPrn DefaultP = text "_"
 
+instance Pretty SrcType where
+  prPrn (SrcTyTypeCon typeName) = prPrn typeName
+  prPrn st@(SrcTyArrow st1 st2) =
+    prPrnParens (st1 `typeHasLowerPrec` st) st1 <+>
+    text "->" <+>
+    prPrnParens (st2 `typeHasLowerPrecAssoc` st) st2
+  prPrn (SrcTyForAll typeVar st) =
+    text "forall" <+> prPrn typeVar <+> text "." <+> prPrn st
+  prPrn st@(SrcTyApp st1 st2) =
+    prPrnParens (st1 `typeHasLowerPrecAssoc` st) st1 <+>
+    prPrnParens (st2 `typeHasLowerPrec` st) st2
+  prPrn (SrcTyTuple elemSrcTypes) = braces (hsep $ punctuate comma $ map prPrn elemSrcTypes)
+  prPrn (SrcTyMonadCons st1 st2) = prPrn st1 <+> text ":::" <+> prPrn st2  -- TODO: associativity?
+
 -- See Note [Precedences and associativity]
 instance Pretty Type where
   prPrn (TyTypeCon typeName) = prPrn typeName
