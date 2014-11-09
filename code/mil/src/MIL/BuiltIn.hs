@@ -38,10 +38,10 @@ charType :: Type
 charType = mkSimpleType "Char"
 
 ioType :: Type -> Type
-ioType t = TyApp (TyMonad $ MTyMonad (TypeMMilMonad IO)) t
+ioType t = TyApp (TyMonad $ MTyMonad IO) t
 
 stateType :: Type -> Type
-stateType t = TyApp (TyMonad $ MTyMonad (TypeMMilMonad State)) t
+stateType t = TyApp (TyMonad $ MTyMonad State) t
 
 refType :: Type -> Type
 refType t = TyApp (TyTypeCon $ TypeName "Ref") t

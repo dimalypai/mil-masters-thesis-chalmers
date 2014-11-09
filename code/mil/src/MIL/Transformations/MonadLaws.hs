@@ -4,8 +4,8 @@ module MIL.Transformations.MonadLaws where
 import MIL.AST
 
 leftIdentity :: TyProgram -> TyProgram
-leftIdentity (Program (typeDefs, aliasDefs, funDefs)) =
-  Program (typeDefs, aliasDefs, map leftIdentityFun funDefs)
+leftIdentity (Program (typeDefs, funDefs)) =
+  Program (typeDefs, map leftIdentityFun funDefs)
 
 leftIdentityFun :: TyFunDef -> TyFunDef
 leftIdentityFun (FunDef funName funType funBody) =
@@ -29,8 +29,8 @@ leftIdentityExpr expr =
     _ -> expr
 
 rightIdentity :: TyProgram -> TyProgram
-rightIdentity (Program (typeDefs, aliasDefs, funDefs)) =
-  Program (typeDefs, aliasDefs, map rightIdentityFun funDefs)
+rightIdentity (Program (typeDefs, funDefs)) =
+  Program (typeDefs, map rightIdentityFun funDefs)
 
 rightIdentityFun :: TyFunDef -> TyFunDef
 rightIdentityFun (FunDef funName funType funBody) =
@@ -52,8 +52,8 @@ rightIdentityExpr expr =
     _ -> expr
 
 associativity :: TyProgram -> TyProgram
-associativity (Program (typeDefs, aliasDefs, funDefs)) =
-  Program (typeDefs, aliasDefs, map associativityFun funDefs)
+associativity (Program (typeDefs, funDefs)) =
+  Program (typeDefs, map associativityFun funDefs)
 
 associativityFun :: TyFunDef -> TyFunDef
 associativityFun (FunDef funName funType funBody) =

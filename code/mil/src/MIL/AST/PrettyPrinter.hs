@@ -18,9 +18,8 @@ import MIL.AST
 import MIL.PrettyPrinter
 
 instance (IsType t, Pretty v, Pretty mt, Pretty t) => Pretty (Program v ct mt t) where
-  prPrn (Program (typeDefs, aliasDefs, funDefs)) =
+  prPrn (Program (typeDefs, funDefs)) =
     vsepBig (map prPrn typeDefs) $+$
-    vsepBig (map prPrn aliasDefs) $+$
     vsepBig (map prPrn funDefs)
 
 instance (IsType t, Pretty t) => Pretty (TypeDef t) where
@@ -37,10 +36,6 @@ instance (IsType t, Pretty t) => Pretty (TypeDef t) where
 instance (IsType t, Pretty t) => Pretty (ConDef t) where
   prPrn (ConDef conName conFields) =
     prPrn conName <+> hsep (map (\t -> prPrnParens (not $ isAtomicType t) t) conFields)
-
-instance Pretty t => Pretty (AliasDef t) where
-  prPrn (AliasDef typeName t) =
-    text "alias" <+> prPrn typeName <+> equals <+> prPrn t <> semi
 
 instance (Pretty v, Pretty mt, Pretty t) => Pretty (FunDef v ct mt t) where
   prPrn (FunDef funName funType expr) =
@@ -130,10 +125,6 @@ instance Pretty Type where
 instance Pretty TypeM where
   prPrn (MTyMonad m) = prPrn m
   prPrn (MTyMonadCons m tm) = prPrn m <+> text ":::" <+> prPrn tm
-
-instance Pretty TypeMMonad where
-  prPrn (TypeMMilMonad m) = prPrn m
-  prPrn (TypeMMonadAlias typeName) = prPrn typeName
 
 instance Pretty Kind where
   prPrn StarK = text "*"

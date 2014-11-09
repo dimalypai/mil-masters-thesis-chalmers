@@ -19,9 +19,9 @@ spec =
       [KW_Type, KW_Case]
 
     it "recognises all keywords correctly" $
-      lexer "alias case end forall let lift in of rec return type unit"
+      lexer "case end forall let lift in of rec return type unit"
         `shouldBe`
-      [ KW_Alias, KW_Case, KW_End, KW_Forall, KW_Let, KW_Lift
+      [ KW_Case, KW_End, KW_Forall, KW_Let, KW_Lift
       , KW_In, KW_Of, KW_Rec, KW_Return, KW_Type, KW_Unit
       ]
 

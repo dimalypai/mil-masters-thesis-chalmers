@@ -27,22 +27,20 @@ module MIL.AST where
 --
 -- * list of type definitions
 --
--- * list of type alias definitions
---
 -- * list of function definitions
 --
 -- Note: they must be in the same order on the source level.
-newtype Program v ct mt t = Program ([TypeDef t], [AliasDef t], [FunDef v ct mt t])
+newtype Program v ct mt t = Program ([TypeDef t], [FunDef v ct mt t])
   deriving Show
 
 type SrcProgram = Program Var () SrcType SrcType
 type TyProgram  = Program TyVarBinder Type TypeM Type
 
 getMilTypeDefs :: Program v ct mt t -> [TypeDef t]
-getMilTypeDefs (Program (typeDefs, _, _)) = typeDefs
+getMilTypeDefs (Program (typeDefs, _)) = typeDefs
 
 getMilFunDefs :: Program v ct mt t -> [FunDef v ct mt t]
-getMilFunDefs (Program (_, _, funDefs)) = funDefs
+getMilFunDefs (Program (_, funDefs)) = funDefs
 
 -- | Type definition:
 --
@@ -67,13 +65,6 @@ data ConDef t = ConDef ConName [t]
 
 type SrcConDef = ConDef SrcType
 type TyConDef  = ConDef Type
-
--- | Type alias definition. Gives a name to a type.
-data AliasDef t = AliasDef TypeName t
-  deriving Show
-
-type SrcAliasDef = AliasDef SrcType
-type TyAliasDef  = AliasDef Type
 
 -- | Function definition:
 --
@@ -162,8 +153,8 @@ type SrcPattern = Pattern SrcType
 type TyPattern  = Pattern Type
 
 -- | Source representation of types. Very general.
--- 'SrcTyTypeCon' can represent type constructors, type variables, aliases, MIL
--- monads. 'SrcTyMonadCons' allows much more types to be represented, which
+-- 'SrcTyTypeCon' can represent type constructors, type variables, MIL monads.
+-- 'SrcTyMonadCons' allows much more types to be represented, which
 -- then will be rejected by the TypeChecker.
 data SrcType
   = SrcTyTypeCon TypeName
@@ -185,7 +176,6 @@ data SrcType
 --
 -- * applied monadic type is 'TyApp' where the first component is 'TyMonad'
 data Type
-  -- | May refer to both data types and type aliases.
   = TyTypeCon TypeName
   | TyVar TypeVar
   | TyArrow Type Type
@@ -212,14 +202,9 @@ applyMonadType tm t = TyApp (TyMonad tm) t
 
 -- | Monadic type. It is either a single monad or a monad on top of another
 -- 'TypeM'. This represents a monad transformers stack, basically.
-data TypeM = MTyMonad TypeMMonad
-           | MTyMonadCons TypeMMonad TypeM
-  deriving (Show, Eq)
-
--- | Monad can be a built-in MIL monad or refered to with a type alias.
-data TypeMMonad
-  = TypeMMilMonad MilMonad
-  | TypeMMonadAlias TypeName
+data TypeM = MTyMonad MilMonad
+           -- TODO: | MTyMonadCons TypeM TypeM
+           | MTyMonadCons MilMonad TypeM
   deriving (Show, Eq)
 
 -- | "Type of the type".

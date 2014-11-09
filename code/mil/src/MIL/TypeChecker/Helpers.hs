@@ -134,8 +134,8 @@ checkTypeMWithTypeVars _ (MTyAlias typeName) =
 
 -- | For monads with type parameters: perform checking of those types (they
 -- must be of kind *). TODO: complete.
-checkTypeMMonadWithTypeVars :: Set.Set TypeVar -> TypeMMonad -> TypeCheckM ()
-checkTypeMMonadWithTypeVars typeVars (TypeMMilMonad (Error t)) = checkTypeWithTypeVarsOfKind typeVars StarK t
+checkTypeMMonadWithTypeVars :: Set.Set TypeVar -> MilMonad -> TypeCheckM ()
+checkTypeMMonadWithTypeVars typeVars (Error t) = checkTypeWithTypeVarsOfKind typeVars StarK t
 --checkTypeMMonadWithTypeVars _ _ = return ()
 
 -- * Type construction
@@ -242,8 +242,8 @@ instance AlphaEq TypeM where
 
 -- | For monads that have type arguments check that these arguments are alpha
 -- equivalent. For the others it is just an equality.
-instance AlphaEq TypeMMonad where
-  alphaEq (TypeMMilMonad (Error t1)) (TypeMMilMonad (Error t2)) = t1 `alphaEq` t2
+instance AlphaEq MilMonad where
+  alphaEq (Error t1) (Error t2) = t1 `alphaEq` t2
   alphaEq m1 m2 = return (m1 == m2)
 
 -- * Type substitution.
@@ -292,10 +292,8 @@ instance SubstType TypeM where
 
 -- | Perform substitution on type parameters if there are any, otherwise, just
 -- return a monad.
--- Type aliases are defined in a completely separate scope, so we don't
--- expand them to perform substitution and just keep them unchanged.
-instance SubstType TypeMMonad where
-  tvArg `substTypeIn` (TypeMMilMonad (Error t)) = TypeMMilMonad $ Error (tvArg `substTypeIn` t)
+instance SubstType MilMonad where
+  tvArg `substTypeIn` (Error t) = Error (tvArg `substTypeIn` t)
   _ `substTypeIn` m = m
 
 -- * 'TypeM' helpers

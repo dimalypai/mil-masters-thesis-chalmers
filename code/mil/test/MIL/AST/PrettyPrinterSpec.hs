@@ -21,8 +21,8 @@ testDir = "test" </> "prettyprintertests"
 spec :: Spec
 spec =
   describe "prPrint" $ do
-    it "pretty prints data type and alias definitions" $
-      let baseName = "DataTypesAndAliases"
+    it "pretty prints data type definitions" $
+      let baseName = "DataTypesAndAliases"  -- TODO: rename file
           ast = Program
                   ( [ TypeDef
                         (TypeName "T")
@@ -43,11 +43,6 @@ spec =
                             , TyApp
                                 (TyTypeCon (TypeName "Tree"))
                                 (mkTypeVar "A")]]]
-                  , [AliasDef
-                       (TypeName "A")
-                       (TyApp
-                          (TyTypeCon (TypeName "Tree"))
-                          (mkSimpleType "Int"))]
                   , [])
       in testCase baseName ast
 
@@ -55,7 +50,6 @@ spec =
       let baseName = "Functions"
           ast = Program
                   ( []
-                  , []
                   , [ FunDef
                         (FunName "fun")
                         (mkSimpleType "Unit")
@@ -73,7 +67,6 @@ spec =
                        (TypeName "T")
                        []
                        [ConDef (ConName "MkT") []]]
-                  , []
                   , [ FunDef
                         (FunName "fun")
                         (mkSimpleType "Unit")
@@ -88,7 +81,6 @@ spec =
       let baseName = "Types"
           ast = Program
                   ( []
-                  , []
                   , [ FunDef
                         (FunName "fun")
                         (TyForAll (TypeVar "A")
@@ -122,10 +114,10 @@ spec =
                         (TyApp
                            (TyMonad
                               (MTyMonadCons
-                                 (TypeMMilMonad State)
+                                 State
                                  (MTyMonadCons
-                                    (TypeMMilMonad $ Error (TyTypeCon (TypeName "String")))
-                                    (MTyMonad (TypeMMilMonad Id)))))
+                                    (Error (TyTypeCon (TypeName "String")))
+                                    (MTyMonad Id))))
                            (mkTypeVar "A"))
                         (LitE UnitLit)
                     , FunDef
@@ -138,7 +130,6 @@ spec =
       let baseName = "Expressions"
           ast = Program
                   ( []
-                  , []
                   , [ FunDef
                         (FunName "fun")
                         (mkSimpleType "Unit")
@@ -159,7 +150,7 @@ spec =
                         (LetE
                            (VarBinder (Var "x", TyTuple [mkSimpleType "Int", mkSimpleType "Float"]))
                            (ReturnE
-                              (MTyMonad $ TypeMMilMonad IO)
+                              (MTyMonad IO)
                               (TupleE [LitE $ IntLit 1, LitE $ FloatLit 0.01]))
                            (VarE $ VarBinder (Var "x", undefined)))
                     , FunDef

@@ -20,7 +20,6 @@ import MIL.AST as AST
 
 %token
   -- Keywords
-  alias  { KW_Alias  }
   case   { KW_Case   }
   end    { KW_End    }
   forall { KW_Forall }
@@ -72,8 +71,7 @@ import MIL.AST as AST
 program :: { SrcProgram }
 program
   : list(typedef)
-    list(aliasdef)
-    list(fundef) { Program ($1, $2, $3) }
+    list(fundef) { Program ($1, $2) }
 
 typedef :: { SrcTypeDef }
 typedef
@@ -84,11 +82,6 @@ condef :: { SrcConDef }
 condef
   : upperId list(atomsrctype)
       { ConDef (ConName $1) $2 }
-
-aliasdef :: { SrcAliasDef }
-aliasdef
-  : alias upperId '=' srctype ';'
-      { AliasDef (TypeName $2) $4 }
 
 fundef :: { SrcFunDef }
 fundef

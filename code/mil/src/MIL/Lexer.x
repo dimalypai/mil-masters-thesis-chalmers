@@ -35,7 +35,6 @@ tokens :-
   @comment ;
 
   -- Keywords
-  alias  { const KW_Alias  }
   case   { const KW_Case   }
   end    { const KW_End    }
   forall { const KW_Forall }
@@ -88,8 +87,7 @@ tokens :-
 -- | Tokens.
 data Token =
   -- Keywords
-    KW_Alias
-  | KW_Case
+    KW_Case
   | KW_End
   | KW_Forall
   | KW_Let
@@ -136,7 +134,6 @@ data Token =
 
 instance Show Token where
   -- Keywords
-  show KW_Alias  = "alias"
   show KW_Case   = "case"
   show KW_End    = "end"
   show KW_Forall = "forall"
