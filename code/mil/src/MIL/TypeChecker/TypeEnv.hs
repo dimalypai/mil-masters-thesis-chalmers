@@ -22,12 +22,6 @@ module MIL.TypeChecker.TypeEnv
   , isDataConDefined
   , addDataCon
 
-  , AliasTypeEnv
-  , getAliasTypeEnv
-  , isAliasDefined
-  , addAlias
-  , getAliasType
-
   , FunTypeEnv
   , getFunTypeEnv
   , isFunctionDefined
@@ -58,19 +52,18 @@ import MIL.AST
 import MIL.BuiltIn
 
 -- | Type environment.
-newtype TypeEnv = TypeEnv { unTypeEnv :: (DataTypeEnv, DataConTypeEnv, AliasTypeEnv, FunTypeEnv) }
+newtype TypeEnv = TypeEnv { unTypeEnv :: (DataTypeEnv, DataConTypeEnv, FunTypeEnv) }
   deriving (Show, Eq)
 
 -- | Smart constructor for 'TypeEnv'.
-mkTypeEnv :: DataTypeEnv -> DataConTypeEnv -> AliasTypeEnv -> FunTypeEnv -> TypeEnv
-mkTypeEnv dataTypeEnv dataConTypeEnv aliasTypeEnv funTypeEnv =
-  TypeEnv (dataTypeEnv, dataConTypeEnv, aliasTypeEnv, funTypeEnv)
+mkTypeEnv :: DataTypeEnv -> DataConTypeEnv -> FunTypeEnv -> TypeEnv
+mkTypeEnv dataTypeEnv dataConTypeEnv funTypeEnv =
+  TypeEnv (dataTypeEnv, dataConTypeEnv, funTypeEnv)
 
 -- | Initial type environment.
 initTypeEnv :: TypeEnv
 initTypeEnv = mkTypeEnv (Map.fromList $ map (second builtInDataTypeInfo) builtInDataTypes)
                         (Map.fromList $ map (second $ uncurry DataConTypeInfo) builtInDataCons)
-                        Map.empty
                         (Map.fromList builtInFunctions)
 
 -- * Data type environment
@@ -85,7 +78,7 @@ data DataTypeInfo = DataTypeInfo
 
 getDataTypeEnv :: TypeEnv -> DataTypeEnv
 getDataTypeEnv typeEnv =
-  let (dataTypeEnv, _, _, _) = unTypeEnv typeEnv
+  let (dataTypeEnv, _, _) = unTypeEnv typeEnv
   in dataTypeEnv
 
 -- | Returns all information about the data type from the environment.
@@ -125,7 +118,7 @@ data DataConTypeInfo = DataConTypeInfo
 
 getDataConTypeEnv :: TypeEnv -> DataConTypeEnv
 getDataConTypeEnv typeEnv =
-  let (_, dataConTypeEnv, _, _) = unTypeEnv typeEnv
+  let (_, dataConTypeEnv, _) = unTypeEnv typeEnv
   in dataConTypeEnv
 
 -- | Returns all information about the data constructor from the environment.
@@ -144,38 +137,13 @@ addDataCon :: ConName -> Type -> TypeName -> DataConTypeEnv -> DataConTypeEnv
 addDataCon conName conType typeName =
   Map.insert conName (DataConTypeInfo conType typeName)
 
--- * Type alias type environment
-
--- | Maps type alias names to the types they denote.
-type AliasTypeEnv = Map.Map TypeName Type
-
-getAliasTypeEnv :: TypeEnv -> AliasTypeEnv
-getAliasTypeEnv typeEnv =
-  let (_, _, aliasTypeEnv, _) = unTypeEnv typeEnv
-  in aliasTypeEnv
-
-isAliasDefined :: TypeName -> AliasTypeEnv -> Bool
-isAliasDefined = Map.member
-
--- | Doesn't check if the type alias is already in the environment.
--- Will overwrite it in this case.
-addAlias :: TypeName -> Type -> AliasTypeEnv -> AliasTypeEnv
-addAlias = Map.insert
-
--- | Returns the aliased type from the environment.
---
--- Note: Unsafe. Should be used only after check that alias is defined.
-getAliasType :: TypeName -> AliasTypeEnv -> Type
-getAliasType typeName aliasTypeEnv =
-  fromJust $ Map.lookup typeName aliasTypeEnv  -- fromJust may fail
-
 -- * Function type environment
 
 type FunTypeEnv = Map.Map FunName Type
 
 getFunTypeEnv :: TypeEnv -> FunTypeEnv
 getFunTypeEnv typeEnv =
-  let (_, _, _, funTypeEnv) = unTypeEnv typeEnv
+  let (_, _, funTypeEnv) = unTypeEnv typeEnv
   in funTypeEnv
 
 isFunctionDefined :: FunName -> FunTypeEnv -> Bool

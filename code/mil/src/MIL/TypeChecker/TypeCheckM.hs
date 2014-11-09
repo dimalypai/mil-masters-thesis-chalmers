@@ -17,12 +17,6 @@ module MIL.TypeChecker.TypeCheckM
   , getDataConTypeM
   , getDataConTypeNameM
 
-  , isAliasDefinedM
-  , addAliasM
-  , getAliasTypeM
-
-  , isTypeOrAliasDefinedM
-
   , isFunctionDefinedM
   , addFunctionM
   , getFunTypeM
@@ -66,9 +60,9 @@ getDataTypeEnvM = gets getDataTypeEnv
 
 modifyDataTypeEnv :: (DataTypeEnv -> DataTypeEnv) -> TypeCheckM ()
 modifyDataTypeEnv f = do
-  (dataTypeEnv, dataConTypeEnv, aliasTypeEnv, funTypeEnv) <-
-    (,,,) <$> getDataTypeEnvM <*> getDataConTypeEnvM <*> getAliasTypeEnvM <*> getFunTypeEnvM
-  put $ mkTypeEnv (f dataTypeEnv) dataConTypeEnv aliasTypeEnv funTypeEnv
+  (dataTypeEnv, dataConTypeEnv, funTypeEnv) <-
+    (,,) <$> getDataTypeEnvM <*> getDataConTypeEnvM <*> getFunTypeEnvM
+  put $ mkTypeEnv (f dataTypeEnv) dataConTypeEnv funTypeEnv
 
 isTypeDefinedM :: TypeName -> TypeCheckM Bool
 isTypeDefinedM typeName = gets (isTypeDefined typeName . getDataTypeEnv)
@@ -93,9 +87,9 @@ getDataConTypeEnvM = gets getDataConTypeEnv
 
 modifyDataConTypeEnv :: (DataConTypeEnv -> DataConTypeEnv) -> TypeCheckM ()
 modifyDataConTypeEnv f = do
-  (dataTypeEnv, dataConTypeEnv, aliasTypeEnv, funTypeEnv) <-
-    (,,,) <$> getDataTypeEnvM <*> getDataConTypeEnvM <*> getAliasTypeEnvM <*> getFunTypeEnvM
-  put $ mkTypeEnv dataTypeEnv (f dataConTypeEnv) aliasTypeEnv funTypeEnv
+  (dataTypeEnv, dataConTypeEnv, funTypeEnv) <-
+    (,,) <$> getDataTypeEnvM <*> getDataConTypeEnvM <*> getFunTypeEnvM
+  put $ mkTypeEnv dataTypeEnv (f dataConTypeEnv) funTypeEnv
 
 isDataConDefinedM :: ConName -> TypeCheckM Bool
 isDataConDefinedM conName = gets (isDataConDefined conName . getDataConTypeEnv)
@@ -118,37 +112,6 @@ getDataConTypeM conName = gets (dcontiType . getDataConTypeInfo conName . getDat
 getDataConTypeNameM :: ConName -> TypeCheckM TypeName
 getDataConTypeNameM conName = gets (dcontiTypeName . getDataConTypeInfo conName . getDataConTypeEnv)
 
--- * Type alias type environment
-
-getAliasTypeEnvM :: TypeCheckM AliasTypeEnv
-getAliasTypeEnvM = gets getAliasTypeEnv
-
-modifyAliasTypeEnv :: (AliasTypeEnv -> AliasTypeEnv) -> TypeCheckM ()
-modifyAliasTypeEnv f = do
-  (dataTypeEnv, dataConTypeEnv, aliasTypeEnv, funTypeEnv) <-
-    (,,,) <$> getDataTypeEnvM <*> getDataConTypeEnvM <*> getAliasTypeEnvM <*> getFunTypeEnvM
-  put $ mkTypeEnv dataTypeEnv dataConTypeEnv (f aliasTypeEnv) funTypeEnv
-
-isAliasDefinedM :: TypeName -> TypeCheckM Bool
-isAliasDefinedM typeName = gets (isAliasDefined typeName . getAliasTypeEnv)
-
--- | Doesn't check if the type alias is already in the environment.
--- Will overwrite it in this case.
-addAliasM :: TypeName -> Type -> TypeCheckM ()
-addAliasM typeName t = modifyAliasTypeEnv $ addAlias typeName t
-
--- | Returns the aliased type from the environment.
---
--- Note: Unsafe. Should be used only after check that alias is defined.
-getAliasTypeM :: TypeName -> TypeCheckM Type
-getAliasTypeM typeName = gets (getAliasType typeName . getAliasTypeEnv)
-
-isTypeOrAliasDefinedM :: TypeName -> TypeCheckM Bool
-isTypeOrAliasDefinedM typeName = do
-  typeDefined <- isTypeDefinedM typeName
-  aliasDefined <- isAliasDefinedM typeName
-  return (typeDefined || aliasDefined)
-
 -- * Function type environment
 
 getFunTypeEnvM :: TypeCheckM FunTypeEnv
@@ -156,9 +119,9 @@ getFunTypeEnvM = gets getFunTypeEnv
 
 modifyFunTypeEnv :: (FunTypeEnv -> FunTypeEnv) -> TypeCheckM ()
 modifyFunTypeEnv f = do
-  (dataTypeEnv, dataConTypeEnv, aliasTypeEnv, funTypeEnv) <-
-    (,,,) <$> getDataTypeEnvM <*> getDataConTypeEnvM <*> getAliasTypeEnvM <*> getFunTypeEnvM
-  put $ mkTypeEnv dataTypeEnv dataConTypeEnv aliasTypeEnv (f funTypeEnv)
+  (dataTypeEnv, dataConTypeEnv, funTypeEnv) <-
+    (,,) <$> getDataTypeEnvM <*> getDataConTypeEnvM <*> getFunTypeEnvM
+  put $ mkTypeEnv dataTypeEnv dataConTypeEnv (f funTypeEnv)
 
 isFunctionDefinedM :: FunName -> TypeCheckM Bool
 isFunctionDefinedM funName = gets (isFunctionDefined funName . getFunTypeEnv)
