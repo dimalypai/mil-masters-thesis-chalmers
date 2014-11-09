@@ -22,7 +22,7 @@ spec :: Spec
 spec =
   describe "prPrint" $ do
     it "pretty prints data type definitions" $
-      let baseName = "DataTypesAndAliases"  -- TODO: rename file
+      let baseName = "DataTypes"
           ast = Program
                   ( [ TypeDef
                         (TypeName "T")
