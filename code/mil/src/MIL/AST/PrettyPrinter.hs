@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 -- | Module containing instances of 'Pretty' for syntax tree nodes.
 --
@@ -17,7 +18,7 @@ module MIL.AST.PrettyPrinter
 import MIL.AST
 import MIL.PrettyPrinter
 
-instance (IsType t, Pretty v, Pretty mt, Pretty t) => Pretty (Program v ct mt t) where
+instance (IsType t, Pretty mt, Pretty t) => Pretty (Program Var ct mt t) where
   prPrn (Program (typeDefs, funDefs)) =
     vsepBig (map prPrn typeDefs) $+$
     vsepBig (map prPrn funDefs)
@@ -37,13 +38,13 @@ instance (IsType t, Pretty t) => Pretty (ConDef t) where
   prPrn (ConDef conName conFields) =
     prPrn conName <+> hsep (map (\t -> prPrnParens (not $ isAtomicType t) t) conFields)
 
-instance (Pretty v, Pretty mt, Pretty t) => Pretty (FunDef v ct mt t) where
+instance (Pretty mt, Pretty t) => Pretty (FunDef Var ct mt t) where
   prPrn (FunDef funName funType expr) =
     prPrn funName <+> colon <+> prPrn funType <+> equals $+$
     nest indLvl (prPrn expr <> semi)
 
 -- See Note [Precedences and associativity]
-instance (Pretty v, Pretty mt, Pretty t) => Pretty (Expr v ct mt t) where
+instance (Pretty mt, Pretty t) => Pretty (Expr Var ct mt t) where
   prPrn (LitE lit) = prPrn lit
   prPrn (VarE v) = prPrn v
   prPrn (LambdaE varBind e) = text "\\" <> prPrn varBind <+> text "->" <+> prPrn e
@@ -82,7 +83,7 @@ instance Pretty Literal where
   prPrn (FloatLit f)  = double f
   prPrn (CharLit c)   = quotes (char c)
 
-instance (Pretty v, Pretty mt, Pretty t) => Pretty (CaseAlt v ct mt t) where
+instance (Pretty mt, Pretty t) => Pretty (CaseAlt Var ct mt t) where
   prPrn (CaseAlt (pat, e)) = text "|" <+> prPrn pat <+> text "=>" <+> prPrn e
 
 instance Pretty t => Pretty (Pattern t) where

@@ -140,9 +140,9 @@ spec =
                               (AppE
                                  (AppE
                                     (TypeAppE
-                                       (ConNameE (ConName "MkT") undefined)
+                                       (ConNameE (ConName "MkT") (mkSimpleType "T"))
                                        (mkSimpleType "Int"))
-                                    (VarE $ VarBinder (Var "x", undefined)))
+                                    (VarE $ Var "x"))
                                  (LitE $ CharLit 'c'))))
                     , FunDef
                         (FunName "fun2")
@@ -152,7 +152,7 @@ spec =
                            (ReturnE
                               (MTyMonad IO)
                               (TupleE [LitE $ IntLit 1, LitE $ FloatLit 0.01]))
-                           (VarE $ VarBinder (Var "x", undefined)))
+                           (VarE $ Var "x"))
                     , FunDef
                         (FunName "fun3")
                         (mkSimpleType "Unit")
@@ -170,7 +170,7 @@ spec =
 
 -- * Infrastructure
 
-testCase :: String -> TyProgram -> IO ()
+testCase :: String -> Program Var Type MonadType Type -> IO ()
 testCase baseName ast = do
   result <- readFile (testDir </> mkFileName baseName)
   prPrint ast `shouldBe` result
