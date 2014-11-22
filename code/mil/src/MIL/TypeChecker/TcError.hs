@@ -14,7 +14,6 @@ import MIL.PrettyPrinter
 data TcError =
     TypeAlreadyDefined TypeName
   | TypeParamAlreadyDefined TypeVar
-  | TypeOrAliasAlreadyDefined TypeName
   | FunctionAlreadyDefined FunName
   | ConAlreadyDefined ConName
   | TypeNotDefined TypeName
@@ -56,9 +55,6 @@ instance Pretty TcError where
 
   prPrn (TypeParamAlreadyDefined typeVar) =
     tcErrorHeader <+> text "Type parameter" <+> quotes (prPrn typeVar) <+> text "is already defined"
-
-  prPrn (TypeOrAliasAlreadyDefined typeName) =
-    tcErrorHeader <+> text "Type or type alias" <+> quotes (prPrn typeName) <+> text "is already defined"
 
   prPrn (FunctionAlreadyDefined funName) =
     tcErrorHeader <+> text "Function" <+> quotes (prPrn funName) <+> text "is already defined"
