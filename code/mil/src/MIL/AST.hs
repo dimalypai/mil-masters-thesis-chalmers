@@ -299,23 +299,11 @@ exprHasLowerPrec e1 e2 = getExprPrec e1 <= getExprPrec e2
 exprHasLowerPrecAssoc :: Expr v ct mt t -> Expr v ct mt t -> Bool
 exprHasLowerPrecAssoc e1 e2 = getExprPrec e1 < getExprPrec e2
 
-getTypePrec :: Type -> Int
-getTypePrec (TyTypeCon {}) = 5
-getTypePrec (TyVar     {}) = 5
-getTypePrec (TyArrow   {}) = 2
-getTypePrec (TyForAll  {}) = 1
-getTypePrec (TyApp     {}) = 4
-getTypePrec (TyTuple   {}) = 5
--- Dirty hacking for nice pretty printing:
--- Atomic monad doesn't get parentheses, but cons does.
-getTypePrec (TyMonad (MTyMonad {})) = 5
-getTypePrec (TyMonad (MTyMonadCons {})) = 3
-
 -- | Returns whether the first type operator has a lower precedence than the
 -- second one. Convenient to use in infix form.
 --
 -- Note: It is reflexive: t `typeHasLowerPrec` t ==> True
-typeHasLowerPrec :: Type -> Type -> Bool
+typeHasLowerPrec :: IsType t => t -> t -> Bool
 typeHasLowerPrec t1 t2 = getTypePrec t1 <= getTypePrec t2
 
 -- | Returns whether the first type operator has a lower precedence than the
@@ -324,7 +312,7 @@ typeHasLowerPrec t1 t2 = getTypePrec t1 <= getTypePrec t2
 -- arrow, type application. See "MIL.AST.PrettyPrinter".
 --
 -- Note: It is *not* reflexive: t `typeHasLowerPrecAssoc` t ==> False
-typeHasLowerPrecAssoc :: Type -> Type -> Bool
+typeHasLowerPrecAssoc :: IsType t => t -> t -> Bool
 typeHasLowerPrecAssoc t1 t2 = getTypePrec t1 < getTypePrec t2
 
 -- * Smart constructors
@@ -343,11 +331,19 @@ mkKind n = StarK :=>: mkKind (n - 1)
 
 class IsType t where
   isAtomicType :: t -> Bool
+  getTypePrec :: t -> Int
 
 instance IsType SrcType where
   isAtomicType (SrcTyTypeCon {}) = True
   isAtomicType (SrcTyTuple   {}) = True
   isAtomicType                 _ = False
+
+  getTypePrec (SrcTyTypeCon   {}) = 5
+  getTypePrec (SrcTyArrow     {}) = 2
+  getTypePrec (SrcTyForAll    {}) = 1
+  getTypePrec (SrcTyApp       {}) = 4
+  getTypePrec (SrcTyTuple     {}) = 5
+  getTypePrec (SrcTyMonadCons {}) = 3
 
 instance IsType Type where
   -- | Type constructors, type variables and tuple types are atomic types.
@@ -355,4 +351,15 @@ instance IsType Type where
   isAtomicType (TyVar     {}) = True
   isAtomicType (TyTuple   {}) = True
   isAtomicType              _ = False
+
+  getTypePrec (TyTypeCon {}) = 5
+  getTypePrec (TyVar     {}) = 5
+  getTypePrec (TyArrow   {}) = 2
+  getTypePrec (TyForAll  {}) = 1
+  getTypePrec (TyApp     {}) = 4
+  getTypePrec (TyTuple   {}) = 5
+  -- Dirty hacking for nice pretty printing:
+  -- Atomic monad doesn't get parentheses, but cons does.
+  getTypePrec (TyMonad (MTyMonad {})) = 5
+  getTypePrec (TyMonad (MTyMonadCons {})) = 3
 
