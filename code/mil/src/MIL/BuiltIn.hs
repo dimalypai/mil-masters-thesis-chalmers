@@ -1,5 +1,8 @@
+{-# LANGUAGE TupleSections #-}
+
 module MIL.BuiltIn where
 
+import qualified Data.Map as Map
 import Data.Maybe (fromJust)
 
 import MIL.AST
@@ -21,6 +24,31 @@ builtInDataCons =
   [ (ConName "True", (mkSimpleType "Bool", TypeName "Bool"))
   , (ConName "False", (mkSimpleType "Bool", TypeName "Bool"))
   ]
+
+builtInMonads :: Map.Map TypeName Kind
+builtInMonads = Map.fromList
+  [ (TypeName "Id",      StarK :=>: StarK)
+  , (TypeName "State",   StarK :=>: StarK)
+  , (TypeName "Error",   StarK :=>: (StarK :=>: StarK))
+  , (TypeName "NonTerm", StarK :=>: StarK)
+  , (TypeName "IO",      StarK :=>: StarK)
+  ]
+
+isBuiltInMonad :: TypeName -> Bool
+isBuiltInMonad typeName = Map.member typeName builtInMonads
+
+-- | Unsafe. Make sure that there exists such a built-in monad.
+getBuiltInMonadKind :: TypeName -> Kind
+getBuiltInMonadKind typeName = fromJust $ Map.lookup typeName builtInMonads
+
+mkBuiltInMonad :: TypeName -> MilMonad
+mkBuiltInMonad (TypeName typeName) =
+  case typeName of
+    "Id"      -> Id
+    "State"   -> State
+    "Error"   -> Error
+    "NonTerm" -> NonTerm
+    "IO"      -> IO
 
 unitType :: Type
 unitType = mkSimpleType "Unit"

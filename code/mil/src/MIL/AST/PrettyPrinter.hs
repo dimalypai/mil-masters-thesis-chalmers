@@ -123,9 +123,13 @@ instance Pretty Type where
   prPrn (TyTuple elemTypes) = braces (hsep $ punctuate comma $ map prPrn elemTypes)
   prPrn (TyMonad tm) = prPrn tm
 
-instance Pretty TypeM where
+instance Pretty MonadType where
   prPrn (MTyMonad m) = prPrn m
-  prPrn (MTyMonadCons m tm) = prPrn m <+> text ":::" <+> prPrn tm
+  prPrn (MTyMonadCons m mt) = prPrn m <+> text ":::" <+> prPrn mt
+
+instance Pretty SingleMonad where
+  prPrn (SinMonad m) = prPrn m
+  prPrn (SinMonadApp m t) = prPrn m <+> prPrn t  -- TODO
 
 instance Pretty Kind where
   prPrn StarK = text "*"
@@ -150,11 +154,11 @@ instance Pretty FunName where
   prPrn (FunName funNameStr) = text funNameStr
 
 instance Pretty MilMonad where
-  prPrn Id = text "Id"
-  prPrn State = text "State"
-  prPrn (Error et) = text "Error" <+> prPrn et
+  prPrn Id      = text "Id"
+  prPrn State   = text "State"
+  prPrn Error   = text "Error"
   prPrn NonTerm = text "NonTerm"
-  prPrn IO = text "IO"
+  prPrn IO      = text "IO"
 
 -- | Indentation level for code.
 indLvl :: Int

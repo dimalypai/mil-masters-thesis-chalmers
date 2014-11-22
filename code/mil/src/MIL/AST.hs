@@ -34,7 +34,7 @@ newtype Program v ct mt t = Program ([TypeDef t], [FunDef v ct mt t])
   deriving Show
 
 type SrcProgram = Program Var () SrcType SrcType
-type TyProgram  = Program TyVarBinder Type TypeM Type
+type TyProgram  = Program TyVarBinder Type MonadType Type
 
 getMilTypeDefs :: Program v ct mt t -> [TypeDef t]
 getMilTypeDefs (Program (typeDefs, _)) = typeDefs
@@ -79,7 +79,7 @@ data FunDef v ct mt t = FunDef FunName t (Expr v ct mt t)
   deriving Show
 
 type SrcFunDef = FunDef Var () SrcType SrcType
-type TyFunDef  = FunDef TyVarBinder Type TypeM Type
+type TyFunDef  = FunDef TyVarBinder Type MonadType Type
 
 -- | Expression representation.
 --
@@ -120,7 +120,7 @@ data Expr v ct mt t
   deriving (Show, Eq)
 
 type SrcExpr = Expr Var () SrcType SrcType
-type TyExpr  = Expr TyVarBinder Type TypeM Type
+type TyExpr  = Expr TyVarBinder Type MonadType Type
 
 -- | Literal constants.
 data Literal = UnitLit
@@ -133,7 +133,7 @@ newtype CaseAlt v ct mt t = CaseAlt (Pattern t, Expr v ct mt t)
   deriving (Show, Eq)
 
 type SrcCaseAlt = CaseAlt Var () SrcType SrcType
-type TyCaseAlt  = CaseAlt TyVarBinder Type TypeM Type
+type TyCaseAlt  = CaseAlt TyVarBinder Type MonadType Type
 
 -- | Patterns.
 data Pattern t
@@ -182,14 +182,14 @@ data Type
   | TyForAll TypeVar Type
   | TyApp Type Type
   | TyTuple [Type]
-  | TyMonad TypeM
+  | TyMonad MonadType
   deriving (Show, Eq)
 
 -- | Applies a monad type given as a first argument to the "return type"
 -- (right-most type of the type arrow) of the type given as a second argument.
-monadReturnType :: TypeM -> Type -> Type
-monadReturnType tm (TyArrow t1 t2) = TyArrow t1 (monadReturnType tm t2)
-monadReturnType tm t = TyApp (TyMonad tm) t
+monadReturnType :: MonadType -> Type -> Type
+monadReturnType mt (TyArrow t1 t2) = TyArrow t1 (monadReturnType mt t2)
+monadReturnType mt t = TyApp (TyMonad mt) t
 
 -- | For monadic type `m a` returns a result type `a`.
 -- Note: Unsafe. Make sure you pass a monadic type.
@@ -197,14 +197,21 @@ getMonadResultType :: Type -> Type
 getMonadResultType (TyApp (TyMonad {}) t) = t
 getMonadResultType t = error $ "Type '" ++ show t ++ "' is not monadic"
 
-applyMonadType :: TypeM -> Type -> Type
-applyMonadType tm t = TyApp (TyMonad tm) t
+applyMonadType :: MonadType -> Type -> Type
+applyMonadType mt t = TyApp (TyMonad mt) t
 
 -- | Monadic type. It is either a single monad or a monad on top of another
--- 'TypeM'. This represents a monad transformers stack, basically.
-data TypeM = MTyMonad MilMonad
-           -- TODO: | MTyMonadCons TypeM TypeM
-           | MTyMonadCons MilMonad TypeM
+-- 'MonadType'. This represents a monad transformers stack, basically.
+data MonadType
+  = MTyMonad SingleMonad
+  | MTyMonadCons SingleMonad MonadType
+  deriving (Show, Eq)
+
+-- | Single monad can be either just built-in monad or an application to some
+-- type (relevant for parameterised monads, like 'Error').
+data SingleMonad
+  = SinMonad MilMonad
+  | SinMonadApp SingleMonad Type
   deriving (Show, Eq)
 
 -- | "Type of the type".
@@ -256,7 +263,7 @@ funNameToVar (FunName funName) = Var funName
 -- | Built-in monads (effects).
 data MilMonad = Id
               | State
-              | Error Type
+              | Error
               | NonTerm
               | IO
   deriving (Show, Eq)

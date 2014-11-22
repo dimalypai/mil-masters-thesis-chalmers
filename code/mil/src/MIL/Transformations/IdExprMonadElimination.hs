@@ -12,7 +12,7 @@ idExprMonadElimination (Program (typeDefs, funDefs)) =
 idExprMEliminateFunDef :: TyFunDef -> TyFunDef
 idExprMEliminateFunDef funDef@(FunDef funName funType bodyExpr) =
   case funType of
-    TyApp (TyMonad (MTyMonad Id)) funResType ->
+    TyApp (TyMonad (MTyMonad (SinMonad Id))) funResType ->
       case bodyExpr of
         ReturnE _ retExpr -> FunDef funName funResType retExpr
     _ -> funDef
