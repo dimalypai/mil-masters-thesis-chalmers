@@ -114,10 +114,10 @@ spec =
                         (TyApp
                            (TyMonad
                               (MTyMonadCons
-                                 State
+                                 (SinMonad State)
                                  (MTyMonadCons
-                                    (Error (TyTypeCon (TypeName "String")))
-                                    (MTyMonad Id))))
+                                    (SinMonadApp (SinMonad Error) (TyTypeCon $ TypeName "String"))
+                                    (MTyMonad $ SinMonad Id))))
                            (mkTypeVar "A"))
                         (LitE UnitLit)
                     , FunDef
@@ -150,7 +150,7 @@ spec =
                         (LetE
                            (VarBinder (Var "x", TyTuple [mkSimpleType "Int", mkSimpleType "Float"]))
                            (ReturnE
-                              (MTyMonad IO)
+                              (MTyMonad $ SinMonad IO)
                               (TupleE [LitE $ IntLit 1, LitE $ FloatLit 0.01]))
                            (VarE $ Var "x"))
                     , FunDef

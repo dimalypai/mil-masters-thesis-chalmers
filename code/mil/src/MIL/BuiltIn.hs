@@ -65,14 +65,14 @@ floatType = mkSimpleType "Float"
 charType :: Type
 charType = mkSimpleType "Char"
 
-ioType :: Type -> Type
-ioType t = TyApp (TyMonad $ MTyMonad IO) t
-
-stateType :: Type -> Type
-stateType t = TyApp (TyMonad $ MTyMonad State) t
-
 refType :: Type -> Type
 refType t = TyApp (TyTypeCon $ TypeName "Ref") t
+
+ioType :: Type -> Type
+ioType t = TyApp (TyMonad $ MTyMonad $ SinMonad IO) t
+
+stateType :: Type -> Type
+stateType t = TyApp (TyMonad $ MTyMonad $ SinMonad State) t
 
 typeOfLiteral :: Literal -> Type
 typeOfLiteral UnitLit      = unitType

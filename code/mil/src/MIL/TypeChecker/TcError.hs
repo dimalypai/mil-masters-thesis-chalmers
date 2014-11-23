@@ -35,8 +35,8 @@ data TcError =
   | ConIncorrectType ConName Type Type
   | NotMonadicType Type
   | IncorrectExprType Type Type
-  | IncorrectMonad TypeM TypeM
-  | IncorrectLifting TypeM TypeM
+  | IncorrectMonad MonadType MonadType
+  | IncorrectLifting MonadType MonadType
   | CaseAltIncorrectType Type Type
   | PatternIncorrectType Type Type
   | ConPatternIncorrectNumberOfFields Int Int
