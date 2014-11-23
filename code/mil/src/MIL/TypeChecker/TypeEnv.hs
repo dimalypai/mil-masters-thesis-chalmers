@@ -72,7 +72,6 @@ type DataTypeEnv = Map.Map TypeName DataTypeInfo
 
 data DataTypeInfo = DataTypeInfo
   { dtiKind        :: Kind
-  , dtiCons        :: [ConName]
   }
   deriving (Show, Eq)
 
@@ -96,15 +95,10 @@ isTypeDefined = Map.member
 --
 -- Note: data constructors are not available at this point.
 addType :: TypeName -> Kind -> DataTypeEnv -> DataTypeEnv
-addType typeName kind = Map.insert typeName (DataTypeInfo kind dataConsStub)
+addType typeName kind = Map.insert typeName (DataTypeInfo kind)
 
 builtInDataTypeInfo :: Kind -> DataTypeInfo
-builtInDataTypeInfo kind = DataTypeInfo kind undefined
-
--- | A placeholder for data constructors in the DataTypeEnv.  There are moments
--- during the type checking when this information is not available yet.
-dataConsStub :: [ConName]
-dataConsStub = error "Data constructors are not available yet"
+builtInDataTypeInfo kind = DataTypeInfo kind
 
 -- * Data constructor type environment
 
