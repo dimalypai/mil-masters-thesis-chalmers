@@ -42,13 +42,7 @@ getBuiltInMonadKind :: TypeName -> Kind
 getBuiltInMonadKind typeName = fromJust $ Map.lookup typeName builtInMonads
 
 mkBuiltInMonad :: TypeName -> MilMonad
-mkBuiltInMonad (TypeName typeName) =
-  case typeName of
-    "Id"      -> Id
-    "State"   -> State
-    "Error"   -> Error
-    "NonTerm" -> NonTerm
-    "IO"      -> IO
+mkBuiltInMonad (TypeName typeName) = read typeName
 
 unitType :: Type
 unitType = mkSimpleType "Unit"

@@ -266,7 +266,7 @@ data MilMonad = Id
               | Error
               | NonTerm
               | IO
-  deriving (Show, Eq)
+  deriving (Show, Read, Eq)
 
 -- Precedences
 
