@@ -197,16 +197,19 @@ instance AlphaEq Type where
   alphaEq (TyMonad tm1) (TyMonad tm2) = tm1 `alphaEq` tm2
   alphaEq _ _ = return False
 
-instance AlphaEq TypeM where
+instance AlphaEq MonadType where
   alphaEq (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
   alphaEq (MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
     (&&) <$> (m1 `alphaEq` m2) <*> (tm1 `alphaEq` tm2)
   alphaEq _ _ = return False
 
--- | For monads that have type arguments check that these arguments are alpha
--- equivalent. For the others it is just an equality.
+instance AlphaEq SingleMonad where
+  alphaEq (SinMonad m1) (SinMonad m2) = m1 `alphaEq` m2
+  alphaEq (SinMonadApp m1 t1) (SinMonadApp m2 t2) =
+    (&&) <$> m1 `alphaEq` m2 <*> (t1 `alphaEq` t2)
+  alphaEq _ _ = return False
+
 instance AlphaEq MilMonad where
-  alphaEq (Error t1) (Error t2) = t1 `alphaEq` t2
   alphaEq m1 m2 = return (m1 == m2)
 
 -- * Type substitution.
@@ -248,15 +251,16 @@ instance SubstType Type where
     TyTuple (map (tvArg `substTypeIn`) elemTypes)
   tvArg `substTypeIn` (TyMonad tm) = TyMonad (tvArg `substTypeIn` tm)
 
-instance SubstType TypeM where
+instance SubstType MonadType where
   tvArg `substTypeIn` (MTyMonad m) = MTyMonad (tvArg `substTypeIn` m)
   tvArg `substTypeIn` (MTyMonadCons m tm) =
     MTyMonadCons (tvArg `substTypeIn` m) (tvArg `substTypeIn` tm)
 
--- | Perform substitution on type parameters if there are any, otherwise, just
--- return a monad.
+instance SubstType SingleMonad where
+  _ `substTypeIn` (SinMonad m) = SinMonad m
+  tvArg `substTypeIn` (SinMonadApp m t) = SinMonadApp m (tvArg `substTypeIn` t)
+
 instance SubstType MilMonad where
-  tvArg `substTypeIn` (Error t) = Error (tvArg `substTypeIn` t)
   _ `substTypeIn` m = m
 
 -- * 'TypeM' helpers
@@ -266,7 +270,7 @@ instance SubstType MilMonad where
 -- For example, m1 is a prefix of m1 ::: m2.
 --
 -- This operation is commutative.
-compatibleMonadTypes :: TypeM -> TypeM -> TypeCheckM Bool
+compatibleMonadTypes :: MonadType -> MonadType -> TypeCheckM Bool
 compatibleMonadTypes (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
 compatibleMonadTypes (MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
   (&&) <$> (m1 `alphaEq` m2) <*> compatibleMonadTypes tm1 tm2
@@ -279,7 +283,7 @@ compatibleMonadTypes tm1 tm2 = compatibleMonadTypes tm2 tm1
 -- Assumption: 'compatibleMonadTypes' returned True.
 --
 -- This operation is *not* commutative.
-hasMoreEffectsThan :: TypeM -> TypeM -> TypeCheckM Bool
+hasMoreEffectsThan :: MonadType -> MonadType -> TypeCheckM Bool
 hasMoreEffectsThan (MTyMonadCons _ tm1) (MTyMonadCons _ tm2) = tm1 `hasMoreEffectsThan` tm2
 hasMoreEffectsThan (MTyMonadCons {}) (MTyMonad {}) = return True
 hasMoreEffectsThan (MTyMonad {}) (MTyMonad {}) = return False
@@ -290,7 +294,7 @@ hasMoreEffectsThan t1@(MTyMonad {}) t2@(MTyMonadCons {}) = not <$> t2 `hasMoreEf
 -- For example, m2 is a suffix of m1 ::: m2.
 --
 -- This operation is *not* commutative.
-isMonadSuffixOf :: TypeM -> TypeM -> TypeCheckM Bool
+isMonadSuffixOf :: MonadType -> MonadType -> TypeCheckM Bool
 isMonadSuffixOf (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
 isMonadSuffixOf t1@(MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) = do
   isSuffix <- (&&) <$> (m1 `alphaEq` m2) <*> tm1 `isMonadSuffixOf` tm2
@@ -300,6 +304,6 @@ isMonadSuffixOf t1@(MTyMonad {}) (MTyMonadCons _ tm2) = t1 `isMonadSuffixOf` tm2
 isMonadSuffixOf (MTyMonadCons {}) (MTyMonad {}) = return False
 
 -- TODO
-containsMonad :: Type -> TypeM -> TypeCheckM Bool
+containsMonad :: Type -> MonadType -> TypeCheckM Bool
 containsMonad = undefined
 
