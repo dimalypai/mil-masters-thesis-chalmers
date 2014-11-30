@@ -1,4 +1,4 @@
--- | Functions for working with types. Used in the type checker.
+-- | Functions for working with types. Used in the type/lint checker.
 module MIL.TypeChecker.Helpers where
 
 import qualified Data.Set as Set
@@ -8,6 +8,7 @@ import Control.Applicative
 import MIL.AST
 import MIL.TypeChecker.TypeCheckM
 import MIL.TypeChecker.TcError
+import MIL.BuiltIn
 import MIL.Utils
 
 -- | Checks if the type is well-formed, well-kinded and uses types in scope.
@@ -17,8 +18,9 @@ checkType :: Type -> TypeCheckM ()
 checkType = checkTypeWithTypeVars Set.empty
 
 -- | Checks if the type is well-formed, well-kinded and uses types in scope.
+--
 -- Takes a set of type variables which are already in scope (used for type
--- parameters in data type definitions).
+-- parameters in data type definitions and forall types).
 --
 -- For details see 'checkTypeWithTypeVarsOfKind'.
 checkTypeWithTypeVars :: Set.Set TypeVar -> Type -> TypeCheckM ()
@@ -28,21 +30,13 @@ checkTypeWithTypeVars typeVars = checkTypeWithTypeVarsOfKind typeVars StarK
 -- that all nested types are well-kinded.
 --
 -- Takes a set of type variables which are already in scope (used for type
--- parameters in data type definitions).
+-- parameters in data type definitions and forall types).
 --
--- Type is ill-formed when something other than a type constructor, another
--- type application or a monad is on the left-hand side of the type
--- application.
---
--- Type is ill-kinded when a type constructor is not fully applied. There is
--- also a check that type variables are not applied (they are of kind *).
---
--- We keep a set of type variables which are currently in scope.
--- There is a kind construction going to, see inline comments.
+-- For details see inline comments.
 checkTypeWithTypeVarsOfKind :: Set.Set TypeVar -> Kind -> Type -> TypeCheckM ()
 checkTypeWithTypeVarsOfKind typeVars kind t =
   case t of
-    TyTypeCon typeName -> do
+    TyTypeCon typeName ->
       ifM (isTypeDefinedM typeName)
         (do dataTypeKind <- getDataTypeKindM typeName
             when (dataTypeKind /= kind) $
@@ -57,20 +51,21 @@ checkTypeWithTypeVarsOfKind typeVars kind t =
         throwError $ TypeVarNotInScope typeVar
 
     TyArrow t1 t2 -> do
-      -- Type vars set and kind modifications are local to each side of the
-      -- arrow.
-      checkTypeWithTypeVarsOfKind typeVars kind t1
-      checkTypeWithTypeVarsOfKind typeVars kind t2
+      unless (kind == StarK) $
+        throwError $ TypeIncorrectKind t StarK kind
+      checkTypeWithTypeVars typeVars t1
+      checkTypeWithTypeVars typeVars t2
 
     TyForAll typeVar bodyT -> do
       -- It is important to check in all these places, since it can shadow a
-      -- type or another type variable and typeVars is not queried
-      -- by 'isTypeDefinedM' and 'isTypeVarBoundM'.
+      -- type or another type variable and typeVars is not queried by
+      -- 'isTypeDefinedM' and 'isTypeVarBoundM'.
       whenM (isTypeDefinedM $ typeVarToTypeName typeVar) $
         throwError $ TypeVarShadowsType typeVar
       isTyVarBound <- isTypeVarBoundM typeVar
       when (isTyVarBound || typeVar `Set.member` typeVars) $
         throwError $ TypeVarShadowsTypeVar typeVar
+      -- forall type extends a set of type variables which are in scope
       let typeVars' = Set.insert typeVar typeVars
       checkTypeWithTypeVarsOfKind typeVars' kind bodyT
 
@@ -81,45 +76,77 @@ checkTypeWithTypeVarsOfKind typeVars kind t =
           -- should have extra * in the kind (on the left) in order for the
           -- type to be well-kinded.
           checkTypeWithTypeVarsOfKind typeVars (StarK :=>: kind) t1
+
           -- Start from kind *, it is another type constructor (another
           -- application).
-          checkTypeWithTypeVarsOfKind typeVars StarK t2
+          checkTypeWithTypeVars typeVars t2
+
         TyApp {} -> do
-          -- One more type application on the left, add * to the kind.
+          -- One more application on the left, add * to the kind.
           checkTypeWithTypeVarsOfKind typeVars (StarK :=>: kind) t1
+
           -- Start from kind *, it is another type constructor (another
           -- application).
-          checkTypeWithTypeVarsOfKind typeVars StarK t2
-        TyMonad tm -> do
-          checkTypeMWithTypeVars typeVars tm
-          -- Start from kind *, it is another type constructor (another
-          -- application).
-          checkTypeWithTypeVarsOfKind typeVars StarK t2
+          checkTypeWithTypeVars typeVars t2
+
+        TyMonad mt ->
+          -- Monad is on the left-hand side of the application, it
+          -- should have extra * in the kind (on the left) in order for
+          -- the type to be well-kinded
+          checkMonadTypeWithTypeVarsOfKind typeVars (StarK :=>: kind) mt
+
+        -- Type variables are always of kind *, so they cannot be applied
         TyVar tv -> throwError $ TypeVarApp tv
+
+        -- Nothing else can be applied
         _ -> throwError $ IllFormedType t
 
-    TyTuple elemTypes ->
-      -- All types of tuple elements must be of kind *.
-      mapM_ (checkTypeWithTypeVarsOfKind typeVars StarK) elemTypes
+    TyTuple elemTypes -> do
+      unless (kind == StarK) $
+        throwError $ TypeIncorrectKind t StarK kind
+      mapM_ (checkTypeWithTypeVars typeVars) elemTypes
 
-    TyMonad tm -> checkTypeMWithTypeVars typeVars tm
+    TyMonad mt -> checkMonadTypeWithTypeVarsOfKind typeVars kind mt
 
--- | Checking the monadic type.
-checkTypeM :: TypeM -> TypeCheckM ()
-checkTypeM = checkTypeMWithTypeVars Set.empty
+-- | Checks if the monadic type is well-formed, uses types in scope, has a
+-- given kind and that all nested types are well-kinded.
+--
+--
+-- Takes a set of type variables which are already in scope (used for type
+-- parameters in data type definitions and forall types).
+checkMonadTypeWithTypeVarsOfKind :: Set.Set TypeVar -> Kind -> MonadType -> TypeCheckM ()
+checkMonadTypeWithTypeVarsOfKind typeVars kind mt = do
+  -- Monadic types have kind * -> *
+  unless (kind == mkKind 1) $
+    throwError $ TypeIncorrectKind (TyMonad mt) (mkKind 1) kind
+  case mt of
+    MTyMonad sm -> checkSingleMonadWithTypeVarsOfKind typeVars (mkKind 1) sm
+    MTyMonadCons sm mt' -> do
+      checkSingleMonadWithTypeVarsOfKind typeVars (mkKind 1) sm
+      checkMonadTypeWithTypeVarsOfKind typeVars (mkKind 1) mt'
 
--- | Checking the monadic type with a set of type variables in scope.
-checkTypeMWithTypeVars :: Set.Set TypeVar -> TypeM -> TypeCheckM ()
-checkTypeMWithTypeVars typeVars (MTyMonad m) = checkTypeMMonadWithTypeVars typeVars m
-checkTypeMWithTypeVars typeVars (MTyMonadCons m tm) = do
-  checkTypeMMonadWithTypeVars typeVars m
-  checkTypeMWithTypeVars typeVars tm
+-- | Checks if a single monad is well-formed, uses types in scope, has a given
+-- kind and that all nested types are well-kinded.
+--
+-- Takes a set of type variables which are already in scope (used for type
+-- parameters in data type definitions and forall types).
+--
+-- For details see inline comments.
+checkSingleMonadWithTypeVarsOfKind :: Set.Set TypeVar -> Kind -> SingleMonad -> TypeCheckM ()
+checkSingleMonadWithTypeVarsOfKind typeVars kind sm =
+  case sm of
+    SinMonad m ->
+      let monadTypeName = builtInMonadTypeName m
+          monadKind = getBuiltInMonadKind monadTypeName in
+      unless (monadKind == kind) $
+        throwError $ TypeConIncorrectApp monadTypeName monadKind kind
+    SinMonadApp sm' t -> do
+      -- One more application on the left, add * to the kind.
+      checkSingleMonadWithTypeVarsOfKind typeVars (StarK :=>: kind) sm'
 
--- | For monads with type parameters: perform checking of those types (they
--- must be of kind *). TODO: complete.
-checkTypeMMonadWithTypeVars :: Set.Set TypeVar -> MilMonad -> TypeCheckM ()
-checkTypeMMonadWithTypeVars typeVars (Error t) = checkTypeWithTypeVarsOfKind typeVars StarK t
---checkTypeMMonadWithTypeVars _ _ = return ()
+      -- Start from kind *, it is another type constructor (another
+      -- application)
+      checkTypeWithTypeVars typeVars t
 
 -- * Type construction
 

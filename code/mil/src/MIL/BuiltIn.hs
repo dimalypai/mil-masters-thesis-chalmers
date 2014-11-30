@@ -44,6 +44,9 @@ getBuiltInMonadKind typeName = fromJust $ Map.lookup typeName builtInMonads
 mkBuiltInMonad :: TypeName -> MilMonad
 mkBuiltInMonad (TypeName typeName) = read typeName
 
+builtInMonadTypeName :: MilMonad -> TypeName
+builtInMonadTypeName = TypeName . show
+
 unitType :: Type
 unitType = mkSimpleType "Unit"
 

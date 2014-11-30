@@ -23,6 +23,7 @@ library
                        MIL.Transformations.IdExprMonadElimination
                        MIL.Transformations.MonadLaws
   other-modules:       MIL.TypeChecker.Helpers
+                       MIL.TypeChecker.SrcTypeHelpers
                        MIL.TypeChecker.TcError
                        MIL.TypeChecker.TypeEnv
                        MIL.TypeChecker.TypeCheckM
@@ -49,6 +50,8 @@ test-suite spec
                    , pretty
                    , hspec
                    , filepath
+                   , mtl
+                   , containers
   build-tools:       alex
                    , happy
   other-modules:     MIL.Lexer

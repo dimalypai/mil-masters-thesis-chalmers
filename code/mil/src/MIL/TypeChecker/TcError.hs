@@ -18,6 +18,8 @@ data TcError =
   | ConAlreadyDefined ConName
   | TypeNotDefined TypeName
   | TypeConIncorrectApp TypeName Kind Kind
+  | TypeIncorrectKind Type Kind Kind
+  | SrcTypeIncorrectKind SrcType Kind Kind
   | TypeVarNotInScope TypeVar
   | TypeVarShadowsType TypeVar
   | TypeVarShadowsTypeVar TypeVar
@@ -31,15 +33,18 @@ data TcError =
   | IncorrectFunArgType Type Type
   | NotFunctionType Type
   | NotForallTypeApp Type
+  | NotMonadicType Type
+  | NotMonadicSrcType SrcType
   | ConNotDefined ConName
   | ConIncorrectType ConName Type Type
-  | NotMonadicType Type
+  | ExprHasNonMonadicType Type
   | IncorrectExprType Type Type
   | IncorrectMonad MonadType MonadType
   | IncorrectLifting MonadType MonadType
   | CaseAltIncorrectType Type Type
   | PatternIncorrectType Type Type
   | ConPatternIncorrectNumberOfFields Int Int
+  | MonadConsOnTheLeft SrcType
   | OtherError String  -- ^ Contains error message.
   deriving (Show, Eq)
 
@@ -67,6 +72,14 @@ instance Pretty TcError where
 
   prPrn (TypeConIncorrectApp typeName defKind useKind) =
     tcErrorHeader <+> text "Type constructor" <+> quotes (prPrn typeName) <+>
+      text "has kind" <+> quotes (prPrn defKind) <> text ", but its usage assumes it has kind" <+> quotes (prPrn useKind)
+
+  prPrn (TypeIncorrectKind t defKind useKind) =
+    tcErrorHeader <+> text "Type" <+> quotes (prPrn t) <+>
+      text "has kind" <+> quotes (prPrn defKind) <> text ", but its usage assumes it has kind" <+> quotes (prPrn useKind)
+
+  prPrn (SrcTypeIncorrectKind st defKind useKind) =
+    tcErrorHeader <+> text "Type" <+> quotes (prPrn st) <+>
       text "has kind" <+> quotes (prPrn defKind) <> text ", but its usage assumes it has kind" <+> quotes (prPrn useKind)
 
   prPrn (TypeVarNotInScope typeVar) =
@@ -111,6 +124,12 @@ instance Pretty TcError where
   prPrn (NotForallTypeApp appType) =
     tcErrorHeader <+> text "The expression needs to have a polymorphic (forall) type, but it has type" <+> quotes (prPrn appType)
 
+  prPrn (NotMonadicType t) =
+    tcErrorHeader <+> text "Type" <+> prPrn t <+> text "needs to be monadic"
+
+  prPrn (NotMonadicSrcType st) =
+    tcErrorHeader <+> text "Type" <+> prPrn st <+> text "needs to be monadic"
+
   prPrn (ConNotDefined conName) =
     tcErrorHeader <+> text "Data constructor" <+> quotes (prPrn conName) <+> text "is not defined"
 
@@ -118,7 +137,7 @@ instance Pretty TcError where
     tcErrorHeader <+> text "Data constructor" <+> quotes (prPrn conName) <+> text "has type" <+> quotes (prPrn expType) <+>
       text "in the environment, but it is annotated with type" <+> quotes (prPrn actType)
 
-  prPrn (NotMonadicType exprType) =
+  prPrn (ExprHasNonMonadicType exprType) =
     tcErrorHeader <+> text "The expression needs to have a monadic type, but it has type" <+> quotes (prPrn exprType)
 
   prPrn (IncorrectExprType expType actType) =
@@ -143,6 +162,9 @@ instance Pretty TcError where
   prPrn (ConPatternIncorrectNumberOfFields expNum actNum) =
     tcErrorHeader <+> text "The constructor pattern needs to have" <+> int expNum <+> text "argument(s)" <>
       text ", but it was given" <+> int actNum
+
+  prPrn (MonadConsOnTheLeft st) =
+    tcErrorHeader <+> text "Monad cons cannot contain another monad cons as a left component: " <+> prPrn st
 
   prPrn (OtherError errMsg) = tcErrorHeader <+> text errMsg
 

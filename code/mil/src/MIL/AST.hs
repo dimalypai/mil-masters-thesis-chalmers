@@ -200,6 +200,10 @@ getMonadResultType t = error $ "Type '" ++ show t ++ "' is not monadic"
 applyMonadType :: MonadType -> Type -> Type
 applyMonadType mt t = TyApp (TyMonad mt) t
 
+isTypeVar :: Type -> Bool
+isTypeVar (TyVar _) = True
+isTypeVar         _ = False
+
 -- | Monadic type. It is either a single monad or a monad on top of another
 -- 'MonadType'. This represents a monad transformers stack, basically.
 data MonadType
@@ -247,6 +251,9 @@ newtype TypeVar = TypeVar String
 
 typeVarToTypeName :: TypeVar -> TypeName
 typeVarToTypeName (TypeVar typeVarName) = TypeName typeVarName
+
+typeNameToTypeVar :: TypeName -> TypeVar
+typeNameToTypeVar (TypeName typeName) = TypeVar typeName
 
 newtype TypeName = TypeName String
   deriving (Show, Eq, Ord)
