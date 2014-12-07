@@ -71,11 +71,6 @@ ioType t = TyApp (TyMonad $ MTyMonad $ SinMonad IO) t
 stateType :: Type -> Type
 stateType t = TyApp (TyMonad $ MTyMonad $ SinMonad State) t
 
-typeOfLiteral :: Literal -> Type
-typeOfLiteral UnitLit      = unitType
-typeOfLiteral IntLit    {} = intType
-typeOfLiteral FloatLit  {} = floatType
-typeOfLiteral CharLit   {} = charType
 
 -- * Built-in functions
 

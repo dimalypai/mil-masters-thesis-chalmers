@@ -14,6 +14,7 @@ import MIL.PrettyPrinter
 data TcError =
     TypeAlreadyDefined TypeName
   | TypeParamAlreadyDefined TypeVar
+  | MainNotDefined FunName
   | FunctionAlreadyDefined FunName
   | ConAlreadyDefined ConName
   | TypeNotDefined TypeName
@@ -21,6 +22,7 @@ data TcError =
   | TypeIncorrectKind Type Kind Kind
   | SrcTypeIncorrectKind SrcType Kind Kind
   | TypeVarNotInScope TypeVar
+  | TypeParamShadowsType TypeVar
   | TypeVarShadowsType TypeVar
   | TypeVarShadowsTypeVar TypeVar
   | TypeVarApp TypeVar
@@ -61,6 +63,9 @@ instance Pretty TcError where
   prPrn (TypeParamAlreadyDefined typeVar) =
     tcErrorHeader <+> text "Type parameter" <+> quotes (prPrn typeVar) <+> text "is already defined"
 
+  prPrn (MainNotDefined funName) =
+    tcErrorHeader <+> text "Function" <+> quotes (prPrn funName) <+> text "is not defined"
+
   prPrn (FunctionAlreadyDefined funName) =
     tcErrorHeader <+> text "Function" <+> quotes (prPrn funName) <+> text "is already defined"
 
@@ -85,8 +90,11 @@ instance Pretty TcError where
   prPrn (TypeVarNotInScope typeVar) =
     tcErrorHeader <+> text "Type variable" <+> quotes (prPrn typeVar) <+> text "is not in scope"
 
+  prPrn (TypeParamShadowsType typeVar) =
+    tcErrorHeader <+> text "Type parameter" <+> quotes (prPrn typeVar) <+> text "shadows existing type"
+
   prPrn (TypeVarShadowsType typeVar) =
-    tcErrorHeader <+> text "Type variable" <+> quotes (prPrn typeVar) <+> text "shadows existing type or type alias"
+    tcErrorHeader <+> text "Type variable" <+> quotes (prPrn typeVar) <+> text "shadows existing type"
 
   prPrn (TypeVarShadowsTypeVar typeVar) =
     tcErrorHeader <+> text "Type variable" <+> quotes (prPrn typeVar) <+> text "shadows another type variable"

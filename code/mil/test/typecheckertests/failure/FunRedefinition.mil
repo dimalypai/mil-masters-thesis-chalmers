@@ -1,0 +1,4 @@
+main : Unit = unit;
+
+main : Int = 1;
+

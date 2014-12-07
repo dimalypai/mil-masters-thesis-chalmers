@@ -1,11 +1,13 @@
--- | MIL type checking module. Most of the functions follow the AST structure.
+-- | MIL lint module. Most of the functions follow the AST structure.
 -- Built using the API from 'TypeCheckM'.
 --
--- Produces a typed representation of a program and a type environment.
-module MIL.TypeChecker
-  ( typeCheck
-  , TypeEnv
+-- The main goal is to construct a type environment from a typed program
+-- and to ensure that the program is well-typed. Can help to ensure that
+-- transformations preserve typing.
+module MIL.LintChecker
+  ( lintCheck
   , TcError
+  , TypeEnv
   , prPrint
   ) where
 
@@ -18,103 +20,97 @@ import MIL.TypeChecker.TypeCheckM
 import MIL.TypeChecker.TypeEnv
 import MIL.TypeChecker.TcError
 import MIL.TypeChecker.Common
-import MIL.TypeChecker.SrcTypeHelpers
 import MIL.TypeChecker.Helpers
 import MIL.BuiltIn
 import MIL.Utils
 
--- | Main entry point to the TypeChecker.
-typeCheck :: SrcProgram -> Either TcError (TyProgram, TypeEnv)
-typeCheck srcProgram = runTypeCheckM (tcProgram srcProgram) initTypeEnv
+-- | Main entry point to the LintChecker.
+lintCheck :: TyProgram -> Either TcError TypeEnv
+lintCheck program = snd <$> runTypeCheckM (lcProgram program) initTypeEnv
 
--- | Entry point into the type checking of the program.
-tcProgram :: SrcProgram -> TypeCheckM TyProgram
-tcProgram (Program (srcTypeDefs, srcFunDefs)) = do
+-- | Entry point into the lint checking of the program.
+lcProgram :: TyProgram -> TypeCheckM ()
+lcProgram (Program (typeDefs, funDefs)) = do
   collectDefs
-    srcTypeDefs collectTypeDef
-    srcFunDefs collectFunDef
+    typeDefs collectTypeDef
+    funDefs collectFunDef
   -- Type parameters and function types have been checked.
   -- Now first information about definitions is in the environment:
   -- + type names and their kinds
   -- + function names and their types
-  -- Source types in these places are transformed.
   checkMain
-  tyTypeDefs <- mapM tcTypeDef srcTypeDefs
-  tyFunDefs <- mapM tcFunDef srcFunDefs
-  return $ Program (tyTypeDefs, tyFunDefs)
+  mapM_ lcTypeDef typeDefs
+  mapM_ lcFunDef funDefs
 
 -- | Checks if the function is already defined.
--- Transforms a function type from source to internal representation.
 -- Checks that the specified function type is correct (well-formed,
 -- well-kinded and uses types in scope).
 -- Adds the function and its type to the environment.
-collectFunDef :: SrcFunDef -> TypeCheckM ()
-collectFunDef (FunDef funName srcFunType _) = do
+collectFunDef :: TyFunDef -> TypeCheckM ()
+collectFunDef (FunDef funName funType _) = do
   whenM (isFunctionDefinedM funName) $
     throwError $ FunctionAlreadyDefined funName
-  funType <- srcTypeToType srcFunType
+  checkType funType
   addFunctionM funName funType
 
 -- | Checks data constructors and adds them to the environment together with
 -- their function types.
 -- Checks that type parameters don't shadow types.
 -- Data constructors are checked with type parameters in scope.
-tcTypeDef :: SrcTypeDef -> TypeCheckM TyTypeDef
-tcTypeDef (TypeDef typeName typeVars srcConDefs) = do
+lcTypeDef :: TyTypeDef -> TypeCheckM ()
+lcTypeDef (TypeDef typeName typeVars conDefs) = do
   checkShadowing typeVars
-  tyConDefs <- mapM (tcConDef typeName typeVars) srcConDefs
-  return $ TypeDef typeName typeVars tyConDefs
+  mapM_ (lcConDef typeName typeVars) conDefs
 
 -- | Checks that constructor fields are correct (well-formed, well-kinded and
 -- use types in scope).
--- Transforms constructor fields from source to internal type representation.
 -- Constructs a function type for the data constructor.
 -- Adds the constructor with its type to the environment.
-tcConDef :: TypeName -> [TypeVar] -> SrcConDef -> TypeCheckM TyConDef
-tcConDef typeName typeVars (ConDef conName srcConFields) = do
+lcConDef :: TypeName -> [TypeVar] -> TyConDef -> TypeCheckM ()
+lcConDef typeName typeVars (ConDef conName conFields) = do
   whenM (isDataConDefinedM conName) $
     throwError $ ConAlreadyDefined conName
-  tyConFields <- mapM (srcTypeToTypeWithTypeVars $ Set.fromList typeVars) srcConFields
+  mapM_ (checkTypeWithTypeVars $ Set.fromList typeVars) conFields
   let conResultType = tyAppFromList typeName typeVars
-      conArrType = tyArrowFromList conResultType tyConFields
+      conArrType = tyArrowFromList conResultType conFields
       conType = tyForAllFromList conArrType typeVars
   addDataConM conName conType typeName
-  return $ ConDef conName tyConFields
 
 -- | Checks that the type of the body is consistent with the specified function
 -- type.
 -- TODO: dependency analysis, NonTerm
-tcFunDef :: SrcFunDef -> TypeCheckM TyFunDef
-tcFunDef (FunDef funName srcFunType srcBodyExpr) = do
-  tyBodyExpr <- tcExpr srcBodyExpr
-  funType <- srcTypeToType srcFunType
-  let bodyType = getTypeOf tyBodyExpr
+lcFunDef :: TyFunDef -> TypeCheckM ()
+lcFunDef (FunDef funName funType bodyExpr) = do
+  lcExpr bodyExpr
+  let bodyType = getTypeOf bodyExpr
   -- TODO: more than alphaEq? monads?
   unlessM (bodyType `alphaEq` funType) $
     throwError $ FunBodyIncorrectType funName funType bodyType
-  return $ FunDef funName funType tyBodyExpr
 
--- | Expression type checking.
--- Returns typed expression.
-tcExpr :: SrcExpr -> TypeCheckM TyExpr
-tcExpr expr =
+-- | Expression lint checking.
+lcExpr :: TyExpr -> TypeCheckM ()
+lcExpr expr =
   case expr of
-    LitE lit -> return $ LitE lit
+    LitE {} -> return ()
 
-    VarE var -> do
+    VarE varBinder -> do
+      let var = getBinderVar varBinder
       -- it can be both a local variable and a global function
       unlessM (isVarBoundM var) $
         throwError $ VarNotBound var
       varType <- getVarTypeM var
-      return $ VarE (VarBinder (var, varType))
+      let binderType = getTypeOf varBinder
+      checkType binderType
+      unlessM (binderType `alphaEq` varType) $
+        throwError $ VarIncorrectType var varType binderType
 
 {-
   case expr of
     LambdaE varBinder bodyExpr -> do
       let var = getBinderVar varBinder
-      whenM (isVarBound var) $
+      whenM (isVarBoundM var) $
         throwError $ VarShadowing var
-      let varType = getTypeOf varBinder
+      let varType = getBinderType varBinder
       checkType varType
       -- Extend local type environment with the variable introduced by the
       -- lambda.
@@ -122,7 +118,7 @@ tcExpr expr =
       -- names are distinct.
       -- Perform the type checking of the body in this extended environment.
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
-      bodyType <- locallyWithEnv localTypeEnv (tcExpr bodyExpr)
+      bodyType <- locallyWithEnvM localTypeEnv (tcExpr bodyExpr)
       let lambdaType = tyArrowFromList bodyType [varType]
       return lambdaType
 
@@ -141,7 +137,7 @@ tcExpr expr =
       -- type, type alias or another type variable
       whenM (isTypeOrAliasDefinedM $ typeVarToTypeName typeVar) $
         throwError $ TypeVarShadowsType typeVar
-      whenM (isTypeVarBound typeVar) $
+      whenM (isTypeVarBoundM typeVar) $
         throwError $ TypeVarShadowsTypeVar typeVar
       -- Extend local type environment with the type variable introduced by the
       -- type lambda.
@@ -149,7 +145,7 @@ tcExpr expr =
       -- in scope are distinct.
       -- Perform the type checking of the body in this extended environment.
       let localTypeEnv = addLocalTypeVar typeVar emptyLocalTypeEnv
-      bodyType <- locallyWithEnv localTypeEnv (tcExpr bodyExpr)
+      bodyType <- locallyWithEnvM localTypeEnv (tcExpr bodyExpr)
       let tyLambdaType = tyForAllFromList bodyType [typeVar]
       return tyLambdaType
 
@@ -168,7 +164,7 @@ tcExpr expr =
 
     -- See Note [Data constructor type checking].
     ConNameE conName conType -> do
-      unlessM (isDataConDefined conName) $
+      unlessM (isDataConDefinedM conName) $
         throwError $ ConNotDefined conName
       dataConType <- getDataConTypeM conName
       unlessM (conType `alphaEq` dataConType) $
@@ -177,7 +173,7 @@ tcExpr expr =
 
     LetE varBinder bindExpr bodyExpr -> do
       let var = getBinderVar varBinder
-          varType = getTypeOf varBinder
+          varType = getBinderType varBinder
       checkType varType
       bindExprType <- tcExpr bindExpr
       bindExprTm <-
@@ -189,7 +185,7 @@ tcExpr expr =
           _ -> throwError $ ExprHasNonMonadicType bindExprType
       bodyType <-
         if (var /= Var "_")
-          then do whenM (isVarBound var) $
+          then do whenM (isVarBoundM var) $
                     throwError $ VarShadowing var
                   -- Extend local type environment with the variable introduced by the
                   -- bind.
@@ -197,7 +193,7 @@ tcExpr expr =
                   -- names are distinct.
                   -- Perform the type checking of the body in this extended environment.
                   let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
-                  locallyWithEnv localTypeEnv (tcExpr bodyExpr)
+                  locallyWithEnvM localTypeEnv (tcExpr bodyExpr)
           else tcExpr bodyExpr
       case bodyType of
         TyApp (TyMonad bodyExprTm) bodyResultType -> do
@@ -239,7 +235,7 @@ tcExpr expr =
 -- | Takes a scrutinee (an expression we are pattern matching on) type and a
 -- list of case alternatives (which is not empty). Returns a type of their
 -- bodies and so of the whole case expression (they all must agree).
-tcCaseAlts :: Type -> [SrcCaseAlt] -> TypeCheckM [TyCaseAlt]
+tcCaseAlts :: Type -> [CaseAlt] -> TypeCheckM Type
 tcCaseAlts scrutType caseAlts = do
   caseAltTypes <- mapM (tcCaseAlt scrutType) caseAlts
   -- There is at least one case alternative and all types should be the same
@@ -256,16 +252,16 @@ tcCaseAlts scrutType caseAlts = do
 -- against the scrutinee type and type checks the alternative's body with
 -- variables bound by the pattern added to the local type environment.
 -- Returns the type of the case alternative body.
-tcCaseAlt :: Type -> SrcCaseAlt -> TypeCheckM TyCaseAlt
+tcCaseAlt :: Type -> CaseAlt -> TypeCheckM Type
 tcCaseAlt scrutType (CaseAlt (pat, expr)) = do
   localTypeEnv <- tcPattern scrutType pat emptyLocalTypeEnv
-  locallyWithEnv localTypeEnv (tcExpr expr)
+  locallyWithEnvM localTypeEnv (tcExpr expr)
 
 -- | Takes a scrutinee type, a pattern and a local type environment. Type
 -- checks the pattern against the scrutinee type and returns an extended local
 -- type environment (with variables bound by the pattern).
 -- The most interesting case is 'ConP'.
-tcPattern :: Type -> SrcPattern -> LocalTypeEnv -> TypeCheckM (TyPattern, LocalTypeEnv)
+tcPattern :: Type -> Pattern -> LocalTypeEnv -> TypeCheckM LocalTypeEnv
 tcPattern scrutType pat localTypeEnv =
   case pat of
     LitP lit -> do
@@ -276,7 +272,7 @@ tcPattern scrutType pat localTypeEnv =
 
     VarP varBinder -> do
       let (VarBinder (var, varType)) = varBinder
-      isBound <- isVarBound var
+      isBound <- isVarBoundM var
       -- it is important to check in both places, since localTypeEnv is not
       -- queried by 'isVarBound'
       when (isBound || isVarInLocalEnv var localTypeEnv) $
@@ -286,7 +282,7 @@ tcPattern scrutType pat localTypeEnv =
       return $ addLocalVar var varType localTypeEnv
 
     ConP conName varBinders -> do
-      unlessM (isDataConDefined conName) $
+      unlessM (isDataConDefinedM conName) $
         throwError $ ConNotDefined conName
       conType <- getDataConTypeM conName
       conTypeName <- getDataConTypeNameM conName
@@ -301,7 +297,8 @@ tcPattern scrutType pat localTypeEnv =
 
     DefaultP -> return localTypeEnv
 -}
--- | Note [Data constructor type checking]:
+
+-- | Note [Data constructor lint checking]:
 --
 -- The first intention is to perform 'checkType' on the type a data constructor
 -- is annotated with. But there is a problem with type variables scope.

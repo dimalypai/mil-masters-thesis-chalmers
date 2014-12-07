@@ -1,0 +1,6 @@
+type T = MkT;
+
+type T = MkS;
+
+main : Unit = unit;
+

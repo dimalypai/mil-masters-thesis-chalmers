@@ -237,9 +237,6 @@ type TyVarBinder  = VarBinder Type
 getBinderVar :: VarBinder t -> Var
 getBinderVar (VarBinder (v,_)) = v
 
-getBinderType :: VarBinder t -> t
-getBinderType (VarBinder (_,t)) = t
-
 newtype Var = Var String
   deriving (Show, Eq, Ord)
 

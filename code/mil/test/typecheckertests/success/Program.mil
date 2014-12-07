@@ -1,0 +1,10 @@
+type T = MkT | MkU;
+
+type Pair A B = MkPair A B;
+
+type Impure A = MkImpure ((IO ::: NonTerm) A);
+
+main : Unit = unit;
+
+varFun : Unit = main;
+

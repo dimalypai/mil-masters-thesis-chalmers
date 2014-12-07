@@ -17,6 +17,7 @@ library
                        MIL.AST.PrettyPrinter
                        MIL.BuiltIn
                        MIL.Lexer
+                       MIL.LintChecker
                        MIL.Parser
                        MIL.PrettyPrinter
                        MIL.TypeChecker
@@ -24,6 +25,7 @@ library
                        MIL.Transformations.MonadLaws
   other-modules:       MIL.TypeChecker.Helpers
                        MIL.TypeChecker.SrcTypeHelpers
+                       MIL.TypeChecker.Common
                        MIL.TypeChecker.TcError
                        MIL.TypeChecker.TypeEnv
                        MIL.TypeChecker.TypeCheckM
