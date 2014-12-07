@@ -4,6 +4,9 @@
 -- The main goal is to construct a type environment from a typed program
 -- and to ensure that the program is well-typed. Can help to ensure that
 -- transformations preserve typing.
+--
+-- TODO: Look carefully at all alphaEq usages. Maybe something more (with
+-- monads) is needed.
 module MIL.LintChecker
   ( lintCheck
   , TcError
@@ -83,7 +86,6 @@ lcFunDef :: TyFunDef -> TypeCheckM ()
 lcFunDef (FunDef funName funType bodyExpr) = do
   lcExpr bodyExpr
   let bodyType = getTypeOf bodyExpr
-  -- TODO: more than alphaEq? monads?
   unlessM (bodyType `alphaEq` funType) $
     throwError $ FunBodyIncorrectType funName funType bodyType
 

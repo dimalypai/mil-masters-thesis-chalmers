@@ -2,6 +2,9 @@
 -- Built using the API from 'TypeCheckM'.
 --
 -- Produces a typed representation of a program and a type environment.
+--
+-- TODO: Look carefully at all alphaEq usages. Maybe something more (with
+-- monads) is needed.
 module MIL.TypeChecker
   ( typeCheck
   , TypeEnv
@@ -89,7 +92,6 @@ tcFunDef (FunDef funName srcFunType srcBodyExpr) = do
   tyBodyExpr <- tcExpr srcBodyExpr
   funType <- srcTypeToType srcFunType
   let bodyType = getTypeOf tyBodyExpr
-  -- TODO: more than alphaEq? monads?
   unlessM (bodyType `alphaEq` funType) $
     throwError $ FunBodyIncorrectType funName funType bodyType
   return $ FunDef funName funType tyBodyExpr
