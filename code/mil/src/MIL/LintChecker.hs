@@ -24,6 +24,7 @@ import MIL.TypeChecker.TypeEnv
 import MIL.TypeChecker.TcError
 import MIL.TypeChecker.Common
 import MIL.TypeChecker.Helpers
+import MIL.TypeChecker.AlphaEq
 import MIL.BuiltIn
 import MIL.Utils
 
@@ -86,7 +87,7 @@ lcFunDef :: TyFunDef -> TypeCheckM ()
 lcFunDef (FunDef funName funType bodyExpr) = do
   lcExpr bodyExpr
   let bodyType = getTypeOf bodyExpr
-  unlessM (bodyType `alphaEq` funType) $
+  unless (bodyType `alphaEq` funType) $
     throwError $ FunBodyIncorrectType funName funType bodyType
 
 -- | Expression lint checking.
@@ -103,7 +104,7 @@ lcExpr expr =
       varType <- getVarTypeM var
       let binderType = getTypeOf varBinder
       checkType binderType
-      unlessM (binderType `alphaEq` varType) $
+      unless (binderType `alphaEq` varType) $
         throwError $ VarIncorrectType var varType binderType
 
     LambdaE varBinder bodyExpr -> do

@@ -25,6 +25,8 @@ library
                        MIL.Transformations.MonadLaws
   other-modules:       MIL.TypeChecker.Helpers
                        MIL.TypeChecker.SrcTypeHelpers
+                       MIL.TypeChecker.AlphaEq
+                       MIL.TypeChecker.TypeSubstitution
                        MIL.TypeChecker.Common
                        MIL.TypeChecker.TcError
                        MIL.TypeChecker.TypeEnv

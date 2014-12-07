@@ -8,6 +8,8 @@ import Control.Applicative
 import MIL.AST
 import MIL.TypeChecker.TypeCheckM
 import MIL.TypeChecker.TcError
+import MIL.TypeChecker.AlphaEq
+import MIL.TypeChecker.TypeSubstitution
 import MIL.BuiltIn
 import MIL.Utils
 
@@ -153,7 +155,7 @@ checkSingleMonadWithTypeVarsOfKind typeVars kind sm =
 -- | Constructs an arrow type given a result type and a list of parameter
 -- types.
 tyArrowFromList :: Type -> [Type] -> Type
-tyArrowFromList resultType = foldr (\t acc -> TyArrow t acc) resultType
+tyArrowFromList = foldr TyArrow
 
 -- | Constructs a type application given a type name and a list of type variables.
 tyAppFromList :: TypeName -> [TypeVar] -> Type
@@ -161,7 +163,7 @@ tyAppFromList typeName = foldl' (\acc tv -> TyApp acc (TyVar tv)) (TyTypeCon typ
 
 -- | Constructs a forall type given a body type and a list of type variables.
 tyForAllFromList :: Type -> [TypeVar] -> Type
-tyForAllFromList bodyType = foldr (\tv acc -> TyForAll tv acc) bodyType
+tyForAllFromList = foldr TyForAll
 
 -- | Takes a scrutinee type and a type of the data constructor (for error
 -- message) and transforms a series of type applications and eventual type
@@ -194,102 +196,6 @@ conFieldTypesFromType t typeArgs = init $ conFieldTypesFromType' t typeArgs
         conFieldTypesFromType' tyVar@(TyVar {}) [] = [tyVar]
         conFieldTypesFromType'          _ _ = error "conFieldTypesFromType: kind checking must have gone wrong"
 
--- * Alpha equivalence of types.
--- TODO: Pure alpha equivalence.
-
--- | Decides if two types are equivalent up to a change of type variables bound
--- by forall. It is monadic to be able to expand type aliases.
---
--- For example, forall A . A -> A and forall B . B -> B are alpha equivalent.
-class AlphaEq t where
-  alphaEq :: t -> t -> TypeCheckM Bool
-
--- | Most of the cases are straightforward. When we get two forall types, we
--- replace one of the type variables (its free occurences) with another one and
--- check whether the resulting types are alpha equivalent.
--- Use 'TypeM' instance for 'TyMonad'.
-instance AlphaEq Type where
-  alphaEq (TyTypeCon typeName1) (TyTypeCon typeName2) = return (typeName1 == typeName2)
-  alphaEq (TyVar typeVar1) (TyVar typeVar2) = return (typeVar1 == typeVar2)
-  alphaEq (TyArrow t11 t12) (TyArrow t21 t22) =
-    (&&) <$> (t11 `alphaEq` t21) <*> (t12 `alphaEq` t22)
-  alphaEq (TyApp t11 t12) (TyApp t21 t22) =
-    (&&) <$> (t11 `alphaEq` t21) <*> (t12 `alphaEq` t22)
-  alphaEq (TyForAll tv1 t1) (TyForAll tv2 t2) = t1 `alphaEq` ((tv2, TyVar tv1) `substTypeIn` t2)
-  -- TODO: width subtyping
-  alphaEq (TyTuple elemTypes1) (TyTuple elemTypes2) = do
-    let lengthEq = length elemTypes1 == length elemTypes2
-    elemsAlphaEq <- mapM (uncurry alphaEq) (zip elemTypes1 elemTypes2)
-    return (lengthEq && and elemsAlphaEq)
-  alphaEq (TyMonad tm1) (TyMonad tm2) = tm1 `alphaEq` tm2
-  alphaEq _ _ = return False
-
-instance AlphaEq MonadType where
-  alphaEq (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
-  alphaEq (MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
-    (&&) <$> (m1 `alphaEq` m2) <*> (tm1 `alphaEq` tm2)
-  alphaEq _ _ = return False
-
-instance AlphaEq SingleMonad where
-  alphaEq (SinMonad m1) (SinMonad m2) = m1 `alphaEq` m2
-  alphaEq (SinMonadApp m1 t1) (SinMonadApp m2 t2) =
-    (&&) <$> m1 `alphaEq` m2 <*> (t1 `alphaEq` t2)
-  alphaEq _ _ = return False
-
-instance AlphaEq MilMonad where
-  alphaEq m1 m2 = return (m1 == m2)
-
--- * Type substitution.
-
--- | Replace free occurences of the type variable (first component of the first
--- parameter) with the type (second component of the first parameter) in the
--- type given as a second parameter.
-class SubstType t where
-  substTypeIn :: (TypeVar, Type) -> t -> t
-
--- | The case that actually does the job is 'TyVar'. Another interesting case is
--- 'TyForAll'. We don't allow shadowing and all type variables in the type are
--- bound (types are closed), but it is possible to introduce shadowing by
--- substitution:
---
--- @
---   (forall A . forall B . A -> B)[A := forall B . B] =>
---   => forall B . (forall B . B) -> B
--- @
---
--- It is not clear that such type can arise from the program (if it is possible
--- to construct such a term), but we still need to handle this case, hence the
--- otherwise guard clause.
---
--- Use 'TypeM' instance for 'TyMonad'.
-instance SubstType Type where
-  _ `substTypeIn` t@(TyTypeCon {}) = t
-  (typeVar, argType) `substTypeIn` t@(TyVar typeVar')
-    | typeVar == typeVar' = argType
-    | otherwise           = t
-  tvArg `substTypeIn` (TyArrow t1 t2) =
-    TyArrow (tvArg `substTypeIn` t1) (tvArg `substTypeIn` t2)
-  tvArg `substTypeIn` (TyApp t1 t2) =
-    TyApp (tvArg `substTypeIn` t1) (tvArg `substTypeIn` t2)
-  tvArg@(typeVar, _) `substTypeIn` forallT@(TyForAll tv t)
-    | typeVar /= tv = TyForAll tv (tvArg `substTypeIn` t)
-    | otherwise     = forallT
-  tvArg `substTypeIn` (TyTuple elemTypes) =
-    TyTuple (map (tvArg `substTypeIn`) elemTypes)
-  tvArg `substTypeIn` (TyMonad tm) = TyMonad (tvArg `substTypeIn` tm)
-
-instance SubstType MonadType where
-  tvArg `substTypeIn` (MTyMonad m) = MTyMonad (tvArg `substTypeIn` m)
-  tvArg `substTypeIn` (MTyMonadCons m tm) =
-    MTyMonadCons (tvArg `substTypeIn` m) (tvArg `substTypeIn` tm)
-
-instance SubstType SingleMonad where
-  _ `substTypeIn` (SinMonad m) = SinMonad m
-  tvArg `substTypeIn` (SinMonadApp m t) = SinMonadApp m (tvArg `substTypeIn` t)
-
-instance SubstType MilMonad where
-  _ `substTypeIn` m = m
-
 -- * 'TypeM' helpers
 
 -- | Checks if two monads are compatible. This means if one of them is alpha
@@ -297,10 +203,10 @@ instance SubstType MilMonad where
 -- For example, m1 is a prefix of m1 ::: m2.
 --
 -- This operation is commutative.
-compatibleMonadTypes :: MonadType -> MonadType -> TypeCheckM Bool
+compatibleMonadTypes :: MonadType -> MonadType -> Bool
 compatibleMonadTypes (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
 compatibleMonadTypes (MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
-  (&&) <$> (m1 `alphaEq` m2) <*> compatibleMonadTypes tm1 tm2
+  (m1 `alphaEq` m2) && compatibleMonadTypes tm1 tm2
 compatibleMonadTypes (MTyMonad m1) (MTyMonadCons m2 _) = m1 `alphaEq` m2
 compatibleMonadTypes tm1 tm2 = compatibleMonadTypes tm2 tm1
 
@@ -321,14 +227,14 @@ hasMoreEffectsThan t1@(MTyMonad {}) t2@(MTyMonadCons {}) = not <$> t2 `hasMoreEf
 -- For example, m2 is a suffix of m1 ::: m2.
 --
 -- This operation is *not* commutative.
-isMonadSuffixOf :: MonadType -> MonadType -> TypeCheckM Bool
+isMonadSuffixOf :: MonadType -> MonadType -> Bool
 isMonadSuffixOf (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
-isMonadSuffixOf t1@(MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) = do
-  isSuffix <- (&&) <$> (m1 `alphaEq` m2) <*> tm1 `isMonadSuffixOf` tm2
-  isShiftedSuffix <- t1 `isMonadSuffixOf` tm2
-  return (isSuffix || isShiftedSuffix)
+isMonadSuffixOf t1@(MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
+  let isSuffix = (m1 `alphaEq` m2) && (tm1 `isMonadSuffixOf` tm2)
+      isShiftedSuffix = t1 `isMonadSuffixOf` tm2
+  in isSuffix || isShiftedSuffix
 isMonadSuffixOf t1@(MTyMonad {}) (MTyMonadCons _ tm2) = t1 `isMonadSuffixOf` tm2
-isMonadSuffixOf (MTyMonadCons {}) (MTyMonad {}) = return False
+isMonadSuffixOf (MTyMonadCons {}) (MTyMonad {}) = False
 
 -- TODO
 containsMonad :: Type -> MonadType -> TypeCheckM Bool

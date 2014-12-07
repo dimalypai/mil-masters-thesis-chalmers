@@ -23,6 +23,7 @@ import MIL.TypeChecker.TcError
 import MIL.TypeChecker.Common
 import MIL.TypeChecker.SrcTypeHelpers
 import MIL.TypeChecker.Helpers
+import MIL.TypeChecker.AlphaEq
 import MIL.BuiltIn
 import MIL.Utils
 
@@ -92,7 +93,7 @@ tcFunDef (FunDef funName srcFunType srcBodyExpr) = do
   tyBodyExpr <- tcExpr srcBodyExpr
   funType <- srcTypeToType srcFunType
   let bodyType = getTypeOf tyBodyExpr
-  unlessM (bodyType `alphaEq` funType) $
+  unless (bodyType `alphaEq` funType) $
     throwError $ FunBodyIncorrectType funName funType bodyType
   return $ FunDef funName funType tyBodyExpr
 
