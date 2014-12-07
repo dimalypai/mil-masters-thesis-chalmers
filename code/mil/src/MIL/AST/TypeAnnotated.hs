@@ -17,6 +17,8 @@ class TypeAnnotated ast where
 instance TypeAnnotated TyExpr where
   getTypeOf (LitE lit) = getTypeOf lit
   getTypeOf (VarE varBinder) = getTypeOf varBinder
+  getTypeOf (LambdaE varBinder bodyExpr) =
+    TyArrow (getTypeOf varBinder) (getTypeOf bodyExpr)
 
 instance TypeAnnotated Literal where
   getTypeOf UnitLit      = unitType

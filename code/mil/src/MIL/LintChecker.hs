@@ -106,13 +106,11 @@ lcExpr expr =
       unlessM (binderType `alphaEq` varType) $
         throwError $ VarIncorrectType var varType binderType
 
-{-
-  case expr of
     LambdaE varBinder bodyExpr -> do
       let var = getBinderVar varBinder
       whenM (isVarBoundM var) $
         throwError $ VarShadowing var
-      let varType = getBinderType varBinder
+      let varType = getTypeOf varBinder
       checkType varType
       -- Extend local type environment with the variable introduced by the
       -- lambda.
@@ -120,10 +118,10 @@ lcExpr expr =
       -- names are distinct.
       -- Perform the type checking of the body in this extended environment.
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
-      bodyType <- locallyWithEnvM localTypeEnv (tcExpr bodyExpr)
-      let lambdaType = tyArrowFromList bodyType [varType]
-      return lambdaType
+      locallyWithEnvM localTypeEnv (lcExpr bodyExpr)
 
+{-
+  case expr of
     AppE exprApp exprArg -> do
       appType <- tcExpr exprApp
       argType <- tcExpr exprArg

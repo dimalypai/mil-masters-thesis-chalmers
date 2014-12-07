@@ -1,0 +1,2 @@
+main : Unit = \(x : Int) -> \(x : Bool) -> unit;
+

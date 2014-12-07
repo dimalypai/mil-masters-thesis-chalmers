@@ -60,6 +60,12 @@ spec =
       it "given an unbound variable name" $
         failureCase "VarNotBound"
 
+      it "given a lambda expression which shadows an existing function" $
+        failureCase "VarShadowsFun"
+
+      it "given nested lambda expressions with the same parameter names" $
+        failureCase "NestedLambdasVarShadowing"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

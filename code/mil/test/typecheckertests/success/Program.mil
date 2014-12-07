@@ -8,3 +8,7 @@ main : Unit = unit;
 
 varFun : Unit = main;
 
+lambdaFun : Bool -> Char = \(b : Bool) -> 'a';
+
+lambdaVarAccess : Float -> Float = \(f : Float) -> f;
+

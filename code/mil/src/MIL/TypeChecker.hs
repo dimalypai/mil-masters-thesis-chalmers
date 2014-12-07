@@ -110,24 +110,22 @@ tcExpr expr =
       varType <- getVarTypeM var
       return $ VarE (VarBinder (var, varType))
 
-{-
-  case expr of
-    LambdaE varBinder bodyExpr -> do
-      let var = getBinderVar varBinder
-      whenM (isVarBound var) $
+    LambdaE srcVarBinder srcBodyExpr -> do
+      let var = getBinderVar srcVarBinder
+      whenM (isVarBoundM var) $
         throwError $ VarShadowing var
-      let varType = getTypeOf varBinder
-      checkType varType
+      varType <- srcTypeToType (getBinderType srcVarBinder)
       -- Extend local type environment with the variable introduced by the
       -- lambda.
       -- This is safe, since we ensure above that all variable and function
       -- names are distinct.
       -- Perform the type checking of the body in this extended environment.
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
-      bodyType <- locallyWithEnv localTypeEnv (tcExpr bodyExpr)
-      let lambdaType = tyArrowFromList bodyType [varType]
-      return lambdaType
+      tyBodyExpr <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
+      return $ LambdaE (VarBinder (var, varType)) tyBodyExpr
 
+{-
+  case expr of
     AppE exprApp exprArg -> do
       appType <- tcExpr exprApp
       argType <- tcExpr exprArg
