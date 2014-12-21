@@ -93,6 +93,9 @@ spec =
       it "given an expression referencing data constructor that is not defined" $
         failureCase "DataConNotDefined"
 
+      it "given a function body with a tuple of incorrect type" $
+        failureCase "TupleIncorrectType"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

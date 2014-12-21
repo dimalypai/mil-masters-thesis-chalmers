@@ -166,6 +166,8 @@ lcExpr expr =
       unless (conType `alphaEq` dataConType) $
         throwError $ ConIncorrectType conName dataConType conType
 
+    TupleE elems -> mapM_ lcExpr elems
+
 {-
     LetE varBinder bindExpr bodyExpr -> do
       let var = getBinderVar varBinder
@@ -223,10 +225,6 @@ lcExpr expr =
     CaseE scrutExpr caseAlts -> do
       scrutExprType <- tcExpr scrutExpr
       tcCaseAlts scrutExprType caseAlts
-
-    TupleE tElems -> do
-      elemTypes <- mapM tcExpr tElems
-      return $ TyTuple elemTypes
 
 -- | Takes a scrutinee (an expression we are pattern matching on) type and a
 -- list of case alternatives (which is not empty). Returns a type of their

@@ -32,6 +32,7 @@ instance TypeAnnotated TyExpr where
     let TyForAll typeVar forallBodyType = getTypeOf appExpr
     in (typeVar, typeArg) `substTypeIn` forallBodyType
   getTypeOf (ConNameE _conName conType) = conType
+  getTypeOf (TupleE elems) = TyTuple (map getTypeOf elems)
 
 instance TypeAnnotated Literal where
   getTypeOf UnitLit      = unitType

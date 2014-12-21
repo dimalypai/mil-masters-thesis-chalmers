@@ -35,3 +35,5 @@ conPairFun : forall A . forall B . A -> B -> Pair A B = MkPair;
 
 appCon : Pair Int Bool = MkPair [Int] [Bool] 1 True;
 
+tup : {Int, {Char}, Bool -> Float} = {1, {'a'}, \(b : Bool) -> 0.01};
+
