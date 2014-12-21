@@ -66,6 +66,9 @@ spec =
       it "given nested lambda expressions with the same parameter names" $
         failureCase "NestedLambdasVarShadowing"
 
+      it "given a function body with lambda of incorrect type" $
+        failureCase "LambdaIncorrectType"
+
       it "given an application with left-hand side which is not a function" $
         failureCase "AppNotFunction"
 
