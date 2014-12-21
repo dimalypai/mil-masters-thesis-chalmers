@@ -158,16 +158,15 @@ lcExpr expr =
         TyForAll {} -> checkType typeArg
         _ -> throwError $ NotForallTypeApp appType
 
-{-
     -- See Note [Data constructor type checking].
     ConNameE conName conType -> do
       unlessM (isDataConDefinedM conName) $
         throwError $ ConNotDefined conName
       dataConType <- getDataConTypeM conName
-      unlessM (conType `alphaEq` dataConType) $
+      unless (conType `alphaEq` dataConType) $
         throwError $ ConIncorrectType conName dataConType conType
-      return conType
 
+{-
     LetE varBinder bindExpr bodyExpr -> do
       let var = getBinderVar varBinder
           varType = getBinderType varBinder

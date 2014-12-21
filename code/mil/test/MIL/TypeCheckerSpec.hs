@@ -90,6 +90,9 @@ spec =
       it "given a type application with non-forall left-hand side" $
         failureCase "TypeAppNotForall"
 
+      it "given an expression referencing data constructor that is not defined" $
+        failureCase "DataConNotDefined"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

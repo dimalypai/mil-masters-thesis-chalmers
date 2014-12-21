@@ -166,16 +166,13 @@ tcExpr expr =
           return $ TypeAppE tyAppExpr typeArg
         _ -> throwError $ NotForallTypeApp appType
 
-{-
-    -- See Note [Data constructor type checking].
-    ConNameE conName conType -> do
-      unlessM (isDataConDefined conName) $
+    ConNameE conName _ -> do
+      unlessM (isDataConDefinedM conName) $
         throwError $ ConNotDefined conName
-      dataConType <- getDataConTypeM conName
-      unlessM (conType `alphaEq` dataConType) $
-        throwError $ ConIncorrectType conName dataConType conType
-      return conType
+      conType <- getDataConTypeM conName
+      return $ ConNameE conName conType
 
+{-
     LetE varBinder bindExpr bodyExpr -> do
       let var = getBinderVar varBinder
           varType = getTypeOf varBinder
@@ -302,15 +299,4 @@ tcPattern scrutType pat localTypeEnv =
 
     DefaultP -> return localTypeEnv
 -}
--- | Note [Data constructor type checking]:
---
--- The first intention is to perform 'checkType' on the type a data constructor
--- is annotated with. But there is a problem with type variables scope.
--- Function types of the data constructors from polymorphic data types contain
--- forall types. If there is a type lambda and an occurence of such a data
--- constructor inside it and there is a clash between type variable names,
--- 'checkType' will throw a shadowing error.
--- It seems to be safe to not perform this check, since later we do a check for
--- alpha-equivalence against the constructor type from the environment, and so
--- incorrectly annotated constructors will be caught.
 

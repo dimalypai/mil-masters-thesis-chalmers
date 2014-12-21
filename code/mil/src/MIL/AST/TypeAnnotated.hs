@@ -31,6 +31,7 @@ instance TypeAnnotated TyExpr where
   getTypeOf (TypeAppE appExpr typeArg) =
     let TyForAll typeVar forallBodyType = getTypeOf appExpr
     in (typeVar, typeArg) `substTypeIn` forallBodyType
+  getTypeOf (ConNameE _conName conType) = conType
 
 instance TypeAnnotated Literal where
   getTypeOf UnitLit      = unitType

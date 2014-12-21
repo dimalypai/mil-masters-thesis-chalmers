@@ -6,6 +6,8 @@ type Impure A = MkImpure ((IO ::: NonTerm) A);
 
 main : Unit = unit;
 
+conTFun : T = MkT;
+
 varFun : Unit = main;
 
 lambdaFun : Bool -> Char = \(b : Bool) -> 'a';
@@ -28,4 +30,8 @@ idFun : (forall B . B -> B) -> (forall C . C -> C) =
 
 # This checks for alpha equivalence
 idFunApp : forall V . V -> V = idFun id;
+
+conPairFun : forall A . forall B . A -> B -> Pair A B = MkPair;
+
+appCon : Pair Int Bool = MkPair [Int] [Bool] 1 True;
 
