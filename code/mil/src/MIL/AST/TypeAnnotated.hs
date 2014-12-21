@@ -7,6 +7,7 @@
 module MIL.AST.TypeAnnotated where
 
 import MIL.AST
+import MIL.TypeChecker.Helpers
 import MIL.BuiltIn
 
 -- | AST nodes for which it makes sense to have a type should be an instance of
@@ -23,6 +24,9 @@ instance TypeAnnotated TyExpr where
   getTypeOf (AppE appExpr _argExpr) =
     let TyArrow _paramType resultType = getTypeOf appExpr
     in resultType
+  getTypeOf (TypeLambdaE typeVar bodyExpr) =
+    let bodyType = getTypeOf bodyExpr
+    in tyForAllFromList bodyType [typeVar]
 
 instance TypeAnnotated Literal where
   getTypeOf UnitLit      = unitType

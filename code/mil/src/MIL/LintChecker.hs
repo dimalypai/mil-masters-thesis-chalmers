@@ -132,11 +132,10 @@ lcExpr expr =
             throwError $ IncorrectFunArgType paramType argType
         _ -> throwError $ NotFunctionType appType
 
-{-
     TypeLambdaE typeVar bodyExpr -> do
       -- it is important to check in all these places, since it can shadow a
       -- type, type alias or another type variable
-      whenM (isTypeOrAliasDefinedM $ typeVarToTypeName typeVar) $
+      whenM (isTypeDefinedM $ typeVarToTypeName typeVar) $
         throwError $ TypeVarShadowsType typeVar
       whenM (isTypeVarBoundM typeVar) $
         throwError $ TypeVarShadowsTypeVar typeVar
@@ -144,12 +143,11 @@ lcExpr expr =
       -- type lambda.
       -- This is safe, since we ensure that all type variables and type names
       -- in scope are distinct.
-      -- Perform the type checking of the body in this extended environment.
+      -- Perform the lint checking of the body in this extended environment.
       let localTypeEnv = addLocalTypeVar typeVar emptyLocalTypeEnv
-      bodyType <- locallyWithEnvM localTypeEnv (tcExpr bodyExpr)
-      let tyLambdaType = tyForAllFromList bodyType [typeVar]
-      return tyLambdaType
+      locallyWithEnvM localTypeEnv (lcExpr bodyExpr)
 
+{-
     TypeAppE exprApp typeArg -> do
       -- Type application can be performed only with forall on the left-hand
       -- side.

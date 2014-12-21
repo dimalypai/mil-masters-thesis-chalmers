@@ -75,6 +75,15 @@ spec =
       it "given an application of lambda to the argument of incorrect type" $
         failureCase "LambdaAppIncorrectType"
 
+      it "given a function body with type lambda of incorrect type" $
+        failureCase "TypeLambdaIncorrectType"
+
+      it "given a type lambda which shadows an existing type" $
+        failureCase "TypeLambdaShadowsType"
+
+      it "given nested type lambdas with the same parameter names" $
+        failureCase "NestedTypeLambdasVarShadowing"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

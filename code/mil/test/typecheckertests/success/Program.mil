@@ -16,3 +16,5 @@ lambdaVarAccessApp : Float = lambdaVarAccess 0.01;
 
 nestedApp : Unit = (\(i : Int) -> \(f : Float) -> unit) 1 0.02;
 
+id : forall A . A -> A = /\A . \(x : A) -> x;
+
