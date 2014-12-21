@@ -18,3 +18,14 @@ nestedApp : Unit = (\(i : Int) -> \(f : Float) -> unit) 1 0.02;
 
 id : forall A . A -> A = /\A . \(x : A) -> x;
 
+# Monomorphising id with Int
+idInt : Int -> Int = id [Int];
+
+# "Monomorphising" id with polymorphic type
+# This checks for alpha equivalence as well
+idFun : (forall B . B -> B) -> (forall C . C -> C) =
+  id [forall A . A -> A];
+
+# This checks for alpha equivalence
+idFunApp : forall V . V -> V = idFun id;
+

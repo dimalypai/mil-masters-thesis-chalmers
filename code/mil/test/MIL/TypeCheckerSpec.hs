@@ -87,6 +87,9 @@ spec =
       it "given nested type lambdas with the same parameter names" $
         failureCase "NestedTypeLambdasVarShadowing"
 
+      it "given a type application with non-forall left-hand side" $
+        failureCase "TypeAppNotForall"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

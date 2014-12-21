@@ -147,20 +147,18 @@ lcExpr expr =
       let localTypeEnv = addLocalTypeVar typeVar emptyLocalTypeEnv
       locallyWithEnvM localTypeEnv (lcExpr bodyExpr)
 
-{-
-    TypeAppE exprApp typeArg -> do
+    TypeAppE appExpr typeArg -> do
       -- Type application can be performed only with forall on the left-hand
       -- side.
       -- We replace free occurences of the type variable bound by the forall
       -- inside its body with the right-hand side type.
-      appType <- tcExpr exprApp
+      lcExpr appExpr
+      let appType = getTypeOf appExpr
       case appType of
-        TyForAll typeVar forallBodyType -> do
-          checkType typeArg
-          let resultType = (typeVar, typeArg) `substTypeIn` forallBodyType
-          return resultType
+        TyForAll {} -> checkType typeArg
         _ -> throwError $ NotForallTypeApp appType
 
+{-
     -- See Note [Data constructor type checking].
     ConNameE conName conType -> do
       unlessM (isDataConDefinedM conName) $

@@ -153,20 +153,20 @@ tcExpr expr =
       tyBodyExpr <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
       return $ TypeLambdaE typeVar tyBodyExpr
 
-{-
-    TypeAppE exprApp typeArg -> do
+    TypeAppE srcAppExpr srcTypeArg -> do
       -- Type application can be performed only with forall on the left-hand
       -- side.
       -- We replace free occurences of the type variable bound by the forall
       -- inside its body with the right-hand side type.
-      appType <- tcExpr exprApp
+      tyAppExpr <- tcExpr srcAppExpr
+      let appType = getTypeOf tyAppExpr
       case appType of
-        TyForAll typeVar forallBodyType -> do
-          checkType typeArg
-          let resultType = (typeVar, typeArg) `substTypeIn` forallBodyType
-          return resultType
+        TyForAll {} -> do
+          typeArg <- srcTypeToType srcTypeArg
+          return $ TypeAppE tyAppExpr typeArg
         _ -> throwError $ NotForallTypeApp appType
 
+{-
     -- See Note [Data constructor type checking].
     ConNameE conName conType -> do
       unlessM (isDataConDefined conName) $
