@@ -125,18 +125,19 @@ tcExpr expr =
       tyBodyExpr <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
       return $ LambdaE (VarBinder (var, varType)) tyBodyExpr
 
-{-
-  case expr of
-    AppE exprApp exprArg -> do
-      appType <- tcExpr exprApp
-      argType <- tcExpr exprArg
+    AppE srcAppExpr srcArgExpr -> do
+      tyAppExpr <- tcExpr srcAppExpr
+      tyArgExpr <- tcExpr srcArgExpr
+      let appType = getTypeOf tyAppExpr
+          argType = getTypeOf tyArgExpr
       case appType of
-        TyArrow paramType resultType ->
-          ifM (not <$> (argType `alphaEq` paramType))
-            (throwError $ IncorrectFunArgType paramType argType)
-            (return resultType)
+        TyArrow paramType _resultType ->
+          if not (argType `alphaEq` paramType)
+            then throwError $ IncorrectFunArgType paramType argType
+            else return $ AppE tyAppExpr tyArgExpr
         _ -> throwError $ NotFunctionType appType
 
+{-
     TypeLambdaE typeVar bodyExpr -> do
       -- it is important to check in all these places, since it can shadow a
       -- type, type alias or another type variable

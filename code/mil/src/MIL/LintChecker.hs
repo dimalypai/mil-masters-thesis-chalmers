@@ -121,18 +121,18 @@ lcExpr expr =
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
       locallyWithEnvM localTypeEnv (lcExpr bodyExpr)
 
-{-
-  case expr of
-    AppE exprApp exprArg -> do
-      appType <- tcExpr exprApp
-      argType <- tcExpr exprArg
+    AppE appExpr argExpr -> do
+      lcExpr appExpr
+      lcExpr argExpr
+      let appType = getTypeOf appExpr
+          argType = getTypeOf argExpr
       case appType of
-        TyArrow paramType resultType ->
-          ifM (not <$> (argType `alphaEq` paramType))
-            (throwError $ IncorrectFunArgType paramType argType)
-            (return resultType)
+        TyArrow paramType _resultType ->
+          unless (argType `alphaEq` paramType) $
+            throwError $ IncorrectFunArgType paramType argType
         _ -> throwError $ NotFunctionType appType
 
+{-
     TypeLambdaE typeVar bodyExpr -> do
       -- it is important to check in all these places, since it can shadow a
       -- type, type alias or another type variable

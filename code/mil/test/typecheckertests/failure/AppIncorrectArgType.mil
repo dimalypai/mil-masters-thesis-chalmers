@@ -1,0 +1,4 @@
+main : Float = f 1;
+
+f : Bool -> Float = \(b : Bool) -> 0.01;
+

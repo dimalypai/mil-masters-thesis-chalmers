@@ -12,3 +12,7 @@ lambdaFun : Bool -> Char = \(b : Bool) -> 'a';
 
 lambdaVarAccess : Float -> Float = \(f : Float) -> f;
 
+lambdaVarAccessApp : Float = lambdaVarAccess 0.01;
+
+nestedApp : Unit = (\(i : Int) -> \(f : Float) -> unit) 1 0.02;
+

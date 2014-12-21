@@ -66,6 +66,15 @@ spec =
       it "given nested lambda expressions with the same parameter names" $
         failureCase "NestedLambdasVarShadowing"
 
+      it "given an application with left-hand side which is not a function" $
+        failureCase "AppNotFunction"
+
+      it "given an application with incorrect argument type" $
+        failureCase "AppIncorrectArgType"
+
+      it "given an application of lambda to the argument of incorrect type" $
+        failureCase "LambdaAppIncorrectType"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.
