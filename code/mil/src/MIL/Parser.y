@@ -132,8 +132,11 @@ pattern
   : literal { LitP $1 }
   | varbinder { VarP $1 }
   | upperId list(varbinder) { ConP (ConName $1) $2 }
-  | '{' seplist1(varbinder, ',') '}' { TupleP $2 }
+  | '{' seplist1(tupleelempattern, ',') '}' { TupleP $2 }
   | '_' { DefaultP }
+
+tupleelempattern :: { SrcVarBinder }
+tupleelempattern : lowerId ':' srctype { VarBinder (Var $1, $3) }
 
 srctype :: { SrcType }
 srctype
