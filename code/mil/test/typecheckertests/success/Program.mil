@@ -37,3 +37,30 @@ appCon : Pair Int Bool = MkPair [Int] [Bool] 1 True;
 
 tup : {Int, {Char}, Bool -> Float} = {1, {'a'}, \(b : Bool) -> 0.01};
 
+litPat : Unit =
+  case 1 of
+    | 0 => unit
+    | 1 => unit
+    | _ => unit
+  end;
+
+varPat : Int =
+  case 1 of
+    | (x : Int) => x
+  end;
+
+conPat : {Int, Bool} =
+  case MkPair [Int] [Bool] 1 True of
+    | MkPair (i : Int) (b : Bool) => {i, b}
+  end;
+
+tuplePat : Int =
+  case {True, 1} of
+    | {b : Bool, i : Int} => i
+  end;
+
+defaultPat : Int =
+  case idFun of
+    | _ => 1
+  end;
+

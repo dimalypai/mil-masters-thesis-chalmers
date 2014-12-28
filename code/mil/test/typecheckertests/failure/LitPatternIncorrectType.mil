@@ -1,0 +1,5 @@
+main : Unit =
+  case True of
+    | 0 => unit
+  end;
+

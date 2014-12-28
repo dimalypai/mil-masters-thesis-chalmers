@@ -16,6 +16,7 @@ module MIL.LintChecker
 
 import qualified Data.Set as Set
 import Control.Applicative
+import Data.Maybe (listToMaybe)
 
 import MIL.AST
 import MIL.AST.TypeAnnotated
@@ -166,6 +167,10 @@ lcExpr expr =
       unless (conType `alphaEq` dataConType) $
         throwError $ ConIncorrectType conName dataConType conType
 
+    CaseE scrutExpr caseAlts -> do
+      lcExpr scrutExpr
+      lcCaseAlts (getTypeOf scrutExpr) caseAlts
+
     TupleE elems -> mapM_ lcExpr elems
 
 {-
@@ -221,76 +226,89 @@ lcExpr expr =
       return $ TyApp (TyMonad tm2) eMonadResultType
 
     LetRecE bindings bodyExpr -> undefined
-
-    CaseE scrutExpr caseAlts -> do
-      scrutExprType <- tcExpr scrutExpr
-      tcCaseAlts scrutExprType caseAlts
+-}
 
 -- | Takes a scrutinee (an expression we are pattern matching on) type and a
--- list of case alternatives (which is not empty). Returns a type of their
--- bodies and so of the whole case expression (they all must agree).
-tcCaseAlts :: Type -> [CaseAlt] -> TypeCheckM Type
-tcCaseAlts scrutType caseAlts = do
-  caseAltTypes <- mapM (tcCaseAlt scrutType) caseAlts
-  -- There is at least one case alternative and all types should be the same
-  let caseExprType = head caseAltTypes
+-- list of case alternatives (which is not empty).
+lcCaseAlts :: Type -> [TyCaseAlt] -> TypeCheckM ()
+lcCaseAlts scrutType caseAlts = do
+  mapM_ (lcCaseAlt scrutType) caseAlts
+  -- There is at least one case alternative and all types should be the same.
+  let caseExprType = getTypeOf (head caseAlts)
   -- TODO: more than alphaEq: monad prefix
-  mIncorrectTypeAlt <- findM (\t -> not <$> (t `alphaEq` caseExprType)) caseAltTypes
-  case mIncorrectTypeAlt of
-    Just incorrectAltType ->
-      throwError $ CaseAltIncorrectType caseExprType incorrectAltType
+  let mCaseAltWithIncorrectType =
+        listToMaybe $
+          filter (\caseAlt -> not (getTypeOf caseAlt `alphaEq` caseExprType))
+            caseAlts
+  case mCaseAltWithIncorrectType of
+    Just caseAltWithIncorrectType ->
+      throwError $ CaseAltIncorrectType caseExprType (getTypeOf caseAltWithIncorrectType)
     Nothing -> return ()
-  return caseExprType
 
--- | Takes a scrutinee type and a case alternative, type checkes a pattern
--- against the scrutinee type and type checks the alternative's body with
+-- | Takes a scrutinee type and a case alternative, lint checkes a pattern
+-- against the scrutinee type and lint checks the alternative's body with
 -- variables bound by the pattern added to the local type environment.
--- Returns the type of the case alternative body.
-tcCaseAlt :: Type -> CaseAlt -> TypeCheckM Type
-tcCaseAlt scrutType (CaseAlt (pat, expr)) = do
-  localTypeEnv <- tcPattern scrutType pat emptyLocalTypeEnv
-  locallyWithEnvM localTypeEnv (tcExpr expr)
+lcCaseAlt :: Type -> TyCaseAlt -> TypeCheckM ()
+lcCaseAlt scrutType (CaseAlt (pat, expr)) = do
+  localTypeEnv <- lcPattern scrutType pat emptyLocalTypeEnv
+  locallyWithEnvM localTypeEnv (lcExpr expr)
 
--- | Takes a scrutinee type, a pattern and a local type environment. Type
--- checks the pattern against the scrutinee type and returns an extended local
--- type environment (with variables bound by the pattern).
--- The most interesting case is 'ConP'.
-tcPattern :: Type -> Pattern -> LocalTypeEnv -> TypeCheckM LocalTypeEnv
-tcPattern scrutType pat localTypeEnv =
+-- | Takes a scrutinee type, a pattern and a local type environment.
+-- Lint checks the pattern against the scrutinee type and returns an extended
+-- local type environment (with variables bound by the pattern).
+-- The most interesting cases are 'ConP' and 'TupleP'.
+lcPattern :: Type -> TyPattern -> LocalTypeEnv -> TypeCheckM LocalTypeEnv
+lcPattern scrutType pat localTypeEnv =
   case pat of
     LitP lit -> do
       let litType = getTypeOf lit
-      unlessM (litType `alphaEq` scrutType) $
+      unless (litType `alphaEq` scrutType) $
         throwError $ PatternIncorrectType scrutType litType
       return localTypeEnv
 
     VarP varBinder -> do
       let (VarBinder (var, varType)) = varBinder
       isBound <- isVarBoundM var
-      -- it is important to check in both places, since localTypeEnv is not
-      -- queried by 'isVarBound'
+      -- It is important to check in both places, since localTypeEnv is not
+      -- queried by 'isVarBoundM'.
       when (isBound || isVarInLocalEnv var localTypeEnv) $
         throwError $ VarShadowing var
-      unlessM (varType `alphaEq` scrutType) $
+      checkType varType
+      unless (varType `alphaEq` scrutType) $
         throwError $ PatternIncorrectType scrutType varType
       return $ addLocalVar var varType localTypeEnv
 
     ConP conName varBinders -> do
       unlessM (isDataConDefinedM conName) $
         throwError $ ConNotDefined conName
+
       conType <- getDataConTypeM conName
       conTypeName <- getDataConTypeNameM conName
       (scrutTypeName, scrutTypeArgs) <- transformScrutType scrutType conType
       when (conTypeName /= scrutTypeName) $
         throwError $ PatternIncorrectType scrutType conType
+
       let conFieldTypes = conFieldTypesFromType conType scrutTypeArgs
       when (length varBinders /= length conFieldTypes) $
         throwError $ ConPatternIncorrectNumberOfFields (length conFieldTypes) (length varBinders)
-      foldM (\localTyEnv (vb, fieldType) -> tcPattern fieldType (VarP vb) localTyEnv)
+
+      -- Constructor field patterns are checked as variable patterns.
+      foldM (\localTyEnv (vb, fieldType) -> lcPattern fieldType (VarP vb) localTyEnv)
         localTypeEnv (zip varBinders conFieldTypes)
 
+    TupleP varBinders -> do
+      unless (isTupleType scrutType) $
+        throwError $ PatternTupleType scrutType
+
+      let (TyTuple elemTypes) = scrutType
+      when (length varBinders /= length elemTypes) $
+        throwError $ TuplePatternIncorrectNumberOfElements (length elemTypes) (length varBinders)
+
+      -- Tuple element patterns are checked as variable patterns.
+      foldM (\localTyEnv (vb, elemType) -> lcPattern elemType (VarP vb) localTyEnv)
+        localTypeEnv (zip varBinders elemTypes)
+
     DefaultP -> return localTypeEnv
--}
 
 -- | Note [Data constructor lint checking]:
 --

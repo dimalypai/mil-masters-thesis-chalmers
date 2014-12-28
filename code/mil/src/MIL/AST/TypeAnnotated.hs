@@ -32,6 +32,7 @@ instance TypeAnnotated TyExpr where
     let TyForAll typeVar forallBodyType = getTypeOf appExpr
     in (typeVar, typeArg) `substTypeIn` forallBodyType
   getTypeOf (ConNameE _conName conType) = conType
+  getTypeOf (CaseE _scrutExpr caseAlts) = getTypeOf (head caseAlts)
   getTypeOf (TupleE elems) = TyTuple (map getTypeOf elems)
 
 instance TypeAnnotated Literal where
@@ -42,10 +43,6 @@ instance TypeAnnotated Literal where
 
 instance TypeAnnotated TyCaseAlt where
   getTypeOf (CaseAlt (_,e)) = getTypeOf e
-
-instance TypeAnnotated TyPattern where
-  getTypeOf (LitP lit) = getTypeOf lit
-  getTypeOf (VarP tyVarBinder) = getTypeOf tyVarBinder
 
 instance TypeAnnotated TyVarBinder where
   getTypeOf (VarBinder (_,t)) = t

@@ -1,0 +1,5 @@
+main : Unit =
+  case {1, 2} of
+    | {i : Int, b : Bool} => unit
+  end;
+

@@ -204,6 +204,10 @@ isTypeVar :: Type -> Bool
 isTypeVar (TyVar _) = True
 isTypeVar         _ = False
 
+isTupleType :: Type -> Bool
+isTupleType (TyTuple _) = True
+isTupleType           _ = False
+
 -- | Monadic type. It is either a single monad or a monad on top of another
 -- 'MonadType'. This represents a monad transformers stack, basically.
 data MonadType

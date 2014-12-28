@@ -1,0 +1,5 @@
+main : Unit =
+  case {1, 2} of
+    | {x : Int, y : Int, z : Int} => unit
+  end;
+

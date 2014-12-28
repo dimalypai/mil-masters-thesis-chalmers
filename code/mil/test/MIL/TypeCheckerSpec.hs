@@ -96,6 +96,45 @@ spec =
       it "given a function body with a tuple of incorrect type" $
         failureCase "TupleIncorrectType"
 
+      it "given a case alternative of incorrect type" $
+        failureCase "CaseAltIncorrectType"
+
+      it "given a literal pattern of incorrect type" $
+        failureCase "LitPatternIncorrectType"
+
+      it "given a variable pattern which shadows an existing function" $
+        failureCase "VarPatternShadowsFun"
+
+      it "given a variable pattern of incorrect type" $
+        failureCase "VarPatternIncorrectType"
+
+      it "given a constructor pattern with undefined constructor" $
+        failureCase "ConPatternUndefined"
+
+      it "given a constructor pattern of incorrect type" $
+        failureCase "ConPatternIncorrectType"
+
+      it "given a constructor pattern with incorrect number of field patterns" $
+        failureCase "ConPatternIncorrectNumberOfFields"
+
+      it "given a nested variable pattern (in constructor) which shadows another variable" $
+        failureCase "VarConPatternShadowsNested"
+
+      it "given a nested variable pattern (in constructor) of incorrect type" $
+        failureCase "VarConPatternNestedIncorrectType"
+
+      it "given a tuple pattern for non-tuple scrutinee" $
+        failureCase "TuplePatternNonTupleScrut"
+
+      it "given a tuple pattern with incorrect number of element patterns" $
+        failureCase "TuplePatternIncorrectNumberOfElements"
+
+      it "given a nested variable pattern (in tuple) which shadows another variable" $
+        failureCase "VarTuplePatternShadowsNested"
+
+      it "given a nested variable pattern (in tuple) of incorrect type" $
+        failureCase "VarTuplePatternNestedIncorrectType"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

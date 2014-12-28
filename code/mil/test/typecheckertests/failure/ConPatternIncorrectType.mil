@@ -1,0 +1,9 @@
+type T = MkT;
+
+type S = MkS;
+
+main : Unit =
+  case MkT of
+    | MkS => unit
+  end;
+

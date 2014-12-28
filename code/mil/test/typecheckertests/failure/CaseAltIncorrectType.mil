@@ -1,0 +1,6 @@
+main : Unit =
+  case 1 of
+    | 0 => unit
+    | 1 => 0.01
+  end;
+

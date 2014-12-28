@@ -1,0 +1,5 @@
+main : Unit =
+  case 1 of
+    | (b : Bool) => unit
+  end;
+

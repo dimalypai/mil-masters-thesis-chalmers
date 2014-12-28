@@ -46,6 +46,8 @@ data TcError =
   | CaseAltIncorrectType Type Type
   | PatternIncorrectType Type Type
   | ConPatternIncorrectNumberOfFields Int Int
+  | PatternTupleType Type
+  | TuplePatternIncorrectNumberOfElements Int Int
   | MonadConsOnTheLeft SrcType
   | OtherError String  -- ^ Contains error message.
   deriving (Show, Eq)
@@ -170,6 +172,14 @@ instance Pretty TcError where
   prPrn (ConPatternIncorrectNumberOfFields expNum actNum) =
     tcErrorHeader <+> text "The constructor pattern needs to have" <+> int expNum <+> text "argument(s)" <>
       text ", but it was given" <+> int actNum
+
+  prPrn (PatternTupleType expType) =
+    tcErrorHeader <+> text "The pattern needs to have type" <+> quotes (prPrn expType) <>
+      text ", but it has tuple type"
+
+  prPrn (TuplePatternIncorrectNumberOfElements expNum actNum) =
+    tcErrorHeader <+> text "The tuple pattern needs to have" <+> int expNum <+> text "element(s)" <>
+      text ", but it has" <+> int actNum
 
   prPrn (MonadConsOnTheLeft st) =
     tcErrorHeader <+> text "Monad cons cannot contain another monad cons as a left component: " <+> prPrn st

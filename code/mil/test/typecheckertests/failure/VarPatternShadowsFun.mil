@@ -1,0 +1,7 @@
+main : Unit = unit;
+
+fun : Int =
+  case unit of
+    | (main : Unit) => 1
+  end;
+

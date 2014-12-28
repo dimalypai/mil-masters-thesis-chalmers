@@ -23,9 +23,6 @@ ifM condM th el = do
   cond <- condM
   if cond then th else el
 
-findM :: Monad m => (a -> m Bool) -> [a] -> m (Maybe a)
-findM p xs = liftM listToMaybe (filterM p xs)
-
 -- | Convenient version of 'runStateT' with the arguments flipped.
 runStateTFrom :: Monad m => s -> StateT s m a -> m (a, s)
 runStateTFrom = flip runStateT

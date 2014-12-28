@@ -1,0 +1,7 @@
+type T = MkT Int Bool;
+
+main : Unit =
+  case MkT 1 True of
+    | MkT (i : Int) (b : Float) => unit
+  end;
+

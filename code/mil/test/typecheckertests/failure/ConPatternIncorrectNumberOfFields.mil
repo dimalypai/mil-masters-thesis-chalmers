@@ -1,0 +1,7 @@
+type T = MkT Int;
+
+main : Unit =
+  case MkT 1 of
+    | MkT => unit
+  end;
+
