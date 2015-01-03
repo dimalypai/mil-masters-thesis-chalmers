@@ -3,7 +3,6 @@ module MIL.Utils where
 
 import Control.Monad.State
 import Control.Monad.Reader
-import Data.Maybe (listToMaybe)
 
 -- | Monadic version of 'when'.
 whenM :: Monad m => m Bool -> m () -> m ()
