@@ -143,6 +143,15 @@ srcTypeToTypeWithTypeVarsOfKind typeVars kind srcType =
 
 -- | Transforms source representation of a monadic type to an internal one.
 --
+-- Checks if the type is well-formed, uses types in scope, has a kind
+-- * => * and that all nested types are well-kinded.
+--
+-- For details see 'srcMonadTypeToTypeWithTypeVarsOfKind'.
+srcMonadTypeToType :: SrcType -> TypeCheckM MonadType
+srcMonadTypeToType = srcMonadTypeToTypeWithTypeVarsOfKind Set.empty (mkKind 1)
+
+-- | Transforms source representation of a monadic type to an internal one.
+--
 -- Checks if the type is well-formed, uses types in scope, has a given kind and
 -- that all nested types are well-kinded.
 --

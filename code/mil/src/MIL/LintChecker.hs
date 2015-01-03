@@ -167,12 +167,6 @@ lcExpr expr =
       unless (conType `alphaEq` dataConType) $
         throwError $ ConIncorrectType conName dataConType conType
 
-    CaseE scrutExpr caseAlts -> do
-      lcExpr scrutExpr
-      lcCaseAlts (getTypeOf scrutExpr) caseAlts
-
-    TupleE elems -> mapM_ lcExpr elems
-
 {-
     LetE varBinder bindExpr bodyExpr -> do
       let var = getBinderVar varBinder
@@ -206,12 +200,13 @@ lcExpr expr =
             (return $ TyApp (TyMonad bindExprTm) bodyResultType)
             (return $ TyApp (TyMonad bodyExprTm) bodyResultType)
         _ -> throwError $ ExprHasNonMonadicType bodyType
+-}
 
-    ReturnE tm retExpr -> do
-      checkTypeM tm
-      retExprType <- tcExpr retExpr
-      return $ TyApp (TyMonad tm) retExprType
+    ReturnE mt retExpr -> do
+      checkMonadType mt
+      lcExpr retExpr
 
+{-
     LiftE e tm1 tm2 -> do
       checkTypeM tm1
       checkTypeM tm2
@@ -227,6 +222,12 @@ lcExpr expr =
 
     LetRecE bindings bodyExpr -> undefined
 -}
+
+    CaseE scrutExpr caseAlts -> do
+      lcExpr scrutExpr
+      lcCaseAlts (getTypeOf scrutExpr) caseAlts
+
+    TupleE elems -> mapM_ lcExpr elems
 
 -- | Takes a scrutinee (an expression we are pattern matching on) type and a
 -- list of case alternatives (which is not empty).

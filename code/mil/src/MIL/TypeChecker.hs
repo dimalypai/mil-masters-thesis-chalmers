@@ -173,13 +173,6 @@ tcExpr expr =
       conType <- getDataConTypeM conName
       return $ ConNameE conName conType
 
-    CaseE srcScrutExpr srcCaseAlts -> do
-      tyScrutExpr <- tcExpr srcScrutExpr
-      tyCaseAlts <- tcCaseAlts (getTypeOf tyScrutExpr) srcCaseAlts
-      return $ CaseE tyScrutExpr tyCaseAlts
-
-    TupleE srcElems -> TupleE <$> mapM tcExpr srcElems
-
 {-
     LetE varBinder bindExpr bodyExpr -> do
       let var = getBinderVar varBinder
@@ -213,12 +206,14 @@ tcExpr expr =
             (return $ TyApp (TyMonad bindExprTm) bodyResultType)
             (return $ TyApp (TyMonad bodyExprTm) bodyResultType)
         _ -> throwError $ ExprHasNonMonadicType bodyType
+-}
 
-    ReturnE tm retExpr -> do
-      checkTypeM tm
-      retExprType <- tcExpr retExpr
-      return $ TyApp (TyMonad tm) retExprType
+    ReturnE st srcRetExpr -> do
+      tyRetExpr <- tcExpr srcRetExpr
+      mt <- srcMonadTypeToType st
+      return $ ReturnE mt tyRetExpr
 
+{-
     LiftE e tm1 tm2 -> do
       checkTypeM tm1
       checkTypeM tm2
@@ -234,6 +229,13 @@ tcExpr expr =
 
     LetRecE bindings bodyExpr -> undefined
 -}
+
+    CaseE srcScrutExpr srcCaseAlts -> do
+      tyScrutExpr <- tcExpr srcScrutExpr
+      tyCaseAlts <- tcCaseAlts (getTypeOf tyScrutExpr) srcCaseAlts
+      return $ CaseE tyScrutExpr tyCaseAlts
+
+    TupleE srcElems -> TupleE <$> mapM tcExpr srcElems
 
 -- | Takes a scrutinee (an expression we are pattern matching on) type and a
 -- list of source case alternatives (which is not empty).

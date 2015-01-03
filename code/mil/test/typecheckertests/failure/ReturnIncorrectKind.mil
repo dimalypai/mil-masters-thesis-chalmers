@@ -1,0 +1,3 @@
+main : IO Unit =
+  return [IO Unit] unit;
+

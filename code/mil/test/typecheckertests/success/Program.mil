@@ -64,3 +64,9 @@ defaultPat : Int =
     | _ => 1
   end;
 
+ioFun : IO Unit =
+  return [IO] unit;
+
+ioNonTermFun : (IO ::: NonTerm) Unit =
+  return [IO ::: NonTerm] unit;
+

@@ -135,6 +135,12 @@ spec =
       it "given a nested variable pattern (in tuple) of incorrect type" $
         failureCase "VarTuplePatternNestedIncorrectType"
 
+      it "given a non-monadic type in return" $
+        failureCase "ReturnNonMonadic"
+
+      it "given a type of incorrect kind in return" $
+        failureCase "ReturnIncorrectKind"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

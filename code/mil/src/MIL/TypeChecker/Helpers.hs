@@ -110,6 +110,13 @@ checkTypeWithTypeVarsOfKind typeVars kind t =
 
     TyMonad mt -> checkMonadTypeWithTypeVarsOfKind typeVars kind mt
 
+-- | Checks if the monadic type is well-formed, uses types in scope, has a kind
+-- * => * and that all nested types are well-kinded.
+--
+-- For details see 'checkMonadTypeWithTypeVarsOfKind'.
+checkMonadType :: MonadType -> TypeCheckM ()
+checkMonadType = checkMonadTypeWithTypeVarsOfKind Set.empty (mkKind 1)
+
 -- | Checks if the monadic type is well-formed, uses types in scope, has a
 -- given kind and that all nested types are well-kinded.
 --
