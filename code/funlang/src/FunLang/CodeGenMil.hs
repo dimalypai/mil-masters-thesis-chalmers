@@ -211,7 +211,7 @@ literalMil :: TyLiteral -> MIL.Literal
 literalMil UnitLit {}         = MIL.UnitLit
 literalMil (IntLit _ _ i)     = MIL.IntLit i
 literalMil (FloatLit _ _ f _) = MIL.FloatLit f
-literalMil (StringLit _ _ s)  = MIL.StringLit s
+literalMil (StringLit _ _ s)  = undefined  -- TODO  type String = Empty | StrCons Char String
 
 -- | Code generation of binary operations.
 -- Takes a binary operation, its operands, a type of the result and a monad of
@@ -272,12 +272,12 @@ codeGenDoBlock (tyStmt:tyStmts) funMonad =
 codeGenBuiltInFunction :: MIL.TypeM -> Var -> CodeGenM (MIL.Expr, MIL.Type)
 codeGenBuiltInFunction funMonad funNameVar =
   case funNameVar of
-    Var "printString" -> codeGenArgBuiltInFunction (MIL.FunName "print_string") funMonad
-    Var "printInt"    -> codeGenArgBuiltInFunction (MIL.FunName "print_int") funMonad
-    Var "printFloat"  -> codeGenArgBuiltInFunction (MIL.FunName "print_float") funMonad
+    Var "printString" -> codeGenArgBuiltInFunction (MIL.FunName "printString") funMonad
+    Var "printInt"    -> codeGenArgBuiltInFunction (MIL.FunName "printInt") funMonad
+    Var "printFloat"  -> codeGenArgBuiltInFunction (MIL.FunName "printFloat") funMonad
 
-    Var "readInt"     -> codeGenNoArgBuiltInFunction (MIL.FunName "read_int") funMonad
-    Var "readFloat"   -> codeGenNoArgBuiltInFunction (MIL.FunName "read_float") funMonad
+    Var "readInt"     -> codeGenNoArgBuiltInFunction (MIL.FunName "readInt") funMonad
+    Var "readFloat"   -> codeGenNoArgBuiltInFunction (MIL.FunName "readFloat") funMonad
 
     -- TODO: state functions
 
