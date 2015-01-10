@@ -22,7 +22,7 @@ $lower = [a-z]
 $upper = [A-Z]
 $digit = [0-9]
 
-@lowerId = $lower [$alpha $digit \_]*
+@lowerId = \_* $lower [$alpha $digit \_]*
 @upperId = $upper [$alpha $digit \_]*
 
 @lineterm = [\n\r] | \r\n
