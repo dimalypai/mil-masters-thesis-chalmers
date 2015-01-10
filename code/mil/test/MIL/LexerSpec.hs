@@ -40,9 +40,9 @@ spec =
       [ IntLit 1, FloatLit 0.1 "0.1", FloatLit 0.01 "1e-2", FloatLit 0.01 "1.0e-2", CharLit '\n' ]
 
     it "recognises identifiers correctly" $
-      lexer "x T var_123 True"
+      lexer "x _x T var_123 True"
         `shouldBe`
-      [ LowerId "x", UpperId "T", LowerId "var_123", UpperId "True" ]
+      [ LowerId "x", LowerId "_x", UpperId "T", LowerId "var_123", UpperId "True" ]
 
     it "shows tokens correctly" $
       intercalate " " (map show
@@ -50,11 +50,11 @@ spec =
               \ =  :  \\  ->  /\\  .  =>  <- \
               \ |  _  (  )  [  ]  {  }  :::  ,  ; \
               \ 1 0.1 1.0e-2 1e-2 \
-              \ x T var_123 True '\n'"))
+              \ x _x T var_123 True '\n'"))
         `shouldBe`
       "case end forall let lift in of rec return type unit\
      \ = : \\ -> /\\ . => <-\
      \ | _ ( ) [ ] { } ::: , ;\
      \ 1 0.1 1.0e-2 1e-2\
-     \ x T var_123 True '\\n'"
+     \ x _x T var_123 True '\\n'"
 
