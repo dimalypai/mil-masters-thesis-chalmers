@@ -210,7 +210,7 @@ parseExpr :: String -> SrcExpr
 parseExpr = parseExprToks . lexer
 
 parseError :: [Token] -> a
-parseError toks = error $ "MIL parsing error"
+parseError toks = error $ "MIL parsing error: " ++ unwords (map show toks)
 
 }
 
