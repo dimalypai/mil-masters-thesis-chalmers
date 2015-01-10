@@ -144,6 +144,12 @@ spec =
       it "given a function body with bind of incorrect type" $
         failureCase "BindIncorrectType"
 
+      it "given a bind that shadows existing function" $
+        failureCase "BindShadowsFun"
+
+      it "given a nested bind with the same variable names" $
+        failureCase "BindShadowsNested"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

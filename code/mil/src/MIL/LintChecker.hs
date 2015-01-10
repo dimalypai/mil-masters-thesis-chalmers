@@ -170,8 +170,14 @@ lcExpr expr =
     LetE varBinder bindExpr bodyExpr -> do
       let var = getBinderVar varBinder
           varType = getBinderType varBinder
+      whenM (isVarBoundM var) $
+        throwError $ VarShadowing var
       checkType varType
       lcExpr bindExpr
+      -- Extend local type environment with the variable introduced by the
+      -- bind.
+      -- This is safe, since we ensure above that all variable and function
+      -- names are distinct.
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
       locallyWithEnvM localTypeEnv (lcExpr bodyExpr)
 

@@ -176,8 +176,14 @@ tcExpr expr =
 
     LetE srcVarBinder srcBindExpr srcBodyExpr -> do
       let var = getBinderVar srcVarBinder
+      whenM (isVarBoundM var) $
+        throwError $ VarShadowing var
       varType <- srcTypeToType (getBinderType srcVarBinder)
       tyBindExpr <- tcExpr srcBindExpr
+      -- Extend local type environment with the variable introduced by the
+      -- bind.
+      -- This is safe, since we ensure above that all variable and function
+      -- names are distinct.
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
       tyBodyExpr <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
       return $ LetE (VarBinder (var, varType)) tyBindExpr tyBodyExpr
