@@ -88,7 +88,8 @@ tcConDef typeName typeVars (ConDef conName srcConFields) = do
 
 -- | Checks that the type of the body is consistent with the specified function
 -- type.
--- TODO: dependency analysis, NonTerm
+-- TODO: dependency analysis, NonTerm? Recursion does not necessarily mean non termination?
+-- But it would be safe.
 tcFunDef :: SrcFunDef -> TypeCheckM TyFunDef
 tcFunDef (FunDef funName srcFunType srcBodyExpr) = do
   tyBodyExpr <- tcExpr srcBodyExpr
@@ -252,7 +253,6 @@ tcCaseAlts scrutType srcCaseAlts = do
   tyCaseAlts <- mapM (tcCaseAlt scrutType) srcCaseAlts
   -- There is at least one case alternative and all types should be the same.
   let caseExprType = getTypeOf (head tyCaseAlts)
-  -- TODO: more than alphaEq: monad prefix
   let mCaseAltWithIncorrectType =
         listToMaybe $
           filter (\tyCaseAlt -> not (getTypeOf tyCaseAlt `alphaEq` caseExprType))
