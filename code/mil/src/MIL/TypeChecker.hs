@@ -178,7 +178,9 @@ tcExpr expr =
       let var = getBinderVar srcVarBinder
       whenM (isVarBoundM var) $
         throwError $ VarShadowing var
+
       varType <- srcTypeToType (getBinderType srcVarBinder)
+
       tyBindExpr <- tcExpr srcBindExpr
       -- Extend local type environment with the variable introduced by the
       -- bind.
@@ -186,14 +188,16 @@ tcExpr expr =
       -- names are distinct.
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
       tyBodyExpr <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
+
+      unless (isMonadicExpr tyBindExpr) $
+        throwError $ ExprHasNonMonadicType (getTypeOf tyBindExpr)
+      unless (isMonadicExpr tyBodyExpr) $
+        throwError $ ExprHasNonMonadicType (getTypeOf tyBodyExpr)
+
       return $ LetE (VarBinder (var, varType)) tyBindExpr tyBodyExpr
 
 {-
     LetE varBinder bindExpr bodyExpr -> do
-      let var = getBinderVar varBinder
-          varType = getTypeOf varBinder
-      checkType varType
-      bindExprType <- tcExpr bindExpr
       bindExprTm <-
         case bindExprType of
           TyApp (TyMonad tm) a -> do
@@ -201,18 +205,6 @@ tcExpr expr =
               throwError $ IncorrectExprType (TyApp (TyMonad tm) varType) bindExprType
             return tm
           _ -> throwError $ ExprHasNonMonadicType bindExprType
-      bodyType <-
-        if (var /= Var "_")
-          then do whenM (isVarBound var) $
-                    throwError $ VarShadowing var
-                  -- Extend local type environment with the variable introduced by the
-                  -- bind.
-                  -- This is safe, since we ensure above that all variable and function
-                  -- names are distinct.
-                  -- Perform the type checking of the body in this extended environment.
-                  let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
-                  locallyWithEnv localTypeEnv (tcExpr bodyExpr)
-          else tcExpr bodyExpr
       case bodyType of
         TyApp (TyMonad bodyExprTm) bodyResultType -> do
           unlessM (compatibleMonadTypes bodyExprTm bindExprTm) $

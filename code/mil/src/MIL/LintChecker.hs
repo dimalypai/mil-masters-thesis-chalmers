@@ -172,7 +172,9 @@ lcExpr expr =
           varType = getBinderType varBinder
       whenM (isVarBoundM var) $
         throwError $ VarShadowing var
+
       checkType varType
+
       lcExpr bindExpr
       -- Extend local type environment with the variable introduced by the
       -- bind.
@@ -181,12 +183,13 @@ lcExpr expr =
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
       locallyWithEnvM localTypeEnv (lcExpr bodyExpr)
 
+      unless (isMonadicExpr bindExpr) $
+        throwError $ ExprHasNonMonadicType (getTypeOf bindExpr)
+      unless (isMonadicExpr bodyExpr) $
+        throwError $ ExprHasNonMonadicType (getTypeOf bodyExpr)
+
 {-
     LetE varBinder bindExpr bodyExpr -> do
-      let var = getBinderVar varBinder
-          varType = getBinderType varBinder
-      checkType varType
-      bindExprType <- tcExpr bindExpr
       bindExprTm <-
         case bindExprType of
           TyApp (TyMonad tm) a -> do
@@ -194,18 +197,6 @@ lcExpr expr =
               throwError $ IncorrectExprType (TyApp (TyMonad tm) varType) bindExprType
             return tm
           _ -> throwError $ ExprHasNonMonadicType bindExprType
-      bodyType <-
-        if (var /= Var "_")
-          then do whenM (isVarBoundM var) $
-                    throwError $ VarShadowing var
-                  -- Extend local type environment with the variable introduced by the
-                  -- bind.
-                  -- This is safe, since we ensure above that all variable and function
-                  -- names are distinct.
-                  -- Perform the type checking of the body in this extended environment.
-                  let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
-                  locallyWithEnvM localTypeEnv (tcExpr bodyExpr)
-          else tcExpr bodyExpr
       case bodyType of
         TyApp (TyMonad bodyExprTm) bodyResultType -> do
           unlessM (compatibleMonadTypes bodyExprTm bindExprTm) $

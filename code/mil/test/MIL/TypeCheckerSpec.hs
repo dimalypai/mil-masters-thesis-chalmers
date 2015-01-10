@@ -150,6 +150,12 @@ spec =
       it "given a nested bind with the same variable names" $
         failureCase "BindShadowsNested"
 
+      it "given a binder expression of non-monadic type" $
+        failureCase "BindExprNonMonadicType"
+
+      it "given a bind body expression of non-monadic type" $
+        failureCase "BindBodyExprNonMonadicType"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

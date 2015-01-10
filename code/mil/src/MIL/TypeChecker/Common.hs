@@ -4,11 +4,13 @@ module MIL.TypeChecker.Common
   , collectTypeDef
   , checkMain
   , checkShadowing
+  , isMonadicExpr
   ) where
 
 import qualified Data.Set as Set
 
 import MIL.AST
+import MIL.AST.TypeAnnotated
 import MIL.TypeChecker.TypeCheckM
 import MIL.TypeChecker.TcError
 import MIL.Utils
@@ -61,4 +63,12 @@ checkShadowing typeVars =
   forM_ typeVars (\tv ->
     whenM (isTypeDefinedM (typeVarToTypeName tv)) $
       throwError $ TypeParamShadowsType tv)
+
+-- | Returns True if an expression has a type which is a fully applied monad,
+-- assuming that kind checking has been done.
+isMonadicExpr :: TyExpr -> Bool
+isMonadicExpr tyExpr =
+  case getTypeOf tyExpr of
+    TyApp (TyMonad _) _ -> True
+    _ -> False
 
