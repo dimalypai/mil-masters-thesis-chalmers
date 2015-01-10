@@ -194,8 +194,14 @@ monadReturnType mt t = TyApp (TyMonad mt) t
 -- | For monadic type `m a` returns a result type `a`.
 -- Note: Unsafe. Make sure you pass a monadic type.
 getMonadResultType :: Type -> Type
-getMonadResultType (TyApp (TyMonad {}) t) = t
+getMonadResultType (TyApp (TyMonad _) t) = t
 getMonadResultType t = error $ "Type '" ++ show t ++ "' is not monadic"
+
+-- | For monadic type `m a` returns a monad type `m`.
+-- Note: Unsafe. Make sure you pass a monadic type.
+getMonadTypeFromApp :: Type -> MonadType
+getMonadTypeFromApp (TyApp (TyMonad mt) _) = mt
+getMonadTypeFromApp t = error $ "Type '" ++ show t ++ "' is not monadic"
 
 applyMonadType :: MonadType -> Type -> Type
 applyMonadType mt t = TyApp (TyMonad mt) t

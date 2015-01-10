@@ -156,6 +156,9 @@ spec =
       it "given a bind body expression of non-monadic type" $
         failureCase "BindBodyExprNonMonadicType"
 
+      it "given a bind with a type mismatch between variable binder and binder expression" $
+        failureCase "BindExprVarBinderTypeMismatch"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

@@ -1,0 +1,4 @@
+main : IO Unit =
+  let (x : Int) <- return [IO] unit in
+    return [IO] unit;
+

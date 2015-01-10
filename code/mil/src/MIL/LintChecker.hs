@@ -183,10 +183,16 @@ lcExpr expr =
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
       locallyWithEnvM localTypeEnv (lcExpr bodyExpr)
 
+      let bindExprType = getTypeOf bindExpr
       unless (isMonadicExpr bindExpr) $
-        throwError $ ExprHasNonMonadicType (getTypeOf bindExpr)
+        throwError $ ExprHasNonMonadicType bindExprType
       unless (isMonadicExpr bodyExpr) $
         throwError $ ExprHasNonMonadicType (getTypeOf bodyExpr)
+
+      let bindResultType = getMonadResultType bindExprType
+          monadType = getMonadTypeFromApp bindExprType
+      unless (bindResultType `alphaEq` varType) $
+        throwError $ IncorrectExprType (applyMonadType monadType varType) bindExprType
 
 {-
     LetE varBinder bindExpr bodyExpr -> do
@@ -196,15 +202,10 @@ lcExpr expr =
             unlessM (a `alphaEq` varType) $
               throwError $ IncorrectExprType (TyApp (TyMonad tm) varType) bindExprType
             return tm
-          _ -> throwError $ ExprHasNonMonadicType bindExprType
       case bodyType of
         TyApp (TyMonad bodyExprTm) bodyResultType -> do
           unlessM (compatibleMonadTypes bodyExprTm bindExprTm) $
             throwError $ IncorrectMonad bindExprTm bodyExprTm
-          ifM (bindExprTm `hasMoreEffectsThan` bodyExprTm)
-            (return $ TyApp (TyMonad bindExprTm) bodyResultType)
-            (return $ TyApp (TyMonad bodyExprTm) bodyResultType)
-        _ -> throwError $ ExprHasNonMonadicType bodyType
 -}
 
     ReturnE mt retExpr -> do
