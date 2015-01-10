@@ -5,6 +5,7 @@ module MIL.TypeChecker.Common
   , checkMain
   , checkShadowing
   , isMonadicExpr
+  , checkMonadicBinding
   ) where
 
 import qualified Data.Set as Set
@@ -13,6 +14,7 @@ import MIL.AST
 import MIL.AST.TypeAnnotated
 import MIL.TypeChecker.TypeCheckM
 import MIL.TypeChecker.TcError
+import MIL.TypeChecker.AlphaEq
 import MIL.Utils
 
 -- | In order to be able to handle (mutually) recursive definitions, we need to
@@ -71,4 +73,14 @@ isMonadicExpr tyExpr =
   case getTypeOf tyExpr of
     TyApp (TyMonad _) _ -> True
     _ -> False
+
+-- | Checks that binder expression is type compatible with the binder.
+checkMonadicBinding :: TyExpr -> TyVarBinder -> TypeCheckM ()
+checkMonadicBinding tyBindExpr tyVarBinder = do
+  let bindExprType = getTypeOf tyBindExpr
+      bindResultType = getMonadResultType bindExprType
+      monadType = getMonadTypeFromApp bindExprType
+      varType = getBinderType tyVarBinder
+  unless (bindResultType `alphaEq` varType) $
+    throwError $ IncorrectExprType (applyMonadType monadType varType) bindExprType
 
