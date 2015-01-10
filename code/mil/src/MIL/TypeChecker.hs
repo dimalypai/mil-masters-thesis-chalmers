@@ -173,6 +173,14 @@ tcExpr expr =
       conType <- getDataConTypeM conName
       return $ ConNameE conName conType
 
+    LetE srcVarBinder srcBindExpr srcBodyExpr -> do
+      let var = getBinderVar srcVarBinder
+      varType <- srcTypeToType (getBinderType srcVarBinder)
+      tyBindExpr <- tcExpr srcBindExpr
+      let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
+      tyBodyExpr <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
+      return $ LetE (VarBinder (var, varType)) tyBindExpr tyBodyExpr
+
 {-
     LetE varBinder bindExpr bodyExpr -> do
       let var = getBinderVar varBinder

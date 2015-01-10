@@ -167,6 +167,14 @@ lcExpr expr =
       unless (conType `alphaEq` dataConType) $
         throwError $ ConIncorrectType conName dataConType conType
 
+    LetE varBinder bindExpr bodyExpr -> do
+      let var = getBinderVar varBinder
+          varType = getBinderType varBinder
+      checkType varType
+      lcExpr bindExpr
+      let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
+      locallyWithEnvM localTypeEnv (lcExpr bodyExpr)
+
 {-
     LetE varBinder bindExpr bodyExpr -> do
       let var = getBinderVar varBinder

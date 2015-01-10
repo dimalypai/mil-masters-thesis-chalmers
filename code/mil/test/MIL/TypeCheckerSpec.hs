@@ -141,6 +141,9 @@ spec =
       it "given a type of incorrect kind in return" $
         failureCase "ReturnIncorrectKind"
 
+      it "given a function body with bind of incorrect type" $
+        failureCase "BindIncorrectType"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

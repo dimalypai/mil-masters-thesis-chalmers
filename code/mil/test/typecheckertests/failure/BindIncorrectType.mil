@@ -1,0 +1,4 @@
+main : State Unit =
+  let (x : Unit) <- return [IO] unit in
+    return [IO] x;
+

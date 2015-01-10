@@ -70,3 +70,7 @@ ioFun : IO Unit =
 ioNonTermFun : (IO ::: NonTerm) Unit =
   return [IO ::: NonTerm] unit;
 
+simpleBind : IO Unit =
+  let (x : Unit) <- return [IO] unit in
+    return [IO] x;
+

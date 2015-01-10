@@ -32,6 +32,7 @@ instance TypeAnnotated TyExpr where
     let TyForAll typeVar forallBodyType = getTypeOf appExpr
     in (typeVar, typeArg) `substTypeIn` forallBodyType
   getTypeOf (ConNameE _conName conType) = conType
+  getTypeOf (LetE _varBinder _bindExpr bodyExpr) = getTypeOf bodyExpr
   getTypeOf (ReturnE mt retExpr) = applyMonadType mt (getTypeOf retExpr)
   getTypeOf (CaseE _scrutExpr caseAlts) = getTypeOf (head caseAlts)
   getTypeOf (TupleE elems) = TyTuple (map getTypeOf elems)
