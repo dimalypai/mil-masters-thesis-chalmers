@@ -162,6 +162,9 @@ spec =
       it "given a bind with two incompatible monads" $
         failureCase "BindIncompatibleMonads"
 
+      it "given a lift of expression of non-monadic type" $
+        failureCase "LiftNonMonadicExpr"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

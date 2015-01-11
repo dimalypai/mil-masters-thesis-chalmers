@@ -214,6 +214,9 @@ tcExpr expr =
 
     LiftE srcExpr st1 st2 -> do
       tyExpr <- tcExpr srcExpr
+      unless (isMonadicExpr tyExpr) $
+        throwError $ ExprHasNonMonadicType (getTypeOf tyExpr)
+
       mt1 <- srcMonadTypeToType st1
       mt2 <- srcMonadTypeToType st2
       return $ LiftE tyExpr mt1 mt2

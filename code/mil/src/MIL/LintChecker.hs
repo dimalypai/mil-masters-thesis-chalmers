@@ -204,6 +204,9 @@ lcExpr expr =
 
     LiftE expr mt1 mt2 -> do
       lcExpr expr
+      unless (isMonadicExpr expr) $
+        throwError $ ExprHasNonMonadicType (getTypeOf expr)
+
       checkMonadType mt1
       checkMonadType mt2
 
