@@ -199,13 +199,16 @@ lcExpr expr =
         throwError $ IncorrectMonad bindMonadType bodyMonadType
 
     ReturnE mt retExpr -> do
-      checkMonadType mt
       lcExpr retExpr
+      checkMonadType mt
+
+    LiftE expr mt1 mt2 -> do
+      lcExpr expr
+      checkMonadType mt1
+      checkMonadType mt2
 
 {-
     LiftE e tm1 tm2 -> do
-      checkTypeM tm1
-      checkTypeM tm2
       -- TODO: not really suffix? just somewhere inside?
       unlessM (tm1 `isMonadSuffixOf` tm2) $
         throwError $ IncorrectLifting tm1 tm2
@@ -214,9 +217,6 @@ lcExpr expr =
       -- TODO: something more than alphaEq?
       unlessM (eMonad `alphaEq` tm1) $
         throwError $ OtherError "Incorrect lifting"
-      return $ TyApp (TyMonad tm2) eMonadResultType
-
-    LetRecE bindings bodyExpr -> undefined
 -}
 
     CaseE scrutExpr caseAlts -> do

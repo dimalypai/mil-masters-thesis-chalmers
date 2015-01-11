@@ -78,3 +78,6 @@ simpleBindMonadCons : (State ::: IO) Unit =
   let (x : Unit) <- return [State ::: IO] unit in
     return [State ::: IO] x;
 
+simpleLift : (State ::: IO) Int =
+  lift [IO => State ::: IO] return [IO] 1;
+

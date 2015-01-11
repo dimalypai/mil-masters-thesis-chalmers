@@ -212,10 +212,14 @@ tcExpr expr =
       mt <- srcMonadTypeToType st
       return $ ReturnE mt tyRetExpr
 
+    LiftE srcExpr st1 st2 -> do
+      tyExpr <- tcExpr srcExpr
+      mt1 <- srcMonadTypeToType st1
+      mt2 <- srcMonadTypeToType st2
+      return $ LiftE tyExpr mt1 mt2
+
 {-
     LiftE e tm1 tm2 -> do
-      checkTypeM tm1
-      checkTypeM tm2
       -- TODO: not really suffix? just somewhere inside?
       unlessM (tm1 `isMonadSuffixOf` tm2) $
         throwError $ IncorrectLifting tm1 tm2
@@ -224,9 +228,6 @@ tcExpr expr =
       -- TODO: something more than alphaEq?
       unlessM (eMonad `alphaEq` tm1) $
         throwError $ OtherError "Incorrect lifting"
-      return $ TyApp (TyMonad tm2) eMonadResultType
-
-    LetRecE bindings bodyExpr -> undefined
 -}
 
     CaseE srcScrutExpr srcCaseAlts -> do
