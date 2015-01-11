@@ -1,0 +1,1 @@
+MIL type checking error: Function body of the function 'main' has to have type 'State Int', but it has type '(State ::: IO) Int'

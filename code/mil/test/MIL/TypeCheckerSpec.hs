@@ -171,6 +171,9 @@ spec =
       it "given an incorrect lifting (not a suffix)" $
         failureCase "IncorrectLifting"
 
+      it "given a more effectful computation in function body" $
+        failureCase "MoreEffects"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.
