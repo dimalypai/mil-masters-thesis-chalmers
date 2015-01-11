@@ -25,7 +25,6 @@ import MIL.TypeChecker.Common
 import MIL.TypeChecker.SrcTypeHelpers
 import MIL.TypeChecker.Helpers
 import MIL.TypeChecker.AlphaEq
-import MIL.BuiltIn
 import MIL.Utils
 
 -- | Main entry point to the TypeChecker.
