@@ -105,7 +105,7 @@ instance Pretty SrcType where
     prPrnParens (st1 `typeHasLowerPrecAssoc` st) st1 <+>
     prPrnParens (st2 `typeHasLowerPrec` st) st2
   prPrn (SrcTyTuple elemSrcTypes) = braces (hsep $ punctuate comma $ map prPrn elemSrcTypes)
-  prPrn (SrcTyMonadCons st1 st2) = prPrn st1 <+> text ":::" <+> prPrn st2  -- TODO: associativity?
+  prPrn (SrcTyMonadCons st1 st2) = prPrn st1 <+> text ":::" <+> prPrn st2  -- TODO: associativity? parens?
 
 -- See Note [Precedences and associativity]
 instance Pretty Type where
@@ -125,11 +125,11 @@ instance Pretty Type where
 
 instance Pretty MonadType where
   prPrn (MTyMonad m) = prPrn m
-  prPrn (MTyMonadCons m mt) = prPrn m <+> text ":::" <+> prPrn mt
+  prPrn (MTyMonadCons m mt) = prPrn m <+> text ":::" <+> prPrn mt  -- TODO: parens?
 
 instance Pretty SingleMonad where
   prPrn (SinMonad m) = prPrn m
-  prPrn (SinMonadApp m t) = prPrn m <+> prPrn t  -- TODO
+  prPrn (SinMonadApp m t) = prPrn m <+> prPrn t  -- TODO: parens
 
 instance Pretty Kind where
   prPrn StarK = text "*"

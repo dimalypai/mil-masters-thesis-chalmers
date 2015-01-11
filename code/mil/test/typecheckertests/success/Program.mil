@@ -81,3 +81,6 @@ simpleBindMonadCons : (State ::: IO) Unit =
 simpleLift : (State ::: IO) Int =
   lift [IO => State ::: IO] return [IO] 1;
 
+consLift : (NonTerm ::: (State ::: IO)) Int =
+  lift [State ::: IO => NonTerm ::: (State ::: IO)] simpleLift;
+
