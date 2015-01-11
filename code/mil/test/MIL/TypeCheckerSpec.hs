@@ -165,6 +165,9 @@ spec =
       it "given a lift of expression of non-monadic type" $
         failureCase "LiftNonMonadicExpr"
 
+      it "given a lift with base monad mismatch" $
+        failureCase "LiftBaseMonadMismatch"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

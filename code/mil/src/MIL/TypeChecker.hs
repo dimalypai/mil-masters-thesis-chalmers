@@ -219,6 +219,11 @@ tcExpr expr =
 
       mt1 <- srcMonadTypeToType st1
       mt2 <- srcMonadTypeToType st2
+
+      let exprMonadType = getMonadTypeFromApp (getTypeOf tyExpr)
+      unless (exprMonadType `alphaEq` mt1) $
+        throwError $ IncorrectMonad mt1 exprMonadType
+
       return $ LiftE tyExpr mt1 mt2
 
 {-
@@ -226,11 +231,6 @@ tcExpr expr =
       -- TODO: not really suffix? just somewhere inside?
       unlessM (tm1 `isMonadSuffixOf` tm2) $
         throwError $ IncorrectLifting tm1 tm2
-      eType <- tcExpr e
-      let (TyApp (TyMonad eMonad) eMonadResultType) = eType
-      -- TODO: something more than alphaEq?
-      unlessM (eMonad `alphaEq` tm1) $
-        throwError $ OtherError "Incorrect lifting"
 -}
 
     CaseE srcScrutExpr srcCaseAlts -> do

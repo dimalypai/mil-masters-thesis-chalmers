@@ -202,24 +202,23 @@ lcExpr expr =
       lcExpr retExpr
       checkMonadType mt
 
-    LiftE expr mt1 mt2 -> do
-      lcExpr expr
-      unless (isMonadicExpr expr) $
-        throwError $ ExprHasNonMonadicType (getTypeOf expr)
+    LiftE liftExpr mt1 mt2 -> do
+      lcExpr liftExpr
+      unless (isMonadicExpr liftExpr) $
+        throwError $ ExprHasNonMonadicType (getTypeOf liftExpr)
 
       checkMonadType mt1
       checkMonadType mt2
+
+      let exprMonadType = getMonadTypeFromApp (getTypeOf liftExpr)
+      unless (exprMonadType `alphaEq` mt1) $
+        throwError $ IncorrectMonad mt1 exprMonadType
 
 {-
     LiftE e tm1 tm2 -> do
       -- TODO: not really suffix? just somewhere inside?
       unlessM (tm1 `isMonadSuffixOf` tm2) $
         throwError $ IncorrectLifting tm1 tm2
-      eType <- tcExpr e
-      let (TyApp (TyMonad eMonad) eMonadResultType) = eType
-      -- TODO: something more than alphaEq?
-      unlessM (eMonad `alphaEq` tm1) $
-        throwError $ OtherError "Incorrect lifting"
 -}
 
     CaseE scrutExpr caseAlts -> do
