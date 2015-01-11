@@ -189,29 +189,23 @@ tcExpr expr =
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
       tyBodyExpr <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
 
+      let bindExprType = getTypeOf tyBindExpr
+          bodyExprType = getTypeOf tyBodyExpr
+
       unless (isMonadicExpr tyBindExpr) $
-        throwError $ ExprHasNonMonadicType (getTypeOf tyBindExpr)
+        throwError $ ExprHasNonMonadicType bindExprType
       unless (isMonadicExpr tyBodyExpr) $
-        throwError $ ExprHasNonMonadicType (getTypeOf tyBodyExpr)
+        throwError $ ExprHasNonMonadicType bodyExprType
 
       let tyVarBinder = VarBinder (var, varType)
       checkMonadicBinding tyBindExpr tyVarBinder
 
-      return $ LetE tyVarBinder tyBindExpr tyBodyExpr
+      let bindMonadType = getMonadTypeFromApp bindExprType
+      let bodyMonadType = getMonadTypeFromApp bodyExprType
+      unless (bodyMonadType `alphaEq` bindMonadType) $
+        throwError $ IncorrectMonad bindMonadType bodyMonadType
 
-{-
-    LetE varBinder bindExpr bodyExpr -> do
-      bindExprTm <-
-        case bindExprType of
-          TyApp (TyMonad tm) a -> do
-            unlessM (a `alphaEq` varType) $
-              throwError $ IncorrectExprType (TyApp (TyMonad tm) varType) bindExprType
-            return tm
-      case bodyType of
-        TyApp (TyMonad bodyExprTm) bodyResultType -> do
-          unlessM (compatibleMonadTypes bodyExprTm bindExprTm) $
-            throwError $ IncorrectMonad bindExprTm bodyExprTm
--}
+      return $ LetE tyVarBinder tyBindExpr tyBodyExpr
 
     ReturnE st srcRetExpr -> do
       tyRetExpr <- tcExpr srcRetExpr

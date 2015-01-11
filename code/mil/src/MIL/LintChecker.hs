@@ -183,26 +183,20 @@ lcExpr expr =
       let localTypeEnv = addLocalVar var varType emptyLocalTypeEnv
       locallyWithEnvM localTypeEnv (lcExpr bodyExpr)
 
+      let bindExprType = getTypeOf bindExpr
+          bodyExprType = getTypeOf bodyExpr
+
       unless (isMonadicExpr bindExpr) $
-        throwError $ ExprHasNonMonadicType (getTypeOf bindExpr)
+        throwError $ ExprHasNonMonadicType bindExprType
       unless (isMonadicExpr bodyExpr) $
-        throwError $ ExprHasNonMonadicType (getTypeOf bodyExpr)
+        throwError $ ExprHasNonMonadicType bodyExprType
 
       checkMonadicBinding bindExpr varBinder
 
-{-
-    LetE varBinder bindExpr bodyExpr -> do
-      bindExprTm <-
-        case bindExprType of
-          TyApp (TyMonad tm) a -> do
-            unlessM (a `alphaEq` varType) $
-              throwError $ IncorrectExprType (TyApp (TyMonad tm) varType) bindExprType
-            return tm
-      case bodyType of
-        TyApp (TyMonad bodyExprTm) bodyResultType -> do
-          unlessM (compatibleMonadTypes bodyExprTm bindExprTm) $
-            throwError $ IncorrectMonad bindExprTm bodyExprTm
--}
+      let bindMonadType = getMonadTypeFromApp bindExprType
+      let bodyMonadType = getMonadTypeFromApp bodyExprType
+      unless (bodyMonadType `alphaEq` bindMonadType) $
+        throwError $ IncorrectMonad bindMonadType bodyMonadType
 
     ReturnE mt retExpr -> do
       checkMonadType mt

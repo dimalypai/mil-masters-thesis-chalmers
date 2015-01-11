@@ -159,6 +159,9 @@ spec =
       it "given a bind with a type mismatch between variable binder and binder expression" $
         failureCase "BindExprVarBinderTypeMismatch"
 
+      it "given a bind with two incompatible monads" $
+        failureCase "BindIncompatibleMonads"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.
