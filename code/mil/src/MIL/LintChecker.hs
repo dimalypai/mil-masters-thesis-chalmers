@@ -213,12 +213,8 @@ lcExpr expr =
       unless (exprMonadType `alphaEq` mt1) $
         throwError $ IncorrectMonad mt1 exprMonadType
 
-{-
-    LiftE e tm1 tm2 -> do
-      -- TODO: not really suffix? just somewhere inside?
-      unlessM (tm1 `isMonadSuffixOf` tm2) $
-        throwError $ IncorrectLifting tm1 tm2
--}
+      unless (mt1 `isMonadSuffixOf` mt2) $
+        throwError $ IncorrectLifting mt1 mt2
 
     CaseE scrutExpr caseAlts -> do
       lcExpr scrutExpr

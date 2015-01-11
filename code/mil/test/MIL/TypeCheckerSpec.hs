@@ -168,6 +168,9 @@ spec =
       it "given a lift with base monad mismatch" $
         failureCase "LiftBaseMonadMismatch"
 
+      it "given an incorrect lifting (not a suffix)" $
+        failureCase "IncorrectLifting"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

@@ -159,7 +159,7 @@ instance Pretty TcError where
       text "monad, but it operates in the" <+> quotes (prPrn actType) <+> text "monad"
 
   prPrn (IncorrectLifting tm1 tm2) =
-    tcErrorHeader <+> text "Incorrect lifting. Can not lift from" <+> quotes (prPrn tm1) <+> text "to" <+> quotes (prPrn tm2) <> text "."
+    tcErrorHeader <+> text "Incorrect lifting. Can not lift from" <+> quotes (prPrn tm1) <+> text "to" <+> quotes (prPrn tm2)
 
   prPrn (CaseAltIncorrectType expType actType) =
     tcErrorHeader <+> text "The case alternative expression needs to have type" <+> quotes (prPrn expType) <>

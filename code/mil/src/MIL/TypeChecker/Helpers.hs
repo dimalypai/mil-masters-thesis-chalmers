@@ -203,7 +203,7 @@ conFieldTypesFromType t typeArgs = init $ conFieldTypesFromType' t typeArgs
         conFieldTypesFromType' tyVar@(TyVar {}) [] = [tyVar]
         conFieldTypesFromType'          _ _ = error "conFieldTypesFromType: kind checking must have gone wrong"
 
--- * 'TypeM' helpers
+-- * 'MonadType' helpers
 
 -- | Checks if two monads are compatible. This means if one of them is alpha
 -- equivalent to another or one of them is a prefix of another.
@@ -233,17 +233,12 @@ hasMoreEffectsThan t1@(MTyMonad {}) t2@(MTyMonadCons {}) = not <$> t2 `hasMoreEf
 -- alpha equivalent.
 -- For example, m2 is a suffix of m1 ::: m2.
 --
+-- This operation is reflexive.
 -- This operation is *not* commutative.
 isMonadSuffixOf :: MonadType -> MonadType -> Bool
 isMonadSuffixOf (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
-isMonadSuffixOf t1@(MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
-  let isSuffix = (m1 `alphaEq` m2) && (tm1 `isMonadSuffixOf` tm2)
-      isShiftedSuffix = t1 `isMonadSuffixOf` tm2
-  in isSuffix || isShiftedSuffix
-isMonadSuffixOf t1@(MTyMonad {}) (MTyMonadCons _ tm2) = t1 `isMonadSuffixOf` tm2
+isMonadSuffixOf t1@(MTyMonadCons {}) t2@(MTyMonadCons _ mt2) =
+  t1 `alphaEq` t2 || t1 `isMonadSuffixOf` mt2
+isMonadSuffixOf t1@(MTyMonad {}) (MTyMonadCons _ mt2) = t1 `isMonadSuffixOf` mt2
 isMonadSuffixOf (MTyMonadCons {}) (MTyMonad {}) = False
-
--- TODO
-containsMonad :: Type -> MonadType -> TypeCheckM Bool
-containsMonad = undefined
 

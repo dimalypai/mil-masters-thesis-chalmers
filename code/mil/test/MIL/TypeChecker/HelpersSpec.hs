@@ -175,7 +175,40 @@ spec = do
       fst <$> runTypeCheckM (checkTypeWithTypeVarsOfKind Set.empty (mkKind 1) t) initTypeEnv
         `shouldBe` Left tcError
 
-    -- TODO: test monadic helpers
+  describe "isMonadSuffixOf" $ do
+    it "is reflexive" $
+      let m = MTyMonad (SinMonad Id)
+      in m `isMonadSuffixOf` m
+
+    it "returns False for two different monads" $
+      let m1 = MTyMonad (SinMonad Id)
+          m2 = MTyMonad (SinMonad NonTerm)
+      in not $ m1 `isMonadSuffixOf` m2
+
+    it "handles alpha equivalence" $
+      let m1 = MTyMonad (SinMonadApp (SinMonad Error) (TyForAll (TypeVar "A") (mkTypeVar "A")))
+          m2 = MTyMonad (SinMonadApp (SinMonad Error) (TyForAll (TypeVar "B") (mkTypeVar "B")))
+      in m1 `isMonadSuffixOf` m2
+
+    it "is not commutative" $
+      let m1 = MTyMonad (SinMonad Id)
+          m2 = MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id)
+      in (m1 `isMonadSuffixOf` m2) `shouldBe` not (m2 `isMonadSuffixOf` m1)
+
+    it "handles two monad conses" $
+      let m1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
+          m2 = MTyMonadCons (SinMonad State) m1
+      in m1 `isMonadSuffixOf` m2
+
+    it "returns False for non-matching ending" $
+      let m1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
+          m2 = MTyMonadCons (SinMonad State) (MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad Id))
+      in not $ m1 `isMonadSuffixOf` m2
+
+    it "returns False for a suffix with injected monad (bug)" $
+      let m1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad Id)
+          m2 = MTyMonadCons (SinMonad NonTerm) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id))
+      in not $ m1 `isMonadSuffixOf` m2
 
 -- * Infrastructure
 
