@@ -458,3 +458,22 @@ General thoughts
   representation? Probably, TypeChecker needs to do additional work, tracking
   type variables and converting special type constructors to built-in monads.
 
+General thoughts. January
+=========================
+
+* The previous reasoning on the subject of "why monad prefix thing works"
+  seems to be not quite correct. See MIL type checking test MoreEffects:
+main : State Int =
+  return [State ::: IO] 1;
+In this case State Int should definitely not mean (State ::: M) Int,
+because then we could hide IO, which is obviously wrong.
+But:
+implicitMonadQuantification : (State ::: IO) Int =
+  return [State] 1;
+should work. How should this behave in bind? Right now, first binder
+restricts everything else with its monad:
+let (x : Int) <- return [IO] 1 in
+  return [IO ::: State] 2;
+This will not pass the type checker and we cannot do anything to the first
+return to make it IO ::: State. Should we choose the highest effect?
+
