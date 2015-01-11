@@ -95,7 +95,7 @@ expr
   | '/\\' typevar '.' expr { TypeLambdaE $2 $4 }
   | let letbinder in expr { LetE (fst $2) (snd $2) $4 }
   | return '[' srctype ']' expr { ReturnE $3 $5 }
-  | lift '[' atomsrctype '->' atomsrctype ']' expr { LiftE $7 $3 $5 }
+  | lift '[' srctype '=>' srctype ']' expr { LiftE $7 $3 $5 }
   | let rec seplist1(letbinder, ';') in expr { LetRecE $3 $5 }
   | case expr of list1(casealt) end { CaseE $2 $4 }
 

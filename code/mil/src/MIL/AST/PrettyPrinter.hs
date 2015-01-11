@@ -63,7 +63,7 @@ instance (Pretty mt, Pretty t) => Pretty (Expr Var ct mt t) where
     text "return" <+> brackets (prPrn m) <+>
     prPrnParens (e1 `exprHasLowerPrec` e) e1
   prPrn e@(LiftE e1 tm1 tm2) =
-    text "lift" <+> brackets (prPrn tm1 <+> text "->" <+> prPrn tm2) <+>
+    text "lift" <+> brackets (prPrn tm1 <+> text "=>" <+> prPrn tm2) <+>
     prPrnParens (e1 `exprHasLowerPrec` e) e1
   prPrn (LetRecE varBinds e) =
     text "let rec" <+>
