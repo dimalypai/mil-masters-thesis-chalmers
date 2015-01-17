@@ -133,7 +133,7 @@ tcExpr expr =
           argType = getTypeOf tyArgExpr
       case appType of
         TyArrow paramType _resultType ->
-          if not (argType `alphaEq` paramType)
+          if not (argType `isCompatibleWith` paramType)
             then throwError $ IncorrectFunArgType paramType argType
             else return $ AppE tyAppExpr tyArgExpr
         _ -> throwError $ NotFunctionType appType

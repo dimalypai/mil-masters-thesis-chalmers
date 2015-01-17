@@ -128,7 +128,7 @@ lcExpr expr =
           argType = getTypeOf argExpr
       case appType of
         TyArrow paramType _resultType ->
-          unless (argType `alphaEq` paramType) $
+          unless (argType `isCompatibleWith` paramType) $
             throwError $ IncorrectFunArgType paramType argType
         _ -> throwError $ NotFunctionType appType
 

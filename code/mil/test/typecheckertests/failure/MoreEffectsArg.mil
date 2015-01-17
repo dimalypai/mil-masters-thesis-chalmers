@@ -1,0 +1,5 @@
+main : IO Int = takesIOComp (return [IO ::: State] 1);
+
+takesIOComp : IO Int -> IO Int =
+  \(f : IO Int) -> let (x : Int) <- f in return [IO] x;
+
