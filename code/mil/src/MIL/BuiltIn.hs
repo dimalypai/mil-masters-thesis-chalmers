@@ -78,10 +78,8 @@ builtInFunctions :: [(FunName, Type)]
 builtInFunctions =
   [
   -- IO functions
-    (FunName "print_int",    TyArrow intType    (ioType unitType))
-  , (FunName "print_float",  TyArrow floatType  (ioType unitType))
-  , (FunName "print_char",   TyArrow charType   (ioType unitType))
-  , (FunName "read_char",    ioType  charType)
+    (FunName "print_char", TyArrow charType   (ioType unitType))
+  , (FunName "read_char",  ioType  charType)
   -- Ref functions
   , (FunName "new_ref",   TyForAll (TypeVar "A")
       (TyArrow (mkTypeVar "A") (stateType (refType $ mkTypeVar "A"))))
