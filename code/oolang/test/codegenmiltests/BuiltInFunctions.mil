@@ -2,23 +2,50 @@ type Maybe A
   = Nothing
   | Just A;
 
+type String
+  = Empty
+  | StrCons Char String;
+
 alias Pure_M = Error Unit ::: NonTerm;
 
 alias Impure_M = Error Unit ::: NonTerm ::: State ::: IO;
 
-readBool : Impure_M Bool =
-  let (bool_str : String) <- read_string in
-    case bool_str of
-      | "true" => return [Impure_M] True
-      | "false" => return [Impure_M] False
-      | _ => throw_error [Unit] [Bool] unit
-    end;
+printString : String -> IO Unit =
+  \(str : String) -> case str of
+                       | Empty => return [IO] unit;
+                       | StrCons (c : Char) (cs : String) => let (_ : Unit) <- print_char c in
+                                                               printString cs
+                     end;
 
 printBool : Bool -> IO Unit =
   \(b : Bool) -> case b of
-                   | True => print_string "true"
-                   | False => print_string "false"
+                   | True => printString (StrCons 't' (StrCons 'r' (StrCons 'u' (StrCons 'e' Empty))))
+                   | False => printString (StrCons 'f' (StrCons 'a' (StrCons 'l' (StrCons 's' (StrCons 'e' Empty)))))
                  end;
+
+readBool : Impure_M Bool =
+  let (c_1 : Char) <- read_char in
+    case c_1 of
+      | 't' => let (c_2 : Char) <- read_char in
+                 case c_2 of
+                   | 'r' => return [Impure_M] True
+                   | _ => throw_error [Unit] [Bool] unit
+                 end
+      | 'f' => let (c_2 : Char) <- read_char in
+                 case c_2 of
+                   | 'a' => return [Impure_M] False
+                   | _ => throw_error [Unit] [Bool] unit
+                 end
+      | _ => throw_error [Unit] [Bool] unit
+    end;
+
+printInt : Int -> IO Unit =
+
+readInt : Impure_M Int =
+
+printFloat : Float -> IO Unit =
+
+readFloat : Impure_M Float =
 
 main : Impure_M Unit =
   let (_ : Unit) <- let (var_0 : String -> IO Unit) <- return [Impure_M] print_string in
