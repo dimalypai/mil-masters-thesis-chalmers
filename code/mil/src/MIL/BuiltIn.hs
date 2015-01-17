@@ -71,6 +71,8 @@ ioType t = TyApp (TyMonad $ MTyMonad $ SinMonad IO) t
 stateType :: Type -> Type
 stateType t = TyApp (TyMonad $ MTyMonad $ SinMonad State) t
 
+errorType :: Type -> Type -> Type
+errorType et at = TyApp (TyMonad $ MTyMonad $ SinMonadApp (SinMonad Error) et) at
 
 -- * Built-in functions
 
@@ -87,6 +89,26 @@ builtInFunctions =
       (TyArrow (refType $ mkTypeVar "A") (stateType $ mkTypeVar "A")))
   , (FunName "write_ref", TyForAll (TypeVar "A")
       (TyArrow (refType $ mkTypeVar "A") (TyArrow (mkTypeVar "A") (stateType unitType))))
+  -- Error functions
+  , (FunName "throw_error", TyForAll (TypeVar "E") $ TyForAll (TypeVar "A")
+      (TyArrow (mkTypeVar "E") (errorType (mkTypeVar "E") (mkTypeVar "A"))))
+  , (FunName "catch_error", TyForAll (TypeVar "E") $ TyForAll (TypeVar "A")
+      (TyArrow (errorType (mkTypeVar "E") (mkTypeVar "A"))
+               (TyArrow (TyArrow (mkTypeVar "E") (errorType (mkTypeVar "E") (mkTypeVar "A")))
+                        (errorType (mkTypeVar "E") (mkTypeVar "A")))))
+  -- Arithmetic functions
+  , (FunName "add_int",   TyArrow intType (TyArrow intType intType))
+  , (FunName "add_float", TyArrow floatType (TyArrow floatType floatType))
+  , (FunName "sub_int",   TyArrow intType (TyArrow intType intType))
+  , (FunName "sub_float", TyArrow floatType (TyArrow floatType floatType))
+  , (FunName "mul_int",   TyArrow intType (TyArrow intType intType))
+  , (FunName "mul_float", TyArrow floatType (TyArrow floatType floatType))
+  , (FunName "div_int",   TyArrow intType (TyArrow intType (errorType unitType intType)))
+  , (FunName "div_float", TyArrow floatType (TyArrow floatType (errorType unitType intType)))
+  -- Comparison functions
+  , (FunName "eq_int",   TyArrow intType (TyArrow intType boolType))
+  , (FunName "eq_float", TyArrow floatType (TyArrow floatType boolType))
+  , (FunName "eq_char",  TyArrow charType (TyArrow charType boolType))
   ]
 
 -- Unsafe. Make sure that there exists such a built-in function.
