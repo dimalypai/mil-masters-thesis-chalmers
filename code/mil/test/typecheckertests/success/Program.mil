@@ -91,6 +91,10 @@ bindHigherEffect : (IO ::: State) Int =
   let (x : Int) <- return [IO] 1 in
     return [IO ::: State] 2;
 
+bindHigherEffect2 : (IO ::: State) Int =
+  let (x : Int) <- return [IO ::: State] 1 in
+    return [IO] 2;
+
 takesMonadicComp : (IO ::: State) Int -> (IO ::: State) Int =
   \(f : (IO ::: State) Int) ->
     let (x : Int) <- f in return [IO ::: State] x;
