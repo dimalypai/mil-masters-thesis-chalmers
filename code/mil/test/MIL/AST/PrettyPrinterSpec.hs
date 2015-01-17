@@ -77,6 +77,8 @@ spec =
                         (LitE $ IntLit 2)])
       in testCase baseName ast
 
+    -- TODO: test src types
+
     it "pretty prints types" $
       let baseName = "Types"
           ast = Program
@@ -126,6 +128,7 @@ spec =
                         (LitE UnitLit)])
       in testCase baseName ast
 
+    -- TODO: let rec
     it "pretty prints expressions" $
       let baseName = "Expressions"
           ast = Program
