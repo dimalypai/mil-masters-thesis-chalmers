@@ -87,7 +87,7 @@ lcFunDef :: TyFunDef -> TypeCheckM ()
 lcFunDef (FunDef funName funType bodyExpr) = do
   lcExpr bodyExpr
   let bodyType = getTypeOf bodyExpr
-  unless (bodyType `alphaEq` funType) $
+  unless (bodyType `isCompatibleWith` funType) $
     throwError $ FunBodyIncorrectType funName funType bodyType
 
 -- | Expression lint checking.
@@ -194,7 +194,7 @@ lcExpr expr =
 
       let bindMonadType = getMonadTypeFromApp bindExprType
       let bodyMonadType = getMonadTypeFromApp bodyExprType
-      unless (bodyMonadType `alphaEq` bindMonadType) $
+      unless (bodyMonadType `isCompatibleMonadWith` bindMonadType) $
         throwError $ IncorrectMonad bindMonadType bodyMonadType
 
     ReturnE mt retExpr -> do

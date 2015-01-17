@@ -210,6 +210,61 @@ spec = do
           m2 = MTyMonadCons (SinMonad NonTerm) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id))
       in not $ m1 `isMonadSuffixOf` m2
 
+  describe "isCompatibleMonadWith" $ do
+    it "is reflexive" $
+      let m = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad Id)
+      in m `isCompatibleMonadWith` m
+
+    it "returns False for incompatible monads" $
+      let m1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad Id)
+          m2 = MTyMonadCons (SinMonad NonTerm) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id))
+      in not $ m1 `isCompatibleMonadWith` m2
+
+    it "handles alpha equivalence" $
+      let m1 = MTyMonad (SinMonadApp (SinMonad Error) (TyForAll (TypeVar "A") (mkTypeVar "A")))
+          m2 = MTyMonad (SinMonadApp (SinMonad Error) (TyForAll (TypeVar "B") (mkTypeVar "B")))
+      in m1 `isCompatibleMonadWith` m2
+
+    it "is commutative" $
+      let m1 = MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad NonTerm))
+          m2 = MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State)
+      in (m1 `isCompatibleMonadWith` m2) `shouldBe` (m2 `isCompatibleMonadWith` m1)
+
+  describe "isCompatibleWith" $ do
+    it "is reflexive" $
+      let t = TyApp (TyMonad $ MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad IO)) intType
+      in t `isCompatibleWith` t
+
+    it "returns True for compatible types" $
+      let t1 = TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State)
+          t2 = TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad NonTerm))
+      in t1 `isCompatibleWith` t2
+
+    it "returns False for incompatible types" $
+      let t1 = unitType
+          t2 = boolType
+      in not $ t1 `isCompatibleWith` t2
+
+    it "returns False for incompatible monadic types" $  -- TODO: future work, commutative effects?
+      let t1 = TyMonad $ MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad IO)
+          t2 = TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State)
+      in not $ t1 `isCompatibleWith` t2
+
+    it "returns False when monad application is incompatible in the result type" $
+      let t1 = TyApp (TyMonad $ MTyMonad (SinMonad IO)) (TyMonad $ MTyMonad (SinMonad State))
+          t2 = TyApp (TyMonad $ MTyMonad (SinMonad IO)) (TyMonad $ MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad IO))
+      in not $ t1 `isCompatibleWith` t2
+
+    it "handles alpha equivalence" $
+      let t1 = TyApp (TyMonad $ MTyMonad (SinMonadApp (SinMonad Error) (TyForAll (TypeVar "A") (mkTypeVar "A")))) intType
+          t2 = TyApp (TyMonad $ MTyMonad (SinMonadApp (SinMonad Error) (TyForAll (TypeVar "B") (mkTypeVar "B")))) intType
+      in t1 `isCompatibleWith` t2
+
+    it "is not commutative" $
+      let t1 = TyApp (TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State)) boolType
+          t2 = TyApp (TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad NonTerm))) boolType
+      in (t1 `isCompatibleWith` t2) `shouldBe` not (t2 `isCompatibleWith` t1)
+
 -- * Infrastructure
 
 successCase :: Type -> IO ()

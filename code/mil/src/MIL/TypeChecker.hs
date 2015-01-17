@@ -94,7 +94,7 @@ tcFunDef (FunDef funName srcFunType srcBodyExpr) = do
   tyBodyExpr <- tcExpr srcBodyExpr
   funType <- srcTypeToType srcFunType
   let bodyType = getTypeOf tyBodyExpr
-  unless (bodyType `alphaEq` funType) $
+  unless (bodyType `isCompatibleWith` funType) $
     throwError $ FunBodyIncorrectType funName funType bodyType
   return $ FunDef funName funType tyBodyExpr
 
@@ -201,7 +201,7 @@ tcExpr expr =
 
       let bindMonadType = getMonadTypeFromApp bindExprType
       let bodyMonadType = getMonadTypeFromApp bodyExprType
-      unless (bodyMonadType `alphaEq` bindMonadType) $
+      unless (bodyMonadType `isCompatibleMonadWith` bindMonadType) $
         throwError $ IncorrectMonad bindMonadType bodyMonadType
 
       return $ LetE tyVarBinder tyBindExpr tyBodyExpr

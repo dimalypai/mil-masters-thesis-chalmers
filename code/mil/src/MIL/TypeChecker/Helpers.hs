@@ -3,7 +3,6 @@ module MIL.TypeChecker.Helpers where
 
 import qualified Data.Set as Set
 import Data.List (foldl')
-import Control.Applicative
 
 import MIL.AST
 import MIL.TypeChecker.TypeCheckM
@@ -203,31 +202,38 @@ conFieldTypesFromType t typeArgs = init $ conFieldTypesFromType' t typeArgs
         conFieldTypesFromType' tyVar@(TyVar {}) [] = [tyVar]
         conFieldTypesFromType'          _ _ = error "conFieldTypesFromType: kind checking must have gone wrong"
 
--- * 'MonadType' helpers
+-- * Helpers for monadic types
+
+-- | Checks if two types are compatible. For most types this simply means alpha
+-- equivalence. For monadic types this means non-commutative monad
+-- compatibility (mt1 is a prefix of mt2). (see 'isCompatibleMonadWith').
+--
+-- This operation is reflexive.
+-- This operation is *not* commutative.
+isCompatibleWith :: Type -> Type -> Bool
+isCompatibleWith (TyMonad mt1) (TyMonad mt2) =
+  mt1 `isCompatibleMonadWithNotCommut` mt2
+isCompatibleWith (TyApp mt1@(TyMonad _) t1) (TyApp mt2@(TyMonad _) t2) =
+  (mt1 `isCompatibleWith` mt2) && (t1 `alphaEq` t2)  -- TODO: t1 `isCompatibleWith` t2 ?
+isCompatibleWith t1 t2 = t1 `alphaEq` t2
+
+-- | Not commutative version of 'isCompatibleMonadWith'.
+isCompatibleMonadWithNotCommut :: MonadType -> MonadType -> Bool
+isCompatibleMonadWithNotCommut (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
+isCompatibleMonadWithNotCommut (MTyMonadCons m1 mt1) (MTyMonadCons m2 mt2) =
+  (m1 `alphaEq` m2) && (mt1 `isCompatibleMonadWithNotCommut` mt2)
+isCompatibleMonadWithNotCommut (MTyMonad m1) (MTyMonadCons m2 _) = m1 `alphaEq` m2
+isCompatibleMonadWithNotCommut _ _ = False
 
 -- | Checks if two monads are compatible. This means if one of them is alpha
 -- equivalent to another or one of them is a prefix of another.
 -- For example, m1 is a prefix of m1 ::: m2.
 --
+-- This operation is reflexive.
 -- This operation is commutative.
-compatibleMonadTypes :: MonadType -> MonadType -> Bool
-compatibleMonadTypes (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
-compatibleMonadTypes (MTyMonadCons m1 tm1) (MTyMonadCons m2 tm2) =
-  (m1 `alphaEq` m2) && compatibleMonadTypes tm1 tm2
-compatibleMonadTypes (MTyMonad m1) (MTyMonadCons m2 _) = m1 `alphaEq` m2
-compatibleMonadTypes tm1 tm2 = compatibleMonadTypes tm2 tm1
-
--- | Compares two monads in terms of their effects.
--- Main idea: monad cons cell has more effects than a single monad.
---
--- Assumption: 'compatibleMonadTypes' returned True.
---
--- This operation is *not* commutative.
-hasMoreEffectsThan :: MonadType -> MonadType -> TypeCheckM Bool
-hasMoreEffectsThan (MTyMonadCons _ tm1) (MTyMonadCons _ tm2) = tm1 `hasMoreEffectsThan` tm2
-hasMoreEffectsThan (MTyMonadCons {}) (MTyMonad {}) = return True
-hasMoreEffectsThan (MTyMonad {}) (MTyMonad {}) = return False
-hasMoreEffectsThan t1@(MTyMonad {}) t2@(MTyMonadCons {}) = not <$> t2 `hasMoreEffectsThan` t1
+isCompatibleMonadWith :: MonadType -> MonadType -> Bool
+isCompatibleMonadWith mt1 mt2 =
+  (mt1 `isCompatibleMonadWithNotCommut` mt2) || (mt2 `isCompatibleMonadWithNotCommut` mt1)
 
 -- | Checks if the first monad is a suffix of the second one or if they are
 -- alpha equivalent.

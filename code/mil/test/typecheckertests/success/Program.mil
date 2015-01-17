@@ -84,3 +84,10 @@ simpleLift : (State ::: IO) Int =
 consLift : (NonTerm ::: (State ::: IO)) Int =
   lift [State ::: IO => NonTerm ::: (State ::: IO)] simpleLift;
 
+implicitMonadQuantification : (State ::: IO) Int =
+  return [State] 1;
+
+bindHigherEffect : (IO ::: State) Int =
+  let (x : Int) <- return [IO] 1 in
+    return [IO ::: State] 2;
+
