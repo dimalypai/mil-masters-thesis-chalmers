@@ -2,9 +2,6 @@
 -- Built using the API from 'TypeCheckM'.
 --
 -- Produces a typed representation of a program and a type environment.
---
--- TODO: Look carefully at all alphaEq usages. Maybe something more (with
--- monads) is needed.
 module MIL.TypeChecker
   ( typeCheck
   , TypeEnv
@@ -220,7 +217,7 @@ tcExpr expr =
       mt2 <- srcMonadTypeToType st2
 
       let exprMonadType = getMonadTypeFromApp (getTypeOf tyExpr)
-      unless (exprMonadType `alphaEq` mt1) $
+      unless (exprMonadType `isCompatibleMonadWithNotCommut` mt1) $
         throwError $ IncorrectMonad mt1 exprMonadType
 
       unless (mt1 `isMonadSuffixOf` mt2) $
@@ -242,6 +239,8 @@ tcCaseAlts scrutType srcCaseAlts = do
   tyCaseAlts <- mapM (tcCaseAlt scrutType) srcCaseAlts
   -- There is at least one case alternative and all types should be the same.
   let caseExprType = getTypeOf (head tyCaseAlts)
+  -- TODO: more than alphaEq. isCompatibleWith?
+  -- we would then take effect of the first alternative which might be not the highest
   let mCaseAltWithIncorrectType =
         listToMaybe $
           filter (\tyCaseAlt -> not (getTypeOf tyCaseAlt `alphaEq` caseExprType))

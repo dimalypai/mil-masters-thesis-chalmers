@@ -4,9 +4,6 @@
 -- The main goal is to construct a type environment from a typed program
 -- and to ensure that the program is well-typed. Can help to ensure that
 -- transformations preserve typing.
---
--- TODO: Look carefully at all alphaEq usages. Maybe something more (with
--- monads) is needed.
 module MIL.LintChecker
   ( lintCheck
   , TcError
@@ -210,7 +207,7 @@ lcExpr expr =
       checkMonadType mt2
 
       let exprMonadType = getMonadTypeFromApp (getTypeOf liftExpr)
-      unless (exprMonadType `alphaEq` mt1) $
+      unless (exprMonadType `isCompatibleMonadWithNotCommut` mt1) $
         throwError $ IncorrectMonad mt1 exprMonadType
 
       unless (mt1 `isMonadSuffixOf` mt2) $
@@ -229,7 +226,8 @@ lcCaseAlts scrutType caseAlts = do
   mapM_ (lcCaseAlt scrutType) caseAlts
   -- There is at least one case alternative and all types should be the same.
   let caseExprType = getTypeOf (head caseAlts)
-  -- TODO: more than alphaEq: monad prefix
+  -- TODO: more than alphaEq. isCompatibleWith?
+  -- we would then take effect of the first alternative which might be not the highest
   let mCaseAltWithIncorrectType =
         listToMaybe $
           filter (\caseAlt -> not (getTypeOf caseAlt `alphaEq` caseExprType))

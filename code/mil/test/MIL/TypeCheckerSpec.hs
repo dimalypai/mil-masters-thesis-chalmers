@@ -177,6 +177,9 @@ spec =
       it "given a more effectful computation as an argument" $
         failureCase "MoreEffectsArg"
 
+      it "given a more effectful computation in lift" $
+        failureCase "MoreEffectsLift"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

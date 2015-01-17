@@ -1,0 +1,3 @@
+main : (NonTerm ::: (IO ::: State)) Int =
+  lift [IO => NonTerm ::: IO] return [IO ::: State] 1;
+

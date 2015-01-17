@@ -97,3 +97,6 @@ takesMonadicComp : (IO ::: State) Int -> (IO ::: State) Int =
 
 passIOComp : (IO ::: State) Int = takesMonadicComp (return [IO] 1);
 
+relaxedLift : (NonTerm ::: (IO ::: State)) Int =
+  lift [IO ::: State => NonTerm ::: (IO ::: State)] return [IO] 1;
+
