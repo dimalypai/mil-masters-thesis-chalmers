@@ -10,6 +10,7 @@ import qualified MIL.BuiltIn as MIL
 builtInFunctions :: [(FunName, Type)]
 builtInFunctions =
   [ (FunName "printString", TyArrow TyString TyUnit)
+  , (FunName "readString",  TyString)
   , (FunName "printBool",   TyArrow TyBool   TyUnit)
   , (FunName "readBool",    TyBool)
   , (FunName "printInt",    TyArrow TyInt    TyUnit)

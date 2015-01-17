@@ -61,6 +61,7 @@ builtInFunctions =
   [
   -- IO functions
     (FunName "printString", TyArrow stringType (ioType unitType))
+  , (FunName "readString",  ioType stringType)
   , (FunName "printInt",    TyArrow intType    (ioType unitType))
   , (FunName "readInt",     ioType intType)
   , (FunName "printFloat",  TyArrow floatType  (ioType unitType))
