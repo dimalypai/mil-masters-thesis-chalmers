@@ -5,6 +5,7 @@ import Test.Hspec
 import System.FilePath((</>), (<.>))
 
 import MIL.AST
+import MIL.AST.Builder
 import MIL.PrettyPrinter
 import MIL.AST.PrettyPrinter()
 

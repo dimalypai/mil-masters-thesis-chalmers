@@ -14,6 +14,7 @@ import Control.Applicative
 import Data.Maybe (listToMaybe)
 
 import MIL.AST
+import MIL.AST.Helpers
 import MIL.AST.TypeAnnotated
 import MIL.TypeChecker.TypeCheckM
 import MIL.TypeChecker.TypeEnv

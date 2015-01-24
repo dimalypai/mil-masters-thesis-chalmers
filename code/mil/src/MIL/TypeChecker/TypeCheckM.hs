@@ -35,6 +35,7 @@ import Control.Monad.Reader
 import Control.Applicative
 
 import MIL.AST
+import MIL.AST.Helpers
 import MIL.TypeChecker.TypeEnv
 import MIL.TypeChecker.TcError
 import MIL.Utils

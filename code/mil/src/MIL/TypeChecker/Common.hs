@@ -11,6 +11,8 @@ module MIL.TypeChecker.Common
 import qualified Data.Set as Set
 
 import MIL.AST
+import MIL.AST.Builder
+import MIL.AST.Helpers
 import MIL.AST.TypeAnnotated
 import MIL.TypeChecker.TypeCheckM
 import MIL.TypeChecker.TcError

@@ -36,12 +36,6 @@ newtype Program v ct mt t = Program ([TypeDef t], [FunDef v ct mt t])
 type SrcProgram = Program Var () SrcType SrcType
 type TyProgram  = Program TyVarBinder Type MonadType Type
 
-getMilTypeDefs :: Program v ct mt t -> [TypeDef t]
-getMilTypeDefs (Program (typeDefs, _)) = typeDefs
-
-getMilFunDefs :: Program v ct mt t -> [FunDef v ct mt t]
-getMilFunDefs (Program (_, funDefs)) = funDefs
-
 -- | Type definition:
 --
 -- * type name
@@ -185,35 +179,6 @@ data Type
   | TyMonad MonadType
   deriving (Show, Eq)
 
--- | Applies a monad type given as a first argument to the "return type"
--- (right-most type of the type arrow) of the type given as a second argument.
-monadReturnType :: MonadType -> Type -> Type
-monadReturnType mt (TyArrow t1 t2) = TyArrow t1 (monadReturnType mt t2)
-monadReturnType mt t = TyApp (TyMonad mt) t
-
--- | For monadic type `m a` returns a result type `a`.
--- Note: Unsafe. Make sure you pass a monadic type.
-getMonadResultType :: Type -> Type
-getMonadResultType (TyApp (TyMonad _) t) = t
-getMonadResultType t = error $ "Type '" ++ show t ++ "' is not monadic"
-
--- | For monadic type `m a` returns a monad type `m`.
--- Note: Unsafe. Make sure you pass a monadic type.
-getMonadTypeFromApp :: Type -> MonadType
-getMonadTypeFromApp (TyApp (TyMonad mt) _) = mt
-getMonadTypeFromApp t = error $ "Type '" ++ show t ++ "' is not monadic"
-
-applyMonadType :: MonadType -> Type -> Type
-applyMonadType mt t = TyApp (TyMonad mt) t
-
-isTypeVar :: Type -> Bool
-isTypeVar (TyVar _) = True
-isTypeVar         _ = False
-
-isTupleType :: Type -> Bool
-isTupleType (TyTuple _) = True
-isTupleType           _ = False
-
 -- | Monadic type. It is either a single monad or a monad on top of another
 -- 'MonadType'. This represents a monad transformers stack, basically.
 data MonadType
@@ -244,26 +209,11 @@ newtype VarBinder t = VarBinder (Var, t)
 type SrcVarBinder = VarBinder SrcType
 type TyVarBinder  = VarBinder Type
 
-getBinderVar :: VarBinder t -> Var
-getBinderVar (VarBinder (v,_)) = v
-
-getBinderType :: VarBinder t -> t
-getBinderType (VarBinder (_,t)) = t
-
 newtype Var = Var String
   deriving (Show, Eq, Ord)
 
-varToFunName :: Var -> FunName
-varToFunName (Var varName) = FunName varName
-
 newtype TypeVar = TypeVar String
   deriving (Show, Eq, Ord)
-
-typeVarToTypeName :: TypeVar -> TypeName
-typeVarToTypeName (TypeVar typeVarName) = TypeName typeVarName
-
-typeNameToTypeVar :: TypeName -> TypeVar
-typeNameToTypeVar (TypeName typeName) = TypeVar typeName
 
 newtype TypeName = TypeName String
   deriving (Show, Eq, Ord)
@@ -274,9 +224,6 @@ newtype ConName = ConName String
 newtype FunName = FunName String
   deriving (Show, Eq, Ord)
 
-funNameToVar :: FunName -> Var
-funNameToVar (FunName funName) = Var funName
-
 -- | Built-in monads (effects).
 data MilMonad = Id
               | State
@@ -285,7 +232,7 @@ data MilMonad = Id
               | IO
   deriving (Show, Read, Eq)
 
--- Precedences
+-- * Precedences
 
 getExprPrec :: Expr v ct mt t -> Int
 getExprPrec LitE        {} = 6
@@ -331,20 +278,6 @@ typeHasLowerPrec t1 t2 = getTypePrec t1 <= getTypePrec t2
 -- Note: It is *not* reflexive: t `typeHasLowerPrecAssoc` t ==> False
 typeHasLowerPrecAssoc :: IsType t => t -> t -> Bool
 typeHasLowerPrecAssoc t1 t2 = getTypePrec t1 < getTypePrec t2
-
--- * Smart constructors
-
-mkTypeVar :: String -> Type
-mkTypeVar = TyVar . TypeVar
-
-mkSimpleType :: String -> Type
-mkSimpleType typeName = TyTypeCon (TypeName typeName)
-
--- | Constructs a kind from an integer that denotes the number of parameters of
--- a type constructor
-mkKind :: Int -> Kind
-mkKind 0 = StarK
-mkKind n = StarK :=>: mkKind (n - 1)
 
 class IsType t where
   isAtomicType :: t -> Bool

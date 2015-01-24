@@ -6,6 +6,7 @@ import Control.Applicative
 import qualified Data.Set as Set
 
 import MIL.AST
+import MIL.AST.Builder
 import MIL.BuiltIn
 import MIL.TypeChecker.Helpers
 import MIL.TypeChecker.TypeCheckM

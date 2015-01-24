@@ -6,6 +6,7 @@ import qualified Data.Map as Map
 import Data.Maybe (fromJust)
 
 import MIL.AST
+import MIL.AST.Builder
 
 -- * Built-in types
 

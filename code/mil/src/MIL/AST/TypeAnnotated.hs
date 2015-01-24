@@ -7,6 +7,8 @@
 module MIL.AST.TypeAnnotated where
 
 import MIL.AST
+import MIL.AST.Builder
+import MIL.AST.Helpers
 import MIL.TypeChecker.Helpers
 import MIL.TypeChecker.TypeSubstitution
 import MIL.BuiltIn
