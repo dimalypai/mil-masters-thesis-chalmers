@@ -17,6 +17,7 @@ library
                        MIL.AST.Builder
                        MIL.AST.Helpers
                        MIL.AST.PrettyPrinter
+                       MIL.AST.TypeAnnotated
                        MIL.BuiltIn
                        MIL.Lexer
                        MIL.LintChecker
