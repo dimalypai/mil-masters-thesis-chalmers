@@ -118,7 +118,7 @@ interactive flags typeEnv revProgramStrs = do
                    case typeOf srcExpr typeEnv of
                      Left tcErr -> putStrLn (prPrint tcErr)
                      Right exprType -> putStrLn ({-prPrint srcExpr ++ " : " ++ -}prPrint exprType)
-          processCommand _ = putStrLn "Wrong command"
+          processCommand _ = putStrLn "Incorrect command"
       processCommand command
   interactive flags typeEnv revProgramStrs
 
