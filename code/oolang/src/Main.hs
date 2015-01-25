@@ -102,6 +102,8 @@ interactive flags typeEnv revProgramStrs = do
                 when (CheckMil `elem` flags) $
                   checkMil optMilProgram "After Optimiser"
                 putStrLn (MIL.prPrint optMilProgram)
+    -- `:print` displays all the programs defined with `:define` command.
+    ":print" -> putStr ((intercalate "\n\n" $ reverse revProgramStrs) ++ "\n")
     -- All commands with arguments go here
     command -> do
       let processCommand cmd | Just fileName <- stripPrefix ":save " cmd =
