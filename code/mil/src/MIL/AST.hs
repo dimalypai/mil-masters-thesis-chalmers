@@ -21,6 +21,8 @@
 --
 -- newtypes are used quite extensively to have a strong distinction between
 -- different types of names.
+--
+-- Derived 'Eq' instances on AST nodes are used for testing purposes.
 module MIL.AST where
 
 -- | Program:
@@ -31,7 +33,7 @@ module MIL.AST where
 --
 -- Note: they must be in the same order on the source level.
 newtype Program v ct mt t = Program ([TypeDef t], [FunDef v ct mt t])
-  deriving Show
+  deriving (Show, Eq)
 
 type SrcProgram = Program Var () SrcType SrcType
 type TyProgram  = Program TyVarBinder Type MonadType Type
@@ -44,7 +46,7 @@ type TyProgram  = Program TyVarBinder Type MonadType Type
 --
 -- * list of constructor definitions
 data TypeDef t = TypeDef TypeName [TypeVar] [ConDef t]
-  deriving Show
+  deriving (Show, Eq)
 
 type SrcTypeDef = TypeDef SrcType
 type TyTypeDef  = TypeDef Type
@@ -55,7 +57,7 @@ type TyTypeDef  = TypeDef Type
 --
 -- * constructor fields (expressed as types)
 data ConDef t = ConDef ConName [t]
-  deriving Show
+  deriving (Show, Eq)
 
 type SrcConDef = ConDef SrcType
 type TyConDef  = ConDef Type
@@ -70,7 +72,7 @@ type TyConDef  = ConDef Type
 --
 -- Note: there is only one function equation and it is without patterns.
 data FunDef v ct mt t = FunDef FunName t (Expr v ct mt t)
-  deriving Show
+  deriving (Show, Eq)
 
 type SrcFunDef = FunDef Var () SrcType SrcType
 type TyFunDef  = FunDef TyVarBinder Type MonadType Type
