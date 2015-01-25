@@ -180,7 +180,7 @@ data Flag = Interactive | DumpAst | Opt | CheckMil | Help
 options :: [OptDescr Flag]
 options =
   [ Option ['i'] ["interactive"] (NoArg Interactive) "Interactive mode (REPL)"
-  , Option []    ["dump-ast"]    (NoArg DumpAst)     "Write AST to a file"
+  , Option []    ["dump-ast"]    (NoArg DumpAst)     "Write AST to the screen"
   , Option ['O'] []              (NoArg Opt)         "Perform optimisations"
   , Option ['c'] ["check-mil"]   (NoArg CheckMil)    "Perform MIL type checking"
   , Option ['h'] ["help"]        (NoArg Help)        "Prints this help information"
