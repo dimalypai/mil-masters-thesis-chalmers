@@ -20,6 +20,7 @@ import OOLang.Utils
 import qualified MIL.AST as MIL
 import qualified MIL.AST.PrettyPrinter as MIL
 import qualified MIL.TypeChecker as MIL
+import qualified MIL.LintChecker as MIL
 
 -- | Main entry point.
 -- Gets compiler arguments.
@@ -93,15 +94,17 @@ interactive flags typeEnv revProgramStrs = do
             Right (tyProgram, programTypeEnv) -> do
               when (DumpAst `elem` flags) $
                 putStrLn (ppShow tyProgram)
-              let milProgram = codeGen tyProgram programTypeEnv
-              when (CheckMil `elem` flags) $
-                checkMil milProgram "Before Optimiser"
-              putStrLn (MIL.prPrint milProgram)
-              when (Opt `elem` flags) $ do
-                let optMilProgram = optimiseMil milProgram
-                when (CheckMil `elem` flags) $
-                  checkMil optMilProgram "After Optimiser"
-                putStrLn (MIL.prPrint optMilProgram)
+              let milSrcProgram = codeGen tyProgram programTypeEnv
+              mTyMilProgram <- typeCheckMil milSrcProgram "Before Optimiser"
+              putStrLn (MIL.prPrint milSrcProgram)
+              case mTyMilProgram of
+                Just tyMilProgram ->
+                  when (Opt `elem` flags) $ do
+                    let optMilProgram = optimiseMil tyMilProgram
+                    when (CheckMil `elem` flags) $
+                      lintCheckMil optMilProgram "After Optimiser"
+                    putStrLn (MIL.prPrint optMilProgram)
+                Nothing -> return ()
     -- `:print` displays all the programs defined with `:define` command.
     ":print" -> putStr ((intercalate "\n\n" $ reverse revProgramStrs) ++ "\n")
     -- All commands with arguments go here
@@ -137,9 +140,21 @@ readProgram = readProgram' 1 []
 
 -- | Performs MIL type checking and prints an error message if it fails.
 -- Takes a string for a phase to improve error message.
-checkMil :: MIL.Program -> String -> IO ()
-checkMil milProgram phase =
-  case MIL.typeCheck milProgram of
+-- Returns a typed MIL program in the case of success.
+typeCheckMil :: MIL.SrcProgram -> String -> IO (Maybe MIL.TyProgram)
+typeCheckMil srcMilProgram phase =
+  case MIL.typeCheck srcMilProgram of
+    Left milTcErr -> do
+      putStrLn (phase ++ ":")
+      putStrLn (MIL.prPrint milTcErr)
+      return Nothing
+    Right (tyProgram, _) -> return $ Just tyProgram
+
+-- | Performs MIL lint checking and prints an error message if it fails.
+-- Takes a string for a phase to improve error message.
+lintCheckMil :: MIL.TyProgram -> String -> IO ()
+lintCheckMil tyMilProgram phase =
+  case MIL.lintCheck tyMilProgram of
     Left milTcErr -> do
       putStrLn (phase ++ ":")
       putStrLn (MIL.prPrint milTcErr)
@@ -163,16 +178,18 @@ compiler flags args = do
         Right (tyProgram, programTypeEnv) -> do
           when (DumpAst `elem` flags) $
             putStrLn (ppShow tyProgram)
-          let milProgram = codeGen tyProgram programTypeEnv
-          when (CheckMil `elem` flags) $
-            checkMil milProgram "Before Optimiser"
-          let outMilProgram = if Opt `elem` flags
-                                then optimiseMil milProgram
-                                else milProgram
-          when (Opt `elem` flags && CheckMil `elem` flags) $
-            checkMil outMilProgram "After Optimiser"
-          putStrLn (MIL.prPrint outMilProgram)
-          exitSuccess
+          let srcMilProgram = codeGen tyProgram programTypeEnv
+          mTyMilProgram <- typeCheckMil srcMilProgram "Before Optimiser"
+          case mTyMilProgram of
+            Just tyMilProgram -> do
+              let outMilProgram = if Opt `elem` flags
+                                    then optimiseMil tyMilProgram
+                                    else tyMilProgram
+              when (Opt `elem` flags && CheckMil `elem` flags) $
+                lintCheckMil outMilProgram "After Optimiser"
+              putStrLn (MIL.prPrint outMilProgram)
+              exitSuccess
+            Nothing -> exitFailure
 
 -- | Compiler flags.
 data Flag = Interactive | DumpAst | Opt | CheckMil | Help
