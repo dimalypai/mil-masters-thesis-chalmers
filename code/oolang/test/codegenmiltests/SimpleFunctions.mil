@@ -2,17 +2,17 @@ type Maybe A
   = Nothing
   | Just A;
 
-alias Pure_M = Error Unit ::: NonTerm;
+type String
+  = Empty_Str
+  | Cons_Str Char String;
 
-alias Impure_M = Error Unit ::: NonTerm ::: State ::: IO;
-
-main : Impure_M Unit =
-  let (_ : Unit) <- return [Impure_M] unit in
-    let (_ : Int) <- pureFun in
+main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  let (var_0 : Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit in
+    let (var_1 : Int) <- pureFun in
       main;
 
-pureFun : Pure_M Int =
-  let (_ : Unit) <- return [Pure_M] unit in
-    let (_ : Int) <- pureFun in
-      return [Pure_M] 1;
+pureFun : (Error Unit ::: NonTerm) Int =
+  let (var_2 : Unit) <- return [Error Unit ::: NonTerm] unit in
+    let (var_3 : Int) <- pureFun in
+      return [Error Unit ::: NonTerm] 1;
 
