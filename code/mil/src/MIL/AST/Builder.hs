@@ -3,6 +3,20 @@ module MIL.AST.Builder where
 
 import MIL.AST
 
+mkSrcFunDef :: String -> SrcType -> SrcExpr -> SrcFunDef
+mkSrcFunDef funNameStr funType bodyExpr =
+  FunDef (FunName funNameStr) funType bodyExpr
+
+mkCharLit :: Char -> Expr v ct mt t
+mkCharLit = LitE . CharLit
+
+mkSrcLambda :: Var -> SrcType -> SrcExpr -> SrcExpr
+mkSrcLambda var varType bodyExpr =
+  LambdaE (VarBinder (var, varType)) bodyExpr
+
+mkSrcConName :: String -> SrcExpr
+mkSrcConName conNameStr = ConNameE (ConName conNameStr) ()
+
 mkTypeVar :: String -> Type
 mkTypeVar = TyVar . TypeVar
 
