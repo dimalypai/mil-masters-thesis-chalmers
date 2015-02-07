@@ -17,6 +17,10 @@ mkSrcLambda var varType bodyExpr =
 mkSrcConName :: String -> SrcExpr
 mkSrcConName conNameStr = ConNameE (ConName conNameStr) ()
 
+mkSrcLet :: Var -> SrcType -> SrcExpr -> SrcExpr -> SrcExpr
+mkSrcLet var varType bindExpr bodyExpr =
+  LetE (VarBinder (var, varType)) bindExpr bodyExpr
+
 mkTypeVar :: String -> Type
 mkTypeVar = TyVar . TypeVar
 

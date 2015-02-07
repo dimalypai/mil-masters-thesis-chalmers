@@ -29,6 +29,9 @@ getMonadTypeFromApp :: Type -> MonadType
 getMonadTypeFromApp (TyApp (TyMonad mt) _) = mt
 getMonadTypeFromApp t = error $ "Type '" ++ show t ++ "' is not monadic"
 
+getSrcResultType :: SrcType -> SrcType
+getSrcResultType (SrcTyApp _ t2) = t2
+
 -- * Predicates
 
 isTypeVar :: Type -> Bool
