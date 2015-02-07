@@ -19,5 +19,6 @@ severalLitsImpure : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
 
 severalLitsPure : (Error Unit ::: NonTerm) (Maybe Int) =
   let (var_2 : Int) <- return [Error Unit ::: NonTerm] 1 in
-    return [Error Unit ::: NonTerm] Nothing [Int];
+    let (var_3 : Bool) <- return [Error Unit ::: NonTerm] False in
+      return [Error Unit ::: NonTerm] Nothing [Int];
 
