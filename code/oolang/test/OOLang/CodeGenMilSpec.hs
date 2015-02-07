@@ -49,10 +49,10 @@ testCase baseName = do
   let Right srcProgram = parseOOLang (mkFileName baseName) input
       Right (tyProgram, typeEnv) = typeCheck srcProgram
       srcGenMilProgram = codeGen tyProgram typeEnv
-      tyGenMilProgram = MIL.typeCheck srcGenMilProgram
+      Right (tyGenMilProgram, _) = MIL.typeCheck srcGenMilProgram
       srcMilProgram = MIL.parseMil output
-      tyMilProgram = MIL.typeCheck srcMilProgram
-  tyGenMilProgram `shouldBe` tyMilProgram
+      Right (tyMilProgram, _) = MIL.typeCheck srcMilProgram
+  MIL.prPrint tyGenMilProgram `shouldBe` MIL.prPrint tyMilProgram
 
 -- | Takes a file base name and reads a source program and expected output
 -- (from .mil file).
