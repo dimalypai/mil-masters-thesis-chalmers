@@ -7,12 +7,8 @@ type String
   | Cons_Str Char String;
 
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
-  let (var_0 : Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit in
-    let (var_1 : Int) <- pureFun in
-      main;
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
 pureFun : (Error Unit ::: NonTerm) Int =
-  let (var_2 : Unit) <- return [Error Unit ::: NonTerm] unit in
-    let (var_3 : Int) <- pureFun in
-      return [Error Unit ::: NonTerm] 1;
+  return [Error Unit ::: NonTerm] 1;
 
