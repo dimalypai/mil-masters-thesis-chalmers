@@ -7,7 +7,9 @@ type String
   | Cons_Str Char String;
 
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
-  return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+  let (var_0 : Int -> (Error Unit ::: NonTerm) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] intId in
+    let (var_1 : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] intImpureId in
+      return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
 intId : Int -> (Error Unit ::: NonTerm) Int =
   \(a : Int) -> return [Error Unit ::: NonTerm] a;
