@@ -12,3 +12,6 @@ main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
 intId : Int -> (Error Unit ::: NonTerm) Int =
   \(a : Int) -> return [Error Unit ::: NonTerm] a;
 
+intImpureId : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
+  \(a : Int) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] a;
+

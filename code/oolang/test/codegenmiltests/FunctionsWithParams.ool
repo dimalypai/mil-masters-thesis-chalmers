@@ -8,6 +8,10 @@ def intId : {a : Int} -> Pure Int =>
   a;
 end
 
+def intImpureId : {a : Int} -> Int =>
+  a;
+end
+
 #def pureFun : {a : Int} -> {b : Bool} -> Pure Unit =>
 #  impureFun 0.01;
 #  pureFun a b;
