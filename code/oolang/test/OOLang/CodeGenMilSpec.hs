@@ -47,12 +47,17 @@ testCase :: String -> IO ()
 testCase baseName = do
   (input, output) <- testRead baseName
   let Right srcProgram = parseOOLang (mkFileName baseName) input
-      Right (tyProgram, typeEnv) = typeCheck srcProgram
-      srcGenMilProgram = codeGen tyProgram typeEnv
-      Right (tyGenMilProgram, _) = MIL.typeCheck srcGenMilProgram
-      srcMilProgram = MIL.parseMil output
-      Right (tyMilProgram, _) = MIL.typeCheck srcMilProgram
-  MIL.prPrint tyGenMilProgram `shouldBe` MIL.prPrint tyMilProgram
+  case typeCheck srcProgram of
+    Right (tyProgram, typeEnv) -> do
+      let srcMilProgram = MIL.parseMil output
+      case MIL.typeCheck srcMilProgram of
+        Right (tyMilProgram, _) -> do
+          let srcGenMilProgram = codeGen tyProgram typeEnv
+          case MIL.typeCheck srcGenMilProgram of
+            Right (tyGenMilProgram, _) -> MIL.prPrint tyGenMilProgram `shouldBe` MIL.prPrint tyMilProgram
+            Left tcErr -> MIL.prPrint tcErr `shouldBe` ""
+        Left tcErr -> MIL.prPrint tcErr `shouldBe` ""
+    Left tcErr -> prPrint tcErr `shouldBe` ""
 
 -- | Takes a file base name and reads a source program and expected output
 -- (from .mil file).
