@@ -5,6 +5,7 @@ import Data.Maybe (isJust, fromJust)
 import OOLang.AST
 
 import qualified MIL.AST as MIL
+import qualified MIL.AST.Builder as MIL
 import qualified MIL.BuiltIn as MIL
 
 builtInFunctions :: [(FunName, Type)]
@@ -28,60 +29,61 @@ getBuiltInFunctionType funName = fromJust $ lookup funName builtInFunctions
 
 -- * Monads
 
-pureMonadMilName :: MIL.TypeName
-pureMonadMilName = MIL.TypeName "Pure_M"
+pureSrcMonadMil :: MIL.SrcType
+pureSrcMonadMil =
+  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType)
+    (MIL.mkSimpleSrcType "NonTerm")
 
-pureMonadMil :: MIL.TypeM
-pureMonadMil = MIL.MTyAlias pureMonadMilName
+impureSrcMonadMil :: MIL.SrcType
+impureSrcMonadMil =
+  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
+    MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "NonTerm") $
+      MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "State")
+        (MIL.mkSimpleSrcType "IO")
 
-pureMonadMilType :: MIL.TypeM
-pureMonadMilType =
-  MIL.MTyMonadCons (MIL.Error exceptionType) $
-    MIL.MTyMonad MIL.NonTerm
+pureMonadMil :: MIL.MonadType
+pureMonadMil =
+  MIL.MTyMonadCons (MIL.SinMonadApp (MIL.SinMonad MIL.Error) exceptionType) $
+    MIL.MTyMonad (MIL.SinMonad MIL.NonTerm)
 
-impureMonadMilName :: MIL.TypeName
-impureMonadMilName = MIL.TypeName "Impure_M"
-
-impureMonadMil :: MIL.TypeM
-impureMonadMil = MIL.MTyAlias impureMonadMilName
-
-impureMonadMilType :: MIL.TypeM
-impureMonadMilType =
-  MIL.MTyMonadCons (MIL.Error exceptionType) $
-    MIL.MTyMonadCons MIL.NonTerm $
-      MIL.MTyMonadCons MIL.State $
-        MIL.MTyMonad MIL.IO
+impureMonadMil :: MIL.MonadType
+impureMonadMil =
+  MIL.MTyMonadCons (MIL.SinMonadApp (MIL.SinMonad MIL.Error) exceptionType) $
+    MIL.MTyMonadCons (MIL.SinMonad MIL.NonTerm) $
+      MIL.MTyMonadCons (MIL.SinMonad MIL.State) $
+        MIL.MTyMonad (MIL.SinMonad MIL.IO)
 
 exceptionType :: MIL.Type
 exceptionType = MIL.unitType
 
+exceptionSrcType :: MIL.SrcType
+exceptionSrcType = MIL.mkSimpleSrcType "Unit"
+
 -- * MIL definitions for built-ins
 
-builtInTypeDefs :: [MIL.TypeDef]
-builtInTypeDefs =
+builtInMilTypeDefs :: [MIL.SrcTypeDef]
+builtInMilTypeDefs =
   [ MIL.TypeDef (MIL.TypeName "Maybe") [MIL.TypeVar "A"]
       [ MIL.ConDef (MIL.ConName "Nothing") []
-      , MIL.ConDef (MIL.ConName "Just")    [MIL.mkTypeVar "A"]]
+      , MIL.ConDef (MIL.ConName "Just")    [MIL.mkSimpleSrcType "A"]]
   , MIL.TypeDef (MIL.TypeName "String") []
       [ MIL.ConDef (MIL.ConName "Empty_Str") []
-      , MIL.ConDef (MIL.ConName "Cons_Str") [MIL.charType, MIL.TyTypeCon (MIL.TypeName "String")]]
+      , MIL.ConDef (MIL.ConName "Cons_Str") [MIL.mkSimpleSrcType "Char", MIL.mkSimpleSrcType "String"]]
   ]
 
 stringTypeMil :: MIL.Type
 stringTypeMil = MIL.TyTypeCon (MIL.TypeName "String")
 
-builtInAliasDefs :: [MIL.AliasDef]
-builtInAliasDefs =
-  [ MIL.AliasDef pureMonadMilName   $ MIL.TyMonad pureMonadMilType
-  , MIL.AliasDef impureMonadMilName $ MIL.TyMonad impureMonadMilType]
-
 maybeDefaultExpr :: Type -> TyExpr
 maybeDefaultExpr t@(TyRef mt) = NewRefE undefined t (LitE $ NothingLit undefined mt undefined)
 maybeDefaultExpr t = LitE $ NothingLit undefined t undefined
 
-builtInMilFunTypes :: [(MIL.FunName, MIL.Type)]
-builtInMilFunTypes =
+-- | TODO: revise
+builtInMilFunTypes :: [(MIL.FunName, MIL.SrcType)]
+builtInMilFunTypes = []
+{-
   [ (MIL.FunName "printString", MIL.TyArrow stringTypeMil (MIL.ioType MIL.unitType))
+  , (MIL.FunName "readString",  MIL.ioType stringTypeMil)
   , (MIL.FunName "printBool",   MIL.TyArrow MIL.boolType (MIL.ioType MIL.unitType))
   , (MIL.FunName "readBool",    MIL.TyApp (MIL.TyMonad impureMonadMil) MIL.boolType)
   , (MIL.FunName "printInt",    MIL.TyArrow MIL.intType (MIL.ioType MIL.unitType))
@@ -89,13 +91,28 @@ builtInMilFunTypes =
   , (MIL.FunName "printFloat",  MIL.TyArrow MIL.floatType (MIL.ioType MIL.unitType))
   , (MIL.FunName "readFloat",   MIL.TyApp (MIL.TyMonad impureMonadMil) MIL.floatType)
   ]
-
+-}
 -- | Unsafe. Make sure that there exists such a built-in function.
-getMilBuiltInFunType :: MIL.FunName -> MIL.Type
+getMilBuiltInFunType :: MIL.FunName -> MIL.SrcType
 getMilBuiltInFunType milFunName = fromJust $ lookup milFunName builtInMilFunTypes
 
-builtInMilFunDefs :: [MIL.FunDef]
-builtInMilFunDefs =
+builtInMilFunDefs :: [MIL.SrcFunDef]
+builtInMilFunDefs = []
+{-
+  [ printBoolMilDef
+  , readBoolMilDef]
+-}
+printBoolMilDef :: MIL.SrcFunDef
+printBoolMilDef =
+  MIL.mkSrcFunDef "printBool" (getMilBuiltInFunType $ MIL.FunName "printBool")
+    undefined--(MIL.mkSrcLambda () ())
+
+readBoolMilDef :: MIL.SrcFunDef
+readBoolMilDef =
+  MIL.mkSrcFunDef "readBool" (getMilBuiltInFunType $ MIL.FunName "readBool")
+    undefined--(MIL.mkSrcLet () () ())
+
+{-
   [ MIL.FunDef (MIL.FunName "printString")
       (getMilBuiltInFunType (MIL.FunName "printString"))
       (MIL.LambdaE (MIL.VarBinder (MIL.Var "str", stringTypeMil))
@@ -125,22 +142,6 @@ builtInMilFunDefs =
             [ readBoolCaseAlt "true" (MIL.ConName "True") 2
             , readBoolCaseAlt "false" (MIL.ConName "False") 2
             , readBoolErrorCaseAlt]))
-
-  , MIL.FunDef (MIL.FunName "printInt")
-      (getMilBuiltInFunType (MIL.FunName "printInt"))
-      _
-
-  , MIL.FunDef (MIL.FunName "readInt")
-      (getMilBuiltInFunType (MIL.FunName "readInt"))
-      _
-{-
-  , MIL.FunDef (MIL.FunName "printFloat")
-      (getMilBuiltInFunType (MIL.FunName "printFloat"))
-      ()
-
-  , MIL.FunDef (MIL.FunName "readFloat")
-      (getMilBuiltInFunType (MIL.FunName "readFloat"))
-      ()-}
   ]
 
 readBoolCaseAlt :: String -> MIL.ConName -> Int -> MIL.CaseAlt
@@ -166,13 +167,12 @@ readBoolErrorCaseAlt =
                          MIL.unitType)
                       MIL.boolType)
                    (MIL.LitE MIL.UnitLit))
+-}
 
-stringMil :: String -> MIL.Expr
-stringMil "" = MIL.ConNameE (MIL.ConName "Empty_Str") stringTypeMil
+stringMil :: String -> MIL.SrcExpr
+stringMil "" = MIL.mkSrcConName "Empty_Str"
 stringMil (c:cs) =
-  MIL.AppE (MIL.AppE (MIL.ConNameE (MIL.ConName "Cons_Str")
-                        (MIL.TyArrow MIL.charType
-                                     (MIL.TyArrow stringTypeMil stringTypeMil)))
-                     (MIL.LitE $ MIL.CharLit c))
+  MIL.AppE (MIL.AppE (MIL.mkSrcConName "Cons_Str")
+                     (MIL.mkCharLit c))
            (stringMil cs)
 

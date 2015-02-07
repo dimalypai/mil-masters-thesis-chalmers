@@ -36,8 +36,8 @@ spec =
       testCase "FunctionsWithParams"
 
     -- TODO: test Refs
-    it "generates MIL code for declaration statements" $
-      testCase "DeclarationStatements"
+    --it "generates MIL code for declaration statements" $
+    --  testCase "DeclarationStatements"
 
 -- * Infrastructure
 

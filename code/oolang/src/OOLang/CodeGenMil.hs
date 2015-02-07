@@ -2,8 +2,8 @@
 
 -- | Module responsible for MIL code generation.
 --
--- All generated code operates in two monads: Pure_M for pure computations and
--- Impure_M for default (impure) computations.
+-- All generated code operates in two monads: one for pure computations and
+-- another one for default (impure) computations.
 -- Statement sequences are represented with monadic binds.
 -- Basically, all expressions (even the simplest ones, like literals and
 -- variables) result in some sequence of binds (possibly empty) and return. We
@@ -27,116 +27,118 @@ import OOLang.TypeChecker.TypeEnv
 import OOLang.BuiltIn
 import OOLang.Utils
 import qualified MIL.AST as MIL
+import qualified MIL.AST.Builder as MIL
+import qualified MIL.AST.Helpers as MIL
 import qualified MIL.BuiltIn as MIL
 
 import System.IO.Unsafe
 
 -- | Entry point to the code generator.
 -- Takes a type checked program in OOLang and a type environment and produces a
--- program in MIL.
-codeGen :: TyProgram -> TypeEnv -> MIL.Program
+-- source program in MIL.
+codeGen :: TyProgram -> TypeEnv -> MIL.SrcProgram
 codeGen tyProgram typeEnv = unsafePerformIO $ runReaderT (evalStateTFrom 0 (runCG $ codeGenProgram tyProgram)) (typeEnv, Map.empty)
 
 -- | Code generation monad. Uses 'StateT' for providing fresh variable names
 -- and 'Reader' for querying the type environment and class types.
+-- 'IO' may be used for debug printing.
 newtype CodeGenM a = CG { runCG :: StateT NameSupply (ReaderT (TypeEnv, ClassTypes) IO) a }
   deriving (Monad, MonadState NameSupply, MonadReader (TypeEnv, ClassTypes), Functor, Applicative, MonadIO)
 
--- | All field and method names accessible from the class and a MIL type of the
+-- | All field and method names accessible from a class and a MIL type of the
 -- object representation.
-type ClassTypes = Map.Map ClassName ([Var], [FunName], MIL.Type)
+type ClassTypes = Map.Map ClassName ([Var], [FunName], MIL.SrcType)
 
 -- | A counter for generating unique variable names.
 type NameSupply = Int
 
 -- | Entry point into the type checking of the program.
 -- There is a list of MIL functions generated for each class definition.
--- TODO: type aliases
 -- There is an MIL function generated for each function definition.
 -- All these definitions are then regrouped and the built-ins are added.
-codeGenProgram :: TyProgram -> CodeGenM MIL.Program
+codeGenProgram :: TyProgram -> CodeGenM MIL.SrcProgram
 codeGenProgram (Program _ tyClassDefs tyFunDefs) = do
-  classTypes <- asks snd
+  classTypes <- asks getClassTypes
   classTypes' <- foldM (\cts (ClassDef _ srcClassName _ _) ->
     collectClassTypes (getClassName srcClassName) cts)
     classTypes tyClassDefs
   local (second $ const classTypes') $ do
     classMilFunDefs <- concat <$> mapM codeGenClassDef tyClassDefs
     milFunDefs <- mapM codeGenFunDef tyFunDefs
-    return $ MIL.Program (builtInTypeDefs, builtInAliasDefs, builtInMilFunDefs ++ (classMilFunDefs ++ milFunDefs))
+    return $ MIL.Program (builtInMilTypeDefs, builtInMilFunDefs ++ (classMilFunDefs ++ milFunDefs))
 
 -- | Collects information about the class: field and methods names. Constructs
 -- a type of the object representation.
 collectClassTypes :: ClassName -> ClassTypes -> CodeGenM ClassTypes
 collectClassTypes className classTypes = do
-  classTypeEnv <- asks (getClassTypeEnv . fst)
-  let fields = getClassFieldsAssoc className classTypeEnv
-      methods = getClassMethodsAssoc className classTypeEnv
-      (fieldNames, fieldTypes) = unzip fields
-      (methodNames, methodTypes) = unzip methods
+  classTypeEnv <- asks (getClassTypeEnv . getTypeEnv)
+  let (fieldNames, fieldTypes) = unzip (getClassFieldsAssoc className classTypeEnv)
+      (methodNames, methodTypes) = unzip (getClassMethodsAssoc className classTypeEnv)
       -- TODO: virtual methods and self parameters
-      classTupleType = MIL.TyTuple [ MIL.TyTuple $ map typeMil fieldTypes
-                                   , MIL.TyTuple $ map typeMil methodTypes]
+      classTupleType = MIL.SrcTyTuple [ MIL.SrcTyTuple $ map srcTypeMil fieldTypes
+                                      , MIL.SrcTyTuple $ map srcTypeMil methodTypes]
   return $ Map.insert className (fieldNames, methodNames, classTupleType) classTypes
 
-codeGenClassDef :: TyClassDef -> CodeGenM [MIL.FunDef]
+codeGenClassDef :: TyClassDef -> CodeGenM [MIL.SrcFunDef]
 codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) = do
   let (_, tyMethodDecls) = partitionClassMembers tyMembers
-  classMemberFunDefs <- mapM codeGenClassMethod tyMethodDecls
-  return $ classMemberFunDefs
+  mapM codeGenClassMethod tyMethodDecls
 
 -- | TODO: inits (together with constructor).
-codeGenClassField :: ClassName -> TyFieldDecl -> CodeGenM MIL.Type
+-- TODO: use
+{-
+codeGenClassField :: ClassName -> TyFieldDecl -> CodeGenM MIL.SrcType
 codeGenClassField className (FieldDecl _ tyDecl _) = do
   let fieldName = getVar $ getDeclVarName tyDecl
-  fieldType <- asks (getClassFieldType className fieldName . getClassTypeEnv . fst)
+  fieldType <- asks (getClassFieldType className fieldName . getClassTypeEnv . getTypeEnv)
   return $ typeMil fieldType
-
+-}
 -- | TODO: add method specifics.
-codeGenClassMethod :: TyMethodDecl -> CodeGenM MIL.FunDef
+codeGenClassMethod :: TyMethodDecl -> CodeGenM MIL.SrcFunDef
 codeGenClassMethod (MethodDecl _ tyFunDef _) = codeGenFunDef tyFunDef
 
-codeGenFunDef :: TyFunDef -> CodeGenM MIL.FunDef
+codeGenFunDef :: TyFunDef -> CodeGenM MIL.SrcFunDef
 codeGenFunDef (FunDef _ srcFunName tyFunType tyStmts) = do
   let funName = getFunName srcFunName
-  funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv . fst)
+  funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv . getTypeEnv)
   let isPure = isPureFunType funType
   let funMonad = if isPure
-                   then pureMonadMil
-                   else impureMonadMil
-  let milFunType = funTypeMil funType
+                   then pureSrcMonadMil
+                   else impureSrcMonadMil
+  let milFunSrcType = funSrcTypeMil funType
   (funBody, _) <- codeGenStmts tyStmts funMonad
   let funParams = getFunParams tyFunType
   let funBodyWithParams = foldr (\tyVarBinder e ->
-                                   MIL.LambdaE ( MIL.VarBinder (varMil (getVar $ getBinderVar tyVarBinder)
-                                               , typeMil $ getTypeOf tyVarBinder)) e)
+                                   MIL.mkSrcLambda (varMil (getVar $ getBinderVar tyVarBinder))
+                                                   (srcTypeMil $ getTypeOf tyVarBinder) e)
                             funBody funParams
-  return $ MIL.FunDef (funNameMil funName) milFunType funBodyWithParams
+  return $ MIL.FunDef (funNameMil funName) milFunSrcType funBodyWithParams
 
 -- | List of statements is not empty.
 -- Takes a monad of the containing function.
 --
 -- Declaration statement needs a special treatment to get variable scope right.
-codeGenStmts :: [TyStmt] -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
-
+codeGenStmts :: [TyStmt] -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
+{-
 codeGenStmts [DeclS _ decl] funMonad =
   codeGenDecl decl funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
                             , MIL.applyMonadType funMonad MIL.unitType)
+-}
 codeGenStmts [tyStmt] funMonad = codeGenStmt tyStmt funMonad
-
+{-
 codeGenStmts ((DeclS _ decl):tyStmts) funMonad = do
   milBodyExprWithType <- codeGenStmts tyStmts funMonad
   codeGenDecl decl funMonad milBodyExprWithType
+-}
 codeGenStmts (tyStmt:tyStmts) funMonad = do
+  var <- newMilVar
   (milBindExpr, milBindExprType) <- codeGenStmt tyStmt funMonad
   (milBodyExpr, milBodyExprType) <- codeGenStmts tyStmts funMonad
-  return ( MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.getMonadResultType milBindExprType))
-             milBindExpr
-             milBodyExpr
+  return ( MIL.mkSrcLet var (MIL.getSrcResultType milBindExprType) milBindExpr milBodyExpr
          , milBodyExprType)
 
 -- | Takes a monad of the containing function.
-codeGenStmt :: TyStmt -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenStmt :: TyStmt -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenStmt tyStmt funMonad =
   case tyStmt of
     ExprS _ tyExpr -> codeGenExpr tyExpr funMonad
@@ -144,10 +146,10 @@ codeGenStmt tyStmt funMonad =
     -- TODO:
     -- + "then" with state putting operations
     -- + ANF/SSA construction
-    AssignS _ srcAssignOp tyExprLeft tyExprRight _ -> undefined
+    --AssignS _ srcAssignOp tyExprLeft tyExprRight _ -> undefined
 
     DeclS {} -> error "codeGenStmt: DeclS should have a special treatment."
-
+{-
 -- | Code generation for declarations.
 -- It takes an expression which will become a body of the monadic bind, where a
 -- declared variable will be in scope and a type of this expression.
@@ -163,15 +165,22 @@ codeGenDecl (Decl _ tyVarBinder mTyInit _) funMonad (milBodyExpr, milBodyExprTyp
              milInitExpr
              milBodyExpr
          , milBodyExprType)
-
+-}
 -- | Expression code generation.
 -- Takes a monad of the containing function.
-codeGenExpr :: TyExpr -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenExpr :: TyExpr -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenExpr tyExpr funMonad =
   case tyExpr of
-    LitE lit -> return ( MIL.ReturnE funMonad (literalMil lit)
-                       , MIL.applyMonadType funMonad (typeMil $ getTypeOf tyExpr))
+    LitE lit -> return
+      ( MIL.ReturnE funMonad (literalMil lit)
+      , MIL.SrcTyApp funMonad (srcTypeMil $ getTypeOf tyExpr))
 
+    VarE _ varType var varPure -> do
+      return ( MIL.ReturnE funMonad (MIL.VarE $ varMil var)
+             , MIL.SrcTyApp funMonad (srcTypeMil varType))
+
+    ParenE _ tySubExpr -> codeGenExpr tySubExpr funMonad
+{-
     VarE _ varType var varPure -> do
       let funName = varToFunName var
       if isBuiltInFunction funName
@@ -199,26 +208,21 @@ codeGenExpr tyExpr funMonad =
 
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 _ ->
       codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
-
-    ParenE _ tySubExpr -> codeGenExpr tySubExpr funMonad
-
-literalMil :: TyLiteral -> MIL.Expr
+-}
+literalMil :: TyLiteral -> MIL.SrcExpr
 literalMil UnitLit {} = MIL.LitE MIL.UnitLit
 literalMil (BoolLit _ _ b) =
   if b
-    then MIL.ConNameE (MIL.ConName "True")  MIL.boolType
-    else MIL.ConNameE (MIL.ConName "False") MIL.boolType
+    then MIL.mkSrcConName "True"
+    else MIL.mkSrcConName "False"
 literalMil (IntLit _ _ i)     = MIL.LitE (MIL.IntLit i)
 literalMil (FloatLit _ _ f _) = MIL.LitE (MIL.FloatLit f)
-literalMil (StringLit _ _ s)  = stringMil s
 literalMil (NothingLit _ t _) =
   -- Monomorphise Nothing constructor.
   MIL.TypeAppE
-    (MIL.ConNameE (MIL.ConName "Nothing")
-       (MIL.TyForAll (MIL.TypeVar "A") $
-          MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (MIL.mkTypeVar "A")))
-    (typeMil $ getMaybeUnderType t)
-
+    (MIL.mkSrcConName "Nothing")
+    (srcTypeMil $ getMaybeUnderType t)
+{-
 -- | Takes a monad of the containing function.
 codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Type -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
 codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
@@ -306,7 +310,10 @@ codeGenNoArgBuiltInFunction milFunName funMonad = do
 -- rid of 'TyPure'.
 
 -- * Type conversions
--- TODO: more Pure_M
+-- TODO: more Pure_M???
+typeMil (TyArrow t1 t2)     = MIL.TyArrow (typeMil t1) (funTypeMil t2)  -- TODO: Pure on the left?
+funTypeMil (TyArrow t1 t2) = MIL.TyArrow (typeMil t1) (funTypeMil t2)
+-}
 
 -- | Note [Type transformation]:
 --
@@ -316,34 +323,34 @@ codeGenNoArgBuiltInFunction milFunName funMonad = do
 -- Another case, where 'funTypeMil' is used is when it is known that the type
 -- being transformed is the type of the global impure function.
 --
--- 'typeMil' introduces Impure_M only for function return type.
--- 'funTypeMil' introduces Impure_M also for atomic types, which are not Pure.
+-- 'typeMil' introduces impure monad stack only for function return type.
+-- 'funTypeMil' introduces impure monad stack also for atomic types, which are
+-- not Pure.
 --
 -- It is important, that 'funTypeMil' recursive call is used only on the
 -- right-hand side of the function arrow, since this is the only place, where
--- Impure_M should be introduced, when 'funTypeMil' is not a top-level call (in
--- this case, atomic types will get Impure_M as well).
+-- impure monad stack should be introduced, when 'funTypeMil' is not a
+-- top-level call (in this case, atomic types will get impure monad stack as
+-- well).
 
 -- | See Note [Type transformation].
-typeMil :: Type -> MIL.Type
-typeMil TyUnit   = MIL.unitType
-typeMil TyBool   = MIL.boolType
-typeMil TyInt    = MIL.intType
-typeMil TyFloat  = MIL.floatType
-typeMil TyString = stringTypeMil
-typeMil (TyClass className) = MIL.TyTypeCon $ typeNameMil className
-typeMil (TyArrow t1 t2)     = MIL.TyArrow (typeMil t1) (funTypeMil t2)  -- TODO: Pure on the left?
-typeMil (TyPure t)          = MIL.TyApp (MIL.TyMonad pureMonadMil) (typeMil t)
-typeMil (TyMaybe t)         = MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (typeMil t)
-typeMil (TyMutable t)       = typeMil t
+srcTypeMil :: Type -> MIL.SrcType
+srcTypeMil TyUnit   = MIL.mkSimpleSrcType "Unit"
+srcTypeMil TyBool   = MIL.mkSimpleSrcType "Bool"
+srcTypeMil TyInt    = MIL.mkSimpleSrcType "Int"
+srcTypeMil TyFloat  = MIL.mkSimpleSrcType "Float"
+srcTypeMil TyString = MIL.mkSimpleSrcType "String"
+srcTypeMil (TyClass className) = MIL.SrcTyTypeCon $ typeNameMil className
+srcTypeMil (TyArrow t1 t2) = MIL.SrcTyArrow (srcTypeMil t1) (funSrcTypeMil t2)
+srcTypeMil (TyPure t)      = MIL.SrcTyApp pureSrcMonadMil (srcTypeMil t)
+srcTypeMil (TyMaybe t)     = MIL.SrcTyApp (MIL.mkSimpleSrcType "Maybe") (srcTypeMil t)
 
 -- | See Note [Type transformation].
-funTypeMil :: Type -> MIL.Type
-funTypeMil (TyArrow t1 t2) = MIL.TyArrow (typeMil t1) (funTypeMil t2)
-funTypeMil (TyPure t)      = MIL.TyApp (MIL.TyMonad pureMonadMil) (typeMil t)
-funTypeMil (TyMaybe t)     = MIL.TyApp (MIL.TyTypeCon $ MIL.TypeName "Maybe") (typeMil t)
-funTypeMil (TyMutable t)   = typeMil t
-funTypeMil               t = MIL.TyApp (MIL.TyMonad impureMonadMil) (typeMil t)
+funSrcTypeMil :: Type -> MIL.SrcType
+funSrcTypeMil (TyArrow t1 t2) = MIL.SrcTyArrow (srcTypeMil t1) (funSrcTypeMil t2)
+funSrcTypeMil (TyPure t)      = MIL.SrcTyApp pureSrcMonadMil (srcTypeMil t)
+funSrcTypeMil (TyMaybe t)     = MIL.SrcTyApp (MIL.mkSimpleSrcType "Maybe") (srcTypeMil t)
+funSrcTypeMil t = MIL.SrcTyApp impureSrcMonadMil (srcTypeMil t)
 
 -- * Conversion utils
 
@@ -366,4 +373,10 @@ newMilVar = do
   i <- get
   modify (+1)
   return $ MIL.Var ("var_" ++ show i)
+
+getTypeEnv :: (TypeEnv, ClassTypes) -> TypeEnv
+getTypeEnv = fst
+
+getClassTypes :: (TypeEnv, ClassTypes) -> ClassTypes
+getClassTypes = snd
 
