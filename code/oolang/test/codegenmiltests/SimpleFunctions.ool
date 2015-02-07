@@ -6,3 +6,14 @@ def pureFun : Pure Int =>
   1;
 end
 
+def severalLitsImpure : Unit =>
+  0.01;
+  true;
+  unit;
+end
+
+def severalLitsPure : Pure (Maybe Int) =>
+  1;
+  nothing [Maybe Int];
+end
+

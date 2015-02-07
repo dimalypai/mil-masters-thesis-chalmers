@@ -12,3 +12,12 @@ main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
 pureFun : (Error Unit ::: NonTerm) Int =
   return [Error Unit ::: NonTerm] 1;
 
+severalLitsImpure : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  let (var_0 : Float) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1.0e-2 in
+    let (var_1 : Bool) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] True in
+      return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+
+severalLitsPure : (Error Unit ::: NonTerm) (Maybe Int) =
+  let (var_2 : Int) <- return [Error Unit ::: NonTerm] 1 in
+    return [Error Unit ::: NonTerm] Nothing [Int];
+
