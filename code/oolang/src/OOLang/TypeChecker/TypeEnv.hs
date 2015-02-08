@@ -54,6 +54,7 @@ import qualified Data.Map as Map
 -- 'second' is used just to transform components of a pair
 import Control.Arrow (second)
 import Data.Maybe (fromJust)
+import Control.Applicative ((<$>))
 
 import OOLang.AST
 import OOLang.AST.Helpers
@@ -81,10 +82,10 @@ type ClassTypeEnv = Map.Map ClassName ClassTypeInfo
 -- | All the information about classes that we store in the type environment.
 -- Some of the fields are kept just for error messages.
 data ClassTypeInfo = ClassTypeInfo
-  { ctiMSuperClassName    :: Maybe ClassName       -- ^ Name of the super class, if it has one.
-  , ctiClassFields        :: Map.Map Var Type      -- ^ Class fields environment.
-  , ctiClassMethods       :: Map.Map FunName Type  -- ^ Class methods environment.
-  , ctiMSuperSrcClassName :: Maybe SrcClassName    -- ^ Super class source name. For error messages.
+  { ctiMSuperClassName    :: Maybe ClassName     -- ^ Name of the super class, if it has one.
+  , ctiClassFields        :: Map.Map Var Type    -- ^ Class fields environment.
+  , ctiClassMethods       :: FunTypeEnv          -- ^ Class methods environment.
+  , ctiMSuperSrcClassName :: Maybe SrcClassName  -- ^ Super class source name. For error messages.
   }
 
 getClassTypeEnv :: TypeEnv -> ClassTypeEnv
@@ -138,8 +139,9 @@ isClassMethodOverride className methodName methodType classTypeEnv =
 -- Note: Unsafe. Should be used only after check that class is defined.
 hasClassMethodOfType :: ClassName -> FunName -> Type -> ClassTypeEnv -> Bool
 hasClassMethodOfType className methodName methodType classTypeEnv =
-  let classTypeInfo = getClassTypeInfo className classTypeEnv in
-  case Map.lookup methodName (ctiClassMethods classTypeInfo) of
+  let classTypeInfo = getClassTypeInfo className classTypeEnv
+      methodTypeInfo = Map.lookup methodName (ctiClassMethods classTypeInfo) in
+  case ftiType <$> methodTypeInfo of
     Just methodType' -> methodType == methodType'
     Nothing ->
       let mSuperClassName = getSuperClass className classTypeEnv in
@@ -168,11 +170,16 @@ addClassField className fieldName fieldType =
 -- Will overwrite it in this case.
 --
 -- Note: Unsafe. Should be used only after check that class is defined.
-addClassMethod :: ClassName -> FunName -> Type -> ClassTypeEnv -> ClassTypeEnv
-addClassMethod className methodName methodType =
+addClassMethod :: ClassName -> FunName -> Type -> ReturnType -> Int -> SrcFunType -> ClassTypeEnv -> ClassTypeEnv
+addClassMethod className methodName methodType retType arity srcMethodType =
   modifyClassTypeInfo className (\classTypeInfo ->
     -- overwrite with the modified class methods mapping
-    classTypeInfo { ctiClassMethods = Map.insert methodName methodType (ctiClassMethods classTypeInfo) })
+    classTypeInfo {
+      ctiClassMethods =
+        Map.insert methodName
+          (FunTypeInfo methodType retType arity srcMethodType)
+          (ctiClassMethods classTypeInfo)
+    })
 
 -- | Returns a type of the class member.
 --
@@ -184,7 +191,9 @@ getClassMemberType className memberName classTypeEnv =
   case Map.lookup (memberNameToVar memberName) (ctiClassFields classTypeInfo) of
     Just fieldType -> fieldType
     Nothing ->
-      case Map.lookup (memberNameToFunName memberName) (ctiClassMethods classTypeInfo) of
+      let methodName = memberNameToFunName memberName
+          methodTypeInfo = Map.lookup methodName (ctiClassMethods classTypeInfo) in
+      case ftiType <$> methodTypeInfo of
         Just methodType -> methodType
         Nothing ->
           let mSuperClassName = getSuperClass className classTypeEnv
@@ -228,7 +237,7 @@ getClassFieldsAssoc className classTypeEnv =
 
 -- | Returns an associative list of names and types of all class methods
 -- accessible from a given class (including super class methods).
-getClassMethodsAssoc :: ClassName -> ClassTypeEnv -> [(FunName, Type)]
+getClassMethodsAssoc :: ClassName -> ClassTypeEnv -> [(FunName, FunTypeInfo)]
 getClassMethodsAssoc className classTypeEnv =
   let classMethodsAssoc = Map.assocs $ ctiClassMethods $ fromJust $ Map.lookup className classTypeEnv
   in case getSuperClass className classTypeEnv of

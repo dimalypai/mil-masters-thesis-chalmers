@@ -73,7 +73,8 @@ collectClassTypes :: ClassName -> ClassTypes -> CodeGenM ClassTypes
 collectClassTypes className classTypes = do
   classTypeEnv <- asks (getClassTypeEnv . getTypeEnv)
   let (fieldNames, fieldTypes) = unzip (getClassFieldsAssoc className classTypeEnv)
-      (methodNames, methodTypes) = unzip (getClassMethodsAssoc className classTypeEnv)
+      (methodNames, methodTypeInfos) = unzip (getClassMethodsAssoc className classTypeEnv)
+      methodTypes = map ftiType methodTypeInfos
       -- TODO: virtual methods and self parameters
       classTupleType = MIL.SrcTyTuple [ MIL.SrcTyTuple $ map srcTypeMil fieldTypes
                                       , MIL.SrcTyTuple $ map srcTypeMil methodTypes]

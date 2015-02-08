@@ -165,7 +165,7 @@ collectClassMethod className (MethodDecl _ (FunDef _ srcFunName srcFunType _) _)
     unlessM (isClassMethodOverrideM className methodName methodType) $
       throwError $ MemberAlreadyDefined memberName methodNameSrcSpan
 
-  addClassMethodM className methodName methodType  -- TODO: retType and arity
+  addClassMethodM className methodName methodType retType arity srcFunType
 
 -- | Checks if the function is already defined.
 -- Checks that the specified function type is correct (used types are defined).

@@ -146,9 +146,9 @@ addClassFieldM className fieldName fieldType =
 -- Will overwrite it in this case.
 --
 -- Note: Unsafe. Should be used only after check that class is defined.
-addClassMethodM :: ClassName -> FunName -> Type -> TypeCheckM ()
-addClassMethodM className methodName methodType =
-  modifyClassTypeEnv $ addClassMethod className methodName methodType
+addClassMethodM :: ClassName -> FunName -> Type -> ReturnType -> Int -> SrcFunType -> TypeCheckM ()
+addClassMethodM className methodName methodType retType arity srcMethodType =
+  modifyClassTypeEnv $ addClassMethod className methodName methodType retType arity srcMethodType
 
 -- | Returns a type of the class member.
 --
