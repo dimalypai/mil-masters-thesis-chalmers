@@ -56,6 +56,17 @@ def pureFunPureParam : {f : Int -> Float -> Pure Unit} -> Pure Unit =>
   f 1 0.01;
 end
 
+# Regression. Impure return type (of Pure function)
+def impurelyReturnPureFun : {f : Int -> Pure Int} -> Int -> Pure Int =>
+  main;
+  f;
+end
+
+# Pure version of impurelyReturnPureFun.
+def purelyReturnPureFun : {f : Int -> Pure Int} -> Pure (Int -> Pure Int) =>
+  f;
+end
+
 # Impure function as parameter, partial application as return value, impure
 def impureFunPartialAppReturn : {f : Int -> Float -> Unit} -> Float -> Unit =>
   f 1;

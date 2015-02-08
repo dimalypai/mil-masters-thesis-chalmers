@@ -361,7 +361,7 @@ tcFunDef insideClass (FunDef s srcFunName srcFunType srcStmts) = do
   unlessM (lastStmtType `isSubTypeOf` retType) $
     throwError $ FunIncorrectReturnType srcFunName (last tyStmts) (stripPureType retType) lastStmtType
 
-  when (isPureFunType retType) $ do
+  when (isPureType retType) $ do
     let mFirstImpureStmt = find (not . getPurityOf) tyStmts
     case mFirstImpureStmt of
       Just firstImpureStmt -> throwError $ FunctionNotPure srcFunName firstImpureStmt

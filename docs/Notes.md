@@ -477,3 +477,14 @@ let (x : Int) <- return [IO] 1 in
 This will not pass the type checker and we cannot do anything to the first
 return to make it IO ::: State. Should we choose the highest effect?
 
+General thoughts. February
+==========================
+
+* During the work on OOLang CodeGen a couple of issues have been revealed. They
+have the same underlying source. One of the issues is type transformation for
+something like {f : Int -> Pure Int} -> Int -> Pure Int. And another one is
+purity checking for a function of such a type. Is it Pure or not? The whole
+thing after parameter binders is a return type, so from this point of view it
+is impure (it impurely delivers a pure function of type Int -> Pure Int). The
+current checking looks only at the last Pure and decides that it is pure.
+

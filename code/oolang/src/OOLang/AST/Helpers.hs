@@ -130,6 +130,10 @@ isPureFunType (TyPure _) = True
 isPureFunType (TyArrow _ t2) = isPureFunType t2
 isPureFunType _ = False
 
+isPureType :: Type -> Bool
+isPureType (TyPure _) = True
+isPureType _ = False
+
 isMutableType :: Type -> Bool
 isMutableType TyMutable {} = True
 isMutableType            _ = False
