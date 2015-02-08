@@ -199,9 +199,9 @@ isFunctionDefinedM funName = isFunctionDefined funName <$> getFunTypeEnvM
 
 -- | Doesn't check if the function is already in the environment.
 -- Will overwrite it in this case.
-addFunctionM :: FunName -> Type -> ReturnType -> SrcFunType -> TypeCheckM ()
-addFunctionM funName funType retType srcFunType =
-  modifyFunTypeEnv $ addFunction funName funType retType srcFunType
+addFunctionM :: FunName -> Type -> ReturnType -> Int -> SrcFunType -> TypeCheckM ()
+addFunctionM funName funType retType arity srcFunType =
+  modifyFunTypeEnv $ addFunction funName funType retType arity srcFunType
 
 -- | Returns all information about the function from the environment.
 --

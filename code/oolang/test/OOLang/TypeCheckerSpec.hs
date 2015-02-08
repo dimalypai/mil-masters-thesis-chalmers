@@ -91,6 +91,9 @@ spec =
       it "given a function with Pure return type and impure statement (dereferencing)" $
         failureCase "PureFunImpureStmtDeref"
 
+      it "given a function with Pure return type and impure statement (impure return type and application)" $
+        failureCase "PureFunImpureStmtRetTypeFullApp"
+
       it "given an application with left-hand side which is not a function" $
         failureCase "AppNotFunction"
 

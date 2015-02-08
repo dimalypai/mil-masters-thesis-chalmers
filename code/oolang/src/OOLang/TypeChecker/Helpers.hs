@@ -133,16 +133,18 @@ isMutableOrRefNested                 _ = False
 -- | Transforms function type which has variable binders and return type to one
 -- big internal type (right associative type arrow without parameter names).
 -- Returns transformed return type as a second component of a pair.
+-- Function arity (number of parameter binders) is returned as a third
+-- component of a pair.
 -- Checks if it is well-formed:
 -- * parameter types are well-formed ('srcFunParamTypeToType')
 -- * return type is well-formed ('srcFunReturnTypeToType')
 -- * general rules ('srcTypeToType')
 -- Does *not* check parameter names.
-srcFunTypeToType :: SrcFunType -> TypeCheckM (Type, ReturnType)
+srcFunTypeToType :: SrcFunType -> TypeCheckM (Type, ReturnType, Int)
 srcFunTypeToType (FunType _ varBinders srcRetType) = do
   retType <- srcFunReturnTypeToType srcRetType
   paramTypes <- mapM (srcFunParamTypeToType . getBinderSrcType) varBinders
-  return (tyArrowFromList (unReturn retType) paramTypes, retType)
+  return (tyArrowFromList (unReturn retType) paramTypes, retType, length varBinders)
 
 -- | Transforms function parameter type to the internal representation.
 -- Checks if it is well-formed:

@@ -36,7 +36,7 @@ def curryFun : {a : Int} -> {b : Float} -> Pure Unit =>
 end
 
 # Partial application of curryFun, pure
-def curryFunPartialApp : Float -> Pure Unit =>
+def curryFunPartialApp : Pure (Float -> Pure Unit) =>
   curryFun 1;
 end
 
@@ -52,7 +52,7 @@ def curryFunAtOnce : Unit =>
 end
 
 # Pure function as parameter, pure
-def pureFunPureParam : {f : Int -> Float -> Pure Unit} -> Pure Unit =>
+def pureFunPureParam : {f : Int -> Pure (Float -> Pure Unit)} -> Pure Unit =>
   f 1 0.01;
 end
 
@@ -72,8 +72,8 @@ def impureFunPartialAppReturn : {f : Int -> Float -> Unit} -> Float -> Unit =>
   f 1;
 end
 
-# Impure function as parameter, partial application, pure
-def impureFunPartialAppPure : {f : Int -> Float -> Unit} -> Pure Int =>
+# Partially pure function as parameter, partial application, pure
+def impureFunPartialAppPure : {f : Int -> Pure (Float -> Unit)} -> Pure Int =>
   f 1;
   1;
 end

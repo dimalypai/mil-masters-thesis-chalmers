@@ -159,13 +159,13 @@ collectClassMethod className (MethodDecl _ (FunDef _ srcFunName srcFunType _) _)
   when (methodName == FunName "new") $
     throwError $ NewMemberName methodNameSrcSpan
 
-  (methodType, retType) <- srcFunTypeToType srcFunType
+  (methodType, retType, arity) <- srcFunTypeToType srcFunType
   let memberName = funNameToMemberName methodName
   whenM (isClassMemberDefinedM className memberName) $ do
     unlessM (isClassMethodOverrideM className methodName methodType) $
       throwError $ MemberAlreadyDefined memberName methodNameSrcSpan
 
-  addClassMethodM className methodName methodType
+  addClassMethodM className methodName methodType  -- TODO: retType and arity
 
 -- | Checks if the function is already defined.
 -- Checks that the specified function type is correct (used types are defined).
@@ -177,8 +177,8 @@ collectFunDef (FunDef _ srcFunName srcFunType _) = do
   let funName = getFunName srcFunName
   whenM (isFunctionDefinedM funName) $
     throwError $ FunctionAlreadyDefined srcFunName
-  (funType, retType) <- srcFunTypeToType srcFunType
-  addFunctionM funName funType retType srcFunType
+  (funType, retType, arity) <- srcFunTypeToType srcFunType
+  addFunctionM funName funType retType arity srcFunType
 
 -- | Program needs to have an entry point: `main : Unit`.
 checkMain :: TypeCheckM ()
@@ -511,16 +511,19 @@ tcInit insideClass (Init s srcInitOp srcExpr) = do
 -- This applies when checking variable/function references and member access.
 --
 -- * If it is a global function or a method and it does not take any arguments,
--- then in order to be pure, it must have Pure type.
+-- then in order to be pure, it must have Pure type. This applies when function
+-- arity is 0, meaning that it didn't have any parameter binders in its
+-- definition. It still can be a function (arrow) type.
 --
 -- * If it *does* take arguments, then it is pure, since we just reference its
 -- name and don't run the computation, it will be checked when it is fully
--- applied.
+-- applied. Full application in this case means that all parameter binders are
+-- used, not that it has value type at the end.
 --
 -- * If it is a local variable (parameter) or a class field, then it is always
 -- pure, since if it has a value type, it has been computed already (we are in
 -- a strict language), and if it has a function type, then we again only
--- reference its name, and its purity should be checked when fully applied.
+-- reference its name, and its purity should be checked when applied.
 
 -- | Expression type checking.
 -- Takes a boolean indicator whether it is inside a class.
@@ -536,10 +539,11 @@ tcExpr insideClass srcExpr =
         throwError $ VarNotBound var s
       varType <- getVarTypeM var
       -- See Note [Purity of function and value types]
-      isPure <- ifM (isFunctionDefinedM $ varToFunName var)
-                  (if isValueType varType && not (isPureFunType varType)
-                     then return False
-                     else return True)
+      let funName = varToFunName var
+      isPure <- ifM (isFunctionDefinedM funName)
+                  (do retType <- unReturn <$> (ftiReturnType <$> getFunTypeInfoM funName)
+                      arity <- ftiArity <$> getFunTypeInfoM funName
+                      return (arity /= 0 || isPureType retType))
                   (return True)
       return $ VarE s varType var isPure
 
@@ -555,6 +559,7 @@ tcExpr insideClass srcExpr =
         throwError $ OutsideFieldAccess s
       memberType <- getClassMemberTypeM className memberName
       -- See Note [Purity of function and value types]
+      -- TODO
       memberPure <- ifM (isClassMethodDefinedM className (memberNameToFunName memberName))
                       (if isValueType memberType && not (isPureFunType memberType)
                          then return False
@@ -574,6 +579,7 @@ tcExpr insideClass srcExpr =
             throwError $ MethodNotDefined methodName className srcExpr
           methodType <- getClassMethodTypeM className methodName
           -- See Note [Purity of function and value types]
+          -- TODO
           methodPure <- if isValueType methodType && not (isPureFunType methodType)
                           then return False
                           else return True
@@ -687,22 +693,35 @@ type BinOpTc = TyExpr -> TyExpr -> TypeCheckM (Type, Bool)
 -- | Function application type checking.
 tcApp :: BinOpTc
 tcApp tyExpr1 tyExpr2 =
-  let expr1Type = getTypeOf tyExpr1
+  -- Function can have Pure type at the top, which we need to discard.
+  let expr1Type = stripPureType $ getTypeOf tyExpr1
       expr2Type = getTypeOf tyExpr2
   in case expr1Type of
        TyArrow argType resultType ->
          ifM (not <$> expr2Type `isSubTypeOf` argType)
            (throwError $ IncorrectFunArgType tyExpr2 argType expr2Type)
            (do
-             -- function performs side effects only when fully applied, so
-             -- if it does not take more arguments, then we check for purity,
-             -- otherwise - postpone this check
-             let expr1Pure = if isValueType resultType && not (isPureFunType resultType)
-                               then False
-                               else True
+             -- Function performs side effects only when fully applied, so if
+             -- it does not take more arguments, then we check for purity,
+             -- otherwise - postpone this check. Full application here means:
+             -- until return type (all parameter binders are used). It still
+             -- can return a function, but impurely.
+
+             -- Try to figure out the purity of result (approximation).
+             resultPure <-
+               case tyExpr1 of
+                 VarE _ _ var _ -> do
+                   let funName = varToFunName var
+                   ifM (isFunctionDefinedM funName)
+                     (do retType <- unReturn <$> (ftiReturnType <$> getFunTypeInfoM funName)
+                         arity <- ftiArity <$> getFunTypeInfoM funName
+                         let parametersLeft = arity - 1 /= 0
+                         return (parametersLeft || isPureType retType))
+                     (return $ isPureType resultType)
+                 _ -> return (isPureType resultType)
+             let expr1Pure = getPurityOf tyExpr1
                  expr2Pure = getPurityOf tyExpr2
-             -- application is pure iff both operands are pure
-             return (resultType, expr1Pure && expr2Pure))
+             return (resultType, expr1Pure && expr2Pure && resultPure))
        _ -> throwError $ NotFunctionType tyExpr1 expr1Type
 
 tcNothingCoalesce :: BinOpTc

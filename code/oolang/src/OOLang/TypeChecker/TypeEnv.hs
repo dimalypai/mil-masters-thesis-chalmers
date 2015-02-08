@@ -29,6 +29,7 @@ module OOLang.TypeChecker.TypeEnv
   , FunTypeInfo
   , ftiType
   , ftiReturnType
+  , ftiArity
   , ftiSrcFunType
   , getFunTypeEnv
   , isFunctionDefined
@@ -66,7 +67,8 @@ initTypeEnv :: TypeEnv
 initTypeEnv = mkTypeEnv Map.empty initFunTypeEnv
 
 initFunTypeEnv :: FunTypeEnv
-initFunTypeEnv = Map.fromList $ map (second $ uncurry builtInFunTypeInfo) builtInFunctions
+initFunTypeEnv = Map.fromList $
+  map (second (\(funType, retType, arity) -> builtInFunTypeInfo funType retType arity)) builtInFunctions
 
 -- | Smart constructor for 'TypeEnv'.
 mkTypeEnv :: ClassTypeEnv -> FunTypeEnv -> TypeEnv
@@ -254,6 +256,7 @@ type FunTypeEnv = Map.Map FunName FunTypeInfo
 data FunTypeInfo = FunTypeInfo
   { ftiType       :: Type        -- ^ Function type.
   , ftiReturnType :: ReturnType  -- ^ Function return type.
+  , ftiArity      :: Int         -- ^ Function arity (number of parameter binders).
   , ftiSrcFunType :: SrcFunType  -- ^ Source type. For error messages.
   }
 
@@ -265,9 +268,9 @@ isFunctionDefined = Map.member
 
 -- | Doesn't check if the function is already in the environment.
 -- Will overwrite it in this case.
-addFunction :: FunName -> Type -> ReturnType -> SrcFunType -> FunTypeEnv -> FunTypeEnv
-addFunction funName funType retType srcFunType =
-  Map.insert funName (FunTypeInfo funType retType srcFunType)
+addFunction :: FunName -> Type -> ReturnType -> Int -> SrcFunType -> FunTypeEnv -> FunTypeEnv
+addFunction funName funType retType arity srcFunType =
+  Map.insert funName (FunTypeInfo funType retType arity srcFunType)
 
 -- | Returns all information about the function from the environment.
 --
@@ -275,8 +278,8 @@ addFunction funName funType retType srcFunType =
 getFunTypeInfo :: FunName -> FunTypeEnv -> FunTypeInfo
 getFunTypeInfo funName funTypeEnv = fromJust $ Map.lookup funName funTypeEnv
 
-builtInFunTypeInfo :: Type -> ReturnType -> FunTypeInfo
-builtInFunTypeInfo funType retType = FunTypeInfo funType retType undefined
+builtInFunTypeInfo :: Type -> ReturnType -> Int -> FunTypeInfo
+builtInFunTypeInfo funType retType arity = FunTypeInfo funType retType arity undefined
 
 -- * Local type environment
 

@@ -8,23 +8,23 @@ import qualified MIL.AST as MIL
 import qualified MIL.AST.Builder as MIL
 import qualified MIL.BuiltIn as MIL
 
-builtInFunctions :: [(FunName, (Type, ReturnType))]
+builtInFunctions :: [(FunName, (Type, ReturnType, Int))]
 builtInFunctions =
-  [ (FunName "printString", (TyArrow TyString TyUnit, ReturnType TyUnit))
-  , (FunName "readString",  (TyString, ReturnType TyString))
-  , (FunName "printBool",   (TyArrow TyBool TyUnit, ReturnType TyUnit))
-  , (FunName "readBool",    (TyBool, ReturnType TyBool))
-  , (FunName "printInt",    (TyArrow TyInt TyUnit, ReturnType TyUnit))
-  , (FunName "readInt",     (TyInt, ReturnType TyInt))
-  , (FunName "printFloat",  (TyArrow TyFloat TyUnit, ReturnType TyUnit))
-  , (FunName "readFloat",   (TyFloat, ReturnType TyFloat))
+  [ (FunName "printString", (TyArrow TyString TyUnit, ReturnType TyUnit, 1))
+  , (FunName "readString",  (TyString, ReturnType TyString, 0))
+  , (FunName "printBool",   (TyArrow TyBool TyUnit, ReturnType TyUnit, 1))
+  , (FunName "readBool",    (TyBool, ReturnType TyBool, 0))
+  , (FunName "printInt",    (TyArrow TyInt TyUnit, ReturnType TyUnit, 1))
+  , (FunName "readInt",     (TyInt, ReturnType TyInt, 0))
+  , (FunName "printFloat",  (TyArrow TyFloat TyUnit, ReturnType TyUnit, 1))
+  , (FunName "readFloat",   (TyFloat, ReturnType TyFloat, 0))
   ]
 
 isBuiltInFunction :: FunName -> Bool
 isBuiltInFunction funName = isJust $ lookup funName builtInFunctions
 
 -- | Unsafe. Make sure that there exists such a built-in function.
-getBuiltInFunctionType :: FunName -> (Type, ReturnType)
+getBuiltInFunctionType :: FunName -> (Type, ReturnType, Int)
 getBuiltInFunctionType funName = fromJust $ lookup funName builtInFunctions
 
 -- * Monads

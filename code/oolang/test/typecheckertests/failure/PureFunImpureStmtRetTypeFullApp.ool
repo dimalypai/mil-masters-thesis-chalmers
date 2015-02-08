@@ -1,0 +1,16 @@
+def main : Unit =>
+  unit;
+end
+
+def pureFun : {a : Int} -> Pure Int =>
+  a;
+end
+
+def pureFunParam : {f : Int -> Pure Int} -> Int -> Pure Int =>
+  f;
+end
+
+def notReallyPureFun : Pure Int =>
+  pureFunParam pureFun 1;
+end
+

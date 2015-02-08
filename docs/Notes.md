@@ -481,10 +481,18 @@ General thoughts. February
 ==========================
 
 * During the work on OOLang CodeGen a couple of issues have been revealed. They
-have the same underlying source. One of the issues is type transformation for
-something like {f : Int -> Pure Int} -> Int -> Pure Int. And another one is
-purity checking for a function of such a type. Is it Pure or not? The whole
-thing after parameter binders is a return type, so from this point of view it
-is impure (it impurely delivers a pure function of type Int -> Pure Int). The
-current checking looks only at the last Pure and decides that it is pure.
+  have the same underlying source. One of the issues is type transformation for
+  something like {f : Int -> Pure Int} -> Int -> Pure Int. And another one is
+  purity checking for a function of such a type. Is it Pure or not? The whole
+  thing after parameter binders is a return type, so from this point of view it
+  is impure (it impurely delivers a pure function of type Int -> Pure Int). The
+  current checking looks only at the last Pure and decides that it is pure.
+* Purity checking approach in OOLang is wrong at the moment. The problem is
+  related to the one above. Before the thought was that only partial
+  application can produce side effects, but not really. When impure function f
+  : Int -> Int -> Int is applied to only one Int it can already produce side
+  effects. Because it could return a function (Int -> Int) impurely. Arity
+  needs to be considered more. But then pure function with many arguments
+  should have Pure on every level because of currying, like Int -> Pure (Int ->
+  Pure Int). This is a bit unfortunate.
 
