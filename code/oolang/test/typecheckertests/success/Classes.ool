@@ -36,8 +36,10 @@ class C =>
   end
 
   # Partial application of impure
+  # Almost the same with Maybe (revealed a need for "maybe application")
   def pureMethod : Pure Int =>
     self.impureParamMethod 1;
+    (just self) ? impureParamMethod;
     self.main;
   end
 

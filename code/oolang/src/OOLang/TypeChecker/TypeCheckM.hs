@@ -19,6 +19,7 @@ module OOLang.TypeChecker.TypeCheckM
   , getClassMemberTypeM
   , getClassFieldTypeM
   , getClassMethodTypeM
+  , getClassMethodTypeInfoM
   , getSuperClassM
   , getClassesAssocM
 
@@ -173,6 +174,14 @@ getClassFieldTypeM className fieldName =
 getClassMethodTypeM :: ClassName -> FunName -> TypeCheckM Type
 getClassMethodTypeM className methodName =
   getClassMethodType className methodName <$> getClassTypeEnvM
+
+-- | Returns all information about the method from the environment.
+--
+-- Note: Unsafe. Should be used only after check that the class and the method
+-- are defined.
+getClassMethodTypeInfoM :: ClassName -> FunName -> TypeCheckM FunTypeInfo
+getClassMethodTypeInfoM className methodName =
+  getClassMethodTypeInfo className methodName <$> getClassTypeEnvM
 
 -- | Returns a super class of the given class if it has one.
 --

@@ -20,6 +20,7 @@ module OOLang.TypeChecker.TypeEnv
   , getClassMemberType
   , getClassFieldType
   , getClassMethodType
+  , getClassMethodTypeInfo
   , getSuperClass
   , getClassesAssoc
   , getClassFieldsAssoc
@@ -214,6 +215,14 @@ getClassFieldType className fieldName =
 getClassMethodType :: ClassName -> FunName -> ClassTypeEnv -> Type
 getClassMethodType className methodName =
   getClassMemberType className (funNameToMemberName methodName)
+
+-- | Returns all information about the method from the environment.
+--
+-- Note: Unsafe. Should be used only after check that the class and the method
+-- are defined.
+getClassMethodTypeInfo :: ClassName -> FunName -> ClassTypeEnv -> FunTypeInfo
+getClassMethodTypeInfo className methodName classTypeEnv =
+  fromJust $ Map.lookup methodName (ctiClassMethods (fromJust $ Map.lookup className classTypeEnv))
 
 -- | Returns a super class of the given class if it has one.
 --
