@@ -105,7 +105,7 @@ srcTypeToType (SrcTyClass srcClassName) = do
   return $ TyClass className
 
 srcTypeToType (SrcTyArrow _ st1 st2) =
-  TyArrow <$> srcFunParamTypeToType st1 <*> srcFunReturnTypeToType st2
+  TyArrow <$> srcFunParamTypeToType st1 <*> (unReturn <$> srcFunReturnTypeToType st2)
 srcTypeToType st@(SrcTyPure {}) = throwError $ PureValue st
 srcTypeToType stM@(SrcTyMaybe _ st) =
   if isMutableOrRefNested st
@@ -132,18 +132,19 @@ isMutableOrRefNested                 _ = False
 
 -- | Transforms function type which has variable binders and return type to one
 -- big internal type (right associative type arrow without parameter names).
+-- Returns transformed return type as a second component of a pair.
 -- Checks if it is well-formed:
 -- * parameter types are well-formed ('srcFunParamTypeToType')
 -- * return type is well-formed ('srcFunReturnTypeToType')
 -- * general rules ('srcTypeToType')
 -- Does *not* check parameter names.
-srcFunTypeToType :: SrcFunType -> TypeCheckM Type
+srcFunTypeToType :: SrcFunType -> TypeCheckM (Type, ReturnType)
 srcFunTypeToType (FunType _ varBinders srcRetType) = do
   retType <- srcFunReturnTypeToType srcRetType
   paramTypes <- mapM (srcFunParamTypeToType . getBinderSrcType) varBinders
-  return $ tyArrowFromList retType paramTypes
+  return (tyArrowFromList (unReturn retType) paramTypes, retType)
 
--- | Transforms function return type to the internal representation.
+-- | Transforms function parameter type to the internal representation.
 -- Checks if it is well-formed:
 -- * doesn't use Mutable, Pure
 -- * general rules ('srcTypeToType')
@@ -153,15 +154,15 @@ srcFunParamTypeToType st@(SrcTyMutable {}) = throwError $ MutableFunParam st
 srcFunParamTypeToType (SrcTyParen _ st) = srcFunParamTypeToType st
 srcFunParamTypeToType st = srcTypeToType st
 
--- | Transforms function parameter type to the internal representation.
+-- | Transforms function return type to the internal representation.
 -- Checks if it is well-formed:
 -- * doesn't use Mutable
 -- * general rules ('srcTypeToType')
-srcFunReturnTypeToType :: SrcType -> TypeCheckM Type
-srcFunReturnTypeToType (SrcTyPure    _ st) = TyPure <$> srcTypeToType st
+srcFunReturnTypeToType :: SrcType -> TypeCheckM ReturnType
+srcFunReturnTypeToType (SrcTyPure    _ st) = ReturnType <$> TyPure <$> srcTypeToType st
 srcFunReturnTypeToType st@(SrcTyMutable {}) = throwError $ MutableFunReturnType st
 srcFunReturnTypeToType (SrcTyParen   _ st) = srcFunReturnTypeToType st
-srcFunReturnTypeToType st = srcTypeToType st
+srcFunReturnTypeToType st = ReturnType <$> srcTypeToType st
 
 -- | Constructs an arrow type given a result type and a list of parameter
 -- types.

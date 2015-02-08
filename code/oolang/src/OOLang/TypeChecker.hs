@@ -159,7 +159,7 @@ collectClassMethod className (MethodDecl _ (FunDef _ srcFunName srcFunType _) _)
   when (methodName == FunName "new") $
     throwError $ NewMemberName methodNameSrcSpan
 
-  methodType <- srcFunTypeToType srcFunType
+  (methodType, retType) <- srcFunTypeToType srcFunType
   let memberName = funNameToMemberName methodName
   whenM (isClassMemberDefinedM className memberName) $ do
     unlessM (isClassMethodOverrideM className methodName methodType) $
@@ -177,8 +177,8 @@ collectFunDef (FunDef _ srcFunName srcFunType _) = do
   let funName = getFunName srcFunName
   whenM (isFunctionDefinedM funName) $
     throwError $ FunctionAlreadyDefined srcFunName
-  funType <- srcFunTypeToType srcFunType
-  addFunctionM funName funType srcFunType
+  (funType, retType) <- srcFunTypeToType srcFunType
+  addFunctionM funName funType retType srcFunType
 
 -- | Program needs to have an entry point: `main : Unit`.
 checkMain :: TypeCheckM ()
@@ -354,7 +354,7 @@ tcFunDef insideClass (FunDef s srcFunName srcFunType srcStmts) = do
 
   tyStmts <- locallyWithContext localTypeContext (mapM (tcStmt insideClass) srcStmts)
 
-  retType <- srcFunReturnTypeToType $ getFunReturnType srcFunType
+  retType <- unReturn <$> (srcFunReturnTypeToType $ getFunReturnType srcFunType)
   -- There is at least one statement, the value of the last one (and hence the
   -- type) is what function returns.
   let lastStmtType = getTypeOf $ last tyStmts

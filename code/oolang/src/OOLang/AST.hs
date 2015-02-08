@@ -239,6 +239,10 @@ data FunType t s = FunType s [VarBinder t s] (TypeS s)
 type SrcFunType = FunType ()   SrcSpan
 type TyFunType  = FunType Type SrcSpan
 
+-- | Type safety measure for working with function type (as a whole) and it's
+-- return part.
+newtype ReturnType = ReturnType { unReturn :: Type }
+
 -- | Name (variable) declaration.
 -- Consists of var binder and an optional initialiser.
 -- Has a purity indicator.

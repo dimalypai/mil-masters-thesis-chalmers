@@ -8,23 +8,23 @@ import qualified MIL.AST as MIL
 import qualified MIL.AST.Builder as MIL
 import qualified MIL.BuiltIn as MIL
 
-builtInFunctions :: [(FunName, Type)]
+builtInFunctions :: [(FunName, (Type, ReturnType))]
 builtInFunctions =
-  [ (FunName "printString", TyArrow TyString TyUnit)
-  , (FunName "readString",  TyString)
-  , (FunName "printBool",   TyArrow TyBool   TyUnit)
-  , (FunName "readBool",    TyBool)
-  , (FunName "printInt",    TyArrow TyInt    TyUnit)
-  , (FunName "readInt",     TyInt)
-  , (FunName "printFloat",  TyArrow TyFloat  TyUnit)
-  , (FunName "readFloat",   TyFloat)
+  [ (FunName "printString", (TyArrow TyString TyUnit, ReturnType TyUnit))
+  , (FunName "readString",  (TyString, ReturnType TyString))
+  , (FunName "printBool",   (TyArrow TyBool TyUnit, ReturnType TyUnit))
+  , (FunName "readBool",    (TyBool, ReturnType TyBool))
+  , (FunName "printInt",    (TyArrow TyInt TyUnit, ReturnType TyUnit))
+  , (FunName "readInt",     (TyInt, ReturnType TyInt))
+  , (FunName "printFloat",  (TyArrow TyFloat TyUnit, ReturnType TyUnit))
+  , (FunName "readFloat",   (TyFloat, ReturnType TyFloat))
   ]
 
 isBuiltInFunction :: FunName -> Bool
 isBuiltInFunction funName = isJust $ lookup funName builtInFunctions
 
 -- | Unsafe. Make sure that there exists such a built-in function.
-getBuiltInFunctionType :: FunName -> Type
+getBuiltInFunctionType :: FunName -> (Type, ReturnType)
 getBuiltInFunctionType funName = fromJust $ lookup funName builtInFunctions
 
 -- * Monads

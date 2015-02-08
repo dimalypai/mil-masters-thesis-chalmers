@@ -28,6 +28,7 @@ module OOLang.TypeChecker.TypeEnv
   , FunTypeEnv
   , FunTypeInfo
   , ftiType
+  , ftiReturnType
   , ftiSrcFunType
   , getFunTypeEnv
   , isFunctionDefined
@@ -65,7 +66,7 @@ initTypeEnv :: TypeEnv
 initTypeEnv = mkTypeEnv Map.empty initFunTypeEnv
 
 initFunTypeEnv :: FunTypeEnv
-initFunTypeEnv = Map.fromList $ map (second builtInFunTypeInfo) builtInFunctions
+initFunTypeEnv = Map.fromList $ map (second $ uncurry builtInFunTypeInfo) builtInFunctions
 
 -- | Smart constructor for 'TypeEnv'.
 mkTypeEnv :: ClassTypeEnv -> FunTypeEnv -> TypeEnv
@@ -252,6 +253,7 @@ type FunTypeEnv = Map.Map FunName FunTypeInfo
 -- Some of the fields are kept just for error messages.
 data FunTypeInfo = FunTypeInfo
   { ftiType       :: Type        -- ^ Function type.
+  , ftiReturnType :: ReturnType  -- ^ Function return type.
   , ftiSrcFunType :: SrcFunType  -- ^ Source type. For error messages.
   }
 
@@ -263,9 +265,9 @@ isFunctionDefined = Map.member
 
 -- | Doesn't check if the function is already in the environment.
 -- Will overwrite it in this case.
-addFunction :: FunName -> Type -> SrcFunType -> FunTypeEnv -> FunTypeEnv
-addFunction funName funType srcFunType =
-  Map.insert funName (FunTypeInfo funType srcFunType)
+addFunction :: FunName -> Type -> ReturnType -> SrcFunType -> FunTypeEnv -> FunTypeEnv
+addFunction funName funType retType srcFunType =
+  Map.insert funName (FunTypeInfo funType retType srcFunType)
 
 -- | Returns all information about the function from the environment.
 --
@@ -273,8 +275,8 @@ addFunction funName funType srcFunType =
 getFunTypeInfo :: FunName -> FunTypeEnv -> FunTypeInfo
 getFunTypeInfo funName funTypeEnv = fromJust $ Map.lookup funName funTypeEnv
 
-builtInFunTypeInfo :: Type -> FunTypeInfo
-builtInFunTypeInfo funType = FunTypeInfo funType undefined
+builtInFunTypeInfo :: Type -> ReturnType -> FunTypeInfo
+builtInFunTypeInfo funType retType = FunTypeInfo funType retType undefined
 
 -- * Local type environment
 
