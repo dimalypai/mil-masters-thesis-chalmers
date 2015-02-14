@@ -294,26 +294,8 @@ codeGenBinOp binOp tyExpr1 tyExpr2 resultType funMonad =
                    appE
              , milResultType)
 {-
--- | Takes a monad of the containing function.
-codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Type -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
-codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
-  let var1Type = MIL.getMonadResultType milExpr1Type
-  let var2Type = MIL.getMonadResultType milExpr2Type
-  -- Type checker ensured that the type of the left operand is a function type.
-  -- All generated code is monadic, so it must be in a monad.
-  let (MIL.TyArrow _ (MIL.TyApp (MIL.TyMonad var1Monad) _)) = var1Type
   let (appBodyExpr, appBodyType) = case (isValueType resultType, isPureFunType resultType, funMonad == pureMonadMil) of
-                                     -- It is a partially applied function, so to make it monadic
-                                     -- value, we need return.
-                                     (False, _, _) -> (MIL.ReturnE funMonad appE, MIL.applyMonadType funMonad (funTypeMil resultType))
-                                     --(True, False, True) -> MIL.ReturnE funMonad appE  -- TODO: should this be possible?
-                                     -- Fully applied Pure function inside a pure or impure function.
-                                     (True, True, _) -> (appE, funTypeMil resultType)
-                                     -- Fully applied impure function inside an impure function.
-                                     (True, False, False) ->
-                                       if var1Monad /= funMonad  -- TODO: is it enough? alphaEq? aliases?
-                                         then (MIL.LiftE appE var1Monad funMonad, funTypeMil resultType)
-                                         else (appE, funTypeMil resultType)
+                                     (True, False, True) -> MIL.ReturnE funMonad appE  -- TODO: should this be possible?
 
 -- | Built-in functions need a special treatment.
 -- TODO: wrong types in bind
