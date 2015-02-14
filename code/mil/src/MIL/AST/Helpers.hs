@@ -31,6 +31,7 @@ getMonadTypeFromApp t = error $ "Type '" ++ show t ++ "' is not monadic"
 
 getSrcResultType :: SrcType -> SrcType
 getSrcResultType (SrcTyApp _ t2) = t2
+getSrcResultType t = error $ "Type '" ++ show t ++ "' is not an application"
 
 -- * Predicates
 
