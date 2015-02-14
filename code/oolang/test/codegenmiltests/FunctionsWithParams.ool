@@ -27,13 +27,10 @@ def impureFunParam : {f : Int -> Int} -> Int -> Int =>
 end
 
 def pureFun : {a : Int} -> {b : Bool} -> Pure Unit =>
-#  impureFun 0.01;
-#  pureFun a b;
   unit;
 end
 
 def impureFun : {a : Float} -> {b : Float} -> Unit =>
-#  pureFun 1;
   unit;
 end
 
@@ -43,5 +40,14 @@ end
 
 def partialImpure : Pure (Float -> Unit) =>
   impureFun 0.01;
+end
+
+def fullPure : Pure Unit =>
+  pureFun 1 true;
+end
+
+def fullPureAndImpure : Unit =>
+  impureFun 0.01 0.02;
+  pureFun 2 false;
 end
 

@@ -50,3 +50,26 @@ partialImpure : (Error Unit ::: NonTerm) (Float -> (Error Unit ::: (NonTerm ::: 
   let (var_11 : Float) <- return [Error Unit ::: NonTerm] 1.0e-2 in
   return [Error Unit ::: NonTerm] var_10 var_11;
 
+fullPure : (Error Unit ::: NonTerm) Unit =
+  let (var_14 : Bool -> (Error Unit ::: NonTerm) Unit) <-
+    let (var_12 : Int -> Bool -> (Error Unit ::: NonTerm) Unit) <- return [Error Unit ::: NonTerm] pureFun in
+    let (var_13 : Int) <- return [Error Unit ::: NonTerm] 1 in
+    return [Error Unit ::: NonTerm] var_12 var_13 in
+  let (var_15 : Bool) <- return [Error Unit ::: NonTerm] True in
+  var_14 var_15;
+
+fullPureAndImpure : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  let (var_20 : Unit) <-
+    let (var_18 : Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) <-
+      let (var_16 : Float -> Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] impureFun in
+      let (var_17 : Float) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1.0e-2 in
+      return [Error Unit ::: (NonTerm ::: (State ::: IO))] var_16 var_17 in
+    let (var_19 : Float) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 2.0e-2 in
+    var_18 var_19 in
+  let (var_23 : Bool -> (Error Unit ::: NonTerm) Unit) <-
+      let (var_21 : Int -> Bool -> (Error Unit ::: NonTerm) Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] pureFun in
+      let (var_22 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 2 in
+      return [Error Unit ::: (NonTerm ::: (State ::: IO))] var_21 var_22 in
+  let (var_24 : Bool) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] False in
+  var_23 var_24;
+
