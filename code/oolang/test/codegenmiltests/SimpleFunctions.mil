@@ -8,8 +8,8 @@ type String
 
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   let (var_0 : Int) <- intFun in
-    let (var_1 : Int) <- intPureFun in
-      return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+  let (var_1 : Int) <- intPureFun in
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
 intFun : (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
   intPureFun;
@@ -19,11 +19,11 @@ intPureFun : (Error Unit ::: NonTerm) Int =
 
 severalLitsImpure : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   let (var_2 : Float) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1.0e-2 in
-    let (var_3 : Bool) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] True in
-      return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+  let (var_3 : Bool) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] True in
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
 severalLitsPure : (Error Unit ::: NonTerm) (Maybe Int) =
   let (var_4 : Int) <- return [Error Unit ::: NonTerm] 1 in
-    let (var_5 : Bool) <- return [Error Unit ::: NonTerm] False in
-      return [Error Unit ::: NonTerm] Nothing [Int];
+  let (var_5 : Bool) <- return [Error Unit ::: NonTerm] False in
+  return [Error Unit ::: NonTerm] Nothing [Int];
 
