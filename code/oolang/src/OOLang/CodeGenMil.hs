@@ -193,6 +193,9 @@ codeGenExpr tyExpr funMonad =
           return ( MIL.VarE $ varMil var
                  , funSrcTypeMil varType)
 
+    BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 _ ->
+      codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
+
     ParenE _ tySubExpr -> codeGenExpr tySubExpr funMonad
 {-
     VarE _ varType var varPure -> do
@@ -266,6 +269,21 @@ getVarCase var varType = do
       if isValueType varType
         then return LocalVarValueType
         else return LocalVarFunType
+
+-- | Takes a monad of the containing function.
+codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Type -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
+codeGenBinOp binOp tyExpr1 tyExpr2 resultType funMonad =
+  case binOp of
+    App -> do
+      (milExpr1, milExpr1Type) <- codeGenExpr tyExpr1 funMonad
+      (milExpr2, milExpr2Type) <- codeGenExpr tyExpr2 funMonad
+      var1 <- newMilVar
+      var2 <- newMilVar
+      let milResultType = funSrcTypeMil resultType  -- TODO
+      return ( MIL.mkSrcLet var1 (MIL.getSrcResultType milExpr1Type) milExpr1 $
+                 MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2 $
+                   MIL.AppE (MIL.VarE var1) (MIL.VarE var2)
+             , milResultType)
 {-
 -- | Takes a monad of the containing function.
 codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Type -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)

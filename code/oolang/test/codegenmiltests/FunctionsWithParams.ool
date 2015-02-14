@@ -1,6 +1,8 @@
 def main : Unit =>
   intId;
+  intId 1;
   intImpureId;
+  intImpureId 1;
 #  impureFun 0.01 0.02;
 #  pureFun 1 true;
   unit;

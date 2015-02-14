@@ -8,8 +8,16 @@ type String
 
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   let (var_0 : Int -> (Error Unit ::: NonTerm) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] intId in
-    let (var_1 : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] intImpureId in
-      return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+  let (var_1 : Int) <-
+    let (var_2 : Int -> (Error Unit ::: NonTerm) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] intId in
+    let (var_3 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1 in
+    var_2 var_3 in
+  let (var_4 : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] intImpureId in
+  let (var_5 : Int) <-
+    let (var_6 : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] intImpureId in
+    let (var_7 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1 in
+    var_6 var_7 in
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
 intId : Int -> (Error Unit ::: NonTerm) Int =
   \(a : Int) -> return [Error Unit ::: NonTerm] a;
