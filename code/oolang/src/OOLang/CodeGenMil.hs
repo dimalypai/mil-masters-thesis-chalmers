@@ -279,10 +279,19 @@ codeGenBinOp binOp tyExpr1 tyExpr2 resultType funMonad =
       (milExpr2, milExpr2Type) <- codeGenExpr tyExpr2 funMonad
       var1 <- newMilVar
       var2 <- newMilVar
-      let milResultType = funSrcTypeMil resultType  -- TODO
+      let (appE, milResultType) = if isValueType resultType
+                                    then ( MIL.AppE (MIL.VarE var1) (MIL.VarE var2)
+                                         , funSrcTypeMil resultType)
+                                    else ( MIL.ReturnE funMonad (MIL.AppE (MIL.VarE var1) (MIL.VarE var2))
+                                         -- TODO: It seems like it doesn't matter if
+                                         -- 'srcTypeMil' or 'funSrcTypeMil' is used,
+                                         -- because they do the same for the
+                                         -- function (arrow) type. Is there a
+                                         -- counter example?
+                                         , MIL.SrcTyApp funMonad (srcTypeMil resultType))
       return ( MIL.mkSrcLet var1 (MIL.getSrcResultType milExpr1Type) milExpr1 $
-                 MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2 $
-                   MIL.AppE (MIL.VarE var1) (MIL.VarE var2)
+                 MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2
+                   appE
              , milResultType)
 {-
 -- | Takes a monad of the containing function.

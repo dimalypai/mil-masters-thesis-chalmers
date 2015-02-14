@@ -3,8 +3,6 @@ def main : Unit =>
   intId 1;
   intImpureId;
   intImpureId 1;
-#  impureFun 0.01 0.02;
-#  pureFun 1 true;
   unit;
 end
 
@@ -28,14 +26,22 @@ def impureFunParam : {f : Int -> Int} -> Int -> Int =>
   f;
 end
 
-#def pureFun : {a : Int} -> {b : Bool} -> Pure Unit =>
+def pureFun : {a : Int} -> {b : Bool} -> Pure Unit =>
 #  impureFun 0.01;
 #  pureFun a b;
-#  unit;
-#end
+  unit;
+end
 
-#def impureFun : {a : Float} -> {b : Float} -> Unit =>
+def impureFun : {a : Float} -> {b : Float} -> Unit =>
 #  pureFun 1;
-#  unit;
-#end
+  unit;
+end
+
+def partialPure : Pure (Bool -> Pure Unit) =>
+  pureFun 1;
+end
+
+def partialImpure : Pure (Float -> Unit) =>
+  impureFun 0.01;
+end
 

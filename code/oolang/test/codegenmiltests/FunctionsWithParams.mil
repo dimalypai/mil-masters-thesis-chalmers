@@ -34,3 +34,19 @@ pureFunParamPureOnTop : (Int -> (Error Unit ::: NonTerm) Int) -> (Error Unit :::
 impureFunParam : (Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) -> (Error Unit ::: (NonTerm ::: (State ::: IO))) (Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) =
   \(f : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] f;
 
+pureFun : Int -> Bool -> (Error Unit ::: NonTerm) Unit =
+  \(a : Int) -> \(b : Bool) -> return [Error Unit ::: NonTerm] unit;
+
+impureFun : Float -> Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(a : Float) -> \(b : Float) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+
+partialPure : (Error Unit ::: NonTerm) (Bool -> (Error Unit ::: NonTerm) Unit) =
+  let (var_8 : Int -> Bool -> (Error Unit ::: NonTerm) Unit) <- return [Error Unit ::: NonTerm] pureFun in
+  let (var_9 : Int) <- return [Error Unit ::: NonTerm] 1 in
+  return [Error Unit ::: NonTerm] var_8 var_9;
+
+partialImpure : (Error Unit ::: NonTerm) (Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) =
+  let (var_10 : Float -> Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) <- return [Error Unit ::: NonTerm] impureFun in
+  let (var_11 : Float) <- return [Error Unit ::: NonTerm] 1.0e-2 in
+  return [Error Unit ::: NonTerm] var_10 var_11;
+
