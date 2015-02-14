@@ -297,22 +297,11 @@ codeGenBinOp binOp tyExpr1 tyExpr2 resultType funMonad =
 -- | Takes a monad of the containing function.
 codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Type -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
 codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
-  (milExpr1, milExpr1Type) <- codeGenExpr tyExpr1 funMonad
-  (milExpr2, milExpr2Type) <- codeGenExpr tyExpr2 funMonad
-  var1 <- newMilVar
-  var2 <- newMilVar
   let var1Type = MIL.getMonadResultType milExpr1Type
   let var2Type = MIL.getMonadResultType milExpr2Type
   -- Type checker ensured that the type of the left operand is a function type.
   -- All generated code is monadic, so it must be in a monad.
-  liftIO $ putStrLn ("var1Type: " ++ show var1Type)
-  liftIO $ putStrLn ("var2Type: " ++ show var2Type)
   let (MIL.TyArrow _ (MIL.TyApp (MIL.TyMonad var1Monad) _)) = var1Type
-  let appE = MIL.AppE (MIL.VarE $ MIL.VarBinder (var1, var1Type))
-                      (MIL.VarE $ MIL.VarBinder (var2, var2Type))
-  liftIO $ putStrLn ("resultType: " ++ show resultType)
-  liftIO $ putStrLn (show $ typeMil resultType)
-  liftIO $ putStrLn (show $ funTypeMil resultType)
   let (appBodyExpr, appBodyType) = case (isValueType resultType, isPureFunType resultType, funMonad == pureMonadMil) of
                                      -- It is a partially applied function, so to make it monadic
                                      -- value, we need return.
@@ -325,12 +314,6 @@ codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
                                        if var1Monad /= funMonad  -- TODO: is it enough? alphaEq? aliases?
                                          then (MIL.LiftE appE var1Monad funMonad, funTypeMil resultType)
                                          else (appE, funTypeMil resultType)
-  return ( MIL.LetE (MIL.VarBinder (var1, var1Type))
-             milExpr1
-             (MIL.LetE (MIL.VarBinder (var2, var2Type))
-                milExpr2
-                appBodyExpr)
-         , appBodyType)
 
 -- | Built-in functions need a special treatment.
 -- TODO: wrong types in bind
