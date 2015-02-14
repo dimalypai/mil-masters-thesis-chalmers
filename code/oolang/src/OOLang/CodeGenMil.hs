@@ -371,19 +371,20 @@ funTypeMil (TyArrow t1 t2) = MIL.TyArrow (typeMil t1) (funTypeMil t2)
 
 -- | Note [Type transformation]:
 --
--- There are two versions of type transformation: 'typeMil' and 'funTypeMil'.
--- Usually, on the top-level, 'typeMil' should be used, except for the cases,
--- where it is known that the type being transformed is a type of the function.
--- Another case, where 'funTypeMil' is used is when it is known that the type
--- being transformed is the type of the global impure function.
+-- There are two main versions of type transformation: 'srcTypeMil' and
+-- 'funSrcTypeMil'. Usually, on the top-level, 'srcTypeMil' should be used,
+-- except for the cases, where it is known that the type being transformed is a
+-- type of a function (?). Another case, where 'funSrcTypeMil' is used is when
+-- it is known that the type being transformed is the type of the global impure
+-- function (with arity 0).
 --
--- 'typeMil' introduces impure monad stack only for function return type.
--- 'funTypeMil' introduces impure monad stack also for atomic types, which are
--- not Pure.
+-- 'srcTypeMil' introduces impure monad stack only for function return type.
+-- 'funSrcTypeMil' introduces impure monad stack also for atomic types, which
+-- are not Pure.
 --
--- It is important, that 'funTypeMil' recursive call is used only on the
+-- It is important, that 'funSrcTypeMil' recursive call is used only on the
 -- right-hand side of the function arrow, since this is the only place, where
--- impure monad stack should be introduced, when 'funTypeMil' is not a
+-- impure monad stack should be introduced, when 'funSrcTypeMil' is not a
 -- top-level call (in this case, atomic types will get impure monad stack as
 -- well).
 --
