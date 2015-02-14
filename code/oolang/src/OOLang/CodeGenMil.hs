@@ -133,8 +133,8 @@ codeGenStmts ((DeclS _ decl):tyStmts) funMonad = do
   codeGenDecl decl funMonad milBodyExprWithType
 -}
 codeGenStmts (tyStmt:tyStmts) funMonad = do
-  var <- newMilVar
   (milBindExpr, milBindExprType) <- codeGenStmt tyStmt funMonad
+  var <- newMilVar
   (milBodyExpr, milBodyExprType) <- codeGenStmts tyStmts funMonad
   return ( MIL.mkSrcLet var (MIL.getSrcResultType milBindExprType) milBindExpr milBodyExpr
          , milBodyExprType)
