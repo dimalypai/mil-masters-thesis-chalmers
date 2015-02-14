@@ -178,8 +178,20 @@ codeGenExpr tyExpr funMonad =
       , MIL.SrcTyApp funMonad (srcTypeMil $ getTypeOf tyExpr))
 
     VarE _ varType var varPure -> do
-      return ( MIL.ReturnE funMonad (MIL.VarE $ varMil var)
-             , MIL.SrcTyApp funMonad (srcTypeMil varType))
+      varCase <- getVarCase var varType
+      case varCase of
+        LocalVarValueType ->
+          return ( MIL.ReturnE funMonad (MIL.VarE $ varMil var)
+                 , MIL.SrcTyApp funMonad (srcTypeMil varType))
+        LocalVarFunType ->
+          return ( MIL.ReturnE funMonad (MIL.VarE $ varMil var)
+                 , MIL.SrcTyApp funMonad (srcTypeMil varType))
+        GlobalFunWithParams ->
+          return ( MIL.ReturnE funMonad (MIL.VarE $ varMil var)
+                 , MIL.SrcTyApp funMonad (srcTypeMil varType))
+        GlobalFunWithoutParams ->
+          return ( MIL.VarE $ varMil var
+                 , funSrcTypeMil varType)
 
     ParenE _ tySubExpr -> codeGenExpr tySubExpr funMonad
 {-
@@ -224,6 +236,36 @@ literalMil (NothingLit _ t _) =
   MIL.TypeAppE
     (MIL.mkSrcConName "Nothing")
     (srcTypeMil $ getMaybeUnderType t)
+
+-- var can be:
+-- + local variable of value type
+-- + local variable of function type
+-- + global pure function (without parameters)
+-- + global impure function (without parameters)
+-- + global pure/impure function with parameters
+-- context can be:
+-- + pure
+-- + impure
+data VarCase
+  = LocalVarValueType
+  | LocalVarFunType
+  | GlobalFunWithParams
+  | GlobalFunWithoutParams
+
+getVarCase :: Var -> Type -> CodeGenM VarCase
+getVarCase var varType = do
+  let funName = varToFunName var
+  isGlobalFun <- asks (isFunctionDefined funName . getFunTypeEnv . getTypeEnv)
+  if isGlobalFun
+    then do
+      arity <- asks (ftiArity . getFunTypeInfo funName . getFunTypeEnv . getTypeEnv)
+      if arity == 0
+        then return GlobalFunWithoutParams
+        else return GlobalFunWithParams
+    else
+      if isValueType varType
+        then return LocalVarValueType
+        else return LocalVarFunType
 {-
 -- | Takes a monad of the containing function.
 codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Type -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)

@@ -1,8 +1,14 @@
 def main : Unit =>
+  intFun;
+  intPureFun;
   unit;
 end
 
-def pureFun : Pure Int =>
+def intFun : Int =>
+  intPureFun;
+end
+
+def intPureFun : Pure Int =>
   1;
 end
 
