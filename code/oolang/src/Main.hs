@@ -112,6 +112,18 @@ interactive flags typeEnv revProgramStrs = do
       let processCommand cmd | Just fileName <- stripPrefix ":save " cmd =
           -- `:save` takes a file name and saves a current list of programs to the file
             writeFile fileName ((intercalate "\n\n" $ reverse revProgramStrs) ++ "\n")
+                             | Just fileName <- stripPrefix ":load " cmd =
+          -- `:load` takes a file name and processes contents of a file through `:define`
+            do src <- readFile fileName
+               case lexer src |> parse "ooli" of
+                 Left parseErr -> putStrLn (prPrint parseErr)
+                 Right srcProgram ->
+                   case typeCheckStage srcProgram typeEnv of
+                     Left tcErr -> putStrLn (prPrint tcErr)
+                     Right (tyProgram, typeEnv') -> do
+                       when (DumpAst `elem` flags) $
+                         putStrLn (ppShow tyProgram)
+                       interactive flags typeEnv' (src : revProgramStrs)
                              | Just strExpr <- stripPrefix ":t " cmd =
           -- `:t` takes an expression and returns its type (things defined
           -- with `:define` are in scope)
