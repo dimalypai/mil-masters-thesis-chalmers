@@ -102,11 +102,12 @@ codeGenFunDef :: TyFunDef -> CodeGenM MIL.SrcFunDef
 codeGenFunDef (FunDef _ srcFunName tyFunType tyStmts) = do
   let funName = getFunName srcFunName
   funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv . getTypeEnv)
-  let isPure = isPureFunType funType
+  retType <- asks (ftiReturnType . getFunTypeInfo funName . getFunTypeEnv . getTypeEnv)
+  let isPure = isPureType $ unReturn retType
   let funMonad = if isPure
                    then pureSrcMonadMil
                    else impureSrcMonadMil
-  let milFunSrcType = funSrcTypeMil funType
+  let milFunSrcType = srcFunTypeMil tyFunType retType
   (funBody, _) <- codeGenStmts tyStmts funMonad
   let funParams = getFunParams tyFunType
   let funBodyWithParams = foldr (\tyVarBinder e ->
@@ -333,6 +334,10 @@ funTypeMil (TyArrow t1 t2) = MIL.TyArrow (typeMil t1) (funTypeMil t2)
 -- impure monad stack should be introduced, when 'funTypeMil' is not a
 -- top-level call (in this case, atomic types will get impure monad stack as
 -- well).
+--
+-- 'srcFunTypeMil' is introduced because we need to know where is the return
+-- type to transform the type correctly (for which 'funSrcTypeMilRetType' is
+-- used).
 
 -- | See Note [Type transformation].
 srcTypeMil :: Type -> MIL.SrcType
@@ -352,6 +357,17 @@ funSrcTypeMil (TyArrow t1 t2) = MIL.SrcTyArrow (srcTypeMil t1) (funSrcTypeMil t2
 funSrcTypeMil (TyPure t)      = MIL.SrcTyApp pureSrcMonadMil (srcTypeMil t)
 funSrcTypeMil (TyMaybe t)     = MIL.SrcTyApp (MIL.mkSimpleSrcType "Maybe") (srcTypeMil t)
 funSrcTypeMil t = MIL.SrcTyApp impureSrcMonadMil (srcTypeMil t)
+
+-- | See Note [Type transformation].
+srcFunTypeMil :: TyFunType -> ReturnType -> MIL.SrcType
+srcFunTypeMil (FunType _ tyVarBinders _) retType =
+  foldr (\(VarBinder _ t _ _) acc -> MIL.SrcTyArrow (srcTypeMil t) acc) (funSrcTypeMilRetType retType) tyVarBinders
+
+-- | See Note [Type transformation].
+funSrcTypeMilRetType :: ReturnType -> MIL.SrcType
+funSrcTypeMilRetType (ReturnType (TyPure t))  = MIL.SrcTyApp pureSrcMonadMil (srcTypeMil t)
+funSrcTypeMilRetType (ReturnType (TyMaybe t)) = MIL.SrcTyApp (MIL.mkSimpleSrcType "Maybe") (srcTypeMil t)
+funSrcTypeMilRetType (ReturnType t) = MIL.SrcTyApp impureSrcMonadMil (srcTypeMil t)
 
 -- * Conversion utils
 

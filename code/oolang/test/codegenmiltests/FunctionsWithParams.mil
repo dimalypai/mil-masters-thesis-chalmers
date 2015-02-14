@@ -17,3 +17,12 @@ intId : Int -> (Error Unit ::: NonTerm) Int =
 intImpureId : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
   \(a : Int) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] a;
 
+pureFunParam : (Int -> (Error Unit ::: NonTerm) Int) -> (Error Unit ::: (NonTerm ::: (State ::: IO))) (Int -> (Error Unit ::: NonTerm) Int) =
+  \(f : Int -> (Error Unit ::: NonTerm) Int) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] f;
+
+pureFunParamPureOnTop : (Int -> (Error Unit ::: NonTerm) Int) -> (Error Unit ::: NonTerm) (Int -> (Error Unit ::: NonTerm) Int) =
+  \(f : Int -> (Error Unit ::: NonTerm) Int) -> return [Error Unit ::: NonTerm] f;
+
+impureFunParam : (Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) -> (Error Unit ::: (NonTerm ::: (State ::: IO))) (Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) =
+  \(f : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] f;
+

@@ -14,6 +14,18 @@ def intImpureId : {a : Int} -> Int =>
   a;
 end
 
+def pureFunParam : {f : Int -> Pure Int} -> Int -> Pure Int =>
+  f;
+end
+
+def pureFunParamPureOnTop : {f : Int -> Pure Int} -> Pure (Int -> Pure Int) =>
+  f;
+end
+
+def impureFunParam : {f : Int -> Int} -> Int -> Int =>
+  f;
+end
+
 #def pureFun : {a : Int} -> {b : Bool} -> Pure Unit =>
 #  impureFun 0.01;
 #  pureFun a b;
