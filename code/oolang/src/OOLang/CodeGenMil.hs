@@ -121,17 +121,14 @@ codeGenFunDef (FunDef _ srcFunName tyFunType tyStmts) = do
 --
 -- Declaration statement needs a special treatment to get variable scope right.
 codeGenStmts :: [TyStmt] -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
-{-
 codeGenStmts [DeclS _ decl] funMonad =
   codeGenDecl decl funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
-                            , MIL.applyMonadType funMonad MIL.unitType)
--}
+                            , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
 codeGenStmts [tyStmt] funMonad = codeGenStmt tyStmt funMonad
-{-
+
 codeGenStmts ((DeclS _ decl):tyStmts) funMonad = do
   milBodyExprWithType <- codeGenStmts tyStmts funMonad
   codeGenDecl decl funMonad milBodyExprWithType
--}
 codeGenStmts (tyStmt:tyStmts) funMonad = do
   (milBindExpr, milBindExprType) <- codeGenStmt tyStmt funMonad
   var <- newMilVar
@@ -151,12 +148,19 @@ codeGenStmt tyStmt funMonad =
     --AssignS _ srcAssignOp tyExprLeft tyExprRight _ -> undefined
 
     DeclS {} -> error "codeGenStmt: DeclS should have a special treatment."
-{-
+
 -- | Code generation for declarations.
 -- It takes an expression which will become a body of the monadic bind, where a
 -- declared variable will be in scope and a type of this expression.
-codeGenDecl :: TyDeclaration -> MIL.TypeM -> (MIL.Expr, MIL.Type) -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenDecl :: TyDeclaration -> MIL.SrcType -> (MIL.SrcExpr, MIL.SrcType) -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenDecl (Decl _ tyVarBinder mTyInit _) funMonad (milBodyExpr, milBodyExprType) = do
+  let var = getVar $ getBinderVar tyVarBinder
+  (milInitExpr, milInitExprType) <-
+    case mTyInit of
+      Just tyInit -> codeGenExpr (getInitExpr tyInit) funMonad
+  return ( MIL.mkSrcLet (varMil var) (MIL.getSrcResultType milInitExprType) milInitExpr milBodyExpr
+         , milBodyExprType)
+{-
   (milInitExpr, _) <- case mTyInit of
                         Just tyInit -> codeGenExpr (getInitExpr tyInit) funMonad
                         -- It may be a variable with Mutable type, so we need

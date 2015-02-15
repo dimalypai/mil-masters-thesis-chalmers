@@ -2,13 +2,11 @@ type Maybe A
   = Nothing
   | Just A;
 
-alias Pure_M = Error Unit ::: NonTerm;
+type String
+  = Empty_Str
+  | Cons_Str Char String;
 
-alias Impure_M = Error Unit ::: NonTerm ::: State ::: IO;
+main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  let (a1 : Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit in
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
-main : Impure_M Unit =
-  let (a : Unit) <- return [Impure_M] unit in
-    let (c : Maybe Int) <- return [Impure_M] Nothing [Int] in
-      let (d : Int) <- return [Impure_M] 3 in
-        let (f : Maybe (Maybe Bool)) <- return [Impure_M] Nothing [Maybe Bool] in
-          return [Impure_M] a;
