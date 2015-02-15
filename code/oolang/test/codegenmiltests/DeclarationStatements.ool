@@ -2,5 +2,6 @@ def main : Unit =>
   a1 : Unit = unit;
   b : Bool = true;
   a2 : Unit = a1;
+  c : Maybe Int;
 end
 

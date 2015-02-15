@@ -158,6 +158,7 @@ codeGenDecl (Decl _ tyVarBinder mTyInit _) funMonad (milBodyExpr, milBodyExprTyp
   (milInitExpr, milInitExprType) <-
     case mTyInit of
       Just tyInit -> codeGenExpr (getInitExpr tyInit) funMonad
+      Nothing -> codeGenExpr (maybeDefaultExpr $ getTypeOf tyVarBinder) funMonad
   return ( MIL.mkSrcLet (varMil var) (MIL.getSrcResultType milInitExprType) milInitExpr milBodyExpr
          , milBodyExprType)
 {-
