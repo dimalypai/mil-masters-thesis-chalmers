@@ -1,0 +1,57 @@
+type Maybe A
+  = Nothing
+  | Just A;
+
+type String
+  = Empty_Str
+  | Cons_Str Char String;
+
+main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  let (var_0 : Int) <- globalPureFun in
+  let (var_1 : Int) <- globalImpureFun in
+  let (var_2 : Int -> (Error Unit ::: NonTerm) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] globalPureFunWithParams in
+  let (var_3 : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] globalImpureFunWithParams in
+  let (var_6 : Int) <-
+    let (var_4 : Int -> (Error Unit ::: NonTerm) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] globalPureFunWithParams in
+    let (var_5 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1 in
+    var_4 var_5 in
+  let (var_9 : Int) <-
+    let (var_7 : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] globalImpureFunWithParams in
+    let (var_8 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 2 in
+    var_7 var_8 in
+  let (var_12 : Int) <-
+    let (var_10 : (Int -> (Error Unit ::: NonTerm) Int) -> (Error Unit ::: NonTerm) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] withLocalPureFun in
+    let (var_11 : Int -> (Error Unit ::: NonTerm) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] globalPureFunWithParams in
+    var_10 var_11 in
+  let (var_15 : Int) <-
+    let (var_13 : (Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] withLocalImpureFun in
+    let (var_14 : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] globalImpureFunWithParams in
+    var_13 var_14 in
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+
+globalPureFun : (Error Unit ::: NonTerm) Int =
+  return [Error Unit ::: NonTerm] 1;
+
+globalImpureFun : (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] 2;
+
+globalPureFunWithParams : Int -> (Error Unit ::: NonTerm) Int =
+  \(a : Int) -> return [Error Unit ::: NonTerm] a;
+
+globalImpureFunWithParams : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
+  \(a : Int) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] a;
+
+withLocalPureFun : (Int -> (Error Unit ::: NonTerm) Int) -> (Error Unit ::: NonTerm) Int =
+  \(f : Int -> (Error Unit ::: NonTerm) Int) ->
+    let (var_16 : Int -> (Error Unit ::: NonTerm) Int) <- return [Error Unit ::: NonTerm] f in
+    let (var_17 : Int -> (Error Unit ::: NonTerm) Int) <- return [Error Unit ::: NonTerm] f in
+    let (var_18 : Int) <- return [Error Unit ::: NonTerm] 1 in
+    var_17 var_18;
+
+withLocalImpureFun : (Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
+  \(f : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) ->
+    let (var_19 : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] f in
+    let (var_20 : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] f in
+    let (var_21 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 2 in
+    var_20 var_21;
+

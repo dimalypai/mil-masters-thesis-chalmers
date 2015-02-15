@@ -32,8 +32,11 @@ spec =
     it "generates MIL code for simple functions" $
       testCase "SimpleFunctions"
 
-    it "generates MIL code for functions with parameters" $
-      testCase "FunctionsWithParams"
+    it "generates MIL code for functions with parameters and their applications" $
+      testCase "FunctionsWithParamsApps"
+
+    it "generates MIL code for different types of variable occurences" $
+      testCase "Variables"
 
     -- TODO: test Refs
     --it "generates MIL code for declaration statements" $

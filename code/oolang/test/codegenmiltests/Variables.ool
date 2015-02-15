@@ -1,0 +1,38 @@
+def main : Unit =>
+  globalPureFun;
+  globalImpureFun;
+  globalPureFunWithParams;
+  globalImpureFunWithParams;
+  globalPureFunWithParams 1;
+  globalImpureFunWithParams 2;
+  withLocalPureFun globalPureFunWithParams;
+  withLocalImpureFun globalImpureFunWithParams;
+  unit;
+end
+
+def globalPureFun : Pure Int =>
+  1;
+end
+
+def globalImpureFun : Int =>
+  2;
+end
+
+def globalPureFunWithParams : {a : Int} -> Pure Int =>
+  a;
+end
+
+def globalImpureFunWithParams : {a : Int} -> Int =>
+  a;
+end
+
+def withLocalPureFun : {f : Int -> Pure Int} -> Pure Int =>
+  f;
+  f 1;
+end
+
+def withLocalImpureFun : {f : Int -> Int} -> Int =>
+  f;
+  f 2;
+end
+
