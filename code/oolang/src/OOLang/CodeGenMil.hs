@@ -201,6 +201,16 @@ codeGenExpr tyExpr funMonad =
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 _ ->
       codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
 
+    -- TODO: Should the type from JustE annotation be used more?
+    JustE _ _ tySubExpr -> do
+      (milSubExpr, milSubExprMonadType) <- codeGenExpr tySubExpr funMonad
+      let milSubExprType = MIL.getSrcResultType milSubExprMonadType
+      var <- newMilVar
+      return ( MIL.mkSrcLet var milSubExprType milSubExpr $
+                 MIL.ReturnE funMonad (MIL.AppE (MIL.TypeAppE (MIL.mkSrcConName "Just") milSubExprType)
+                                                (MIL.VarE var))
+             , MIL.SrcTyApp funMonad $ MIL.SrcTyApp (MIL.mkSimpleSrcType "Maybe") milSubExprType)
+
     ParenE _ tySubExpr -> codeGenExpr tySubExpr funMonad
 {-
     VarE _ varType var varPure -> do

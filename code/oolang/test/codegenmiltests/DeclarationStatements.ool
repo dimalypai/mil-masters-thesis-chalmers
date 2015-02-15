@@ -3,5 +3,6 @@ def main : Unit =>
   b : Bool = true;
   a2 : Unit = a1;
   c : Maybe Int;
+  d1 : Maybe Int = just 2;
 end
 
