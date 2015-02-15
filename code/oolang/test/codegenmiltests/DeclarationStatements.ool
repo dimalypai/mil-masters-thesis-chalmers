@@ -4,5 +4,6 @@ def main : Unit =>
   a2 : Unit = a1;
   c : Maybe Int;
   d1 : Maybe Int = just 2;
+  d2 : Maybe Int = d1;
 end
 
