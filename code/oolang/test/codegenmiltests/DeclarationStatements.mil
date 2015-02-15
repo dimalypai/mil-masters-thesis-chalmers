@@ -8,5 +8,6 @@ type String
 
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   let (a1 : Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit in
+  let (b : Bool) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] True in
   return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
