@@ -20,10 +20,12 @@ intPureFun : (Error Unit ::: NonTerm) Int =
 severalLitsImpure : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   let (var_2 : Float) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1.0e-2 in
   let (var_3 : Bool) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] True in
+  let (var_4 : String) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    Cons_Str 's' (Cons_Str 't' (Cons_Str 'r' (Cons_Str 'i' (Cons_Str 'n' (Cons_Str 'g' Empty_Str))))) in
   return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
 severalLitsPure : (Error Unit ::: NonTerm) (Maybe Int) =
-  let (var_4 : Int) <- return [Error Unit ::: NonTerm] 1 in
-  let (var_5 : Bool) <- return [Error Unit ::: NonTerm] False in
+  let (var_5 : Int) <- return [Error Unit ::: NonTerm] 1 in
+  let (var_6 : Bool) <- return [Error Unit ::: NonTerm] False in
   return [Error Unit ::: NonTerm] Nothing [Int];
 

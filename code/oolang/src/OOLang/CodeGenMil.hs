@@ -236,6 +236,7 @@ literalMil (BoolLit _ _ b) =
     else MIL.mkSrcConName "False"
 literalMil (IntLit _ _ i)     = MIL.LitE (MIL.IntLit i)
 literalMil (FloatLit _ _ f _) = MIL.LitE (MIL.FloatLit f)
+literalMil (StringLit _ _ s)  = stringMil s
 literalMil (NothingLit _ t _) =
   -- Monomorphise Nothing constructor.
   MIL.TypeAppE

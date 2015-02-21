@@ -15,6 +15,7 @@ end
 def severalLitsImpure : Unit =>
   0.01;
   true;
+  "string";
   unit;
 end
 
