@@ -158,21 +158,11 @@ codeGenDecl (Decl _ tyVarBinder mTyInit _) funMonad (milBodyExpr, milBodyExprTyp
   (milInitExpr, milInitExprType) <-
     case mTyInit of
       Just tyInit -> codeGenExpr (getInitExpr tyInit) funMonad
-      Nothing -> codeGenExpr (maybeDefaultExpr $ getTypeOf tyVarBinder) funMonad
+      -- It may be a variable with Mutable type, so we need 'getUnderType'.
+      Nothing -> codeGenExpr (maybeDefaultExpr $ getUnderType $ getTypeOf tyVarBinder) funMonad
   return ( MIL.mkSrcLet (varMil var) (MIL.getSrcResultType milInitExprType) milInitExpr milBodyExpr
          , milBodyExprType)
-{-
-  (milInitExpr, _) <- case mTyInit of
-                        Just tyInit -> codeGenExpr (getInitExpr tyInit) funMonad
-                        -- It may be a variable with Mutable type, so we need
-                        -- 'getUnderType'.
-                        Nothing -> codeGenExpr (maybeDefaultExpr $ getUnderType $ getTypeOf tyVarBinder) funMonad
-  return ( MIL.LetE ( MIL.VarBinder (varMil (getVar $ getBinderVar tyVarBinder)
-                    , typeMil $ getTypeOf tyVarBinder))
-             milInitExpr
-             milBodyExpr
-         , milBodyExprType)
--}
+
 -- | Expression code generation.
 -- Takes a monad of the containing function.
 codeGenExpr :: TyExpr -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
@@ -253,7 +243,7 @@ literalMil (NothingLit _ t _) =
   -- Monomorphise Nothing constructor.
   MIL.TypeAppE
     (MIL.mkSrcConName "Nothing")
-    (srcTypeMil $ getMaybeUnderType $ getUnderType t)  -- Type may be Mutable
+    (srcTypeMil $ getMaybeUnderType t)
 
 -- var can be:
 -- + local variable of value type
