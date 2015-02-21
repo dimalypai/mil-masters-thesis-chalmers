@@ -93,10 +93,11 @@ t1 `isSubTypeOf` t2 = do
 -- * it is not Pure (it is allowed only in function return type)
 -- * Maybe, Mutable and Ref can have Mutable or Ref inside only through type arrows
 srcTypeToType :: SrcType -> TypeCheckM Type
-srcTypeToType (SrcTyUnit  _) = return TyUnit
-srcTypeToType (SrcTyBool  _) = return TyBool
-srcTypeToType (SrcTyInt   _) = return TyInt
-srcTypeToType (SrcTyFloat _) = return TyFloat
+srcTypeToType (SrcTyUnit  _)  = return TyUnit
+srcTypeToType (SrcTyBool  _)  = return TyBool
+srcTypeToType (SrcTyInt   _)  = return TyInt
+srcTypeToType (SrcTyFloat _)  = return TyFloat
+srcTypeToType (SrcTyString _) = return TyString
 
 srcTypeToType (SrcTyClass srcClassName) = do
   let className = getClassName srcClassName
@@ -186,6 +187,7 @@ isComparableType TyUnit        = True
 isComparableType TyBool        = True
 isComparableType TyInt         = True
 isComparableType TyFloat       = True
+isComparableType TyString      = True
 isComparableType TyClass {}    = True
 isComparableType (TyPure t)    = isComparableType t
 isComparableType (TyMaybe t)   = isComparableType t

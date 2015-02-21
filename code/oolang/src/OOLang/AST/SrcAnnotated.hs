@@ -50,6 +50,7 @@ instance SrcAnnotated TypeS where
   ann (SrcTyBool s) = s
   ann (SrcTyInt s) = s
   ann (SrcTyFloat s) = s
+  ann (SrcTyString s) = s
   ann (SrcTyClass cn) = ann cn
   ann (SrcTyArrow s _ _) = s
   ann (SrcTyPure s _) = s

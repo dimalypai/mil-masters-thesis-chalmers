@@ -57,6 +57,7 @@ import OOLang.Parser.ParseError
   Bool    { $$@(KW_TyBool,    _) }
   Float   { $$@(KW_TyFloat,   _) }
   Int     { $$@(KW_TyInt,     _) }
+  String  { $$@(KW_TyString,  _) }
   Maybe   { $$@(KW_TyMaybe,   _) }
   Mutable { $$@(KW_TyMutable, _) }
   Pure    { $$@(KW_TyPure,    _) }
@@ -311,6 +312,7 @@ atomtype
   | Bool    {% withFileName $ \fileName -> SrcTyBool  $ mkTokSrcSpan $1 fileName }
   | Int     {% withFileName $ \fileName -> SrcTyInt   $ mkTokSrcSpan $1 fileName }
   | Float   {% withFileName $ \fileName -> SrcTyFloat $ mkTokSrcSpan $1 fileName }
+  | String  {% withFileName $ \fileName -> SrcTyString $ mkTokSrcSpan $1 fileName }
   | upperId {% withFileName $ \fileName -> SrcTyClass ( ClassName $ getTokId $1
                                                       , mkTokSrcSpan $1 fileName ) }
   | '(' type ')'

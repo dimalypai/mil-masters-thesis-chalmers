@@ -28,12 +28,12 @@ spec =
         (lexer "catch class def do else end false finally if just nothing \
               \ otherwise private public ref return \
               \ static then true try unit when while \
-              \ Bool Float Int Maybe Mutable Pure Ref Unit")
+              \ Bool Float Int String Maybe Mutable Pure Ref Unit")
         `shouldBe`
       [ KW_Catch, KW_Class, KW_Def, KW_Do, KW_Else, KW_End, KW_False, KW_Finally, KW_If, KW_Just, KW_Nothing
       , KW_Otherwise, KW_Private, KW_Public, KW_Ref, KW_Return
       , KW_Static, KW_Then, KW_True, KW_Try, KW_Unit, KW_When, KW_While
-      , KW_TyBool, KW_TyFloat, KW_TyInt, KW_TyMaybe, KW_TyMutable, KW_TyPure, KW_TyRef, KW_TyUnit
+      , KW_TyBool, KW_TyFloat, KW_TyInt, KW_TyString, KW_TyMaybe, KW_TyMutable, KW_TyPure, KW_TyRef, KW_TyUnit
       ]
 
     it "recognises all symbols correctly" $
@@ -74,7 +74,7 @@ spec =
         (lexer "catch class def do else end false finally if just nothing \
               \ otherwise private public ref return \
               \ static then true try unit when while \
-              \ Bool Float Int Maybe Mutable Pure Ref Unit \
+              \ Bool Float Int String Maybe Mutable Pure Ref Unit \
               \ =  :  +  -  *  /  %  <  >  <=  >=  /= \
               \ =>  ->  \\  .  ::  ?  ??  <-  :=  ! \
               \ &&  ||  (  )  {  }  [  ]  ; \
@@ -84,7 +84,7 @@ spec =
       "catch class def do else end false finally if just nothing\
      \ otherwise private public ref return\
      \ static then true try unit when while\
-     \ Bool Float Int Maybe Mutable Pure Ref Unit\
+     \ Bool Float Int String Maybe Mutable Pure Ref Unit\
      \ = : + - * / % < > <= >= /=\
      \ => -> \\ . :: ? ?? <- := !\
      \ && || ( ) { } [ ] ;\

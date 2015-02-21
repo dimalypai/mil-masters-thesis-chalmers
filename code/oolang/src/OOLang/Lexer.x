@@ -75,6 +75,7 @@ tokens :-
   Bool    { \p s -> (KW_TyBool,    posn p s) }
   Float   { \p s -> (KW_TyFloat,   posn p s) }
   Int     { \p s -> (KW_TyInt,     posn p s) }
+  String  { \p s -> (KW_TyString,  posn p s) }
   Maybe   { \p s -> (KW_TyMaybe,   posn p s) }
   Mutable { \p s -> (KW_TyMutable, posn p s) }
   Pure    { \p s -> (KW_TyPure,    posn p s) }
@@ -162,6 +163,7 @@ data Token =
   | KW_TyBool
   | KW_TyFloat
   | KW_TyInt
+  | KW_TyString
   | KW_TyMaybe
   | KW_TyMutable
   | KW_TyPure
@@ -244,6 +246,7 @@ instance Show Token where
   show KW_TyBool    = "Bool"
   show KW_TyFloat   = "Float"
   show KW_TyInt     = "Int"
+  show KW_TyString  = "String"
   show KW_TyMaybe   = "Maybe"
   show KW_TyMutable = "Mutable"
   show KW_TyPure    = "Pure"

@@ -1,5 +1,6 @@
 def main : Unit =>
-  printString "Hello from main";
+  s : String = readString;
+  printString s;
   b : Bool = readBool;
   printBool b;
   i : Int = readInt;
