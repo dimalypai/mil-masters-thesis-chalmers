@@ -105,7 +105,12 @@ instance Pretty SrcType where
     prPrnParens (st1 `typeHasLowerPrecAssoc` st) st1 <+>
     prPrnParens (st2 `typeHasLowerPrec` st) st2
   prPrn (SrcTyTuple elemSrcTypes) = braces (hsep $ punctuate comma $ map prPrn elemSrcTypes)
-  prPrn (SrcTyMonadCons st1 st2) = prPrn st1 <+> text ":::" <+> prPrn st2  -- TODO: associativity? parens?
+  prPrn (SrcTyMonadCons st1 st2) =
+    prPrn st1 <+> text ":::" <+>
+    prPrnParens (case st2 of
+                   SrcTyMonadCons {} -> True
+                   _ -> False)
+      st2
 
 -- See Note [Precedences and associativity]
 instance Pretty Type where
@@ -125,7 +130,12 @@ instance Pretty Type where
 
 instance Pretty MonadType where
   prPrn (MTyMonad m) = prPrn m
-  prPrn (MTyMonadCons m mt) = prPrn m <+> text ":::" <+> prPrn mt  -- TODO: parens?
+  prPrn (MTyMonadCons m mt) =
+    prPrn m <+> text ":::" <+>
+    prPrnParens (case mt of
+                   MTyMonadCons {} -> True
+                   _ -> False)
+      mt
 
 instance Pretty SingleMonad where
   prPrn (SinMonad m) = prPrn m

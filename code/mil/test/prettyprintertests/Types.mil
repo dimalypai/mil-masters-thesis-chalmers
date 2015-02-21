@@ -7,7 +7,7 @@ fun2 : (Pair Int Int -> Int) -> Int -> Unit =
 fun3 : (forall A . A -> A) -> Int -> Unit =
   unit;
 
-fun4 : (State ::: Error String ::: Id) A =
+fun4 : (State ::: (Error String ::: Id)) A =
   unit;
 
 fun5 : {Int, Float} =
