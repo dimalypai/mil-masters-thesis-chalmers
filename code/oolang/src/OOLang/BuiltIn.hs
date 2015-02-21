@@ -71,9 +71,6 @@ builtInMilTypeDefs =
       , MIL.ConDef (MIL.ConName "Cons_Str") [MIL.mkSimpleSrcType "Char", MIL.mkSimpleSrcType "String"]]
   ]
 
-stringTypeMil :: MIL.Type
-stringTypeMil = MIL.TyTypeCon (MIL.TypeName "String")
-
 maybeDefaultExpr :: Type -> TyExpr
 maybeDefaultExpr t@(TyRef mt) = NewRefE undefined t (LitE $ NothingLit undefined mt undefined)
 maybeDefaultExpr t = LitE $ NothingLit undefined t undefined
