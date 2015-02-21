@@ -227,9 +227,6 @@ codeGenExpr tyExpr funMonad =
                                             else return ( MIL.VarE $ MIL.VarBinder ( varMil var
                                                                                    , funTypeMil varType)
                                                         , funTypeMil varType)
-
-    BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 _ ->
-      codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
 -}
 literalMil :: TyLiteral -> MIL.SrcExpr
 literalMil UnitLit {} = MIL.LitE MIL.UnitLit
@@ -349,12 +346,9 @@ codeGenNoArgBuiltInFunction milFunName funMonad = do
 --
 -- In bind, the variable type should be "atomic" (non-monadic), so we must get
 -- rid of 'TyPure'.
+-}
 
 -- * Type conversions
--- TODO: more Pure_M???
-typeMil (TyArrow t1 t2)     = MIL.TyArrow (typeMil t1) (funTypeMil t2)  -- TODO: Pure on the left?
-funTypeMil (TyArrow t1 t2) = MIL.TyArrow (typeMil t1) (funTypeMil t2)
--}
 
 -- | Note [Type transformation]:
 --
