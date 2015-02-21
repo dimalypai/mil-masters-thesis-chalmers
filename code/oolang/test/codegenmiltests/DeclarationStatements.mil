@@ -18,5 +18,7 @@ main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   let (e1 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 3 in
   let (e2 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] e1 in
   let (f : Maybe Bool) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] Nothing [Bool] in
+  let (g : Maybe Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] Nothing [Int] in
+  let (h : Maybe (Maybe Bool)) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] Nothing [Maybe Bool] in
   return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 

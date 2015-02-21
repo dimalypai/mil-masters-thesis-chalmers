@@ -8,5 +8,7 @@ def main : Unit =>
   e1 : Mutable Int <- 3;
   e2 : Mutable Int <- e1;
   f : Mutable (Maybe Bool);
+  g : Mutable (Maybe Int) <- nothing [Maybe Int];
+  h : Mutable (Maybe (Maybe Bool));
 end
 
