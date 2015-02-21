@@ -6,6 +6,30 @@ type String
   = Empty_Str
   | Cons_Str Char String;
 
+printString : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(s : String) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+
+readString : (Error Unit ::: (NonTerm ::: (State ::: IO))) String =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] Empty_Str;
+
+printBool : Bool -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(b : Bool) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+
+readBool : (Error Unit ::: (NonTerm ::: (State ::: IO))) Bool =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] True;
+
+printInt : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(i : Int) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+
+readInt : (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1;
+
+printFloat : Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(f : Float) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+
+readFloat : (Error Unit ::: (NonTerm ::: (State ::: IO))) Float =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1.0;
+
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   let (var_0 : Int -> (Error Unit ::: NonTerm) Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] intId in
   let (var_3 : Int) <-

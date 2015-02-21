@@ -3,64 +3,55 @@ type Maybe A
   | Just A;
 
 type String
-  = Empty
-  | StrCons Char String;
+  = Empty_Str
+  | Cons_Str Char String;
 
-alias Pure_M = Error Unit ::: NonTerm;
+printString : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(s : String) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
-alias Impure_M = Error Unit ::: NonTerm ::: State ::: IO;
+readString : (Error Unit ::: (NonTerm ::: (State ::: IO))) String =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] Empty_Str;
 
-printString : String -> IO Unit =
-  \(str : String) -> case str of
-                       | Empty => return [IO] unit;
-                       | StrCons (c : Char) (cs : String) => let (_ : Unit) <- print_char c in
-                                                               printString cs
-                     end;
+printBool : Bool -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(b : Bool) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
-printBool : Bool -> IO Unit =
-  \(b : Bool) -> case b of
-                   | True => printString (StrCons 't' (StrCons 'r' (StrCons 'u' (StrCons 'e' Empty))))
-                   | False => printString (StrCons 'f' (StrCons 'a' (StrCons 'l' (StrCons 's' (StrCons 'e' Empty)))))
-                 end;
+readBool : (Error Unit ::: (NonTerm ::: (State ::: IO))) Bool =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] True;
 
-readBool : Impure_M Bool =
-  let (c_1 : Char) <- read_char in
-    case c_1 of
-      | 't' => let (c_2 : Char) <- read_char in
-                 case c_2 of
-                   | 'r' => return [Impure_M] True
-                   | _ => throw_error [Unit] [Bool] unit
-                 end
-      | 'f' => let (c_2 : Char) <- read_char in
-                 case c_2 of
-                   | 'a' => return [Impure_M] False
-                   | _ => throw_error [Unit] [Bool] unit
-                 end
-      | _ => throw_error [Unit] [Bool] unit
-    end;
+printInt : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(i : Int) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
-printInt : Int -> IO Unit =
+readInt : (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1;
 
-readInt : Impure_M Int =
+printFloat : Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(f : Float) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 
-printFloat : Float -> IO Unit =
+readFloat : (Error Unit ::: (NonTerm ::: (State ::: IO))) Float =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1.0;
 
-readFloat : Impure_M Float =
-
-main : Impure_M Unit =
-  let (_ : Unit) <- let (var_0 : String -> IO Unit) <- return [Impure_M] print_string in
-                      let (var_1 : String) <- return [Impure_M] "Hello from main" in
-                        lift [IO -> Impure_M] var_0 var_1 in
-    let (b : Bool) <- readBool in
-      let (_ : Unit) <- let (var_2 : Bool -> IO Unit) <- return [Impure_M] printBool in
-                          let (var_3 : Bool) <- return [Impure_M] b in
-                            lift [IO -> Impure_M] var_2 var_3 in
-        let (i : Int) <- read_int in
-          let (_ : Unit) <- let (var_4 : Int -> IO Unit) <- return [Impure_M] print_int in
-                              let (var_5 : Int) <- return [Impure_M] i in
-                                lift [IO -> Impure_M] var_4 var_5 in
-            let (f : Float) <- read_float in
-              let (var_6 : Float -> IO Unit) <- return [Impure_M] print_float in
-                let (var_7 : Float) <- return [Impure_M] f in
-                  lift [IO -> Impure_M] var_6 var_7;
+main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  let (s : String) <- readString in
+  let (var_0 : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] printString in
+  let (var_3 : Unit) <-
+    let (var_1 : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] printString in
+    let (var_2 : String) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] s in
+    var_1 var_2 in
+  let (b : Bool) <- readBool in
+  let (var_4 : Bool -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] printBool in
+  let (var_7 : Unit) <-
+    let (var_5 : Bool -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] printBool in
+    let (var_6 : Bool) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] b in
+    var_5 var_6 in
+  let (i : Int) <- readInt in
+  let (var_8 : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] printInt in
+  let (var_11 : Unit) <-
+    let (var_9 : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] printInt in
+    let (var_10 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] i in
+    var_9 var_10 in
+  let (f : Float) <- readFloat in
+  let (var_12 : Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] printFloat in
+  let (var_13 : Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] printFloat in
+  let (var_14 : Float) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] f in
+  var_13 var_14;
 

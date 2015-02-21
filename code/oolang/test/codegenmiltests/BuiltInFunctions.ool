@@ -1,10 +1,15 @@
 def main : Unit =>
-  printString "Hello from main";
+  s : String = readString;
+  printString;
+  printString s;
   b : Bool = readBool;
+  printBool;
   printBool b;
   i : Int = readInt;
+  printInt;
   printInt i;
   f : Float = readFloat;
+  printFloat;
   printFloat f;
 end
 

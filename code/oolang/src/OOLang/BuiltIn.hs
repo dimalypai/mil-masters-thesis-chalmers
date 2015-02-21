@@ -75,39 +75,77 @@ maybeDefaultExpr :: Type -> TyExpr
 maybeDefaultExpr t@(TyRef mt) = NewRefE undefined t (LitE $ NothingLit undefined mt undefined)
 maybeDefaultExpr t = LitE $ NothingLit undefined t undefined
 
--- | TODO: revise
 builtInMilFunTypes :: [(MIL.FunName, MIL.SrcType)]
-builtInMilFunTypes = []
-{-
-  [ (MIL.FunName "printString", MIL.TyArrow stringTypeMil (MIL.ioType MIL.unitType))
-  , (MIL.FunName "readString",  MIL.ioType stringTypeMil)
-  , (MIL.FunName "printBool",   MIL.TyArrow MIL.boolType (MIL.ioType MIL.unitType))
-  , (MIL.FunName "readBool",    MIL.TyApp (MIL.TyMonad impureMonadMil) MIL.boolType)
-  , (MIL.FunName "printInt",    MIL.TyArrow MIL.intType (MIL.ioType MIL.unitType))
-  , (MIL.FunName "readInt",     MIL.TyApp (MIL.TyMonad impureMonadMil) MIL.intType)
-  , (MIL.FunName "printFloat",  MIL.TyArrow MIL.floatType (MIL.ioType MIL.unitType))
-  , (MIL.FunName "readFloat",   MIL.TyApp (MIL.TyMonad impureMonadMil) MIL.floatType)
+builtInMilFunTypes =
+  [ (MIL.FunName "printString", MIL.SrcTyArrow (MIL.mkSimpleSrcType "String")
+                                               (MIL.SrcTyApp impureSrcMonadMil (MIL.mkSimpleSrcType "Unit")))
+  , (MIL.FunName "readString",  MIL.SrcTyApp impureSrcMonadMil (MIL.mkSimpleSrcType "String"))
+  , (MIL.FunName "printBool",   MIL.SrcTyArrow (MIL.mkSimpleSrcType "Bool")
+                                               (MIL.SrcTyApp impureSrcMonadMil (MIL.mkSimpleSrcType "Unit")))
+  , (MIL.FunName "readBool",    MIL.SrcTyApp impureSrcMonadMil (MIL.mkSimpleSrcType "Bool"))
+  , (MIL.FunName "printInt",    MIL.SrcTyArrow (MIL.mkSimpleSrcType "Int")
+                                               (MIL.SrcTyApp impureSrcMonadMil (MIL.mkSimpleSrcType "Unit")))
+  , (MIL.FunName "readInt",     MIL.SrcTyApp impureSrcMonadMil (MIL.mkSimpleSrcType "Int"))
+  , (MIL.FunName "printFloat",  MIL.SrcTyArrow (MIL.mkSimpleSrcType "Float")
+                                               (MIL.SrcTyApp impureSrcMonadMil (MIL.mkSimpleSrcType "Unit")))
+  , (MIL.FunName "readFloat",   MIL.SrcTyApp impureSrcMonadMil (MIL.mkSimpleSrcType "Float"))
   ]
--}
+
 -- | Unsafe. Make sure that there exists such a built-in function.
 getMilBuiltInFunType :: MIL.FunName -> MIL.SrcType
 getMilBuiltInFunType milFunName = fromJust $ lookup milFunName builtInMilFunTypes
 
 builtInMilFunDefs :: [MIL.SrcFunDef]
-builtInMilFunDefs = []
-{-
-  [ printBoolMilDef
-  , readBoolMilDef]
--}
+builtInMilFunDefs =
+  [ printStringMilDef
+  , readStringMilDef
+  , printBoolMilDef
+  , readBoolMilDef
+  , printIntMilDef
+  , readIntMilDef
+  , printFloatMilDef
+  , readFloatMilDef
+  ]
+
+printStringMilDef :: MIL.SrcFunDef
+printStringMilDef =
+  MIL.mkSrcFunDef "printString" (getMilBuiltInFunType $ MIL.FunName "printString")
+    (MIL.mkSrcLambda (MIL.Var "s") (MIL.mkSimpleSrcType "String") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
+
+readStringMilDef :: MIL.SrcFunDef
+readStringMilDef =
+  MIL.mkSrcFunDef "readString" (getMilBuiltInFunType $ MIL.FunName "readString")
+    (MIL.ReturnE impureSrcMonadMil (MIL.mkSrcConName "Empty_Str"))
+
 printBoolMilDef :: MIL.SrcFunDef
 printBoolMilDef =
   MIL.mkSrcFunDef "printBool" (getMilBuiltInFunType $ MIL.FunName "printBool")
-    undefined--(MIL.mkSrcLambda () ())
+    (MIL.mkSrcLambda (MIL.Var "b") (MIL.mkSimpleSrcType "Bool") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
 
 readBoolMilDef :: MIL.SrcFunDef
 readBoolMilDef =
   MIL.mkSrcFunDef "readBool" (getMilBuiltInFunType $ MIL.FunName "readBool")
-    undefined--(MIL.mkSrcLet () () ())
+    (MIL.ReturnE impureSrcMonadMil (MIL.mkSrcConName "True"))
+
+printIntMilDef :: MIL.SrcFunDef
+printIntMilDef =
+  MIL.mkSrcFunDef "printInt" (getMilBuiltInFunType $ MIL.FunName "printInt")
+    (MIL.mkSrcLambda (MIL.Var "i") (MIL.mkSimpleSrcType "Int") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
+
+readIntMilDef :: MIL.SrcFunDef
+readIntMilDef =
+  MIL.mkSrcFunDef "readInt" (getMilBuiltInFunType $ MIL.FunName "readInt")
+    (MIL.ReturnE impureSrcMonadMil (MIL.LitE $ MIL.IntLit 1))
+
+printFloatMilDef :: MIL.SrcFunDef
+printFloatMilDef =
+  MIL.mkSrcFunDef "printFloat" (getMilBuiltInFunType $ MIL.FunName "printFloat")
+    (MIL.mkSrcLambda (MIL.Var "f") (MIL.mkSimpleSrcType "Float") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
+
+readFloatMilDef :: MIL.SrcFunDef
+readFloatMilDef =
+  MIL.mkSrcFunDef "readFloat" (getMilBuiltInFunType $ MIL.FunName "readFloat")
+    (MIL.ReturnE impureSrcMonadMil (MIL.LitE $ MIL.FloatLit 1.0))
 
 {-
   [ MIL.FunDef (MIL.FunName "printString")
