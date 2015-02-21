@@ -16,5 +16,6 @@ main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
     return [Error Unit ::: (NonTerm ::: (State ::: IO))] Just [Int] var_0 in
   let (d2 : Maybe Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] d1 in
   let (e1 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 3 in
+  let (e2 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] e1 in
   return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
 

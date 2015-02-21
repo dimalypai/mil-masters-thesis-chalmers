@@ -400,6 +400,7 @@ srcTypeMil (TyClass className) = MIL.SrcTyTypeCon $ typeNameMil className
 srcTypeMil (TyArrow t1 t2) = MIL.SrcTyArrow (srcTypeMil t1) (funSrcTypeMil t2)
 srcTypeMil (TyPure t)      = MIL.SrcTyApp pureSrcMonadMil (srcTypeMil t)
 srcTypeMil (TyMaybe t)     = MIL.SrcTyApp (MIL.mkSimpleSrcType "Maybe") (srcTypeMil t)
+srcTypeMil (TyMutable t)   = srcTypeMil t
 
 -- | See Note [Type transformation].
 funSrcTypeMil :: Type -> MIL.SrcType

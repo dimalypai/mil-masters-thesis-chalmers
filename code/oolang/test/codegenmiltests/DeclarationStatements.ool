@@ -6,5 +6,6 @@ def main : Unit =>
   d1 : Maybe Int = just 2;
   d2 : Maybe Int = d1;
   e1 : Mutable Int <- 3;
+  e2 : Mutable Int <- e1;
 end
 
