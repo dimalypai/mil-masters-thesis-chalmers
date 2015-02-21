@@ -253,7 +253,7 @@ literalMil (NothingLit _ t _) =
   -- Monomorphise Nothing constructor.
   MIL.TypeAppE
     (MIL.mkSrcConName "Nothing")
-    (srcTypeMil $ getMaybeUnderType t)
+    (srcTypeMil $ getMaybeUnderType $ getUnderType t)  -- Type may be Mutable
 
 -- var can be:
 -- + local variable of value type

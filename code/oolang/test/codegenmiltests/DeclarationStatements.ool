@@ -7,5 +7,6 @@ def main : Unit =>
   d2 : Maybe Int = d1;
   e1 : Mutable Int <- 3;
   e2 : Mutable Int <- e1;
+  f : Mutable (Maybe Bool);
 end
 
