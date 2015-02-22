@@ -496,3 +496,67 @@ General thoughts. February
   should have Pure on every level because of currying, like Int -> Pure (Int ->
   Pure Int). This is a bit unfortunate.
 
+Monad stacks and types:
+-----------------------
+
+Error e m a => m (Either e a)
+State s m a => s -> m (a, s)
+NonTerm m a => m (Maybe a)
+IOT m a => m (IO a)
+
+   (NonTerm ::: Error e) a
+=> Error e Id (Maybe a)
+=> Either e (Maybe a)
+
+   (Error e ::: NonTerm) a
+=> NonTerm Id (Either e a)
+=> Maybe (Either e a)
+OOLang/FunLang Pure looks like this (as Tolmach's EXN)
+
+   (Error e ::: NonTerm ::: State s ::: IO) a
+=> (NonTerm ::: State s ::: IO) (Either e a)
+=> (State s ::: IO) (Maybe (Either e a))
+=> s -> IO (Maybe (Either e a), s)
+Currently OOLang's Impure (Program should always return state even when it doesn't terminate, this sounds impossible)
+
+   (Error e ::: State s ::: NonTerm ::: IO) a
+=> (State s ::: NonTerm ::: IO) (Either e a)
+=> s -> (NonTerm ::: IO) (Either e a, s)
+=> s -> IO (Maybe (Either e a, s))
+OOLang's Impure should look like this (as Tolmach's ST).
+But it is hard to combine this stack with Pure stack, there is State in between Error and NonTerm.
+
+   (State s ::: Error e ::: NonTerm ::: IO) a
+=> s -> (Error e ::: NonTerm ::: IO) (a, s)
+=> s -> (NonTerm ::: IO) (Either e (a, s))
+=> s -> IO (Maybe (Either e (a, s)))
+This is better in a sense that Error and NonTerm come together and we can lift
+to State on top, but in this case state is rolled back in case of exception.
+This is of course possible semantics, but would be nice to have Error ::: State
+for OOLang. It is a pity that IL kind of pushes and  determines the semantics
+of the source language.
+
+One radical thing would be to exclude NonTerm altogether from MIL, it is kind of hard and causes trouble.
+But is it as useful then, if we cannot express non-terminating things.
+
+Then:
+Error e a => Either e a
+This is Pure for OOLang/FunLang.
+
+   (Error e ::: State s ::: IO) a
+=> (State s ::: IO) (Either e a)
+=> s -> IO (Either e a, s)
+This is Impure for OOLang.
+
+   (Error e ::: IO) a
+=> IO (Either e a)
+This is IO for FunLang.
+
+   (State s ::: Error e) a
+=> s -> Error e Id (a, s)
+=> s -> Either e (a, s)
+Could be State for FunLang (for the fun of different Error/State ordering).
+Pure things will need to be lifted to State.
+
+There is still a limitation that FunLang doesn't allow combining monads (IO and State).
+
