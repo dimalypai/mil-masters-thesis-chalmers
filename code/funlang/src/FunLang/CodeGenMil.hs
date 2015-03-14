@@ -127,21 +127,18 @@ codeGenFunDef (FunDef _ srcFunName _ tyFunEqs) = do
   let funName = getFunName srcFunName
   milFunSrcType <- funTypeMil <$> asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
   let (MIL.SrcTyApp funMonad _) = milFunSrcType
-  let milFunBody = MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
+  milFunBody <- codeGenFunEqs funMonad tyFunEqs
   return $ MIL.FunDef (funNameMil funName) milFunSrcType milFunBody
 {-
-  let funName = getFunName srcFunName
   milFunType <- monadFunTypeMil <$> asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
   -- All generated code is monadic. Therefore, function types should have a
   -- monad.
   let (MIL.TyApp (MIL.TyMonad funMonad) _) = milFunType
-  milFunBody <- codeGenFunEqs tyFunEqs funMonad
-  return $ MIL.FunDef (funNameMil funName) milFunType milFunBody
-
+-}
 -- | Takes function equations of the function definition and a function monad
 -- and returns an MIL expression.
-codeGenFunEqs :: [TyFunEq] -> MIL.SrcType -> CodeGenM MIL.SrcExpr
-codeGenFunEqs tyFunEqs funMonad = do
+codeGenFunEqs :: MIL.SrcType -> [TyFunEq] -> CodeGenM MIL.SrcExpr
+codeGenFunEqs funMonad tyFunEqs = do
   funEqExprs <- mapM (codeGenExpr funMonad . getFunEqBody) tyFunEqs
   return $ fst $ head funEqExprs  -- TODO
 
@@ -154,8 +151,10 @@ codeGenExpr funMonad tyExpr =
   case tyExpr of
     LitE tyLit ->
       return ( MIL.ReturnE funMonad (MIL.LitE $ literalMil tyLit)
-             , MIL.applyMonadType funMonad (typeMil exprType))
+             , MIL.SrcTyApp funMonad (typeMil exprType))
 
+    DoE _ _ tyStmts -> codeGenDoBlock funMonad tyStmts
+{-
     VarE _ varType var -> do
       let funName = varToFunName var
       if isBuiltInFunction funName
@@ -213,15 +212,13 @@ codeGenExpr funMonad tyExpr =
       codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
 
     ParenE _ tySubExpr -> codeGenExpr funMonad tySubExpr
-
-    DoE _ _ tyStmts -> codeGenDoBlock tyStmts funMonad
-
+-}
 literalMil :: TyLiteral -> MIL.Literal
 literalMil UnitLit {}         = MIL.UnitLit
 literalMil (IntLit _ _ i)     = MIL.IntLit i
 literalMil (FloatLit _ _ f _) = MIL.FloatLit f
-literalMil (StringLit _ _ s)  = _  -- TODO  type String = Empty | StrCons Char String
-
+literalMil (StringLit _ _ s)  = undefined -- TODO: type String = Empty | StrCons Char String
+{-
 -- | Code generation of binary operations.
 -- Takes a binary operation, its operands, a type of the result and a monad of
 -- containing function.
@@ -248,11 +245,12 @@ codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
                        else appE
                    else appE))
          , monadFunTypeMil resultType)  -- TODO?
-
-codeGenDoBlock :: [TyStmt] -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
-codeGenDoBlock [ExprS _ tyExpr] funMonad = codeGenExpr funMonad tyExpr
+-}
+codeGenDoBlock :: MIL.SrcType -> [TyStmt] -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
+codeGenDoBlock funMonad [ExprS _ tyExpr] = codeGenExpr funMonad tyExpr
 -- Every expression code generation results in return.
-codeGenDoBlock [ReturnS _ _ tyExpr] funMonad = codeGenExpr funMonad tyExpr
+codeGenDoBlock funMonad [ReturnS _ _ tyExpr] = codeGenExpr funMonad tyExpr
+{-
 codeGenDoBlock (tyStmt:tyStmts) funMonad =
   case tyStmt of
     ExprS _ tyExpr -> do
@@ -276,7 +274,8 @@ codeGenDoBlock (tyStmt:tyStmts) funMonad =
       return ( MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.getMonadResultType milBindType))
                  milBindExpr milBodyExpr
              , milBodyType)
-
+-}
+{-
 -- | Built-in functions need a special treatment.
 codeGenBuiltInFunction :: MIL.SrcType -> Var -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenBuiltInFunction funMonad funNameVar =
