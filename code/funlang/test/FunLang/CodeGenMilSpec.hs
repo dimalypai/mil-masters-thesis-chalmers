@@ -12,6 +12,7 @@ import FunLang.CodeGenMil
 import FunLang.TestUtils
 
 import qualified MIL.AST.PrettyPrinter as MIL
+import qualified MIL.Parser as MIL
 import qualified MIL.TypeChecker as MIL
 
 -- | To be able to run this module from GHCi.
@@ -47,11 +48,17 @@ testCase :: String -> IO ()
 testCase baseName = do
   (input, output) <- testRead baseName
   let Right srcProgram = parseFunLang (mkFileName baseName) input
-  let Right (tyProgram, typeEnv) = typeCheck srcProgram
-  let milProgram = codeGen tyProgram typeEnv
-  case MIL.typeCheck milProgram of
-    Right _ -> (dropNewLine $ MIL.prPrint milProgram) `shouldBe` output
-    Left milTcErr -> MIL.prPrint milTcErr `shouldBe` ""
+  case typeCheck srcProgram of
+    Right (tyProgram, typeEnv) -> do
+      let srcMilProgram = MIL.parseMil output
+      case MIL.typeCheck srcMilProgram of
+        Right (tyMilProgram, _) -> do
+          let srcGenMilProgram = codeGen tyProgram typeEnv
+          case MIL.typeCheck srcGenMilProgram of
+            Right (tyGenMilProgram, _) -> MIL.prPrint tyGenMilProgram `shouldBe` MIL.prPrint tyMilProgram
+            Left tcErr -> MIL.prPrint tcErr `shouldBe` ""
+        Left tcErr -> MIL.prPrint tcErr `shouldBe` ""
+    Left tcErr -> prPrint tcErr `shouldBe` ""
 
 -- | Takes a file base name and reads a source program and expected output
 -- (from .mil file).
