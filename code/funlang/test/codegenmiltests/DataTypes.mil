@@ -1,31 +1,8 @@
-type T
-  = MkT (Int -> Pure_M Unit)
-  | MkTT;
+type A = MkA;
 
-type Pair A B
-  = MkPair A B;
+con_MkA : (Error Unit ::: NonTerm) A =
+  return [Error Unit ::: NonTerm] MkA;
 
-alias Pure_M = Error Unit ::: NonTerm;
-
-alias IO_M = Error Unit ::: NonTerm ::: IO;
-
-con_MkT : Pure_M ((Int -> Pure_M Unit) -> Pure_M T) =
-  return [Pure_M] \(var_0 : Int -> Pure_M Unit) -> return [Pure_M] MkT var_0;
-
-con_MkTT : Pure_M T =
-  return [Pure_M] MkTT;
-
-con_MkPair : Pure_M (forall A . Pure_M (forall B . Pure_M (A -> Pure_M (B -> Pure_M (Pair A B))))) =
-  return [Pure_M] /\A . return [Pure_M] /\B . return [Pure_M] \(var_1 : A) -> return [Pure_M] \(var_2 : B) -> return [Pure_M] MkPair [A] [B] var_1 var_2;
-
-main : IO_M Unit =
-  return [IO_M] unit;
-
-f : Pure_M T =
-  let (var_3 : (Int -> Pure_M Unit) -> Pure_M T) <- con_MkT in
-    let (var_4 : Int -> Pure_M Unit) <- g in
-      var_3 var_4;
-
-g : Pure_M (Int -> Pure_M Unit) =
-  return [Pure_M] \(x : Int) -> return [Pure_M] unit;
+main : (Error Unit ::: (NonTerm ::: IO)) Unit =
+  return [Error Unit ::: (NonTerm ::: IO)] unit;
 

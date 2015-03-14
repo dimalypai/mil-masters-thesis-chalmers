@@ -2,7 +2,7 @@
 
 -- | Module responsible for MIL code generation.
 --
--- All generated code operates in monads: Pure_M for pure computations and some
+-- All generated code operates in monads: one for pure computations and some
 -- analogues (with more effects) for built-in monads. Basically, all
 -- expressions (even the simplest ones, like literals and variables) result in
 -- some sequence of binds (possibly empty) and return. We give fresh names to
@@ -29,8 +29,8 @@ import qualified MIL.BuiltIn as MIL
 
 -- | Entry point to the code generator.
 -- Takes a type checked program in FunLang and a type environment and produces
--- a program in MIL.
-codeGen :: TyProgram -> TypeEnv -> MIL.Program
+-- a source program in MIL.
+codeGen :: TyProgram -> TypeEnv -> MIL.SrcProgram
 codeGen tyProgram typeEnv = runReaderFrom typeEnv $ evalStateTFrom 0 (runCG $ codeGenProgram tyProgram)
 
 -- | Code generation monad. Uses 'StateT' for providing fresh variable names
@@ -41,57 +41,57 @@ newtype CodeGenM a = CG { runCG :: StateT NameSupply (Reader TypeEnv) a }
 -- | A counter for generating unique variable names.
 type NameSupply = Int
 
-codeGenProgram :: TyProgram -> CodeGenM MIL.Program
+codeGenProgram :: TyProgram -> CodeGenM MIL.SrcProgram
 codeGenProgram (Program _ srcTypeDefs tyFunDefs) = do
   (milTypeDefs, milConWrappers) <- unzip <$> mapM codeGenTypeDef srcTypeDefs
   milFunDefs <- mapM codeGenFunDef tyFunDefs
-  return $ MIL.Program (milTypeDefs, builtInAliasDefs, concat milConWrappers ++ milFunDefs)
+  return $ MIL.Program (milTypeDefs, concat milConWrappers ++ milFunDefs)
 
 -- | Code generation for data type.
 -- Returns an MIL type definition and a list of wrapper functions for data
 -- constructors.
 -- See Note [Data constructors and purity].
-codeGenTypeDef :: SrcTypeDef -> CodeGenM (MIL.TypeDef, [MIL.FunDef])
+codeGenTypeDef :: SrcTypeDef -> CodeGenM (MIL.SrcTypeDef, [MIL.SrcFunDef])
 codeGenTypeDef (TypeDef _ srcTypeName srcTypeVars srcConDefs) = do
+  let milTypeName = typeNameMil $ getTypeName srcTypeName
   let milTypeVars = map (typeVarMil . getTypeVar) srcTypeVars
   (milConDefs, milConWrappers) <- unzip <$> mapM codeGenConDef srcConDefs
-  return (MIL.TypeDef (typeNameMil $ getTypeName srcTypeName) milTypeVars milConDefs, milConWrappers)
+  return (MIL.TypeDef milTypeName milTypeVars milConDefs, milConWrappers)
 
 -- | Code generation for data constructor.
 -- Returns an MIL constructor definition and a wrapper function definition.
 -- See Note [Data constructors and purity].
-codeGenConDef :: SrcConDef -> CodeGenM (MIL.ConDef, MIL.FunDef)
+codeGenConDef :: SrcConDef -> CodeGenM (MIL.SrcConDef, MIL.SrcFunDef)
 codeGenConDef (ConDef _ srcConName srcConFields) = do
-  milConFields <- mapM monadSrcTypeMil srcConFields
   let conName = getConName srcConName
+  let milConFields = map srcTypeMil srcConFields
   milConWrapper <- codeGenConWrapper conName
   return (MIL.ConDef (conNameMil conName) milConFields, milConWrapper)
 
 -- | See Note [Data constructors and purity].
-codeGenConWrapper :: ConName -> CodeGenM MIL.FunDef
+codeGenConWrapper :: ConName -> CodeGenM MIL.SrcFunDef
 codeGenConWrapper conName = do
   conType <- asks (dcontiType . getDataConTypeInfo conName . getDataConTypeEnv)
-  let conWrapperType = monadFunTypeMil conType
-  let conNameExpr = MIL.ConNameE (conNameMil conName) (conTypeMil conType)
+  let conWrapperType = funTypeMil conType
+  let conNameExpr = MIL.ConNameE (conNameMil conName) ()
   conWrapperBody <- conWrapperMilExpr conWrapperType conNameExpr
   return (MIL.FunDef (conWrapperFunNameMil conName) conWrapperType conWrapperBody)
 
 -- | Note [Data constructors and purity]:
---
+-- TODO: Revise
 -- There is a problem with function types of data constructors and FunLang's
--- Pure_M monad for pure computations. These function types are produced by the
--- MIL type checker, which doesn't know about Pure_M except for that there is
--- an type alias with this name is defined. Data constructors in MIL are
--- completely pure (they don't get special monadic types). They can be
+-- monad for pure computations. These function types are produced by the MIL
+-- type checker, which doesn't know about this pure monad. Data constructors in
+-- MIL are completely pure (they don't get special monadic types). They can be
 -- referenced (and partially applied) from FunLang's pure functions (which are
--- not completely pure, they work inside Pure_M) and then the types don't
+-- not completely pure, they work inside a pure monad) and then the types don't
 -- match. It would be very hard (or even impossible) to figure out the places
 -- where we should do type conversions differently when referencing data
 -- constructors.
 --
 -- Solution: Each data constructor gets its wrapper function in the generated
 -- code (see 'conWrapperMilExpr'), which has a converted monadic type of the
--- constructor (with Pure_M all over the place).
+-- constructor (with pure monad all over the place).
 
 -- | Generates a body for a data constructor wrapper function.
 -- Takes a type of the wrapper function and an expression to begin with, which
@@ -101,26 +101,35 @@ codeGenConWrapper conName = do
 -- polymorphic type (see also `Theorems for free`), but it is much more simple
 -- and restricted. It doesn't try to handle all possible types, but only the
 -- shape that data constructor types have.
-conWrapperMilExpr :: MIL.Type -> MIL.Expr -> CodeGenM MIL.Expr
+conWrapperMilExpr :: MIL.SrcType -> MIL.SrcExpr -> CodeGenM MIL.SrcExpr
 conWrapperMilExpr conWrapperType conAppMilExpr =
   case conWrapperType of
-    MIL.TyApp (MIL.TyMonad tm) a -> MIL.ReturnE tm <$> conWrapperMilExpr a conAppMilExpr
+    MIL.SrcTyApp mt a -> return $ MIL.ReturnE mt conAppMilExpr
+{-
+  case conWrapperType of
+    MIL.SrcTyApp (MIL.TyMonad tm) a -> MIL.ReturnE tm <$> conWrapperMilExpr a conAppMilExpr
     -- Each forall type produces a type lambda and adds a type application to
     -- the data constructor.
-    MIL.TyForAll tv t ->
+    MIL.SrcTyForAll tv t ->
       MIL.TypeLambdaE tv <$> conWrapperMilExpr t (MIL.TypeAppE conAppMilExpr (MIL.TyVar tv))
     -- Each arrow type produces a lambda and adds an application to the data
     -- constructor.
-    MIL.TyArrow t1 t2 -> do
+    MIL.SrcTyArrow t1 t2 -> do
       v <- newMilVar
       MIL.LambdaE (MIL.VarBinder (v, t1)) <$>
         conWrapperMilExpr t2 (MIL.AppE conAppMilExpr (MIL.VarE $ MIL.VarBinder (v, t1)))
     -- Base cases. It should be a type constructor (result).
     MIL.TyTypeCon _ -> return conAppMilExpr
     MIL.TyApp {} -> return conAppMilExpr
-
-codeGenFunDef :: TyFunDef -> CodeGenM MIL.FunDef
+-}
+codeGenFunDef :: TyFunDef -> CodeGenM MIL.SrcFunDef
 codeGenFunDef (FunDef _ srcFunName _ tyFunEqs) = do
+  let funName = getFunName srcFunName
+  milFunSrcType <- funTypeMil <$> asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
+  let (MIL.SrcTyApp funMonad _) = milFunSrcType
+  let milFunBody = MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
+  return $ MIL.FunDef (funNameMil funName) milFunSrcType milFunBody
+{-
   let funName = getFunName srcFunName
   milFunType <- monadFunTypeMil <$> asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
   -- All generated code is monadic. Therefore, function types should have a
@@ -131,7 +140,7 @@ codeGenFunDef (FunDef _ srcFunName _ tyFunEqs) = do
 
 -- | Takes function equations of the function definition and a function monad
 -- and returns an MIL expression.
-codeGenFunEqs :: [TyFunEq] -> MIL.TypeM -> CodeGenM MIL.Expr
+codeGenFunEqs :: [TyFunEq] -> MIL.SrcType -> CodeGenM MIL.SrcExpr
 codeGenFunEqs tyFunEqs funMonad = do
   funEqExprs <- mapM (codeGenExpr funMonad . getFunEqBody) tyFunEqs
   return $ fst $ head funEqExprs  -- TODO
@@ -139,7 +148,7 @@ codeGenFunEqs tyFunEqs funMonad = do
 -- | Expression code generation.
 -- Takes a monad of the containing function.
 -- Returns an MIL expression and its type.
-codeGenExpr :: MIL.TypeM -> TyExpr -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenExpr :: MIL.SrcType -> TyExpr -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenExpr funMonad tyExpr =
   let exprType = getTypeOf tyExpr in
   case tyExpr of
@@ -211,13 +220,13 @@ literalMil :: TyLiteral -> MIL.Literal
 literalMil UnitLit {}         = MIL.UnitLit
 literalMil (IntLit _ _ i)     = MIL.IntLit i
 literalMil (FloatLit _ _ f _) = MIL.FloatLit f
-literalMil (StringLit _ _ s)  = undefined  -- TODO  type String = Empty | StrCons Char String
+literalMil (StringLit _ _ s)  = _  -- TODO  type String = Empty | StrCons Char String
 
 -- | Code generation of binary operations.
 -- Takes a binary operation, its operands, a type of the result and a monad of
 -- containing function.
 -- Returns an MIL expression and its type.
-codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Type -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Type -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
   (milExpr1, milExpr1Type) <- codeGenExpr funMonad tyExpr1
   (milExpr2, milExpr2Type) <- codeGenExpr funMonad tyExpr2
@@ -240,7 +249,7 @@ codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
                    else appE))
          , monadFunTypeMil resultType)  -- TODO?
 
-codeGenDoBlock :: [TyStmt] -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenDoBlock :: [TyStmt] -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenDoBlock [ExprS _ tyExpr] funMonad = codeGenExpr funMonad tyExpr
 -- Every expression code generation results in return.
 codeGenDoBlock [ReturnS _ _ tyExpr] funMonad = codeGenExpr funMonad tyExpr
@@ -269,7 +278,7 @@ codeGenDoBlock (tyStmt:tyStmts) funMonad =
              , milBodyType)
 
 -- | Built-in functions need a special treatment.
-codeGenBuiltInFunction :: MIL.TypeM -> Var -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenBuiltInFunction :: MIL.SrcType -> Var -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenBuiltInFunction funMonad funNameVar =
   case funNameVar of
     Var "printString" -> codeGenArgBuiltInFunction (MIL.FunName "printString") funMonad
@@ -285,7 +294,7 @@ codeGenBuiltInFunction funMonad funNameVar =
 
 -- | These functions have at least on parameter, so we just return them in the
 -- function monad.
-codeGenArgBuiltInFunction :: MIL.FunName -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenArgBuiltInFunction :: MIL.FunName -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenArgBuiltInFunction milFunName funMonad = do
   let milFunNameVar = MIL.funNameToVar milFunName
       milFunType = MIL.getBuiltInFunctionType milFunName
@@ -294,7 +303,7 @@ codeGenArgBuiltInFunction milFunName funMonad = do
 
 -- | These functions don't expect arguments. We must lift them if they are in a
 -- different monad. Type checking ensured that they are in the correct monad.
-codeGenNoArgBuiltInFunction :: MIL.FunName -> MIL.TypeM -> CodeGenM (MIL.Expr, MIL.Type)
+codeGenNoArgBuiltInFunction :: MIL.FunName -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenNoArgBuiltInFunction milFunName funMonad = do
   let milFunNameVar = MIL.funNameToVar milFunName
       milFunType = MIL.getBuiltInFunctionType milFunName
@@ -312,13 +321,12 @@ codeGenNoArgBuiltInFunction milFunName funMonad = do
 -- There are several different versions of type conversion. Sometimes we need
 -- to convert source types, in other cases, we are working with internal type
 -- representation.
---
+-- TODO: revise
 -- * 'typeMil' is the simplest one. It converts an internal type representation
 -- to an MIL type. It doesn't know about generated monads (like Pure_M or
 -- IO_M). It doesn't introduce any new monads, only maps built-in FunLang
 -- monads to built-in MIL monads. Used for built-in functions and for some very
--- simple cases, like types of literals. Used in constructor type conversion
--- also (see 'conTypeMil').
+-- simple cases, like types of literals.
 --
 -- * 'monadTypeMil' is one of the main `working horses` of the type conversion.
 -- It introduces Pure_M monad for pure functions and converts built-in monads
@@ -326,19 +334,14 @@ codeGenNoArgBuiltInFunction milFunName funMonad = do
 -- right of function arrows and inside forall type. Used more for local things
 -- and argument positions.
 --
--- * 'monadFunTypeMil' introduces more monads compared to 'monadTypeMil' and is
+-- * 'funTypeMil' introduces more monads compared to 'monadTypeMil' and is
 -- used more with global function types and result positions. It puts Pure_M
 -- before almost any type except for built-in FunLang monads.
---
--- * 'conTypeMil' is used for conversion of data constructor function type when
--- annotating constructor occurence. The idea is that it uses 'monadTypeMil'
--- for `fields` (left components of function arrows) and 'typeMil' for the
--- result type and for all the other types (on the top-level).
 --
 -- * 'monadSrcTypeMil' is basically a 'SrcType' version of 'monadTypeMil'.
 --
 -- * 'monadSrcFunTypeMil' is basically a 'SrcType' version of
--- 'monadFunTypeMil'.
+-- 'funTypeMil'.
 
 -- | See Note [Type conversion].
 -- The most interesting is the 'TyApp' transformation, because it deals with
@@ -391,13 +394,6 @@ monadFunTypeMil t@(TyApp typeName typeArgs) =
     _ -> MIL.applyMonadType pureMonadMil (monadTypeMil t)
 monadFunTypeMil t = MIL.applyMonadType pureMonadMil (monadTypeMil t)
 
--- | Data constructor type conversion.
--- See Note [Type conversion].
-conTypeMil :: Type -> MIL.Type
-conTypeMil (TyArrow t1 t2@(TyArrow {})) = MIL.TyArrow (monadTypeMil t1) (conTypeMil t2)
-conTypeMil (TyArrow t1 t2) = MIL.TyArrow (monadTypeMil t1) (typeMil t2)
-conTypeMil t = typeMil t
-
 -- | See Note [Type conversion].
 -- Monadic types are transformed in different cases depending on their kind.
 -- * IO and State have kind `* => *` so they are caught in 'SrcTyCon'.
@@ -430,6 +426,35 @@ monadSrcFunTypeMil t@(SrcTyCon srcTypeName) =
     TypeName "State" -> monadSrcTypeMil t
     _ -> MIL.applyMonadType pureMonadMil <$> monadSrcTypeMil t
 monadSrcFunTypeMil st = MIL.applyMonadType pureMonadMil <$> monadSrcTypeMil st
+-}
+
+-- | TODO
+srcTypeMil :: SrcType -> MIL.SrcType
+srcTypeMil (SrcTyCon srcTypeName) = MIL.SrcTyTypeCon (typeNameMil $ getTypeName srcTypeName)
+srcTypeMil (SrcTyApp _ st1 st2)   = error "SrcTyApp"
+srcTypeMil (SrcTyArrow _ st1 st2) = error "SrcTyArrow"
+srcTypeMil (SrcTyForAll _ srv st) = error "SrcTyForAll"
+srcTypeMil (SrcTyParen _ st)      = srcTypeMil st
+
+-- | TODO
+typeMil :: Type -> MIL.SrcType
+typeMil (TyApp typeName typeArgs) =
+  case (typeName, typeArgs) of
+    (TypeName "IO", [ioResultType]) ->
+      MIL.SrcTyApp ioSrcMonadMil (typeMil ioResultType)
+    _ -> foldl' (\at t -> MIL.SrcTyApp at (typeMil t))
+                (MIL.SrcTyTypeCon $ typeNameMil typeName)
+                typeArgs
+
+-- | TODO
+funTypeMil :: Type -> MIL.SrcType
+funTypeMil (TyVar _) = error "TyVar"
+funTypeMil (TyArrow {}) = error "TyArrow"
+funTypeMil t@(TyApp typeName typeArgs) =
+  case typeName of
+    TypeName "IO" -> typeMil t
+    _ -> MIL.SrcTyApp pureSrcMonadMil (typeMil t)
+funTypeMil (TyForAll {}) = error "TyForAll"
 
 -- * Conversion utils
 
@@ -453,13 +478,6 @@ varMil (Var varStr) = MIL.Var varStr
 
 typeVarMil :: TypeVar -> MIL.TypeVar
 typeVarMil (TypeVar typeVarStr) = MIL.TypeVar typeVarStr
-
--- * Built-ins
-
-builtInAliasDefs :: [MIL.AliasDef]
-builtInAliasDefs =
-  [ MIL.AliasDef pureMonadMilName $ MIL.TyMonad pureMonadMilType
-  , MIL.AliasDef ioMonadMilName   $ MIL.TyMonad ioMonadMilType ]
 
 -- * CodeGenM operations
 

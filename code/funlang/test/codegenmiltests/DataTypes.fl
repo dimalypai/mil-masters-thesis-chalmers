@@ -3,13 +3,15 @@ main = do
   return unit;
 end;;
 
-type T = MkT (Int -> Unit) | MkTT
+type A = MkA
 
-type Pair A B = MkPair A B
+#type T = MkT (Int -> Unit) | MkTT
 
-f : T
-f = MkT g;;
+#type Pair A B = MkPair A B
 
-g : Int -> Unit
-g = \(x : Int) -> unit;;
+#f : T
+#f = MkT g;;
+
+#g : Int -> Unit
+#g = \(x : Int) -> unit;;
 

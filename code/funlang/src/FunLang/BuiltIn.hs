@@ -7,6 +7,7 @@ import FunLang.AST
 import FunLang.AST.Helpers
 
 import qualified MIL.AST as MIL
+import qualified MIL.AST.Builder as MIL
 import qualified MIL.BuiltIn as MIL
 
 -- * Built-in types
@@ -100,29 +101,38 @@ monadTypes = Set.fromList
   , TypeName "State"
   ]
 
-pureMonadMilName :: MIL.TypeName
-pureMonadMilName = MIL.TypeName "Pure_M"
+pureSrcMonadMil :: MIL.SrcType
+pureSrcMonadMil =
+  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType)
+    (MIL.mkSimpleSrcType "NonTerm")
 
-pureMonadMil :: MIL.TypeM
-pureMonadMil = MIL.MTyAlias pureMonadMilName
+stateSrcMonadMil :: MIL.SrcType
+stateSrcMonadMil =
+  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
+    MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "NonTerm")
+      (MIL.mkSimpleSrcType "State")
 
-pureMonadMilType :: MIL.TypeM
-pureMonadMilType =
+ioSrcMonadMil :: MIL.SrcType
+ioSrcMonadMil =
+  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
+    MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "NonTerm")
+      (MIL.mkSimpleSrcType "IO")
+
+{-
+pureMonadMil :: MIL.MonadType
+pureMonadMil =
   MIL.MTyMonadCons (MIL.Error exceptionType) $
     MIL.MTyMonad MIL.NonTerm
 
-ioMonadMilName :: MIL.TypeName
-ioMonadMilName = MIL.TypeName "IO_M"
-
-ioMonadMil :: MIL.TypeM
-ioMonadMil = MIL.MTyAlias ioMonadMilName
-
-ioMonadMilType :: MIL.TypeM
-ioMonadMilType =
+ioMonadMil :: MIL.MonadType
+ioMonadMil =
   MIL.MTyMonadCons (MIL.Error exceptionType) $
     MIL.MTyMonadCons MIL.NonTerm $
       MIL.MTyMonad MIL.IO
-
+-}
+exceptionSrcType :: MIL.SrcType
+exceptionSrcType = MIL.mkSimpleSrcType "Unit"
+{-
 exceptionType :: MIL.Type
 exceptionType = MIL.unitType
-
+-}
