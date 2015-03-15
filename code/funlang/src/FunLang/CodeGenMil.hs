@@ -47,7 +47,7 @@ codeGenProgram :: TyProgram -> CodeGenM MIL.SrcProgram
 codeGenProgram (Program _ srcTypeDefs tyFunDefs) = do
   (milTypeDefs, milConWrappers) <- unzip <$> mapM codeGenTypeDef srcTypeDefs
   milFunDefs <- mapM codeGenFunDef tyFunDefs
-  return $ MIL.Program (milTypeDefs, concat milConWrappers ++ milFunDefs)
+  return $ MIL.Program (builtInMilTypeDefs ++ milTypeDefs, builtInMilFunDefs ++ concat milConWrappers ++ milFunDefs)
 
 -- | Code generation for data type.
 -- Returns an MIL type definition and a list of wrapper functions for data
@@ -155,7 +155,7 @@ codeGenExpr funMonad tyExpr =
   let exprType = getTypeOf tyExpr in
   case tyExpr of
     LitE tyLit ->
-      return ( MIL.ReturnE funMonad (MIL.LitE $ literalMil tyLit)
+      return ( MIL.ReturnE funMonad (literalMil tyLit)
              , MIL.SrcTyApp funMonad (typeMil exprType))
 
     -- See Note [Data constructors and purity].
@@ -218,11 +218,18 @@ codeGenExpr funMonad tyExpr =
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 ->
       codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
 -}
-literalMil :: TyLiteral -> MIL.Literal
-literalMil UnitLit {}         = MIL.UnitLit
-literalMil (IntLit _ _ i)     = MIL.IntLit i
-literalMil (FloatLit _ _ f _) = MIL.FloatLit f
-literalMil (StringLit _ _ s)  = undefined -- TODO: type String = Empty | StrCons Char String
+literalMil :: TyLiteral -> MIL.SrcExpr
+literalMil UnitLit {}         = MIL.LitE MIL.UnitLit
+literalMil (IntLit _ _ i)     = MIL.LitE (MIL.IntLit i)
+literalMil (FloatLit _ _ f _) = MIL.LitE (MIL.FloatLit f)
+literalMil (StringLit _ _ s)  = stringMil s
+
+stringMil :: String -> MIL.SrcExpr
+stringMil "" = MIL.mkSrcConName "Empty_Str"
+stringMil (c:cs) =
+  MIL.AppE (MIL.AppE (MIL.mkSrcConName "Cons_Str")
+                     (MIL.mkCharLit c))
+           (stringMil cs)
 {-
 -- | Code generation of binary operations.
 -- Takes a binary operation, its operands, a type of the result and a monad of
@@ -254,6 +261,7 @@ codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
 codeGenDoBlock :: MIL.SrcType -> [TyStmt] -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenDoBlock funMonad [ExprS _ tyExpr] = codeGenExpr funMonad tyExpr
 -- Every expression code generation results in return.
+-- TODO: take funMonad into account
 codeGenDoBlock funMonad [ReturnS _ _ tyExpr] = codeGenExpr funMonad tyExpr
 {-
 codeGenDoBlock (tyStmt:tyStmts) funMonad =
@@ -472,7 +480,7 @@ monadTypeMil t@(TyArrow {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 monadTypeMil t@(TyApp typeName _typeArgs) =
   case typeName of
     TypeName "IO" -> typeMil t
-    TypeName "State" -> error "State monadTypeMil"
+    TypeName "State" -> typeMil t
     _ -> MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 monadTypeMil t@(TyForAll {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 

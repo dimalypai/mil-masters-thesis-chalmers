@@ -31,6 +31,9 @@ spec =
     it "generates MIL code for data types" $
       testCase "DataTypes"
 
+    it "generates MIL code for simple functions" $
+      testCase "SimpleFunctions"
+
     --it "generates MIL code for lambdas and applications" $
       --testCase "LambdasApps"
 

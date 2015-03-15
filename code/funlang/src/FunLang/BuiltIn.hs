@@ -14,12 +14,13 @@ import qualified MIL.BuiltIn as MIL
 
 builtInDataTypes :: [(TypeName, Kind)]
 builtInDataTypes =
-  [ (TypeName "Unit",  StarK)
-  , (TypeName "Bool",  StarK)
-  , (TypeName "Int",   StarK)
-  , (TypeName "Float", StarK)
-  , (TypeName "IO",    StarK :=>: StarK)
-  , (TypeName "State", StarK :=>: (StarK :=>: StarK))
+  [ (TypeName "Unit",   StarK)
+  , (TypeName "Bool",   StarK)
+  , (TypeName "Int",    StarK)
+  , (TypeName "Float",  StarK)
+  , (TypeName "String", StarK)
+  , (TypeName "IO",     StarK :=>: StarK)
+  , (TypeName "State",  StarK :=>: (StarK :=>: StarK))
   ]
 
 builtInDataCons :: [(ConName, (Type, TypeName))]
@@ -55,6 +56,13 @@ typeOfLiteral IntLit    {} = intType
 typeOfLiteral FloatLit  {} = floatType
 typeOfLiteral StringLit {} = stringType
 
+builtInMilTypeDefs :: [MIL.SrcTypeDef]
+builtInMilTypeDefs =
+  [ MIL.TypeDef (MIL.TypeName "String") []
+      [ MIL.ConDef (MIL.ConName "Empty_Str") []
+      , MIL.ConDef (MIL.ConName "Cons_Str") [MIL.mkSimpleSrcType "Char", MIL.mkSimpleSrcType "String"]]
+  ]
+
 -- * Built-in functions
 
 builtInFunctions :: [(FunName, Type)]
@@ -89,6 +97,22 @@ builtInFunctions =
 
 isBuiltInFunction :: FunName -> Bool
 isBuiltInFunction funName = isJust $ lookup funName builtInFunctions
+
+builtInMilFunDefs :: [MIL.SrcFunDef]
+builtInMilFunDefs =
+  [ conTrue
+  , conFalse
+  ]
+
+conTrue :: MIL.SrcFunDef
+conTrue =
+  MIL.mkSrcFunDef "con_True" (MIL.SrcTyApp pureSrcMonadMil (MIL.mkSimpleSrcType "Bool")) $
+    MIL.ReturnE pureSrcMonadMil (MIL.mkSrcConName "True")
+
+conFalse :: MIL.SrcFunDef
+conFalse =
+  MIL.mkSrcFunDef "con_False" (MIL.SrcTyApp pureSrcMonadMil (MIL.mkSimpleSrcType "Bool")) $
+    MIL.ReturnE pureSrcMonadMil (MIL.mkSrcConName "False")
 
 -- * Monads
 

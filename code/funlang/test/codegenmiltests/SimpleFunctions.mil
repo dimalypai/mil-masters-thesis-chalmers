@@ -1,0 +1,31 @@
+type String
+  = Empty_Str
+  | Cons_Str Char String;
+
+con_True : (Error Unit ::: NonTerm) Bool =
+  return [Error Unit ::: NonTerm] True;
+
+con_False : (Error Unit ::: NonTerm) Bool =
+  return [Error Unit ::: NonTerm] False;
+
+main : (Error Unit ::: (NonTerm ::: IO)) Unit =
+  return [Error Unit ::: (NonTerm ::: IO)] unit;
+
+unitFun : (Error Unit ::: NonTerm) Unit =
+  return [Error Unit ::: NonTerm] unit;
+
+boolFun : (Error Unit ::: NonTerm) Bool =
+  con_True;
+
+intFun : (Error Unit ::: NonTerm) Int =
+  return [Error Unit ::: NonTerm] 1;
+
+floatFun : (Error Unit ::: NonTerm) Float =
+  return [Error Unit ::: NonTerm] 1.0e-2;
+
+stringFun : (Error Unit ::: NonTerm) String =
+  return [Error Unit ::: NonTerm] Cons_Str 's' (Cons_Str 't' (Cons_Str 'r' (Cons_Str 'i' (Cons_Str 'n' (Cons_Str 'g' Empty_Str)))));
+
+stateFun : (Error Unit ::: (NonTerm ::: State)) Bool =
+  con_False;
+

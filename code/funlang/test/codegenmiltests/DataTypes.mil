@@ -1,3 +1,7 @@
+type String
+  = Empty_Str
+  | Cons_Str Char String;
+
 type S = MkS;
 
 type T = MkT (Int -> (Error Unit ::: NonTerm) Unit) | MkTT;
@@ -7,6 +11,12 @@ type Pair A B = MkPair A B;
 type IoWrapper A = MkIO ((Error Unit ::: (NonTerm ::: IO)) A);
 
 type StateWrapper St A = MkState ((Error Unit ::: (NonTerm ::: State)) A);
+
+con_True : (Error Unit ::: NonTerm) Bool =
+  return [Error Unit ::: NonTerm] True;
+
+con_False : (Error Unit ::: NonTerm) Bool =
+  return [Error Unit ::: NonTerm] False;
 
 con_MkS : (Error Unit ::: NonTerm) S =
   return [Error Unit ::: NonTerm] MkS;

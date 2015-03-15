@@ -1,0 +1,25 @@
+main : IO Unit
+main = do
+  return unit;
+end;;
+
+unitFun : Unit
+unitFun = unit;;
+
+boolFun : Bool
+boolFun = True;;
+
+intFun : Int
+intFun = 1;;
+
+floatFun : Float
+floatFun = 0.01;;
+
+stringFun : String
+stringFun = "string";;
+
+stateFun : State Int Bool
+stateFun = do
+  return False;
+end;;
+
