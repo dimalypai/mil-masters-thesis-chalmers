@@ -166,6 +166,8 @@ codeGenExpr funMonad tyExpr =
              , conWrapperType)
 
     DoE _ _ tyStmts -> codeGenDoBlock funMonad tyStmts
+
+    ParenE _ tySubExpr -> codeGenExpr funMonad tySubExpr
 {-
     VarE _ varType var -> do
       let funName = varToFunName var
@@ -215,8 +217,6 @@ codeGenExpr funMonad tyExpr =
 
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 ->
       codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
-
-    ParenE _ tySubExpr -> codeGenExpr funMonad tySubExpr
 -}
 literalMil :: TyLiteral -> MIL.Literal
 literalMil UnitLit {}         = MIL.UnitLit
