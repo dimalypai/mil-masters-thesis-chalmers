@@ -18,6 +18,11 @@ type Pair A B = MkPair A B
 mkPair : forall A . forall B . A -> B -> Pair A B
 mkPair = MkPair;;
 
+type IoWrapper A = MkIO (IO A)
+
+mkIo : forall A . IO A -> IoWrapper A
+mkIo = MkIO;;
+
 #f : T
 #f = MkT g;;
 

@@ -470,7 +470,12 @@ monadSrcFunTypeMil st = MIL.applyMonadType pureMonadMil <$> monadSrcTypeMil st
 -- | TODO
 srcTypeMil :: SrcType -> MIL.SrcType
 srcTypeMil (SrcTyCon srcTypeName) = MIL.SrcTyTypeCon (typeNameMil $ getTypeName srcTypeName)
-srcTypeMil (SrcTyApp _ st1 st2)   = error "SrcTyApp"
+srcTypeMil (SrcTyApp _ st1 st2) =
+  case st1 of
+    SrcTyCon srcTypeName ->
+      case getTypeName srcTypeName of
+        TypeName "IO" -> MIL.SrcTyApp ioSrcMonadMil (srcTypeMil st2)
+    _ -> MIL.SrcTyApp (srcTypeMil st1) (srcTypeMil st2)
 srcTypeMil (SrcTyArrow _ st1 st2) = MIL.SrcTyArrow (srcTypeMil st1) (MIL.SrcTyApp pureSrcMonadMil $ srcTypeMil st2)
 srcTypeMil (SrcTyForAll _ srv st) = error "SrcTyForAll"
 srcTypeMil (SrcTyParen _ st)      = srcTypeMil st
