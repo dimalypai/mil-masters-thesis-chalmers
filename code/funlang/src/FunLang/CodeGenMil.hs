@@ -134,15 +134,12 @@ codeGenFunDef :: TyFunDef -> CodeGenM MIL.SrcFunDef
 codeGenFunDef (FunDef _ srcFunName _ tyFunEqs) = do
   let funName = getFunName srcFunName
   milFunSrcType <- monadTypeMil <$> asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
+  -- All generated code is monadic. Therefore, function types should have a
+  -- monad.
   let (MIL.SrcTyApp funMonad _) = milFunSrcType
   milFunBody <- codeGenFunEqs funMonad tyFunEqs
   return $ MIL.FunDef (funNameMil funName) milFunSrcType milFunBody
-{-
-  milFunType <- monadFunTypeMil <$> asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
-  -- All generated code is monadic. Therefore, function types should have a
-  -- monad.
-  let (MIL.TyApp (MIL.TyMonad funMonad) _) = milFunType
--}
+
 -- | Takes function equations of the function definition and a function monad
 -- and returns an MIL expression.
 codeGenFunEqs :: MIL.SrcType -> [TyFunEq] -> CodeGenM MIL.SrcExpr
