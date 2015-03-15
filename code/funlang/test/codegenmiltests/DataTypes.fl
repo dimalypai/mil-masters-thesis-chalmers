@@ -3,10 +3,10 @@ main = do
   return unit;
 end;;
 
-type A = MkA
+type S = MkS
 
-mkA : A
-mkA = MkA;;
+mkS : S
+mkS = MkS;;
 
 type T = MkT (Int -> Unit) | MkTT
 
