@@ -507,6 +507,7 @@ monadTypeMil t@(TyArrow {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 monadTypeMil t@(TyApp typeName _typeArgs) =
   case typeName of
     TypeName "IO" -> typeMil t
+    TypeName "State" -> error "State monadTypeMil"
     _ -> MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 monadTypeMil t@(TyForAll {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 
