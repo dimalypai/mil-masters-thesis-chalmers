@@ -31,14 +31,14 @@ spec =
     it "generates MIL code for data types" $
       testCase "DataTypes"
 
-    it "generates MIL code for lambdas and applications" $
-      testCase "LambdasApps"
+    --it "generates MIL code for lambdas and applications" $
+      --testCase "LambdasApps"
 
-    it "generates MIL code for polymorphic functions" $
-      testCase "Polymorphism"
+    --it "generates MIL code for polymorphic functions" $
+      --testCase "Polymorphism"
 
-    it "generates MIL code for monadic do-blocks" $
-      testCase "DoBlocks"
+    --it "generates MIL code for monadic do-blocks" $
+      --testCase "DoBlocks"
 
 -- Infrastructure
 
