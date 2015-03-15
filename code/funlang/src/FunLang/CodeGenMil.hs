@@ -74,7 +74,7 @@ codeGenConDef (ConDef _ srcConName srcConFields) = do
 codeGenConWrapper :: ConName -> CodeGenM MIL.SrcFunDef
 codeGenConWrapper conName = do
   conType <- asks (dcontiType . getDataConTypeInfo conName . getDataConTypeEnv)
-  let conWrapperType = funTypeMil conType
+  let conWrapperType = monadTypeMil conType
   let conNameExpr = MIL.ConNameE (conNameMil conName) ()
   conWrapperBody <- conWrapperMilExpr conType conNameExpr
   return (MIL.FunDef (conWrapperFunNameMil conName) conWrapperType conWrapperBody)
@@ -158,7 +158,7 @@ conWrapperMilExpr conType conAppMilExpr =
 codeGenFunDef :: TyFunDef -> CodeGenM MIL.SrcFunDef
 codeGenFunDef (FunDef _ srcFunName _ tyFunEqs) = do
   let funName = getFunName srcFunName
-  milFunSrcType <- funTypeMil <$> asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
+  milFunSrcType <- monadTypeMil <$> asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
   let (MIL.SrcTyApp funMonad _) = milFunSrcType
   milFunBody <- codeGenFunEqs funMonad tyFunEqs
   return $ MIL.FunDef (funNameMil funName) milFunSrcType milFunBody
@@ -189,7 +189,7 @@ codeGenExpr funMonad tyExpr =
     -- See Note [Data constructors and purity].
     ConNameE conType srcConName -> do
       let conName = getConName srcConName
-      let conWrapperType = funTypeMil conType
+      let conWrapperType = monadTypeMil conType
       return ( MIL.VarE $ conWrapperVarMil conName
              , conWrapperType)
 
@@ -478,7 +478,7 @@ srcTypeMil (SrcTyParen _ st)      = srcTypeMil st
 -- | TODO
 typeMil :: Type -> MIL.SrcType
 typeMil (TyVar typeVar) = MIL.SrcTyTypeCon (typeNameMil $ typeVarToTypeName typeVar)
-typeMil (TyArrow t1 t2) = MIL.SrcTyArrow (typeMil t1) (funTypeMil t2)
+typeMil (TyArrow t1 t2) = MIL.SrcTyArrow (typeMil t1) (monadTypeMil t2)
 typeMil (TyApp typeName typeArgs) =
   case (typeName, typeArgs) of
     (TypeName "IO", [ioResultType]) ->
@@ -486,17 +486,17 @@ typeMil (TyApp typeName typeArgs) =
     _ -> foldl' (\at t -> MIL.SrcTyApp at (typeMil t))
                 (MIL.SrcTyTypeCon $ typeNameMil typeName)
                 typeArgs
-typeMil (TyForAll typeVar t) = MIL.SrcTyForAll (typeVarMil typeVar) (funTypeMil t)
+typeMil (TyForAll typeVar t) = MIL.SrcTyForAll (typeVarMil typeVar) (monadTypeMil t)
 
 -- | TODO
-funTypeMil :: Type -> MIL.SrcType
-funTypeMil (TyVar _) = error "TyVar"
-funTypeMil t@(TyArrow {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
-funTypeMil t@(TyApp typeName _typeArgs) =
+monadTypeMil :: Type -> MIL.SrcType
+monadTypeMil (TyVar _) = error "TyVar"
+monadTypeMil t@(TyArrow {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
+monadTypeMil t@(TyApp typeName _typeArgs) =
   case typeName of
     TypeName "IO" -> typeMil t
     _ -> MIL.SrcTyApp pureSrcMonadMil (typeMil t)
-funTypeMil t@(TyForAll {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
+monadTypeMil t@(TyForAll {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 
 -- * Conversion utils
 
