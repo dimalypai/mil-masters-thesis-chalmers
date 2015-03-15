@@ -475,7 +475,12 @@ srcTypeMil (SrcTyApp _ st1 st2) =
     SrcTyCon srcTypeName ->
       case getTypeName srcTypeName of
         TypeName "IO" -> MIL.SrcTyApp ioSrcMonadMil (srcTypeMil st2)
-    _ -> MIL.SrcTyApp (srcTypeMil st1) (srcTypeMil st2)
+        _ -> MIL.SrcTyApp (srcTypeMil st1) (srcTypeMil st2)  -- TODO: test
+    (SrcTyApp _ (SrcTyCon srcTypeName') _) ->
+      case getTypeName srcTypeName' of
+        TypeName "State" -> MIL.SrcTyApp stateSrcMonadMil (srcTypeMil st2)  -- discard state type?
+        _ -> MIL.SrcTyApp (srcTypeMil st1) (srcTypeMil st2)  -- TODO: test
+    _ -> MIL.SrcTyApp (srcTypeMil st1) (srcTypeMil st2)  -- TODO: test
 srcTypeMil (SrcTyArrow _ st1 st2) = MIL.SrcTyArrow (srcTypeMil st1) (MIL.SrcTyApp pureSrcMonadMil $ srcTypeMil st2)
 srcTypeMil (SrcTyForAll _ srv st) = error "SrcTyForAll"
 srcTypeMil (SrcTyParen _ st)      = srcTypeMil st
@@ -488,6 +493,8 @@ typeMil (TyApp typeName typeArgs) =
   case (typeName, typeArgs) of
     (TypeName "IO", [ioResultType]) ->
       MIL.SrcTyApp ioSrcMonadMil (typeMil ioResultType)
+    (TypeName "State", [_stateType, stateResultType]) ->
+      MIL.SrcTyApp stateSrcMonadMil (typeMil stateResultType)
     _ -> foldl' (\at t -> MIL.SrcTyApp at (typeMil t))
                 (MIL.SrcTyTypeCon $ typeNameMil typeName)
                 typeArgs

@@ -6,6 +6,8 @@ type Pair A B = MkPair A B;
 
 type IoWrapper A = MkIO ((Error Unit ::: (NonTerm ::: IO)) A);
 
+type StateWrapper St A = MkState ((Error Unit ::: (NonTerm ::: State)) A);
+
 con_MkS : (Error Unit ::: NonTerm) S =
   return [Error Unit ::: NonTerm] MkS;
 
@@ -27,6 +29,12 @@ con_MkIO : (Error Unit ::: NonTerm) (forall A . (Error Unit ::: NonTerm) ((Error
     return [Error Unit ::: NonTerm] \(var_3 : (Error Unit ::: (NonTerm ::: IO)) A) ->
       return [Error Unit ::: NonTerm] MkIO [A] var_3;
 
+con_MkState : (Error Unit ::: NonTerm) (forall St . (Error Unit ::: NonTerm) (forall A . (Error Unit ::: NonTerm) ((Error Unit ::: (NonTerm ::: State)) A -> (Error Unit ::: NonTerm) (StateWrapper St A)))) =
+  return [Error Unit ::: NonTerm] /\St .
+    return [Error Unit ::: NonTerm] /\A .
+      return [Error Unit ::: NonTerm] \(var_4 : (Error Unit ::: (NonTerm ::: State)) A) ->
+        return [Error Unit ::: NonTerm] MkState [St] [A] var_4;
+
 main : (Error Unit ::: (NonTerm ::: IO)) Unit =
   return [Error Unit ::: (NonTerm ::: IO)] unit;
 
@@ -41,4 +49,7 @@ mkPair : (Error Unit ::: NonTerm) (forall A . (Error Unit ::: NonTerm) (forall B
 
 mkIo : (Error Unit ::: NonTerm) (forall A . (Error Unit ::: NonTerm) ((Error Unit ::: (NonTerm ::: IO)) A -> (Error Unit ::: NonTerm) (IoWrapper A))) =
   con_MkIO;
+
+mkState : (Error Unit ::: NonTerm) (forall St . (Error Unit ::: NonTerm) (forall A . (Error Unit ::: NonTerm) ((Error Unit ::: (NonTerm ::: State)) A -> (Error Unit ::: NonTerm) (StateWrapper St A)))) =
+  con_MkState;
 

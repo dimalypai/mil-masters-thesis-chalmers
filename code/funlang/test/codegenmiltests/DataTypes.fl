@@ -23,6 +23,11 @@ type IoWrapper A = MkIO (IO A)
 mkIo : forall A . IO A -> IoWrapper A
 mkIo = MkIO;;
 
+type StateWrapper St A = MkState (State St A)
+
+mkState : forall St . forall A . State St A -> StateWrapper St A
+mkState = MkState;;
+
 #f : T
 #f = MkT g;;
 
