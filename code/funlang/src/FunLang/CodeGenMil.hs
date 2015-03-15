@@ -216,13 +216,6 @@ codeGenExpr funMonad tyExpr =
              monadSrcTypeMil srcArgType)
       return (milTypeAppExpr, monadFunTypeMil exprType)  -- TODO?
 
-    -- See Note [Data constructors and purity].
-    ConNameE conType srcConName -> do
-      let conName = getConName srcConName
-      let conWrapperType = monadFunTypeMil exprType
-      return ( MIL.VarE $ MIL.VarBinder (conWrapperVarMil conName, conWrapperType)
-             , conWrapperType)
-
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 ->
       codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
 
