@@ -110,10 +110,9 @@ codeGenConWrapper conName = do
 conWrapperMilExpr :: Type -> MIL.SrcExpr -> CodeGenM MIL.SrcExpr
 conWrapperMilExpr conType conAppMilExpr =
   case conType of
-    TyApp typeName typeArgs ->
-      case typeName of
-        -- TODO: built-in monads
-        _ -> return $ MIL.ReturnE pureSrcMonadMil conAppMilExpr
+    -- TODO: It looks like built-in monads will never get here,
+    -- so this is just the base case for this function
+    TyApp {} -> return $ MIL.ReturnE pureSrcMonadMil conAppMilExpr
 
     TyArrow t1 t2 -> do
       v <- newMilVar
