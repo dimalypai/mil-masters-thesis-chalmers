@@ -26,6 +26,7 @@ import FunLang.BuiltIn
 import FunLang.Utils
 import qualified MIL.AST as MIL
 import qualified MIL.AST.Builder as MIL
+import qualified MIL.AST.Helpers as MIL
 import qualified MIL.BuiltIn as MIL
 
 -- | Entry point to the code generator.
@@ -75,7 +76,7 @@ codeGenConWrapper conName = do
   conType <- asks (dcontiType . getDataConTypeInfo conName . getDataConTypeEnv)
   let conWrapperType = funTypeMil conType
   let conNameExpr = MIL.ConNameE (conNameMil conName) ()
-  conWrapperBody <- conWrapperMilExpr conWrapperType conNameExpr
+  conWrapperBody <- conWrapperMilExpr conType conNameExpr
   return (MIL.FunDef (conWrapperFunNameMil conName) conWrapperType conWrapperBody)
 
 -- | Note [Data constructors and purity]:
@@ -99,15 +100,34 @@ codeGenConWrapper conName = do
 -- only once in the wrapper and then just don't worry about constructors.
 
 -- | Generates a body for a data constructor wrapper function.
--- Takes a type of the wrapper function and an expression to begin with, which
+-- Takes a constructor function type and an expression to begin with, which
 -- also plays a role of the accumulator for the result.
 --
 -- It is like these clever programs that try to produce a term from a
 -- polymorphic type (see also `Theorems for free`), but it is much more simple
 -- and restricted. It doesn't try to handle all possible types, but only the
 -- shape that data constructor types have.
-conWrapperMilExpr :: MIL.SrcType -> MIL.SrcExpr -> CodeGenM MIL.SrcExpr
-conWrapperMilExpr conWrapperType conAppMilExpr =
+conWrapperMilExpr :: Type -> MIL.SrcExpr -> CodeGenM MIL.SrcExpr
+conWrapperMilExpr conType conAppMilExpr =
+  case conType of
+    TyApp typeName typeArgs ->
+      case typeName of
+        -- TODO: built-in monads
+        _ -> return $ MIL.ReturnE pureSrcMonadMil conAppMilExpr
+
+    TyArrow t1 t2 -> do
+      v <- newMilVar
+      let conExprAppliedToVar = MIL.AppE conAppMilExpr (MIL.VarE v)
+      lambdaExprBody <- conWrapperMilExpr t2 conExprAppliedToVar
+      let lambdaExpr = MIL.mkSrcLambda v (typeMil t1) lambdaExprBody
+      return $ MIL.ReturnE pureSrcMonadMil lambdaExpr
+
+    TyForAll tv t -> do
+      let conExprAppliedToTypeVar = MIL.TypeAppE conAppMilExpr (MIL.SrcTyTypeCon $ MIL.typeVarToTypeName (typeVarMil tv))
+      typeLambdaExprBody <- conWrapperMilExpr t conExprAppliedToTypeVar
+      let typeLambdaExpr = MIL.TypeLambdaE (typeVarMil tv) typeLambdaExprBody
+      return $ MIL.ReturnE pureSrcMonadMil typeLambdaExpr
+  {-
   case conWrapperType of
     MIL.SrcTyTypeCon _ -> return conAppMilExpr
     -- TODO: Distinguish between a monad and other applications
@@ -115,6 +135,9 @@ conWrapperMilExpr conWrapperType conAppMilExpr =
     MIL.SrcTyArrow st1 st2 -> do
       v <- newMilVar
       MIL.mkSrcLambda v st1 <$> conWrapperMilExpr st2 (MIL.AppE conAppMilExpr (MIL.VarE v))
+    MIL.SrcTyForAll tv st ->
+      MIL.TypeLambdaE tv <$> conWrapperMilExpr st (MIL.TypeAppE conAppMilExpr (MIL.SrcTyTypeCon $ MIL.typeVarToTypeName tv))
+  -}
 {-
   case conWrapperType of
     MIL.SrcTyApp (MIL.TyMonad tm) a -> MIL.ReturnE tm <$> conWrapperMilExpr a conAppMilExpr
@@ -454,6 +477,7 @@ srcTypeMil (SrcTyParen _ st)      = srcTypeMil st
 
 -- | TODO
 typeMil :: Type -> MIL.SrcType
+typeMil (TyVar typeVar) = MIL.SrcTyTypeCon (typeNameMil $ typeVarToTypeName typeVar)
 typeMil (TyArrow t1 t2) = MIL.SrcTyArrow (typeMil t1) (funTypeMil t2)
 typeMil (TyApp typeName typeArgs) =
   case (typeName, typeArgs) of
@@ -462,16 +486,17 @@ typeMil (TyApp typeName typeArgs) =
     _ -> foldl' (\at t -> MIL.SrcTyApp at (typeMil t))
                 (MIL.SrcTyTypeCon $ typeNameMil typeName)
                 typeArgs
+typeMil (TyForAll typeVar t) = MIL.SrcTyForAll (typeVarMil typeVar) (funTypeMil t)
 
 -- | TODO
 funTypeMil :: Type -> MIL.SrcType
 funTypeMil (TyVar _) = error "TyVar"
 funTypeMil t@(TyArrow {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
-funTypeMil t@(TyApp typeName typeArgs) =
+funTypeMil t@(TyApp typeName _typeArgs) =
   case typeName of
     TypeName "IO" -> typeMil t
     _ -> MIL.SrcTyApp pureSrcMonadMil (typeMil t)
-funTypeMil (TyForAll {}) = error "TyForAll"
+funTypeMil t@(TyForAll {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 
 -- * Conversion utils
 

@@ -2,6 +2,8 @@ type S = MkS;
 
 type T = MkT (Int -> (Error Unit ::: NonTerm) Unit) | MkTT;
 
+type Pair A B = MkPair A B;
+
 con_MkS : (Error Unit ::: NonTerm) S =
   return [Error Unit ::: NonTerm] MkS;
 
@@ -11,6 +13,13 @@ con_MkT : (Error Unit ::: NonTerm) ((Int -> (Error Unit ::: NonTerm) Unit) -> (E
 con_MkTT : (Error Unit ::: NonTerm) T =
   return [Error Unit ::: NonTerm] MkTT;
 
+con_MkPair : (Error Unit ::: NonTerm) (forall A . (Error Unit ::: NonTerm) (forall B . (Error Unit ::: NonTerm) (A -> (Error Unit ::: NonTerm) (B -> (Error Unit ::: NonTerm) (Pair A B))))) =
+  return [Error Unit ::: NonTerm] /\A .
+    return [Error Unit ::: NonTerm] /\B .
+      return [Error Unit ::: NonTerm] \(var_1 : A) ->
+        return [Error Unit ::: NonTerm] \(var_2 : B) ->
+          return [Error Unit ::: NonTerm] MkPair [A] [B] var_1 var_2;
+
 main : (Error Unit ::: (NonTerm ::: IO)) Unit =
   return [Error Unit ::: (NonTerm ::: IO)] unit;
 
@@ -19,4 +28,7 @@ mkS : (Error Unit ::: NonTerm) S =
 
 mkT : (Error Unit ::: NonTerm) ((Int -> (Error Unit ::: NonTerm) Unit) -> (Error Unit ::: NonTerm) T) =
   con_MkT;
+
+mkPair : (Error Unit ::: NonTerm) (forall A . (Error Unit ::: NonTerm) (forall B . (Error Unit ::: NonTerm) (A -> (Error Unit ::: NonTerm) (B -> (Error Unit ::: NonTerm) (Pair A B))))) =
+  con_MkPair;
 
