@@ -25,6 +25,7 @@ import FunLang.TypeChecker.Helpers
 import FunLang.BuiltIn
 import FunLang.Utils
 import qualified MIL.AST as MIL
+import qualified MIL.AST.Builder as MIL
 import qualified MIL.BuiltIn as MIL
 
 -- | Entry point to the code generator.
@@ -92,6 +93,10 @@ codeGenConWrapper conName = do
 -- Solution: Each data constructor gets its wrapper function in the generated
 -- code (see 'conWrapperMilExpr'), which has a converted monadic type of the
 -- constructor (with pure monad all over the place).
+--
+-- Could we instead just always use `return` when processing data constructors?
+-- What is done right now looks kind of easier, since you generate this return
+-- only once in the wrapper and then just don't worry about constructors.
 
 -- | Generates a body for a data constructor wrapper function.
 -- Takes a type of the wrapper function and an expression to begin with, which
@@ -104,7 +109,12 @@ codeGenConWrapper conName = do
 conWrapperMilExpr :: MIL.SrcType -> MIL.SrcExpr -> CodeGenM MIL.SrcExpr
 conWrapperMilExpr conWrapperType conAppMilExpr =
   case conWrapperType of
-    MIL.SrcTyApp mt a -> return $ MIL.ReturnE mt conAppMilExpr
+    MIL.SrcTyTypeCon _ -> return conAppMilExpr
+    -- TODO: Distinguish between a monad and other applications
+    MIL.SrcTyApp mt a -> MIL.ReturnE mt <$> conWrapperMilExpr a conAppMilExpr
+    MIL.SrcTyArrow st1 st2 -> do
+      v <- newMilVar
+      MIL.mkSrcLambda v st1 <$> conWrapperMilExpr st2 (MIL.AppE conAppMilExpr (MIL.VarE v))
 {-
   case conWrapperType of
     MIL.SrcTyApp (MIL.TyMonad tm) a -> MIL.ReturnE tm <$> conWrapperMilExpr a conAppMilExpr
@@ -152,6 +162,13 @@ codeGenExpr funMonad tyExpr =
     LitE tyLit ->
       return ( MIL.ReturnE funMonad (MIL.LitE $ literalMil tyLit)
              , MIL.SrcTyApp funMonad (typeMil exprType))
+
+    -- See Note [Data constructors and purity].
+    ConNameE conType srcConName -> do
+      let conName = getConName srcConName
+      let conWrapperType = funTypeMil conType
+      return ( MIL.VarE $ conWrapperVarMil conName
+             , conWrapperType)
 
     DoE _ _ tyStmts -> codeGenDoBlock funMonad tyStmts
 {-
@@ -431,12 +448,13 @@ monadSrcFunTypeMil st = MIL.applyMonadType pureMonadMil <$> monadSrcTypeMil st
 srcTypeMil :: SrcType -> MIL.SrcType
 srcTypeMil (SrcTyCon srcTypeName) = MIL.SrcTyTypeCon (typeNameMil $ getTypeName srcTypeName)
 srcTypeMil (SrcTyApp _ st1 st2)   = error "SrcTyApp"
-srcTypeMil (SrcTyArrow _ st1 st2) = error "SrcTyArrow"
+srcTypeMil (SrcTyArrow _ st1 st2) = MIL.SrcTyArrow (srcTypeMil st1) (MIL.SrcTyApp pureSrcMonadMil $ srcTypeMil st2)
 srcTypeMil (SrcTyForAll _ srv st) = error "SrcTyForAll"
 srcTypeMil (SrcTyParen _ st)      = srcTypeMil st
 
 -- | TODO
 typeMil :: Type -> MIL.SrcType
+typeMil (TyArrow t1 t2) = MIL.SrcTyArrow (typeMil t1) (funTypeMil t2)
 typeMil (TyApp typeName typeArgs) =
   case (typeName, typeArgs) of
     (TypeName "IO", [ioResultType]) ->
@@ -448,7 +466,7 @@ typeMil (TyApp typeName typeArgs) =
 -- | TODO
 funTypeMil :: Type -> MIL.SrcType
 funTypeMil (TyVar _) = error "TyVar"
-funTypeMil (TyArrow {}) = error "TyArrow"
+funTypeMil t@(TyArrow {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 funTypeMil t@(TyApp typeName typeArgs) =
   case typeName of
     TypeName "IO" -> typeMil t

@@ -1,8 +1,22 @@
 type A = MkA;
 
+type T = MkT (Int -> (Error Unit ::: NonTerm) Unit) | MkTT;
+
 con_MkA : (Error Unit ::: NonTerm) A =
   return [Error Unit ::: NonTerm] MkA;
 
+con_MkT : (Error Unit ::: NonTerm) ((Int -> (Error Unit ::: NonTerm) Unit) -> (Error Unit ::: NonTerm) T) =
+  return [Error Unit ::: NonTerm] \(var_0 : Int -> (Error Unit ::: NonTerm) Unit) -> return [Error Unit ::: NonTerm] MkT var_0;
+
+con_MkTT : (Error Unit ::: NonTerm) T =
+  return [Error Unit ::: NonTerm] MkTT;
+
 main : (Error Unit ::: (NonTerm ::: IO)) Unit =
   return [Error Unit ::: (NonTerm ::: IO)] unit;
+
+mkA : (Error Unit ::: NonTerm) A =
+  con_MkA;
+
+mkT : (Error Unit ::: NonTerm) ((Int -> (Error Unit ::: NonTerm) Unit) -> (Error Unit ::: NonTerm) T) =
+  con_MkT;
 

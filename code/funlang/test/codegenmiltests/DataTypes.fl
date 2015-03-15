@@ -5,7 +5,13 @@ end;;
 
 type A = MkA
 
-#type T = MkT (Int -> Unit) | MkTT
+mkA : A
+mkA = MkA;;
+
+type T = MkT (Int -> Unit) | MkTT
+
+mkT : (Int -> Unit) -> T
+mkT = MkT;;
 
 #type Pair A B = MkPair A B
 
