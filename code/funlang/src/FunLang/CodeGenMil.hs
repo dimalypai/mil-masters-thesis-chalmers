@@ -140,7 +140,7 @@ codeGenFunDef (FunDef _ srcFunName _ tyFunEqs) = do
 codeGenFunEqs :: MIL.SrcType -> [TyFunEq] -> CodeGenM MIL.SrcExpr
 codeGenFunEqs funMonad tyFunEqs = do
   funEqExprs <- mapM (codeGenExpr funMonad . getFunEqBody) tyFunEqs
-  return $ fst $ head funEqExprs  -- TODO
+  return $ fst $ head funEqExprs  -- TODO: combine equations (descoped)
 
 -- | Expression code generation.
 -- Takes a monad of the containing function.
