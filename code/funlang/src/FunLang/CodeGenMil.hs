@@ -80,7 +80,6 @@ codeGenConWrapper conName = do
   return (MIL.FunDef (conWrapperFunNameMil conName) conWrapperType conWrapperBody)
 
 -- | Note [Data constructors and purity]:
--- TODO: Revise
 -- There is a problem with function types of data constructors and FunLang's
 -- monad for pure computations. These function types are produced by the MIL
 -- type checker, which doesn't know about this pure monad. Data constructors in
@@ -114,6 +113,8 @@ conWrapperMilExpr conType conAppMilExpr =
     -- so this is just the base case for this function
     TyApp {} -> return $ MIL.ReturnE pureSrcMonadMil conAppMilExpr
 
+    -- Each arrow type produces a lambda and adds an application to the data
+    -- constructor.
     TyArrow t1 t2 -> do
       v <- newMilVar
       let conExprAppliedToVar = MIL.AppE conAppMilExpr (MIL.VarE v)
@@ -121,39 +122,14 @@ conWrapperMilExpr conType conAppMilExpr =
       let lambdaExpr = MIL.mkSrcLambda v (typeMil t1) lambdaExprBody
       return $ MIL.ReturnE pureSrcMonadMil lambdaExpr
 
+    -- Each forall type produces a type lambda and adds a type application to
+    -- the data constructor.
     TyForAll tv t -> do
       let conExprAppliedToTypeVar = MIL.TypeAppE conAppMilExpr (MIL.SrcTyTypeCon $ MIL.typeVarToTypeName (typeVarMil tv))
       typeLambdaExprBody <- conWrapperMilExpr t conExprAppliedToTypeVar
       let typeLambdaExpr = MIL.TypeLambdaE (typeVarMil tv) typeLambdaExprBody
       return $ MIL.ReturnE pureSrcMonadMil typeLambdaExpr
-  {-
-  case conWrapperType of
-    MIL.SrcTyTypeCon _ -> return conAppMilExpr
-    -- TODO: Distinguish between a monad and other applications
-    MIL.SrcTyApp mt a -> MIL.ReturnE mt <$> conWrapperMilExpr a conAppMilExpr
-    MIL.SrcTyArrow st1 st2 -> do
-      v <- newMilVar
-      MIL.mkSrcLambda v st1 <$> conWrapperMilExpr st2 (MIL.AppE conAppMilExpr (MIL.VarE v))
-    MIL.SrcTyForAll tv st ->
-      MIL.TypeLambdaE tv <$> conWrapperMilExpr st (MIL.TypeAppE conAppMilExpr (MIL.SrcTyTypeCon $ MIL.typeVarToTypeName tv))
-  -}
-{-
-  case conWrapperType of
-    MIL.SrcTyApp (MIL.TyMonad tm) a -> MIL.ReturnE tm <$> conWrapperMilExpr a conAppMilExpr
-    -- Each forall type produces a type lambda and adds a type application to
-    -- the data constructor.
-    MIL.SrcTyForAll tv t ->
-      MIL.TypeLambdaE tv <$> conWrapperMilExpr t (MIL.TypeAppE conAppMilExpr (MIL.TyVar tv))
-    -- Each arrow type produces a lambda and adds an application to the data
-    -- constructor.
-    MIL.SrcTyArrow t1 t2 -> do
-      v <- newMilVar
-      MIL.LambdaE (MIL.VarBinder (v, t1)) <$>
-        conWrapperMilExpr t2 (MIL.AppE conAppMilExpr (MIL.VarE $ MIL.VarBinder (v, t1)))
-    -- Base cases. It should be a type constructor (result).
-    MIL.TyTypeCon _ -> return conAppMilExpr
-    MIL.TyApp {} -> return conAppMilExpr
--}
+
 codeGenFunDef :: TyFunDef -> CodeGenM MIL.SrcFunDef
 codeGenFunDef (FunDef _ srcFunName _ tyFunEqs) = do
   let funName = getFunName srcFunName
