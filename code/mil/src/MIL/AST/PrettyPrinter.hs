@@ -47,11 +47,13 @@ instance (PrettyVar v, Pretty mt, Pretty t) => Pretty (FunDef v ct mt t) where
 instance (PrettyVar v, Pretty mt, Pretty t) => Pretty (Expr v ct mt t) where
   prPrn (LitE lit) = prPrn lit
   prPrn (VarE v) = prPrnVar v
-  prPrn (LambdaE varBind e) = text "\\" <> prPrn varBind <+> text "->" <+> prPrn e
+  prPrn (LambdaE varBind e) = text "\\" <> prPrn varBind <+> text "->" $+$
+    nest indLvl (prPrn e)
   prPrn e@(AppE e1 e2) =
     prPrnParens (e1 `exprHasLowerPrecAssoc` e) e1 <+>
     prPrnParens (e2 `exprHasLowerPrec` e) e2
-  prPrn (TypeLambdaE typeVar e) = text "/\\" <> prPrn typeVar <+> text "." <+> prPrn e
+  prPrn (TypeLambdaE typeVar e) = text "/\\" <> prPrn typeVar <+> text "." $+$
+    nest indLvl (prPrn e)
   prPrn e@(TypeAppE e1 t) =
     prPrnParens (e1 `exprHasLowerPrecAssoc` e) e1 <+>
     brackets (prPrn t)
