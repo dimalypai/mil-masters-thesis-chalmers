@@ -199,19 +199,6 @@ codeGenExpr funMonad tyExpr =
                   else return ( MIL.ReturnE funMonad (MIL.VarE $ MIL.VarBinder (milVar, monadTypeMil varType))
                               , MIL.applyMonadType funMonad (monadTypeMil varType))
 
-    LambdaE _ _ tyVarBinders tyBodyExpr -> do
-      (milBodyExpr, milBodyType) <- codeGenExpr funMonad tyBodyExpr
-      (milLambdaExpr, milLambdaType) <- foldM (\(mexpr, mtype) tvb -> do
-          let varType = getTypeOf tvb
-          let milVarType = monadTypeMil varType
-          return ( MIL.ReturnE funMonad
-                     (MIL.LambdaE (MIL.VarBinder ( varMil (getVar $ getBinderVar tvb)
-                                                 , milVarType)) mexpr)
-                 , MIL.applyMonadType funMonad (MIL.TyArrow milVarType mtype)))
-        (milBodyExpr, milBodyType)
-        (reverse tyVarBinders)
-      return (milLambdaExpr, milLambdaType)
-
     TypeLambdaE _ _ srcTypeVars tyBodyExpr -> do
       (milBodyExpr, milBodyType) <- codeGenExpr funMonad tyBodyExpr
       return $ foldr (\tv (mexpr, mtype) ->
