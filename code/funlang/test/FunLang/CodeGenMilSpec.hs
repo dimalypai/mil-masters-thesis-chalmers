@@ -34,8 +34,8 @@ spec =
     it "generates MIL code for simple functions" $
       testCase "SimpleFunctions"
 
-    --it "generates MIL code for lambdas and applications" $
-      --testCase "LambdasApps"
+    it "generates MIL code for lambdas and applications" $
+      testCase "LambdasApps"
 
     --it "generates MIL code for polymorphic functions" $
       --testCase "Polymorphism"

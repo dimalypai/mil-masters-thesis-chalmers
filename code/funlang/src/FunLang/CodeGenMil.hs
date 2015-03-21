@@ -165,6 +165,23 @@ codeGenExpr funMonad tyExpr =
       return ( MIL.VarE $ conWrapperVarMil conName
              , conWrapperType)
 
+    VarE _ varType var -> do
+      let milVar = varMil var
+      return ( MIL.ReturnE funMonad $ MIL.VarE milVar
+             , MIL.SrcTyApp funMonad $ typeMil varType)
+
+    LambdaE _ _ tyVarBinders tyBodyExpr -> do
+      (milBodyExpr, milBodyType) <- codeGenExpr funMonad tyBodyExpr
+      foldM (\(mBodyExpr, mBodyType) tvb -> do
+          let varType = getTypeOf tvb
+          let milVar = varMil (getVar $ getBinderVar tvb)
+          let milVarType = typeMil varType
+          return ( MIL.ReturnE funMonad $
+                     MIL.LambdaE (MIL.VarBinder (milVar, milVarType)) mBodyExpr
+                 , MIL.SrcTyApp funMonad (MIL.SrcTyArrow milVarType mBodyType)))
+        (milBodyExpr, milBodyType)
+        tyVarBinders
+
     DoE _ _ tyStmts -> codeGenDoBlock funMonad tyStmts
 
     ParenE _ tySubExpr -> codeGenExpr funMonad tySubExpr

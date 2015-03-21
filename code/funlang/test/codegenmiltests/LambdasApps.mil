@@ -1,43 +1,16 @@
-alias Pure_M = Error Unit ::: NonTerm;
+type String
+  = Empty_Str
+  | Cons_Str Char String;
 
-alias IO_M = Error Unit ::: NonTerm ::: IO;
+con_True : (Error Unit ::: NonTerm) Bool =
+  return [Error Unit ::: NonTerm] True;
 
-main : IO_M Unit =
-  return [IO_M] unit;
+con_False : (Error Unit ::: NonTerm) Bool =
+  return [Error Unit ::: NonTerm] False;
 
-lamFun : Pure_M (Int -> Pure_M (Unit -> Pure_M Float)) =
-  return [Pure_M] \(x : Int) -> return [Pure_M] \(y : Unit) -> return [Pure_M] 1.0e-2;
+main : (Error Unit ::: (NonTerm ::: IO)) Unit =
+  return [Error Unit ::: (NonTerm ::: IO)] unit;
 
-lamFun2 : Pure_M (Int -> Pure_M (Unit -> Pure_M Float)) =
-  return [Pure_M] \(x : Int) -> return [Pure_M] \(y : Unit) -> return [Pure_M] 2.0e-2;
-
-lamApp1 : Pure_M (Unit -> Pure_M Float) =
-  let (var_0 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun in
-    let (var_1 : Int) <- return [Pure_M] 1 in
-      var_0 var_1;
-
-lamApp2 : Pure_M Float =
-  let (var_2 : Unit -> Pure_M Float) <- lamApp1 in
-    let (var_3 : Unit) <- return [Pure_M] unit in
-      var_2 var_3;
-
-lamApp3 : Pure_M (Unit -> Pure_M Float) =
-  let (var_4 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun2 in
-    let (var_5 : Int) <- return [Pure_M] 1 in
-      var_4 var_5;
-
-lamApp4 : Pure_M Float =
-  let (var_8 : Unit -> Pure_M Float) <- let (var_6 : Int -> Pure_M (Unit -> Pure_M Float)) <- lamFun2 in
-                                          let (var_7 : Int) <- return [Pure_M] 1 in
-                                            var_6 var_7 in
-    let (var_9 : Unit) <- return [Pure_M] unit in
-      var_8 var_9;
-
-lamFun3 : Pure_M (Unit -> Pure_M Unit) =
-  let (var_10 : (Unit -> Pure_M Unit) -> Pure_M (Unit -> Pure_M Unit)) <- return [Pure_M] \(x : Unit -> Pure_M Unit) -> return [Pure_M] x in
-    let (var_11 : Unit -> Pure_M Unit) <- return [Pure_M] \(x : Unit) -> return [Pure_M] x in
-      var_10 var_11;
-
-ioFun : Pure_M (IO_M Int -> IO_M Int) =
-  return [Pure_M] \(f : IO_M Int) -> f;
+unitId : (Error Unit ::: NonTerm) (Unit -> (Error Unit ::: NonTerm) Unit) =
+  return [Error Unit ::: NonTerm] \(a : Unit) -> return [Error Unit ::: NonTerm] a;
 

@@ -3,27 +3,30 @@ main = do
   return unit;
 end;;
 
-lamFun : Int -> Unit -> Float
-lamFun = \(x : Int) (y : Unit) -> 0.01;;
+unitId : Unit -> Unit
+unitId = \(a : Unit) -> a;;
 
-lamFun2 : Int -> Unit -> Float
-lamFun2 = \(x : Int) -> \(y : Unit) -> 0.02;;
+#lamFun : Int -> Unit -> Float
+#lamFun = \(x : Int) (y : Unit) -> 0.01;;
 
-lamApp1 : Unit -> Float
-lamApp1 = lamFun 1;;
+#lamFun2 : Int -> Unit -> Float
+#lamFun2 = \(x : Int) -> \(y : Unit) -> 0.02;;
 
-lamApp2 : Float
-lamApp2 = lamApp1 unit;;
+#lamApp1 : Unit -> Float
+#lamApp1 = lamFun 1;;
 
-lamApp3 : Unit -> Float
-lamApp3 = lamFun2 1;;
+#lamApp2 : Float
+#lamApp2 = lamApp1 unit;;
 
-lamApp4 : Float
-lamApp4 = lamFun2 1 unit;;
+#lamApp3 : Unit -> Float
+#lamApp3 = lamFun2 1;;
 
-lamFun3 : Unit -> Unit
-lamFun3 = (\(x : Unit -> Unit) -> x) (\(x : Unit) -> x);;
+#lamApp4 : Float
+#lamApp4 = lamFun2 1 unit;;
 
-ioFun : IO Int -> IO Int
-ioFun = \(f : IO Int) -> f;;
+#lamFun3 : Unit -> Unit
+#lamFun3 = (\(x : Unit -> Unit) -> x) (\(x : Unit) -> x);;
+
+#ioFun : IO Int -> IO Int
+#ioFun = \(f : IO Int) -> f;;
 
