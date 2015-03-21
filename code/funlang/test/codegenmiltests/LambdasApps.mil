@@ -51,3 +51,9 @@ higherOrderLambda : (Error Unit ::: NonTerm) (Unit -> (Error Unit ::: NonTerm) U
       return [Error Unit ::: NonTerm] x in
   var_8 var_9;
 
+ioFun : (Error Unit ::: NonTerm) ((Error Unit ::: (NonTerm ::: IO)) Int -> (Error Unit ::: (NonTerm ::: IO)) Int) =
+  return [Error Unit ::: NonTerm] \(f : (Error Unit ::: (NonTerm ::: IO)) Int) -> f;
+
+stateFun : (Error Unit ::: NonTerm) ((Error Unit ::: (NonTerm ::: State)) Unit -> (Error Unit ::: (NonTerm ::: State)) Unit) =
+  return [Error Unit ::: NonTerm] \(f : (Error Unit ::: (NonTerm ::: State)) Unit) -> f;
+

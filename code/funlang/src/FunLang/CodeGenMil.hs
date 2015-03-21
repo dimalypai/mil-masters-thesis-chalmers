@@ -169,7 +169,7 @@ codeGenExpr funMonad tyExpr =
       let milVar = varMil var
       let funName = varToFunName var
       isGlobalFunction <- asks (isFunctionDefined funName . getFunTypeEnv)
-      if isGlobalFunction
+      if isGlobalFunction || isMonadType varType
         then return ( MIL.VarE milVar
                     , monadTypeMil varType)
         else return ( MIL.ReturnE funMonad $ MIL.VarE milVar
@@ -194,19 +194,6 @@ codeGenExpr funMonad tyExpr =
 
     ParenE _ tySubExpr -> codeGenExpr funMonad tySubExpr
 {-
-    VarE _ varType var -> do
-      let funName = varToFunName var
-      if isBuiltInFunction funName
-        then codeGenBuiltInFunction funMonad var
-        else do let milVar = varMil var
-                isGlobalFunction <- asks (isFunctionDefined funName . getFunTypeEnv)
-                if isGlobalFunction || isMonadType varType
-                  -- TODO: it may be different monad?
-                  then return ( MIL.VarE $ MIL.VarBinder (milVar, monadFunTypeMil varType)
-                              , monadFunTypeMil varType)
-                  else return ( MIL.ReturnE funMonad (MIL.VarE $ MIL.VarBinder (milVar, monadTypeMil varType))
-                              , MIL.applyMonadType funMonad (monadTypeMil varType))
-
     TypeLambdaE _ _ srcTypeVars tyBodyExpr -> do
       (milBodyExpr, milBodyType) <- codeGenExpr funMonad tyBodyExpr
       return $ foldr (\tv (mexpr, mtype) ->

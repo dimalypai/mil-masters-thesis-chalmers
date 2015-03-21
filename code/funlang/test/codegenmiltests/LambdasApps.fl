@@ -24,6 +24,9 @@ fullApp = multParamsFun 1 unit;;
 higherOrderLambda : Unit -> Unit
 higherOrderLambda = (\(x : Unit -> Unit) -> x) (\(x : Unit) -> x);;
 
-#ioFun : IO Int -> IO Int
-#ioFun = \(f : IO Int) -> f;;
+ioFun : IO Int -> IO Int
+ioFun = \(f : IO Int) -> f;;
+
+stateFun : State Int Unit -> State Int Unit
+stateFun = \(f : State Int Unit) -> f;;
 
