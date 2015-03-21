@@ -6,11 +6,11 @@ end;;
 unitId : Unit -> Unit
 unitId = \(a : Unit) -> a;;
 
-#lamFun : Int -> Unit -> Float
-#lamFun = \(x : Int) (y : Unit) -> 0.01;;
+multParamsFun : Int -> Unit -> Float
+multParamsFun = \(x : Int) (y : Unit) -> 1.00;;
 
-#lamFun2 : Int -> Unit -> Float
-#lamFun2 = \(x : Int) -> \(y : Unit) -> 0.02;;
+multParamsFunNested : Int -> Unit -> Float
+multParamsFunNested = \(x : Int) -> \(y : Unit) -> 2.00;;
 
 #lamApp1 : Unit -> Float
 #lamApp1 = lamFun 1;;

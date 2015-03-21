@@ -14,3 +14,13 @@ main : (Error Unit ::: (NonTerm ::: IO)) Unit =
 unitId : (Error Unit ::: NonTerm) (Unit -> (Error Unit ::: NonTerm) Unit) =
   return [Error Unit ::: NonTerm] \(a : Unit) -> return [Error Unit ::: NonTerm] a;
 
+multParamsFun : (Error Unit ::: NonTerm) (Int -> (Error Unit ::: NonTerm) (Unit -> (Error Unit ::: NonTerm) Float)) =
+  return [Error Unit ::: NonTerm] \(x : Int) ->
+    return [Error Unit ::: NonTerm] \(y : Unit) ->
+      return [Error Unit ::: NonTerm] 1.0;
+
+multParamsFunNested : (Error Unit ::: NonTerm) (Int -> (Error Unit ::: NonTerm) (Unit -> (Error Unit ::: NonTerm) Float)) =
+  return [Error Unit ::: NonTerm] \(x : Int) ->
+    return [Error Unit ::: NonTerm] \(y : Unit) ->
+      return [Error Unit ::: NonTerm] 2.0;
+

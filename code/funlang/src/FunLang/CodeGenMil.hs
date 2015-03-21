@@ -180,7 +180,7 @@ codeGenExpr funMonad tyExpr =
                      MIL.LambdaE (MIL.VarBinder (milVar, milVarType)) mBodyExpr
                  , MIL.SrcTyApp funMonad (MIL.SrcTyArrow milVarType mBodyType)))
         (milBodyExpr, milBodyType)
-        tyVarBinders
+        (reverse tyVarBinders)
 
     DoE _ _ tyStmts -> codeGenDoBlock funMonad tyStmts
 
