@@ -29,3 +29,27 @@ idFunApp : (Error Unit ::: NonTerm) (forall T . (Error Unit ::: NonTerm) (T -> (
   let (var_3 : forall A . (Error Unit ::: NonTerm) (A -> (Error Unit ::: NonTerm) A)) <- id in
   var_2 var_3;
 
+polyApp : (Error Unit ::: NonTerm) Unit =
+  let (var_10 : Int -> (Error Unit ::: NonTerm) Unit) <-
+    let (var_8 : (Int -> (Error Unit ::: NonTerm) Unit) -> (Error Unit ::: NonTerm) (Int -> (Error Unit ::: NonTerm) Unit)) <-
+      let (var_7 : forall B . (Error Unit ::: NonTerm) ((Int -> (Error Unit ::: NonTerm) B) -> (Error Unit ::: NonTerm) (Int -> (Error Unit ::: NonTerm) B))) <-
+        let (var_6 : forall A . (Error Unit ::: NonTerm) (forall B . (Error Unit ::: NonTerm) ((A -> (Error Unit ::: NonTerm) B) -> (Error Unit ::: NonTerm) (A -> (Error Unit ::: NonTerm) B)))) <-
+          return [Error Unit ::: NonTerm] /\A .
+            return [Error Unit ::: NonTerm] /\B .
+              return [Error Unit ::: NonTerm] \(f : A -> (Error Unit ::: NonTerm) B) ->
+                return [Error Unit ::: NonTerm] \(x : A) ->
+                  let (var_4 : A -> (Error Unit ::: NonTerm) B) <-
+                    return [Error Unit ::: NonTerm] f in
+                  let (var_5 : A) <-
+                    return [Error Unit ::: NonTerm] x in
+                  var_4 var_5 in
+        var_6 [Int] in
+      var_7 [Unit] in
+    let (var_9 : Int -> (Error Unit ::: NonTerm) Unit) <-
+      return [Error Unit ::: NonTerm] \(x : Int) ->
+        return [Error Unit ::: NonTerm] unit in
+    var_8 var_9 in
+ let (var_11 : Int) <-
+   return [Error Unit ::: NonTerm] 1 in
+  var_10 var_11;
+

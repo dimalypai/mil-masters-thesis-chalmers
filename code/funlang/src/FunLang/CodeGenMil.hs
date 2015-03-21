@@ -27,18 +27,22 @@ import FunLang.Utils
 import qualified MIL.AST as MIL
 import qualified MIL.AST.Builder as MIL
 import qualified MIL.AST.Helpers as MIL
+import qualified MIL.AST.PrettyPrinter as MIL
 import qualified MIL.BuiltIn as MIL
+
+import System.IO.Unsafe
 
 -- | Entry point to the code generator.
 -- Takes a type checked program in FunLang and a type environment and produces
 -- a source program in MIL.
 codeGen :: TyProgram -> TypeEnv -> MIL.SrcProgram
-codeGen tyProgram typeEnv = runReaderFrom typeEnv $ evalStateTFrom 0 (runCG $ codeGenProgram tyProgram)
+codeGen tyProgram typeEnv = unsafePerformIO $ runReaderT (evalStateTFrom 0 (runCG $ codeGenProgram tyProgram)) typeEnv
 
 -- | Code generation monad. Uses 'StateT' for providing fresh variable names
 -- and 'Reader' for querying the type environment.
-newtype CodeGenM a = CG { runCG :: StateT NameSupply (Reader TypeEnv) a }
-  deriving (Monad, MonadState NameSupply, MonadReader TypeEnv, Functor, Applicative)
+-- 'IO' may be used for debug printing.
+newtype CodeGenM a = CG { runCG :: StateT NameSupply (ReaderT TypeEnv IO) a }
+  deriving (Monad, MonadState NameSupply, MonadReader TypeEnv, Functor, Applicative, MonadIO)
 
 -- | A counter for generating unique variable names.
 type NameSupply = Int
@@ -200,7 +204,7 @@ codeGenExpr funMonad tyExpr =
       var <- newMilVar
       return ( MIL.mkSrcLet var (MIL.getSrcResultType milAppExprType) milAppExpr $
                  MIL.TypeAppE (MIL.VarE var) (srcTypeMil srcArgType)
-             , typeMil exprType)
+             , monadTypeMil exprType)
 
     DoE _ _ tyStmts -> codeGenDoBlock funMonad tyStmts
 
@@ -246,17 +250,14 @@ codeGenBinOp funMonad binOp tyExpr1 tyExpr2 resultType = do
       (milExpr2, milExpr2Type) <- codeGenExpr funMonad tyExpr2
       var1 <- newMilVar
       var2 <- newMilVar
-      let appE = MIL.AppE (MIL.VarE var1) (MIL.VarE var2)
       -- FunLang functions always get pure monad stack as a first type
       -- constructor, so we don't need to generate `return`, but type
       -- conversion for milResultType should communicate that.
-      let milResultType = if isFunctionType resultType
-                            then monadTypeMil resultType
-                            else typeMil resultType
+      let appE = MIL.AppE (MIL.VarE var1) (MIL.VarE var2)
       return ( MIL.mkSrcLet var1 (MIL.getSrcResultType milExpr1Type) milExpr1 $
                  MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2
                    appE
-             , milResultType)
+             , monadTypeMil resultType)
 
 codeGenDoBlock :: MIL.SrcType -> [TyStmt] -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenDoBlock funMonad [ExprS _ tyExpr] = codeGenExpr funMonad tyExpr
@@ -424,7 +425,7 @@ srcTypeMil (SrcTyArrow _ st1 st2) =
 srcTypeMil (SrcTyForAll _ stv st) =
   MIL.SrcTyForAll (typeVarMil $ getTypeVar stv)
     (MIL.SrcTyApp pureSrcMonadMil $ srcTypeMil st)  -- TODO: built-ins?
-srcTypeMil (SrcTyParen _ st)      = srcTypeMil st
+srcTypeMil (SrcTyParen _ st) = srcTypeMil st
 
 -- | TODO
 typeMil :: Type -> MIL.SrcType
@@ -482,4 +483,7 @@ newMilVar = do
   i <- get
   modify (+1)
   return $ MIL.Var ("var_" ++ show i)
+
+debugPrint :: String -> String -> IO ()
+debugPrint name value = liftIO $ putStrLn ((name ++ ": ") ++ value)
 
