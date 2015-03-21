@@ -1,55 +1,18 @@
-type Pair A B
-  = MkPair A B;
+type String
+  = Empty_Str
+  | Cons_Str Char String;
 
-alias Pure_M = Error Unit ::: NonTerm;
+con_True : (Error Unit ::: NonTerm) Bool =
+  return [Error Unit ::: NonTerm] True;
 
-alias IO_M = Error Unit ::: NonTerm ::: IO;
+con_False : (Error Unit ::: NonTerm) Bool =
+  return [Error Unit ::: NonTerm] False;
 
-con_MkPair : Pure_M (forall A . Pure_M (forall B . Pure_M (A -> Pure_M (B -> Pure_M (Pair A B))))) =
-  return [Pure_M] /\A . return [Pure_M] /\B . return [Pure_M] \(var_0 : A) -> return [Pure_M] \(var_1 : B) -> return [Pure_M] MkPair [A] [B] var_0 var_1;
+main : (Error Unit ::: (NonTerm ::: IO)) Unit =
+  return [Error Unit ::: (NonTerm ::: IO)] unit;
 
-main : IO_M Unit =
-  return [IO_M] unit;
-
-mkPair : Pure_M (forall A . Pure_M (forall B . Pure_M (A -> Pure_M (B -> Pure_M (Pair A B))))) =
-  con_MkPair;
-
-id : Pure_M (forall A . Pure_M (A -> Pure_M A)) =
-  return [Pure_M] /\A . return [Pure_M] \(x : A) -> return [Pure_M] x;
-
-idInt : Pure_M (Int -> Pure_M Int) =
-  let (var_2 : forall A . Pure_M (A -> Pure_M A)) <- id in
-    var_2 [Int];
-
-idFun : Pure_M ((forall B . Pure_M (B -> Pure_M B)) -> Pure_M (forall C . Pure_M (C -> Pure_M C))) =
-  let (var_3 : forall A . Pure_M (A -> Pure_M A)) <- id in
-    var_3 [forall A . Pure_M (A -> Pure_M A)];
-
-idFunApp : Pure_M (forall T . Pure_M (T -> Pure_M T)) =
-  let (var_4 : (forall B . Pure_M (B -> Pure_M B)) -> Pure_M (forall C . Pure_M (C -> Pure_M C))) <- idFun in
-    let (var_5 : forall A . Pure_M (A -> Pure_M A)) <- id in
-      var_4 var_5;
-
-typeAppsFun : Pure_M Unit =
-  let (var_12 : Int -> Pure_M Unit) <- let (var_10 : (Int -> Pure_M Unit) -> Pure_M (Int -> Pure_M Unit)) <- let (var_9 : forall B . Pure_M ((Int -> Pure_M B) -> Pure_M (Int -> Pure_M B))) <- let (var_8 : forall A . Pure_M (forall B . Pure_M ((A -> Pure_M B) -> Pure_M (A -> Pure_M B)))) <- return [Pure_M] /\A . return [Pure_M] /\B . return [Pure_M] \(f : A -> Pure_M B) -> return [Pure_M] \(x : A) -> let (var_6 : A -> Pure_M B) <- return [Pure_M] f in
-                                                                                                                                                                                                                                                                                                                                                                                                                     let (var_7 : A) <- return [Pure_M] x in
-                                                                                                                                                                                                                                                                                                                                                                                                                       var_6 var_7 in
-                                                                                                                                                                                                  var_8 [Int] in
-                                                                                                               var_9 [Unit] in
-                                         let (var_11 : Int -> Pure_M Unit) <- return [Pure_M] \(x : Int) -> return [Pure_M] unit in
-                                           var_10 var_11 in
-    let (var_13 : Int) <- return [Pure_M] 1 in
-      var_12 var_13;
-
-compose : Pure_M (forall A . Pure_M (forall B . Pure_M (forall C . Pure_M ((B -> Pure_M C) -> Pure_M ((A -> Pure_M B) -> Pure_M (A -> Pure_M C)))))) =
-  return [Pure_M] /\A . return [Pure_M] /\B . return [Pure_M] /\C . return [Pure_M] \(f : B -> Pure_M C) -> return [Pure_M] \(g : A -> Pure_M B) -> return [Pure_M] \(x : A) -> let (var_16 : B -> Pure_M C) <- return [Pure_M] f in
-                                                                                                                                                                                  let (var_17 : B) <- let (var_14 : A -> Pure_M B) <- return [Pure_M] g in
-                                                                                                                                                                                                        let (var_15 : A) <- return [Pure_M] x in
-                                                                                                                                                                                                          var_14 var_15 in
-                                                                                                                                                                                    var_16 var_17;
-
-mkIntPair : Pure_M (Int -> Pure_M (Int -> Pure_M (Pair Int Int))) =
-  let (var_19 : forall B . Pure_M (Int -> Pure_M (B -> Pure_M (Pair Int B)))) <- let (var_18 : forall A . Pure_M (forall B . Pure_M (A -> Pure_M (B -> Pure_M (Pair A B))))) <- con_MkPair in
-                                                                                   var_18 [Int] in
-    var_19 [Int];
+id : (Error Unit ::: NonTerm) (forall A . (Error Unit ::: NonTerm) (A -> (Error Unit ::: NonTerm) A)) =
+  return [Error Unit ::: NonTerm] /\A .
+    return [Error Unit ::: NonTerm] \(x : A) ->
+      return [Error Unit ::: NonTerm] x;
 

@@ -37,8 +37,8 @@ spec =
     it "generates MIL code for lambdas and applications" $
       testCase "LambdasApps"
 
-    --it "generates MIL code for polymorphic functions" $
-      --testCase "Polymorphism"
+    it "generates MIL code for polymorphic functions" $
+      testCase "Polymorphism"
 
     --it "generates MIL code for built-in functions" $
       --testCase "BuiltInFunctions"

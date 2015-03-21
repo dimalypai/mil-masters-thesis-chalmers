@@ -3,36 +3,33 @@ main = do
   return unit;
 end;;
 
-type Pair A B = MkPair A B
-
-mkPair : forall A . forall B . A -> B -> Pair A B
-mkPair = MkPair;;
-
 id : forall A . A -> A
 id = /\A . \(x : A) -> x;;
 
 # Monomorphising id with Int
-idInt : Int -> Int
-idInt = id [Int];;
+#idInt : Int -> Int
+#idInt = id [Int];;
 
 # "Monomorphising" id with polymorphic type
 # This checks for alpha equivalence as well
-idFun : (forall B . B -> B) -> (forall C . C -> C)
-idFun = id [forall A . A -> A];;
+#idFun : (forall B . B -> B) -> (forall C . C -> C)
+#idFun = id [forall A . A -> A];;
 
 # This checks for alpha equivalence
-idFunApp : forall T . T -> T
-idFunApp = idFun id;;
+#idFunApp : forall T . T -> T
+#idFunApp = idFun id;;
 
 # Polymorphic function application
-typeAppsFun : Unit
-typeAppsFun = (/\A . /\B . \(f : A -> B) -> \(x : A) -> f x) [Int] [Unit] (\(x : Int) -> unit) 1;;
+#typeAppsFun : Unit
+#typeAppsFun = (/\A . /\B . \(f : A -> B) -> \(x : A) -> f x) [Int] [Unit] (\(x : Int) -> unit) 1;;
 
 # Function composition with non-nested lambdas
-compose : forall A . forall B . forall C . (B -> C) -> (A -> B) -> A -> C
-compose = /\A B C . \(f : B -> C) (g : A -> B) (x : A) -> f (g x);;
+#compose : forall A . forall B . forall C . (B -> C) -> (A -> B) -> A -> C
+#compose = /\A B C . \(f : B -> C) (g : A -> B) (x : A) -> f (g x);;
+
+#type Pair A B = MkPair A B
 
 # Monomorphising polymorphic data constructor
-mkIntPair : Int -> Int -> Pair Int Int
-mkIntPair = MkPair [Int] [Int];;
+#mkIntPair : Int -> Int -> Pair Int Int
+#mkIntPair = MkPair [Int] [Int];;
 

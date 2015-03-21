@@ -187,6 +187,21 @@ codeGenExpr funMonad tyExpr =
         (milBodyExpr, milBodyType)
         (reverse tyVarBinders)
 
+    TypeLambdaE _ _ srcTypeVars tyBodyExpr -> do
+      (milBodyExpr, milBodyType) <- codeGenExpr funMonad tyBodyExpr
+      return $ foldr (\tv (mBodyExpr, mBodyType) ->
+                   ( MIL.ReturnE funMonad (MIL.TypeLambdaE (typeVarMil tv) mBodyExpr)
+                   , MIL.SrcTyApp funMonad (MIL.SrcTyForAll (typeVarMil tv) mBodyType)))
+                 (milBodyExpr, milBodyType)
+                 (map getTypeVar srcTypeVars)
+
+    TypeAppE _ _ tyAppExpr srcArgType -> do
+      (milAppExpr, milAppExprType) <- codeGenExpr funMonad tyAppExpr
+      var <- newMilVar
+      return ( MIL.mkSrcLet var (MIL.getSrcResultType milAppExprType) milAppExpr $
+                 MIL.TypeAppE (MIL.VarE var) (srcTypeMil srcArgType)
+             , typeMil exprType)
+
     DoE _ _ tyStmts -> codeGenDoBlock funMonad tyStmts
 
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 ->
@@ -194,14 +209,6 @@ codeGenExpr funMonad tyExpr =
 
     ParenE _ tySubExpr -> codeGenExpr funMonad tySubExpr
 {-
-    TypeLambdaE _ _ srcTypeVars tyBodyExpr -> do
-      (milBodyExpr, milBodyType) <- codeGenExpr funMonad tyBodyExpr
-      return $ foldr (\tv (mexpr, mtype) ->
-                   ( MIL.ReturnE funMonad (MIL.TypeLambdaE (typeVarMil tv) mexpr)
-                   , MIL.applyMonadType funMonad (MIL.TyForAll (typeVarMil tv) mtype)))
-                 (milBodyExpr, milBodyType)
-                 (map getTypeVar srcTypeVars)
-
     TypeAppE _ _ tyAppExpr srcArgType -> do
       (milAppExpr, milAppExprType) <- codeGenExpr funMonad tyAppExpr
       var <- newMilVar
@@ -412,8 +419,11 @@ srcTypeMil (SrcTyApp _ st1 st2) =
         TypeName "State" -> MIL.SrcTyApp stateSrcMonadMil (srcTypeMil st2)  -- discard state type?
         _ -> normalCaseApp
     _ -> normalCaseApp
-srcTypeMil (SrcTyArrow _ st1 st2) = MIL.SrcTyArrow (srcTypeMil st1) (MIL.SrcTyApp pureSrcMonadMil $ srcTypeMil st2)
-srcTypeMil (SrcTyForAll _ srv st) = error "SrcTyForAll"
+srcTypeMil (SrcTyArrow _ st1 st2) =
+  MIL.SrcTyArrow (srcTypeMil st1) (MIL.SrcTyApp pureSrcMonadMil $ srcTypeMil st2)  -- TODO: built-ins?
+srcTypeMil (SrcTyForAll _ stv st) =
+  MIL.SrcTyForAll (typeVarMil $ getTypeVar stv)
+    (MIL.SrcTyApp pureSrcMonadMil $ srcTypeMil st)  -- TODO: built-ins?
 srcTypeMil (SrcTyParen _ st)      = srcTypeMil st
 
 -- | TODO
@@ -433,7 +443,7 @@ typeMil (TyForAll typeVar t) = MIL.SrcTyForAll (typeVarMil typeVar) (monadTypeMi
 
 -- | TODO
 monadTypeMil :: Type -> MIL.SrcType
-monadTypeMil (TyVar _) = error "TyVar"
+monadTypeMil t@(TyVar {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 monadTypeMil t@(TyArrow {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 monadTypeMil t@(TyApp typeName _typeArgs) =
   case typeName of
