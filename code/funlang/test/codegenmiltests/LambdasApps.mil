@@ -24,3 +24,8 @@ multParamsFunNested : (Error Unit ::: NonTerm) (Int -> (Error Unit ::: NonTerm) 
     return [Error Unit ::: NonTerm] \(y : Unit) ->
       return [Error Unit ::: NonTerm] 2.0;
 
+simpleApp : (Error Unit ::: NonTerm) Unit =
+  let (var_0 : Unit -> (Error Unit ::: NonTerm) Unit) <- unitId in
+    let (var_1 : Unit) <- return [Error Unit ::: NonTerm] unit in
+      var_0 var_1;
+

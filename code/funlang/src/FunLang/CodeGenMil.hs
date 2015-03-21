@@ -167,8 +167,13 @@ codeGenExpr funMonad tyExpr =
 
     VarE _ varType var -> do
       let milVar = varMil var
-      return ( MIL.ReturnE funMonad $ MIL.VarE milVar
-             , MIL.SrcTyApp funMonad $ typeMil varType)
+      let funName = varToFunName var
+      isGlobalFunction <- asks (isFunctionDefined funName . getFunTypeEnv)
+      if isGlobalFunction
+        then return ( MIL.VarE milVar
+                    , monadTypeMil varType)
+        else return ( MIL.ReturnE funMonad $ MIL.VarE milVar
+                    , MIL.SrcTyApp funMonad $ typeMil varType)
 
     LambdaE _ _ tyVarBinders tyBodyExpr -> do
       (milBodyExpr, milBodyType) <- codeGenExpr funMonad tyBodyExpr
@@ -183,6 +188,9 @@ codeGenExpr funMonad tyExpr =
         (reverse tyVarBinders)
 
     DoE _ _ tyStmts -> codeGenDoBlock funMonad tyStmts
+
+    BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 ->
+      codeGenBinOp funMonad (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType
 
     ParenE _ tySubExpr -> codeGenExpr funMonad tySubExpr
 {-
@@ -218,9 +226,6 @@ codeGenExpr funMonad tyExpr =
              (MIL.VarE $ MIL.VarBinder (var, varType)) <$>
              monadSrcTypeMil srcArgType)
       return (milTypeAppExpr, monadFunTypeMil exprType)  -- TODO?
-
-    BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 ->
-      codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
 -}
 literalMil :: TyLiteral -> MIL.SrcExpr
 literalMil UnitLit {}         = MIL.LitE MIL.UnitLit
@@ -234,25 +239,25 @@ stringMil (c:cs) =
   MIL.AppE (MIL.AppE (MIL.mkSrcConName "Cons_Str")
                      (MIL.mkCharLit c))
            (stringMil cs)
-{-
+
 -- | Code generation of binary operations.
--- Takes a binary operation, its operands, a type of the result and a monad of
--- containing function.
+-- Takes a monad of containing function, binary operation, its operands, a type
+-- of the result.
 -- Returns an MIL expression and its type.
-codeGenBinOp :: BinOp -> TyExpr -> TyExpr -> Type -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
-codeGenBinOp App tyExpr1 tyExpr2 resultType funMonad = do
-  (milExpr1, milExpr1Type) <- codeGenExpr funMonad tyExpr1
-  (milExpr2, milExpr2Type) <- codeGenExpr funMonad tyExpr2
-  var1 <- newMilVar
-  var2 <- newMilVar
-  let var1Type = MIL.getMonadResultType milExpr1Type
-  let var2Type = MIL.getMonadResultType milExpr2Type
-  let appE = MIL.AppE (MIL.VarE $ MIL.VarBinder (var1, var1Type))
-                      (MIL.VarE $ MIL.VarBinder (var2, var2Type))
-  return ( MIL.LetE (MIL.VarBinder (var1, var1Type))
-             milExpr1
-             (MIL.LetE (MIL.VarBinder (var2, var2Type))
-                milExpr2
+codeGenBinOp :: MIL.SrcType -> BinOp -> TyExpr -> TyExpr -> Type -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
+codeGenBinOp funMonad binOp tyExpr1 tyExpr2 resultType = do
+  case binOp of
+    App -> do
+      (milExpr1, milExpr1Type) <- codeGenExpr funMonad tyExpr1
+      (milExpr2, milExpr2Type) <- codeGenExpr funMonad tyExpr2
+      var1 <- newMilVar
+      var2 <- newMilVar
+      let (appE, milResultType) = (MIL.AppE (MIL.VarE var1) (MIL.VarE var2), typeMil resultType)
+      return ( MIL.mkSrcLet var1 (MIL.getSrcResultType milExpr1Type) milExpr1 $
+                 MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2
+                   appE
+             , milResultType)
+{-
                 (if isMonadType resultType
                    then
                      let (MIL.TyApp (MIL.TyMonad resultMonad) _) = typeMil resultType in
