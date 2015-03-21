@@ -7,8 +7,8 @@ id : forall A . A -> A
 id = /\A . \(x : A) -> x;;
 
 # Monomorphising id with Int
-#idInt : Int -> Int
-#idInt = id [Int];;
+idInt : Int -> Int
+idInt = id [Int];;
 
 # "Monomorphising" id with polymorphic type
 # This checks for alpha equivalence as well

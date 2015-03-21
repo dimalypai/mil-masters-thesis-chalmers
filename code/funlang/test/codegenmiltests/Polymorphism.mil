@@ -16,3 +16,7 @@ id : (Error Unit ::: NonTerm) (forall A . (Error Unit ::: NonTerm) (A -> (Error 
     return [Error Unit ::: NonTerm] \(x : A) ->
       return [Error Unit ::: NonTerm] x;
 
+idInt : (Error Unit ::: NonTerm) (Int -> (Error Unit ::: NonTerm) Int) =
+  let (var_0 : forall A . (Error Unit ::: NonTerm) (A -> (Error Unit ::: NonTerm) A)) <- id in
+    var_0 [Int];
+
