@@ -2,8 +2,9 @@ fun : Unit =
   /\A . \(x : A) -> MkT [Int] x 'c';
 
 fun2 : Unit =
-  let (x : {Int, Float}) <- return [IO] {1, 1.0e-2} in
-    x;
+  let (x : {Int, Float}) <-
+    return [IO] {1, 1.0e-2} in
+      x;
 
 fun3 : Unit =
   case unit of
