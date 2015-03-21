@@ -560,3 +560,12 @@ Pure things will need to be lifted to State.
 
 There is still a limitation that FunLang doesn't allow combining monads (IO and State).
 
+General thoughts. March
+=======================
+
+* MIL. What happens if we have something of monadic type in the argument position?
+  When does the effects happen? It looks like they should happen only when
+  doing bind, because otherwise there should be some type trickery going on as
+  in OOLang (roughly), because if we evaluate them before passing to a function
+  then arguments never can have monadic types, because this is a lie, effects
+  have happened already.
