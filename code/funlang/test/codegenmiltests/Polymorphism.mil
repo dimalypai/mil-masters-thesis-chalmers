@@ -20,3 +20,12 @@ idInt : (Error Unit ::: NonTerm) (Int -> (Error Unit ::: NonTerm) Int) =
   let (var_0 : forall A . (Error Unit ::: NonTerm) (A -> (Error Unit ::: NonTerm) A)) <- id in
     var_0 [Int];
 
+idFun : (Error Unit ::: NonTerm) ((forall B . (Error Unit ::: NonTerm) (B -> (Error Unit ::: NonTerm) B)) -> (Error Unit ::: NonTerm) (forall C . (Error Unit ::: NonTerm) (C -> (Error Unit ::: NonTerm) C))) =
+  let (var_1 : forall A . (Error Unit ::: NonTerm) (A -> (Error Unit ::: NonTerm) A)) <- id in
+    var_1 [forall A . (Error Unit ::: NonTerm) (A -> (Error Unit ::: NonTerm) A)];
+
+idFunApp : (Error Unit ::: NonTerm) (forall T . (Error Unit ::: NonTerm) (T -> (Error Unit ::: NonTerm) T)) =
+  let (var_2 : (forall B . (Error Unit ::: NonTerm) (B -> (Error Unit ::: NonTerm) B)) -> (Error Unit ::: NonTerm) (forall C . (Error Unit ::: NonTerm) (C -> (Error Unit ::: NonTerm) C))) <- idFun in
+  let (var_3 : forall A . (Error Unit ::: NonTerm) (A -> (Error Unit ::: NonTerm) A)) <- id in
+  var_2 var_3;
+

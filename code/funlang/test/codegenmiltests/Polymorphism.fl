@@ -12,12 +12,12 @@ idInt = id [Int];;
 
 # "Monomorphising" id with polymorphic type
 # This checks for alpha equivalence as well
-#idFun : (forall B . B -> B) -> (forall C . C -> C)
-#idFun = id [forall A . A -> A];;
+idFun : (forall B . B -> B) -> (forall C . C -> C)
+idFun = id [forall A . A -> A];;
 
 # This checks for alpha equivalence
-#idFunApp : forall T . T -> T
-#idFunApp = idFun id;;
+idFunApp : forall T . T -> T
+idFunApp = idFun id;;
 
 # Polymorphic function application
 #typeAppsFun : Unit
