@@ -29,3 +29,8 @@ simpleApp : (Error Unit ::: NonTerm) Unit =
     let (var_1 : Unit) <- return [Error Unit ::: NonTerm] unit in
       var_0 var_1;
 
+partialApp : (Error Unit ::: NonTerm) (Unit -> (Error Unit ::: NonTerm) Float) =
+  let (var_2 : Int -> (Error Unit ::: NonTerm) (Unit -> (Error Unit ::: NonTerm) Float)) <- multParamsFun in
+    let (var_3 : Int) <- return [Error Unit ::: NonTerm] 1 in
+      var_2 var_3;
+

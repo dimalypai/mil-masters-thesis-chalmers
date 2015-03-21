@@ -15,14 +15,9 @@ multParamsFunNested = \(x : Int) -> \(y : Unit) -> 2.00;;
 simpleApp : Unit
 simpleApp = unitId unit;;
 
-#lamApp2 : Float
-#lamApp2 = lamApp1 unit;;
+partialApp : Unit -> Float
+partialApp = multParamsFun 1;;
 
-#lamApp3 : Unit -> Float
-#lamApp3 = lamFun2 1;;
-
-#lamApp4 : Float
-#lamApp4 = lamFun2 1 unit;;
 
 #lamFun3 : Unit -> Unit
 #lamFun3 = (\(x : Unit -> Unit) -> x) (\(x : Unit) -> x);;
