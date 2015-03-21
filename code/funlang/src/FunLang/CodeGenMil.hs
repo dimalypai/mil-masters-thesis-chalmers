@@ -252,21 +252,18 @@ codeGenBinOp funMonad binOp tyExpr1 tyExpr2 resultType = do
       (milExpr2, milExpr2Type) <- codeGenExpr funMonad tyExpr2
       var1 <- newMilVar
       var2 <- newMilVar
-      let (appE, milResultType) = (MIL.AppE (MIL.VarE var1) (MIL.VarE var2), typeMil resultType)
+      let appE = MIL.AppE (MIL.VarE var1) (MIL.VarE var2)
+      -- FunLang functions always get pure monad stack as a first type
+      -- constructor, so we don't need to generate `return`, but type
+      -- conversion for milResultType should communicate that.
+      let milResultType = if isFunctionType resultType
+                            then monadTypeMil resultType
+                            else typeMil resultType
       return ( MIL.mkSrcLet var1 (MIL.getSrcResultType milExpr1Type) milExpr1 $
                  MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2
                    appE
              , milResultType)
-{-
-                (if isMonadType resultType
-                   then
-                     let (MIL.TyApp (MIL.TyMonad resultMonad) _) = typeMil resultType in
-                     if True  -- TODO: resultMonad `MIL.isMonadSuffixOf` funMonad?
-                       then MIL.LiftE appE resultMonad funMonad
-                       else appE
-                   else appE))
-         , monadFunTypeMil resultType)  -- TODO?
--}
+
 codeGenDoBlock :: MIL.SrcType -> [TyStmt] -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenDoBlock funMonad [ExprS _ tyExpr] = codeGenExpr funMonad tyExpr
 -- Every expression code generation results in return.

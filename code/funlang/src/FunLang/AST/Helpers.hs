@@ -92,6 +92,10 @@ isTypeVar :: Type -> Bool
 isTypeVar (TyVar _) = True
 isTypeVar         _ = False
 
+isFunctionType :: Type -> Bool
+isFunctionType TyArrow {} = True
+isFunctionType _ = False
+
 isAtomicType :: Type -> Bool
 isAtomicType TyArrow   {} = False
 isAtomicType (TyApp _ []) = True

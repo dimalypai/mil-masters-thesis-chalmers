@@ -34,3 +34,11 @@ partialApp : (Error Unit ::: NonTerm) (Unit -> (Error Unit ::: NonTerm) Float) =
     let (var_3 : Int) <- return [Error Unit ::: NonTerm] 1 in
       var_2 var_3;
 
+fullApp : (Error Unit ::: NonTerm) Float =
+  let (var_6 : Unit -> (Error Unit ::: NonTerm) Float) <-
+    let (var_4 : Int -> (Error Unit ::: NonTerm) (Unit -> (Error Unit ::: NonTerm) Float)) <- multParamsFun in
+    let (var_5 : Int) <- return [Error Unit ::: NonTerm] 1 in
+    var_4 var_5 in
+  let (var_7 : Unit) <- return [Error Unit ::: NonTerm] unit in
+  var_6 var_7;
+
