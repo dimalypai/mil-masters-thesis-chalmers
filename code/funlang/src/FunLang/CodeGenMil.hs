@@ -401,16 +401,17 @@ monadSrcFunTypeMil st = MIL.applyMonadType pureMonadMil <$> monadSrcTypeMil st
 srcTypeMil :: SrcType -> MIL.SrcType
 srcTypeMil (SrcTyCon srcTypeName) = MIL.SrcTyTypeCon (typeNameMil $ getTypeName srcTypeName)
 srcTypeMil (SrcTyApp _ st1 st2) =
+  let normalCaseApp = MIL.SrcTyApp (srcTypeMil st1) (srcTypeMil st2) in
   case st1 of
     SrcTyCon srcTypeName ->
       case getTypeName srcTypeName of
         TypeName "IO" -> MIL.SrcTyApp ioSrcMonadMil (srcTypeMil st2)
-        _ -> MIL.SrcTyApp (srcTypeMil st1) (srcTypeMil st2)  -- TODO: test
+        _ -> normalCaseApp
     (SrcTyApp _ (SrcTyCon srcTypeName') _) ->
       case getTypeName srcTypeName' of
         TypeName "State" -> MIL.SrcTyApp stateSrcMonadMil (srcTypeMil st2)  -- discard state type?
-        _ -> MIL.SrcTyApp (srcTypeMil st1) (srcTypeMil st2)  -- TODO: test
-    _ -> MIL.SrcTyApp (srcTypeMil st1) (srcTypeMil st2)  -- TODO: test
+        _ -> normalCaseApp
+    _ -> normalCaseApp
 srcTypeMil (SrcTyArrow _ st1 st2) = MIL.SrcTyArrow (srcTypeMil st1) (MIL.SrcTyApp pureSrcMonadMil $ srcTypeMil st2)
 srcTypeMil (SrcTyForAll _ srv st) = error "SrcTyForAll"
 srcTypeMil (SrcTyParen _ st)      = srcTypeMil st
