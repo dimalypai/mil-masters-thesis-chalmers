@@ -212,19 +212,7 @@ codeGenExpr funMonad tyExpr =
       codeGenBinOp funMonad (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType
 
     ParenE _ tySubExpr -> codeGenExpr funMonad tySubExpr
-{-
-    TypeAppE _ _ tyAppExpr srcArgType -> do
-      (milAppExpr, milAppExprType) <- codeGenExpr funMonad tyAppExpr
-      var <- newMilVar
-      let varType = MIL.getMonadResultType milAppExprType
-      milTypeAppExpr <-
-        MIL.LetE (MIL.VarBinder (var, varType))
-          milAppExpr <$>
-          (MIL.TypeAppE
-             (MIL.VarE $ MIL.VarBinder (var, varType)) <$>
-             monadSrcTypeMil srcArgType)
-      return (milTypeAppExpr, monadFunTypeMil exprType)  -- TODO?
--}
+
 literalMil :: TyLiteral -> MIL.SrcExpr
 literalMil UnitLit {}         = MIL.LitE MIL.UnitLit
 literalMil (IntLit _ _ i)     = MIL.LitE (MIL.IntLit i)
