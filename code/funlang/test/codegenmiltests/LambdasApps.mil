@@ -42,3 +42,12 @@ fullApp : (Error Unit ::: NonTerm) Float =
   let (var_7 : Unit) <- return [Error Unit ::: NonTerm] unit in
   var_6 var_7;
 
+higherOrderLambda : (Error Unit ::: NonTerm) (Unit -> (Error Unit ::: NonTerm) Unit) =
+  let (var_8 : (Unit -> (Error Unit ::: NonTerm) Unit) -> (Error Unit ::: NonTerm) (Unit -> (Error Unit ::: NonTerm) Unit)) <-
+    return [Error Unit ::: NonTerm] \(x : Unit -> (Error Unit ::: NonTerm) Unit) ->
+      return [Error Unit ::: NonTerm] x in
+  let (var_9 : Unit -> (Error Unit ::: NonTerm) Unit) <-
+    return [Error Unit ::: NonTerm] \(x : Unit) ->
+      return [Error Unit ::: NonTerm] x in
+  var_8 var_9;
+
