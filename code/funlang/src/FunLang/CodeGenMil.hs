@@ -295,42 +295,6 @@ codeGenDoBlock (tyStmt:tyStmts) funMonad =
              , milBodyType)
 -}
 {-
--- | Built-in functions need a special treatment.
-codeGenBuiltInFunction :: MIL.SrcType -> Var -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
-codeGenBuiltInFunction funMonad funNameVar =
-  case funNameVar of
-    Var "printString" -> codeGenArgBuiltInFunction (MIL.FunName "printString") funMonad
-    Var "printInt"    -> codeGenArgBuiltInFunction (MIL.FunName "printInt") funMonad
-    Var "printFloat"  -> codeGenArgBuiltInFunction (MIL.FunName "printFloat") funMonad
-
-    Var "readInt"     -> codeGenNoArgBuiltInFunction (MIL.FunName "readInt") funMonad
-    Var "readFloat"   -> codeGenNoArgBuiltInFunction (MIL.FunName "readFloat") funMonad
-
-    -- TODO: state functions
-
-    _ -> error (prPrint funNameVar ++ "is not a built-in function")
-
--- | These functions have at least on parameter, so we just return them in the
--- function monad.
-codeGenArgBuiltInFunction :: MIL.FunName -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
-codeGenArgBuiltInFunction milFunName funMonad = do
-  let milFunNameVar = MIL.funNameToVar milFunName
-      milFunType = MIL.getBuiltInFunctionType milFunName
-  return $ ( MIL.ReturnE funMonad (MIL.VarE $ MIL.VarBinder (milFunNameVar, milFunType))
-           , MIL.applyMonadType funMonad milFunType)
-
--- | These functions don't expect arguments. We must lift them if they are in a
--- different monad. Type checking ensured that they are in the correct monad.
-codeGenNoArgBuiltInFunction :: MIL.FunName -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
-codeGenNoArgBuiltInFunction milFunName funMonad = do
-  let milFunNameVar = MIL.funNameToVar milFunName
-      milFunType = MIL.getBuiltInFunctionType milFunName
-      (MIL.TyApp (MIL.TyMonad resultMonad) monadResultType) = milFunType
-  if (resultMonad /= funMonad)
-    then return $ ( MIL.LiftE (MIL.VarE $ MIL.VarBinder (milFunNameVar, milFunType)) resultMonad funMonad
-                  , MIL.applyMonadType funMonad monadResultType)
-    else return $ ( MIL.VarE $ MIL.VarBinder (milFunNameVar, milFunType)
-                  , MIL.applyMonadType funMonad monadResultType)
 
 -- * Type conversions
 
