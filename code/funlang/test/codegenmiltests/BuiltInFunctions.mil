@@ -1,0 +1,2 @@
+main : (Error Unit ::: (NonTerm ::: IO)) Unit =
+  return [Error Unit ::: (NonTerm ::: IO)] unit;
