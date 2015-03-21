@@ -12,6 +12,14 @@ type IoWrapper A = MkIO ((Error Unit ::: (NonTerm ::: IO)) A);
 
 type StateWrapper St A = MkState ((Error Unit ::: (NonTerm ::: State)) A);
 
+type BuiltInMonadFunWrapper
+  = IoFun (Unit -> (Error Unit ::: (NonTerm ::: IO)) Unit)
+  | StateFun (Int -> (Error Unit ::: (NonTerm ::: State)) Unit);
+
+type BuiltInMonadForAllWrapper
+  = IoForAll (forall A . (Error Unit ::: (NonTerm ::: IO)) A)
+  | StateForAll (forall A . (Error Unit ::: (NonTerm ::: State)) A);
+
 con_True : (Error Unit ::: NonTerm) Bool =
   return [Error Unit ::: NonTerm] True;
 
@@ -44,6 +52,22 @@ con_MkState : (Error Unit ::: NonTerm) (forall St . (Error Unit ::: NonTerm) (fo
     return [Error Unit ::: NonTerm] /\A .
       return [Error Unit ::: NonTerm] \(var_4 : (Error Unit ::: (NonTerm ::: State)) A) ->
         return [Error Unit ::: NonTerm] MkState [St] [A] var_4;
+
+con_IoFun : (Error Unit ::: NonTerm) ((Unit -> (Error Unit ::: (NonTerm ::: IO)) Unit) -> (Error Unit ::: NonTerm) BuiltInMonadFunWrapper) =
+  return [Error Unit ::: NonTerm] \(var_5 : Unit -> (Error Unit ::: (NonTerm ::: IO)) Unit) ->
+    return [Error Unit ::: NonTerm] IoFun var_5;
+
+con_StateFun : (Error Unit ::: NonTerm) ((Int -> (Error Unit ::: (NonTerm ::: State)) Unit) -> (Error Unit ::: NonTerm) BuiltInMonadFunWrapper) =
+  return [Error Unit ::: NonTerm] \(var_6 : Int -> (Error Unit ::: (NonTerm ::: State)) Unit) ->
+    return [Error Unit ::: NonTerm] StateFun var_6;
+
+con_IoForAll : (Error Unit ::: NonTerm) ((forall A . (Error Unit ::: (NonTerm ::: IO)) A) -> (Error Unit ::: NonTerm) BuiltInMonadForAllWrapper) =
+  return [Error Unit ::: NonTerm] \(var_7 : forall A . (Error Unit ::: (NonTerm ::: IO)) A) ->
+    return [Error Unit ::: NonTerm] IoForAll var_7;
+
+con_StateForAll : (Error Unit ::: NonTerm) ((forall A . (Error Unit ::: (NonTerm ::: State)) A) -> (Error Unit ::: NonTerm) BuiltInMonadForAllWrapper) =
+  return [Error Unit ::: NonTerm] \(var_8 : forall A . (Error Unit ::: (NonTerm ::: State)) A) ->
+    return [Error Unit ::: NonTerm] StateForAll var_8;
 
 main : (Error Unit ::: (NonTerm ::: IO)) Unit =
   return [Error Unit ::: (NonTerm ::: IO)] unit;

@@ -408,12 +408,25 @@ srcTypeMil (SrcTyApp _ st1 st2) =
         TypeName "State" -> MIL.SrcTyApp stateSrcMonadMil (srcTypeMil st2)  -- discard state type?
         _ -> normalCaseApp
     _ -> normalCaseApp
-srcTypeMil (SrcTyArrow _ st1 st2) =
-  MIL.SrcTyArrow (srcTypeMil st1) (MIL.SrcTyApp pureSrcMonadMil $ srcTypeMil st2)  -- TODO: built-ins?
-srcTypeMil (SrcTyForAll _ stv st) =
-  MIL.SrcTyForAll (typeVarMil $ getTypeVar stv)
-    (MIL.SrcTyApp pureSrcMonadMil $ srcTypeMil st)  -- TODO: built-ins?
+srcTypeMil (SrcTyArrow _ st1 st2) = MIL.SrcTyArrow (srcTypeMil st1) (monadSrcTypeMil st2)
+srcTypeMil (SrcTyForAll _ stv st) = MIL.SrcTyForAll (typeVarMil $ getTypeVar stv) (monadSrcTypeMil st)
 srcTypeMil (SrcTyParen _ st) = srcTypeMil st
+
+-- | TODO
+monadSrcTypeMil :: SrcType -> MIL.SrcType
+monadSrcTypeMil st@(SrcTyApp _ st1 st2) =
+  let normalCaseApp = MIL.SrcTyApp pureSrcMonadMil (srcTypeMil st) in
+  case st1 of
+    SrcTyCon srcTypeName ->
+      case getTypeName srcTypeName of
+        TypeName "IO" -> srcTypeMil st
+        _ -> normalCaseApp
+    (SrcTyApp _ (SrcTyCon srcTypeName') _) ->
+      case getTypeName srcTypeName' of
+        TypeName "State" -> srcTypeMil st
+        _ -> normalCaseApp
+    _ -> normalCaseApp
+monadSrcTypeMil st = MIL.SrcTyApp pureSrcMonadMil (srcTypeMil st)
 
 -- | TODO
 typeMil :: Type -> MIL.SrcType
@@ -432,14 +445,12 @@ typeMil (TyForAll typeVar t) = MIL.SrcTyForAll (typeVarMil typeVar) (monadTypeMi
 
 -- | TODO
 monadTypeMil :: Type -> MIL.SrcType
-monadTypeMil t@(TyVar {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
-monadTypeMil t@(TyArrow {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 monadTypeMil t@(TyApp typeName _typeArgs) =
   case typeName of
     TypeName "IO" -> typeMil t
     TypeName "State" -> typeMil t
     _ -> MIL.SrcTyApp pureSrcMonadMil (typeMil t)
-monadTypeMil t@(TyForAll {}) = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
+monadTypeMil t = MIL.SrcTyApp pureSrcMonadMil (typeMil t)
 
 -- * Conversion utils
 
