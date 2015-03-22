@@ -68,22 +68,22 @@ builtInFunctions =
   , (FunName "readFloat",   ioType floatType)
   -- Monadic run functions
   {- Built-in pair/tuple type is needed
-  , (FunName "runState",  TyForAll (TypeVar "_S") $ TyForAll (TypeVar "_A") $
-                            TyArrow (stateType (mkTypeVar "_S") (mkTypeVar "_A"))
-                                    (TyArrow (mkTypeVar "_S") undefined))
+  , (FunName "runState",  TyForAll (TypeVar "S_") $ TyForAll (TypeVar "A_") $
+                            TyArrow (stateType (mkTypeVar "S_") (mkTypeVar "A_"))
+                                    (TyArrow (mkTypeVar "S_") undefined))
   -}
-  , (FunName "evalState", TyForAll (TypeVar "_S") $ TyForAll (TypeVar "_A") $
-                            TyArrow (stateType (mkTypeVar "_S") (mkTypeVar "_A"))
-                                    (TyArrow (mkTypeVar "_S") (mkTypeVar "_A")))
-  , (FunName "execState", TyForAll (TypeVar "_S") $ TyForAll (TypeVar "_A") $
-                            TyArrow (stateType (mkTypeVar "_S") (mkTypeVar "_A"))
-                                    (TyArrow (mkTypeVar "_S") (mkTypeVar "_S")))
+  , (FunName "evalState", TyForAll (TypeVar "S_") $ TyForAll (TypeVar "A_") $
+                            TyArrow (stateType (mkTypeVar "S_") (mkTypeVar "A_"))
+                                    (TyArrow (mkTypeVar "S_") (mkTypeVar "A_")))
+  , (FunName "execState", TyForAll (TypeVar "S_") $ TyForAll (TypeVar "A_") $
+                            TyArrow (stateType (mkTypeVar "S_") (mkTypeVar "A_"))
+                                    (TyArrow (mkTypeVar "S_") (mkTypeVar "S_")))
   -- Monadic operations
-  , (FunName "get",    TyForAll (TypeVar "_S") $ stateType (mkTypeVar "_S") (mkTypeVar "_S"))
-  , (FunName "put",    TyForAll (TypeVar "_S") $ TyArrow (mkTypeVar "_S")
-                                                        (stateType (mkTypeVar "_S") unitType))
-  , (FunName "modify", TyForAll (TypeVar "_S") $ TyArrow (TyArrow (mkTypeVar "_S") (mkTypeVar "_S"))
-                                                        (stateType (mkTypeVar "_S") unitType))
+  , (FunName "get",    TyForAll (TypeVar "S_") $ stateType (mkTypeVar "S_") (mkTypeVar "S_"))
+  , (FunName "put",    TyForAll (TypeVar "S_") $ TyArrow (mkTypeVar "S_")
+                                                        (stateType (mkTypeVar "S_") unitType))
+  , (FunName "modify", TyForAll (TypeVar "S_") $ TyArrow (TyArrow (mkTypeVar "S_") (mkTypeVar "S_"))
+                                                        (stateType (mkTypeVar "S_") unitType))
   ]
 
 isBuiltInFunction :: FunName -> Bool
