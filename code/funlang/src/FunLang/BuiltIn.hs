@@ -1,14 +1,10 @@
 module FunLang.BuiltIn where
 
 import qualified Data.Set as Set
-import Data.Maybe (isJust)
+import Data.Maybe (isJust, fromJust)
 
 import FunLang.AST
 import FunLang.AST.Helpers
-
-import qualified MIL.AST as MIL
-import qualified MIL.AST.Builder as MIL
-import qualified MIL.BuiltIn as MIL
 
 -- * Built-in types
 
@@ -56,15 +52,10 @@ typeOfLiteral IntLit    {} = intType
 typeOfLiteral FloatLit  {} = floatType
 typeOfLiteral StringLit {} = stringType
 
-builtInMilTypeDefs :: [MIL.SrcTypeDef]
-builtInMilTypeDefs =
-  [ MIL.TypeDef (MIL.TypeName "String") []
-      [ MIL.ConDef (MIL.ConName "Empty_Str") []
-      , MIL.ConDef (MIL.ConName "Cons_Str") [MIL.mkSimpleSrcType "Char", MIL.mkSimpleSrcType "String"]]
-  ]
-
 -- * Built-in functions
 
+-- | Type variable names are mangled a bit to decrease a chance of collision
+-- with type names in the source code, since we don't allow shadowing.
 builtInFunctions :: [(FunName, Type)]
 builtInFunctions =
   [
@@ -76,43 +67,31 @@ builtInFunctions =
   , (FunName "printFloat",  TyArrow floatType  (ioType unitType))
   , (FunName "readFloat",   ioType floatType)
   -- Monadic run functions
-  {-
-  , (FunName "runState",  TyForAll (TypeVar "S") $ TyForAll (TypeVar "A") $
-                            TyArrow (stateType (mkTypeVar "S") (mkTypeVar "A"))
-                                    (TyArrow (mkTypeVar "S") undefined))
+  {- Built-in pair/tuple type is needed
+  , (FunName "runState",  TyForAll (TypeVar "_S") $ TyForAll (TypeVar "_A") $
+                            TyArrow (stateType (mkTypeVar "_S") (mkTypeVar "_A"))
+                                    (TyArrow (mkTypeVar "_S") undefined))
   -}
-  , (FunName "evalState", TyForAll (TypeVar "S") $ TyForAll (TypeVar "A") $
-                            TyArrow (stateType (mkTypeVar "S") (mkTypeVar "A"))
-                                    (TyArrow (mkTypeVar "S") (mkTypeVar "A")))
-  , (FunName "execState", TyForAll (TypeVar "S") $ TyForAll (TypeVar "A") $
-                            TyArrow (stateType (mkTypeVar "S") (mkTypeVar "A"))
-                                    (TyArrow (mkTypeVar "S") (mkTypeVar "S")))
+  , (FunName "evalState", TyForAll (TypeVar "_S") $ TyForAll (TypeVar "_A") $
+                            TyArrow (stateType (mkTypeVar "_S") (mkTypeVar "_A"))
+                                    (TyArrow (mkTypeVar "_S") (mkTypeVar "_A")))
+  , (FunName "execState", TyForAll (TypeVar "_S") $ TyForAll (TypeVar "_A") $
+                            TyArrow (stateType (mkTypeVar "_S") (mkTypeVar "_A"))
+                                    (TyArrow (mkTypeVar "_S") (mkTypeVar "_S")))
   -- Monadic operations
-  , (FunName "get",    TyForAll (TypeVar "S") $ stateType (mkTypeVar "S") (mkTypeVar "S"))
-  , (FunName "put",    TyForAll (TypeVar "S") $ TyArrow (mkTypeVar "S")
-                                                        (stateType (mkTypeVar "S") unitType))
-  , (FunName "modify", TyForAll (TypeVar "S") $ TyArrow (TyArrow (mkTypeVar "S") (mkTypeVar "S"))
-                                                        (stateType (mkTypeVar "S") unitType))
+  , (FunName "get",    TyForAll (TypeVar "_S") $ stateType (mkTypeVar "_S") (mkTypeVar "_S"))
+  , (FunName "put",    TyForAll (TypeVar "_S") $ TyArrow (mkTypeVar "_S")
+                                                        (stateType (mkTypeVar "_S") unitType))
+  , (FunName "modify", TyForAll (TypeVar "_S") $ TyArrow (TyArrow (mkTypeVar "_S") (mkTypeVar "_S"))
+                                                        (stateType (mkTypeVar "_S") unitType))
   ]
 
 isBuiltInFunction :: FunName -> Bool
 isBuiltInFunction funName = isJust $ lookup funName builtInFunctions
 
-builtInMilFunDefs :: [MIL.SrcFunDef]
-builtInMilFunDefs =
-  [ conTrue
-  , conFalse
-  ]
-
-conTrue :: MIL.SrcFunDef
-conTrue =
-  MIL.mkSrcFunDef "con_True" (MIL.SrcTyApp pureSrcMonadMil (MIL.mkSimpleSrcType "Bool")) $
-    MIL.ReturnE pureSrcMonadMil (MIL.mkSrcConName "True")
-
-conFalse :: MIL.SrcFunDef
-conFalse =
-  MIL.mkSrcFunDef "con_False" (MIL.SrcTyApp pureSrcMonadMil (MIL.mkSimpleSrcType "Bool")) $
-    MIL.ReturnE pureSrcMonadMil (MIL.mkSrcConName "False")
+-- | Unsafe. Make sure that there exists such a built-in function.
+getBuiltInFunctionType :: FunName -> Type
+getBuiltInFunctionType funName = fromJust $ lookup funName builtInFunctions
 
 -- * Monads
 
@@ -125,38 +104,3 @@ monadTypes = Set.fromList
   , TypeName "State"
   ]
 
-pureSrcMonadMil :: MIL.SrcType
-pureSrcMonadMil =
-  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType)
-    (MIL.mkSimpleSrcType "NonTerm")
-
-stateSrcMonadMil :: MIL.SrcType
-stateSrcMonadMil =
-  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
-    MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "NonTerm")
-      (MIL.mkSimpleSrcType "State")
-
-ioSrcMonadMil :: MIL.SrcType
-ioSrcMonadMil =
-  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
-    MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "NonTerm")
-      (MIL.mkSimpleSrcType "IO")
-
-{-
-pureMonadMil :: MIL.MonadType
-pureMonadMil =
-  MIL.MTyMonadCons (MIL.Error exceptionType) $
-    MIL.MTyMonad MIL.NonTerm
-
-ioMonadMil :: MIL.MonadType
-ioMonadMil =
-  MIL.MTyMonadCons (MIL.Error exceptionType) $
-    MIL.MTyMonadCons MIL.NonTerm $
-      MIL.MTyMonad MIL.IO
--}
-exceptionSrcType :: MIL.SrcType
-exceptionSrcType = MIL.mkSimpleSrcType "Unit"
-{-
-exceptionType :: MIL.Type
-exceptionType = MIL.unitType
--}

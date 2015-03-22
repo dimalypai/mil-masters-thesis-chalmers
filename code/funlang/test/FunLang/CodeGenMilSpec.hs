@@ -40,8 +40,8 @@ spec =
     it "generates MIL code for polymorphic functions" $
       testCase "Polymorphism"
 
-    --it "generates MIL code for built-in functions" $
-      --testCase "BuiltInFunctions"
+    it "generates MIL code for built-in functions" $
+      testCase "BuiltInFunctions"
 
 -- Infrastructure
 

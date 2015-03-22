@@ -26,6 +26,27 @@ con_True : (Error Unit ::: NonTerm) Bool =
 con_False : (Error Unit ::: NonTerm) Bool =
   return [Error Unit ::: NonTerm] False;
 
+printString : (Error Unit ::: NonTerm) (String -> (Error Unit ::: (NonTerm ::: IO)) Unit) =
+  return [Error Unit ::: NonTerm] \(s : String) ->
+    return [Error Unit ::: (NonTerm ::: IO)] unit;
+
+readString : (Error Unit ::: (NonTerm ::: IO)) String =
+  return [Error Unit ::: (NonTerm ::: IO)] Empty_Str;
+
+printInt : (Error Unit ::: NonTerm) (Int -> (Error Unit ::: (NonTerm ::: IO)) Unit) =
+  return [Error Unit ::: NonTerm] \(i : Int) ->
+    return [Error Unit ::: (NonTerm ::: IO)] unit;
+
+readInt : (Error Unit ::: (NonTerm ::: IO)) Int =
+  return [Error Unit ::: (NonTerm ::: IO)] 1;
+
+printFloat : (Error Unit ::: NonTerm) (Float -> (Error Unit ::: (NonTerm ::: IO)) Unit) =
+  return [Error Unit ::: NonTerm] \(f : Float) ->
+    return [Error Unit ::: (NonTerm ::: IO)] unit;
+
+readFloat : (Error Unit ::: (NonTerm ::: IO)) Float =
+  return [Error Unit ::: (NonTerm ::: IO)] 1.0;
+
 con_MkS : (Error Unit ::: NonTerm) S =
   return [Error Unit ::: NonTerm] MkS;
 

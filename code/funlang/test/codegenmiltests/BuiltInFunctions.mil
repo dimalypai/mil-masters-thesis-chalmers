@@ -1,2 +1,53 @@
+type String
+  = Empty_Str
+  | Cons_Str Char String;
+
+con_True : (Error Unit ::: NonTerm) Bool =
+  return [Error Unit ::: NonTerm] True;
+
+con_False : (Error Unit ::: NonTerm) Bool =
+  return [Error Unit ::: NonTerm] False;
+
+printString : (Error Unit ::: NonTerm) (String -> (Error Unit ::: (NonTerm ::: IO)) Unit) =
+  return [Error Unit ::: NonTerm] \(s : String) ->
+    return [Error Unit ::: (NonTerm ::: IO)] unit;
+
+readString : (Error Unit ::: (NonTerm ::: IO)) String =
+  return [Error Unit ::: (NonTerm ::: IO)] Empty_Str;
+
+printInt : (Error Unit ::: NonTerm) (Int -> (Error Unit ::: (NonTerm ::: IO)) Unit) =
+  return [Error Unit ::: NonTerm] \(i : Int) ->
+    return [Error Unit ::: (NonTerm ::: IO)] unit;
+
+readInt : (Error Unit ::: (NonTerm ::: IO)) Int =
+  return [Error Unit ::: (NonTerm ::: IO)] 1;
+
+printFloat : (Error Unit ::: NonTerm) (Float -> (Error Unit ::: (NonTerm ::: IO)) Unit) =
+  return [Error Unit ::: NonTerm] \(f : Float) ->
+    return [Error Unit ::: (NonTerm ::: IO)] unit;
+
+readFloat : (Error Unit ::: (NonTerm ::: IO)) Float =
+  return [Error Unit ::: (NonTerm ::: IO)] 1.0;
+
 main : (Error Unit ::: (NonTerm ::: IO)) Unit =
-  return [Error Unit ::: (NonTerm ::: IO)] unit;
+  let (s : String) <- readString in
+  let (var_2 : Unit) <-
+    let (var_0 : String -> (Error Unit ::: (NonTerm ::: IO)) Unit) <-
+      printString in
+    let (var_1 : String) <-
+      return [Error Unit ::: (NonTerm ::: IO)] s in
+    var_0 var_1 in
+  let (i : Int) <- readInt in
+  let (var_5 : Unit) <-
+    let (var_3 : Int -> (Error Unit ::: (NonTerm ::: IO)) Unit) <-
+      printInt in
+    let (var_4 : Int) <-
+      return [Error Unit ::: (NonTerm ::: IO)] i in
+    var_3 var_4 in
+  let (f : Float) <- readFloat in
+  let (var_6 : Float -> (Error Unit ::: (NonTerm ::: IO)) Unit) <-
+    printFloat in
+  let (var_7 : Float) <-
+    return [Error Unit ::: (NonTerm ::: IO)] f in
+  var_6 var_7;
+

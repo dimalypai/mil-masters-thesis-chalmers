@@ -250,34 +250,33 @@ codeGenBinOp funMonad binOp tyExpr1 tyExpr2 resultType = do
 codeGenDoBlock :: MIL.SrcType -> [TyStmt] -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenDoBlock funMonad [ExprS _ tyExpr] = codeGenExpr funMonad tyExpr
 -- Every expression code generation results in return.
--- TODO: take funMonad into account
+-- TODO: take funMonad into account???
 codeGenDoBlock funMonad [ReturnS _ _ tyExpr] = codeGenExpr funMonad tyExpr
-{-
-codeGenDoBlock (tyStmt:tyStmts) funMonad =
+codeGenDoBlock funMonad (tyStmt:tyStmts) =
   case tyStmt of
     ExprS _ tyExpr -> do
       (milBindExpr, milBindType) <- codeGenExpr funMonad tyExpr
-      (milBodyExpr, milBodyType) <- codeGenDoBlock tyStmts funMonad
-      return ( MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.getMonadResultType milBindType))
+      var <- newMilVar
+      (milBodyExpr, milBodyType) <- codeGenDoBlock funMonad tyStmts
+      return ( MIL.mkSrcLet var (MIL.getSrcResultType milBindType)
                  milBindExpr milBodyExpr
              , milBodyType)
 
     BindS _ tyVarBinder tyExpr -> do
       (milBindExpr, milBindType) <- codeGenExpr funMonad tyExpr
-      (milBodyExpr, milBodyType) <- codeGenDoBlock tyStmts funMonad
-      return ( MIL.LetE (MIL.VarBinder ( varMil (getVar $ getBinderVar tyVarBinder)
-                                       , MIL.getMonadResultType milBindType))
+      (milBodyExpr, milBodyType) <- codeGenDoBlock funMonad tyStmts
+      let milVar = varMil (getVar $ getBinderVar tyVarBinder)
+      return ( MIL.mkSrcLet milVar (MIL.getSrcResultType milBindType)
                  milBindExpr milBodyExpr
              , milBodyType)
 
     ReturnS _ _ tyExpr -> do
       (milBindExpr, milBindType) <- codeGenExpr funMonad tyExpr
-      (milBodyExpr, milBodyType) <- codeGenDoBlock tyStmts funMonad
-      return ( MIL.LetE (MIL.VarBinder (MIL.Var "_", MIL.getMonadResultType milBindType))
+      var <- newMilVar
+      (milBodyExpr, milBodyType) <- codeGenDoBlock funMonad tyStmts
+      return ( MIL.mkSrcLet var (MIL.getSrcResultType milBindType)
                  milBindExpr milBodyExpr
              , milBodyType)
--}
-{-
 
 -- * Type conversions
 
@@ -313,6 +312,8 @@ codeGenDoBlock (tyStmt:tyStmts) funMonad =
 -- monads. Type checker ensures that all type constructors are fully applied,
 -- so it is safe to construct monadic types in this way (by direct pattern
 -- matching), otherwise - we throw a panic.
+
+{-
 typeMil :: Type -> MIL.Type
 typeMil (TyVar typeVar) = MIL.TyVar $ typeVarMil typeVar
 typeMil (TyArrow t1 t2) = MIL.TyArrow (typeMil t1) (typeMil t2)
@@ -392,6 +393,9 @@ monadSrcFunTypeMil t@(SrcTyCon srcTypeName) =
     _ -> MIL.applyMonadType pureMonadMil <$> monadSrcTypeMil t
 monadSrcFunTypeMil st = MIL.applyMonadType pureMonadMil <$> monadSrcTypeMil st
 -}
+
+-- TODO: State conversion should generate a function type with Ref A or A as a
+-- parameter for storage.
 
 -- | TODO
 srcTypeMil :: SrcType -> MIL.SrcType
@@ -485,4 +489,127 @@ newMilVar = do
 
 debugPrint :: String -> String -> CodeGenM ()
 debugPrint name value = liftIO $ putStrLn ((name ++ ": ") ++ value)
+
+-- * Built-ins
+
+pureSrcMonadMil :: MIL.SrcType
+pureSrcMonadMil =
+  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType)
+    (MIL.mkSimpleSrcType "NonTerm")
+
+-- TODO: state parameter (Ref or not)
+stateSrcMonadMil :: MIL.SrcType
+stateSrcMonadMil =
+  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
+    MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "NonTerm")
+      (MIL.mkSimpleSrcType "State")
+
+ioSrcMonadMil :: MIL.SrcType
+ioSrcMonadMil =
+  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
+    MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "NonTerm")
+      (MIL.mkSimpleSrcType "IO")
+
+exceptionSrcType :: MIL.SrcType
+exceptionSrcType = MIL.mkSimpleSrcType "Unit"
+
+builtInMilTypeDefs :: [MIL.SrcTypeDef]
+builtInMilTypeDefs =
+  [ MIL.TypeDef (MIL.TypeName "String") []
+      [ MIL.ConDef (MIL.ConName "Empty_Str") []
+      , MIL.ConDef (MIL.ConName "Cons_Str") [MIL.mkSimpleSrcType "Char", MIL.mkSimpleSrcType "String"]]
+  ]
+
+builtInMilFunDefs :: [MIL.SrcFunDef]
+builtInMilFunDefs =
+  [ conTrue
+  , conFalse
+  , printStringMilDef
+  , readStringMilDef
+  , printIntMilDef
+  , readIntMilDef
+  , printFloatMilDef
+  , readFloatMilDef
+  --, evalStateMilDef
+  --, execStateMilDef
+  --, getMilDef
+  --, putMilDef
+  --, modifyMilDef
+  ]
+
+conTrue :: MIL.SrcFunDef
+conTrue =
+  MIL.mkSrcFunDef "con_True" (MIL.SrcTyApp pureSrcMonadMil (MIL.mkSimpleSrcType "Bool")) $
+    MIL.ReturnE pureSrcMonadMil (MIL.mkSrcConName "True")
+
+conFalse :: MIL.SrcFunDef
+conFalse =
+  MIL.mkSrcFunDef "con_False" (MIL.SrcTyApp pureSrcMonadMil (MIL.mkSimpleSrcType "Bool")) $
+    MIL.ReturnE pureSrcMonadMil (MIL.mkSrcConName "False")
+
+printStringMilDef :: MIL.SrcFunDef
+printStringMilDef =
+  MIL.mkSrcFunDef "printString" (monadTypeMil (getBuiltInFunctionType $ FunName "printString"))
+    (MIL.ReturnE pureSrcMonadMil $
+       MIL.mkSrcLambda (MIL.Var "s") (MIL.mkSimpleSrcType "String") $ MIL.ReturnE ioSrcMonadMil (MIL.LitE MIL.UnitLit))
+
+readStringMilDef :: MIL.SrcFunDef
+readStringMilDef =
+  MIL.mkSrcFunDef "readString" (monadTypeMil (getBuiltInFunctionType $ FunName "readString"))
+    (MIL.ReturnE ioSrcMonadMil (MIL.mkSrcConName "Empty_Str"))
+
+printIntMilDef :: MIL.SrcFunDef
+printIntMilDef =
+  MIL.mkSrcFunDef "printInt" (monadTypeMil (getBuiltInFunctionType $ FunName "printInt"))
+    (MIL.ReturnE pureSrcMonadMil $
+       MIL.mkSrcLambda (MIL.Var "i") (MIL.mkSimpleSrcType "Int") $ MIL.ReturnE ioSrcMonadMil (MIL.LitE MIL.UnitLit))
+
+readIntMilDef :: MIL.SrcFunDef
+readIntMilDef =
+  MIL.mkSrcFunDef "readInt" (monadTypeMil (getBuiltInFunctionType $ FunName "readInt"))
+    (MIL.ReturnE ioSrcMonadMil (MIL.LitE $ MIL.IntLit 1))
+
+printFloatMilDef :: MIL.SrcFunDef
+printFloatMilDef =
+  MIL.mkSrcFunDef "printFloat" (monadTypeMil (getBuiltInFunctionType $ FunName "printFloat"))
+    (MIL.ReturnE pureSrcMonadMil $
+       MIL.mkSrcLambda (MIL.Var "f") (MIL.mkSimpleSrcType "Float") $ MIL.ReturnE ioSrcMonadMil (MIL.LitE MIL.UnitLit))
+
+readFloatMilDef :: MIL.SrcFunDef
+readFloatMilDef =
+  MIL.mkSrcFunDef "readFloat" (monadTypeMil (getBuiltInFunctionType $ FunName "readFloat"))
+    (MIL.ReturnE ioSrcMonadMil (MIL.LitE $ MIL.FloatLit 1.0))
+
+evalStateMilDef :: MIL.SrcFunDef
+evalStateMilDef =
+  MIL.mkSrcFunDef "evalState" (monadTypeMil (getBuiltInFunctionType $ FunName "evalState"))
+    (MIL.ReturnE pureSrcMonadMil $
+       MIL.TypeLambdaE (MIL.TypeVar "_S") $
+         MIL.ReturnE pureSrcMonadMil $
+           MIL.TypeLambdaE (MIL.TypeVar "_A") $
+             MIL.ReturnE pureSrcMonadMil $
+               MIL.mkSrcLambda (MIL.Var "sa") (typeMil $ stateType (mkTypeVar "_S") (mkTypeVar "_A")) $
+                 MIL.ReturnE pureSrcMonadMil $
+                   MIL.mkSrcLambda (MIL.Var "s") (MIL.mkSimpleSrcType "_S") $
+                     MIL.ReturnE pureSrcMonadMil (MIL.LitE MIL.UnitLit))  -- TODO: value of type _A
+
+execStateMilDef :: MIL.SrcFunDef
+execStateMilDef =
+  MIL.mkSrcFunDef "execState" (monadTypeMil (getBuiltInFunctionType $ FunName "execState"))
+    (MIL.ReturnE pureSrcMonadMil (MIL.LitE $ MIL.FloatLit 1.0))
+
+getMilDef :: MIL.SrcFunDef
+getMilDef =
+  MIL.mkSrcFunDef "get" (monadTypeMil (getBuiltInFunctionType $ FunName "get"))
+    (MIL.ReturnE pureSrcMonadMil (MIL.LitE $ MIL.FloatLit 1.0))
+
+putMilDef :: MIL.SrcFunDef
+putMilDef =
+  MIL.mkSrcFunDef "put" (monadTypeMil (getBuiltInFunctionType $ FunName "put"))
+    (MIL.ReturnE pureSrcMonadMil (MIL.LitE $ MIL.FloatLit 1.0))
+
+modifyMilDef :: MIL.SrcFunDef
+modifyMilDef =
+  MIL.mkSrcFunDef "modify" (monadTypeMil (getBuiltInFunctionType $ FunName "modify"))
+    (MIL.ReturnE pureSrcMonadMil (MIL.LitE $ MIL.FloatLit 1.0))
 
