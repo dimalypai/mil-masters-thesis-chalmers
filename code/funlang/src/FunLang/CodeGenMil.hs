@@ -483,6 +483,6 @@ newMilVar = do
   modify (+1)
   return $ MIL.Var ("var_" ++ show i)
 
-debugPrint :: String -> String -> IO ()
+debugPrint :: String -> String -> CodeGenM ()
 debugPrint name value = liftIO $ putStrLn ((name ++ ": ") ++ value)
 
