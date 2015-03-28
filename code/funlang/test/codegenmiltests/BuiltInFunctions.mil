@@ -88,8 +88,11 @@ modify : (Error Unit ::: (NonTerm ::: State)) (forall S_ . (Error Unit ::: (NonT
       return [Error Unit ::: (NonTerm ::: State)]
         \(state_function : S_ -> (Error Unit ::: (NonTerm ::: State)) S_) ->
           \(state_ : Ref S_) ->
-            return [Error Unit ::: (NonTerm ::: State)]
-              unit;
+            let (state_value : S_) <-
+              lift [State => Error Unit ::: (NonTerm ::: State)] read_ref [S_] state_
+            in let (new_state_value : S_) <-
+                 state_function state_value
+               in lift [State => Error Unit ::: (NonTerm ::: State)] write_ref [S_] state_ state_value;
 
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   let (s : String) <-

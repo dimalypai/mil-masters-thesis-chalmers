@@ -713,5 +713,16 @@ modifyMilDef =
                                                                       (MIL.SrcTyApp pureSrcMonadMil (MIL.mkSimpleSrcType "S_"))) $
              MIL.mkSrcLambda (MIL.Var "state_") (MIL.SrcTyApp (MIL.mkSimpleSrcType "Ref")
                                                               (MIL.mkSimpleSrcType "S_")) $
-               MIL.ReturnE stateSrcMonadMil $ MIL.LitE MIL.UnitLit)  -- TODO: implement body
+               MIL.mkSrcLet (MIL.Var "state_value") (MIL.mkSimpleSrcType "S_")
+                 (MIL.LiftE
+                    (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "read_ref") (MIL.mkSimpleSrcType "S_"))
+                              (MIL.VarE $ MIL.Var "state_"))
+                    (MIL.mkSimpleSrcType "State") stateSrcMonadMil) $
+                 MIL.mkSrcLet (MIL.Var "new_state_value") (MIL.mkSimpleSrcType "S_")
+                   (MIL.AppE (MIL.VarE $ MIL.Var "state_function") (MIL.VarE $ MIL.Var "state_value")) $
+                   MIL.LiftE
+                     (MIL.AppE (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "write_ref") (MIL.mkSimpleSrcType "S_"))
+                                         (MIL.VarE $ MIL.Var "state_"))
+                               (MIL.VarE $ MIL.Var "state_value"))
+                     (MIL.mkSimpleSrcType "State") stateSrcMonadMil)
 
