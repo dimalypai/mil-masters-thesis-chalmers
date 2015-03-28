@@ -201,6 +201,12 @@ isMonadType :: Type -> Bool
 isMonadType (TyApp typeName _) = typeName `Set.member` monadTypes
 isMonadType                  _ = False
 
+-- | Check if it is State type constructor applied to two type arguments,
+-- nothing more is checked.
+isStateMonad :: Type -> Bool
+isStateMonad (TyApp (TypeName "State") [_, _]) = True
+isStateMonad _ = False
+
 isArithType :: Type -> Bool
 isArithType (TyApp typeName []) = typeName == TypeName "Int"
                                || typeName == TypeName "Float"

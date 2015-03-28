@@ -6,15 +6,15 @@ main = do
   printInt i;
   f : Float <- readFloat;
   printFloat f;
-  #printInt (execState [Int] [Unit] stateFun 1);
-  #return (evalState [Int] [Unit] stateFun 0);
+  printInt (execState [Int] [Unit] stateFun 1);
+  return (evalState [Int] [Unit] stateFun 0);
 end;;
 
-#stateFun : State Int Unit
-#stateFun = do
-#  i : Int <- get [Int];
-#  return i;  # Test return in the middle of do
-#  put [Int] i;
-#  modify [Int] (\(s : Int) -> s);
-#end;;
+stateFun : State Int Unit
+stateFun = do
+  i : Int <- get [Int];
+  return i;  # Test return in the middle of do
+  put [Int] i;
+  modify [Int] (\(s : Int) -> s);
+end;;
 
