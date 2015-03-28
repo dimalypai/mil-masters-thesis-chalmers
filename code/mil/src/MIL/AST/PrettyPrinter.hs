@@ -60,11 +60,11 @@ instance (PrettyVar v, Pretty mt, Pretty t) => Pretty (Expr v ct mt t) where
   prPrn (ConNameE conName _) = prPrn conName
   prPrn (LetE varBind e1 e2) =
     text "let" <+> prPrn varBind <+> text "<-" $+$
-      nest indLvl (prPrn e1 <+> text "in") $+$
-      nest (2 * indLvl) (prPrn e2)
+      nest indLvl (prPrn e1) $+$
+    text "in" <+> prPrn e2
   prPrn e@(ReturnE m e1) =
-    text "return" <+> brackets (prPrn m) <+>
-    prPrnParens (e1 `exprHasLowerPrec` e) e1
+    text "return" <+> brackets (prPrn m) $+$
+    nest indLvl (prPrnParens (e1 `exprHasLowerPrec` e) e1)
   prPrn e@(LiftE e1 tm1 tm2) =
     text "lift" <+> brackets (prPrn tm1 <+> text "=>" <+> prPrn tm2) <+>
     prPrnParens (e1 `exprHasLowerPrec` e) e1
