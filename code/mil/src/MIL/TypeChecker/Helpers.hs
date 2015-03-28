@@ -250,3 +250,16 @@ isMonadSuffixOf t1@(MTyMonadCons {}) t2@(MTyMonadCons _ mt2) =
 isMonadSuffixOf t1@(MTyMonad {}) (MTyMonadCons _ mt2) = t1 `isMonadSuffixOf` mt2
 isMonadSuffixOf (MTyMonadCons {}) (MTyMonad {}) = False
 
+-- | Takes two monadic types and returns the one, which has highest effect
+-- (most effects). Monad types must be compatible. See 'isCompatibleMonadWith'.
+--
+-- This operation is commutative.
+highestEffectMonadType :: MonadType -> MonadType -> MonadType
+highestEffectMonadType mt1@(MTyMonadCons {}) (MTyMonad {}) = mt1
+highestEffectMonadType (MTyMonad {}) mt2@(MTyMonadCons {}) = mt2
+highestEffectMonadType mt1@(MTyMonad {}) (MTyMonad {}) = mt1
+highestEffectMonadType mt1@(MTyMonadCons _ mt1') mt2@(MTyMonadCons _ mt2') =
+  if highestEffectMonadType mt1' mt2' == mt1'
+    then mt1
+    else mt2
+

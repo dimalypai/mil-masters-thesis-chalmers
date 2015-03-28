@@ -1,0 +1,4 @@
+main : (Error Unit ::: NonTerm) Unit =
+  let (x : Int) <- return [Error Unit ::: NonTerm] 1
+  in return [Error Unit ::: (NonTerm ::: State)] unit;
+

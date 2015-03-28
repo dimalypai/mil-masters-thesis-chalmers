@@ -266,6 +266,32 @@ spec = do
           t2 = TyApp (TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad NonTerm))) boolType
       in (t1 `isCompatibleWith` t2) `shouldBe` not (t2 `isCompatibleWith` t1)
 
+  describe "highestEffectMonadType" $ do
+    it "returns the one which has more effects in the stack (both cons)" $
+      let mt1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
+          mt2 = MTyMonadCons (SinMonad NonTerm) (MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State))
+      in highestEffectMonadType mt1 mt2 `shouldBe` mt2
+
+    it "returns the one which has more effects in the stack (one without cons)" $
+      let mt1 = MTyMonad (SinMonad NonTerm)
+          mt2 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad State)
+      in highestEffectMonadType mt1 mt2 `shouldBe` mt2
+
+    it "returns the first one if monad types are alpha-equivalent (both cons)" $
+      let mt1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
+          mt2 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
+      in highestEffectMonadType mt1 mt2 `shouldBe` mt1
+
+    it "returns the first one if monad types are alpha-equivalent (both without cons)" $
+      let mt1 = MTyMonad (SinMonadApp (SinMonad Error) (TyForAll (TypeVar "A") (mkTypeVar "A")))
+          mt2 = MTyMonad (SinMonadApp (SinMonad Error) (TyForAll (TypeVar "B") (mkTypeVar "B")))
+      in highestEffectMonadType mt1 mt2 `shouldBe` mt1
+
+    it "is commutative" $
+      let mt1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
+          mt2 = MTyMonadCons (SinMonad NonTerm) (MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State))
+      in highestEffectMonadType mt1 mt2 `shouldBe` highestEffectMonadType mt2 mt1
+
 -- * Infrastructure
 
 successCase :: Type -> IO ()

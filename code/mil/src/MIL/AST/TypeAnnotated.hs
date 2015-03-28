@@ -34,7 +34,11 @@ instance TypeAnnotated TyExpr where
     let TyForAll typeVar forallBodyType = getTypeOf appExpr
     in (typeVar, typeArg) `substTypeIn` forallBodyType
   getTypeOf (ConNameE _conName conType) = conType
-  getTypeOf (LetE _varBinder _bindExpr bodyExpr) = getTypeOf bodyExpr
+  getTypeOf (LetE _varBinder bindExpr bodyExpr) =
+    let bindMonadType = getMonadTypeFromApp (getTypeOf bindExpr)
+        bodyMonadType = getMonadTypeFromApp (getTypeOf bodyExpr)
+        bodyResultType = getMonadResultType (getTypeOf bodyExpr)
+    in TyApp (TyMonad $ highestEffectMonadType bindMonadType bodyMonadType) bodyResultType
   getTypeOf (ReturnE mt retExpr) = applyMonadType mt (getTypeOf retExpr)
   getTypeOf (LiftE expr _mt1 mt2) = applyMonadType mt2 (getMonadResultType $ getTypeOf expr)
   getTypeOf (CaseE _scrutExpr caseAlts) = getTypeOf (head caseAlts)

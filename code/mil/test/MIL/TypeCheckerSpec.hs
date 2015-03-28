@@ -180,6 +180,12 @@ spec =
       it "given a more effectful computation in lift" $
         failureCase "MoreEffectsLift"
 
+      it "given less effectful computation in let-bind than in let-body" $
+        failureCase "MoreEffectsLetBind"
+
+      it "given less effectful computation in let-body than in let-bind" $
+        failureCase "MoreEffectsLetBody"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.
