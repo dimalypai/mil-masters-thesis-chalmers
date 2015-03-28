@@ -2,6 +2,7 @@
 module MIL.AST.Helpers where
 
 import MIL.AST
+import MIL.AST.PrettyPrinter
 
 -- * Getters
 
@@ -31,7 +32,7 @@ getMonadTypeFromApp t = error $ "Type '" ++ show t ++ "' is not monadic"
 
 getSrcResultType :: SrcType -> SrcType
 getSrcResultType (SrcTyApp _ t2) = t2
-getSrcResultType t = error $ "Type '" ++ show t ++ "' is not an application"
+getSrcResultType t = error $ "Type '" ++ prPrint t ++ "' is not an application"
 
 -- * Predicates
 
