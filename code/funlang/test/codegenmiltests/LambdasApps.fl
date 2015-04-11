@@ -30,3 +30,11 @@ ioFun = \(f : IO Int) -> f;;
 stateFun : State Int Unit -> State Int Unit
 stateFun = \(f : State Int Unit) -> f;;
 
+stateFunWithParam : Int -> State Int Unit
+stateFunWithParam = \(i : Int) -> stateFunForParam;;
+
+stateFunForParam : State Int Unit
+stateFunForParam = do
+  return unit;
+end;;
+
