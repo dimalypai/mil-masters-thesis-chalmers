@@ -1,0 +1,7 @@
+def main : Unit =>
+  a : Mutable Int <- 0;
+  a <- 1;
+  a;
+  unit;
+end
+

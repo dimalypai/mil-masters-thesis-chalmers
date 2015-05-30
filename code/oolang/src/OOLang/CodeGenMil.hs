@@ -16,8 +16,9 @@ import Control.Monad.Reader
 import Control.Monad.State
 import Control.Applicative
 import qualified Data.Map as Map
--- 'second' is used just to transform components of a pair
-import Control.Arrow (second)
+-- Used just to transform components of a pair
+import Control.Arrow (first, second)
+import Data.Maybe (fromMaybe)
 
 import OOLang.AST
 import OOLang.AST.TypeAnnotated
@@ -37,13 +38,13 @@ import System.IO.Unsafe
 -- Takes a type checked program in OOLang and a type environment and produces a
 -- source program in MIL.
 codeGen :: TyProgram -> TypeEnv -> MIL.SrcProgram
-codeGen tyProgram typeEnv = unsafePerformIO $ runReaderT (evalStateTFrom 0 (runCG $ codeGenProgram tyProgram)) (typeEnv, Map.empty)
+codeGen tyProgram typeEnv = unsafePerformIO $ runReaderT (evalStateTFrom (0, Map.empty) (runCG $ codeGenProgram tyProgram)) (typeEnv, Map.empty)
 
 -- | Code generation monad. Uses 'StateT' for providing fresh variable names
 -- and 'Reader' for querying the type environment and class types.
 -- 'IO' may be used for debug printing.
-newtype CodeGenM a = CG { runCG :: StateT NameSupply (ReaderT (TypeEnv, ClassTypes) IO) a }
-  deriving (Monad, MonadState NameSupply, MonadReader (TypeEnv, ClassTypes), Functor, Applicative, MonadIO)
+newtype CodeGenM a = CG { runCG :: StateT (NameSupply, VarMap) (ReaderT (TypeEnv, ClassTypes) IO) a }
+  deriving (Monad, MonadState (NameSupply, VarMap), MonadReader (TypeEnv, ClassTypes), Functor, Applicative, MonadIO)
 
 -- | All field and method names accessible from a class and a MIL type of the
 -- object representation.
@@ -51,6 +52,10 @@ type ClassTypes = Map.Map ClassName ([Var], [FunName], MIL.SrcType)
 
 -- | A counter for generating unique variable names.
 type NameSupply = Int
+
+-- | A map to keep track of the last occurence of a variable
+-- and generate fresh names for new occurences. Used for assignments.
+type VarMap = Map.Map Var Int
 
 -- | Entry point into the type checking of the program.
 -- There is a list of MIL functions generated for each class definition.
@@ -119,16 +124,24 @@ codeGenFunDef (FunDef _ srcFunName tyFunType tyStmts) = do
 -- | List of statements is not empty.
 -- Takes a monad of the containing function.
 --
--- Declaration statement needs a special treatment to get variable scope right.
+-- Declaration and assignment statements need a special treatment to get
+-- variable scope right.
 codeGenStmts :: [TyStmt] -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenStmts [DeclS _ decl] funMonad =
   codeGenDecl decl funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
                             , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
+codeGenStmts [stmt@(AssignS {})] funMonad =
+  codeGenAssign stmt funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
+                              , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
 codeGenStmts [tyStmt] funMonad = codeGenStmt tyStmt funMonad
 
 codeGenStmts ((DeclS _ decl):tyStmts) funMonad = do
   milBodyExprWithType <- codeGenStmts tyStmts funMonad
   codeGenDecl decl funMonad milBodyExprWithType
+codeGenStmts (stmt@(AssignS {}):tyStmts) funMonad = do
+  preCodeGenAssign stmt
+  milBodyExprWithType <- codeGenStmts tyStmts funMonad
+  codeGenAssign stmt funMonad milBodyExprWithType
 codeGenStmts (tyStmt:tyStmts) funMonad = do
   (milBindExpr, milBindExprType) <- codeGenStmt tyStmt funMonad
   var <- newMilVar
@@ -142,11 +155,7 @@ codeGenStmt tyStmt funMonad =
   case tyStmt of
     ExprS _ tyExpr -> codeGenExpr tyExpr funMonad
 
-    -- TODO:
-    -- + "then" with state putting operations
-    -- + ANF/SSA construction
-    --AssignS _ srcAssignOp tyExprLeft tyExprRight _ -> undefined
-
+    AssignS {} -> error "codeGenStmt: AssignS should have a special treatment."
     DeclS {} -> error "codeGenStmt: DeclS should have a special treatment."
 
 -- | Code generation for declarations.
@@ -163,6 +172,36 @@ codeGenDecl (Decl _ tyVarBinder mTyInit _) funMonad (milBodyExpr, milBodyExprTyp
   return ( MIL.mkSrcLet (varMil var) (MIL.getSrcResultType milInitExprType) milInitExpr milBodyExpr
          , milBodyExprType)
 
+-- | Fresh name for new assigned variable occurence should be generated
+-- separately, because of the order in which code is generated for statements.
+preCodeGenAssign :: TyStmt -> CodeGenM ()
+preCodeGenAssign (AssignS _ srcAssignOp tyExprLeft _ _) = do
+  case getAssignOp srcAssignOp of
+    AssignMut -> preCodeGenAssignMut tyExprLeft
+
+-- | Code generation for assignments.
+-- It takes an expression which will become a body of the monadic bind, where a
+-- new occurence of the assigned variable will be in scope and a type of this
+-- expression.
+codeGenAssign :: TyStmt -> MIL.SrcType -> (MIL.SrcExpr, MIL.SrcType) -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
+codeGenAssign (AssignS _ srcAssignOp tyExprLeft tyExprRight _) funMonad milBodyExprWithType =
+  case getAssignOp srcAssignOp of
+    AssignMut -> codeGenAssignMut tyExprLeft tyExprRight funMonad milBodyExprWithType
+
+preCodeGenAssignMut :: TyExpr -> CodeGenM ()
+preCodeGenAssignMut tyExprLeft =
+  case tyExprLeft of
+    VarE _ _ var _ -> void $ nextVar var
+
+codeGenAssignMut :: TyExpr -> TyExpr -> MIL.SrcType -> (MIL.SrcExpr, MIL.SrcType) -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
+codeGenAssignMut tyExprLeft tyExprRight funMonad (milBodyExpr, milBodyExprType) =
+  case tyExprLeft of
+    VarE _ _ var _ -> do
+      milVar <- currentVar var
+      (milExprRight, milExprRightType) <- codeGenExpr tyExprRight funMonad
+      return ( MIL.mkSrcLet milVar (MIL.getSrcResultType milExprRightType) milExprRight milBodyExpr
+             , milBodyExprType)
+
 -- | Expression code generation.
 -- Takes a monad of the containing function.
 codeGenExpr :: TyExpr -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
@@ -174,18 +213,19 @@ codeGenExpr tyExpr funMonad =
 
     VarE _ varType var varPure -> do
       varCase <- getVarCase var varType
+      milVar <- currentVar var
       case varCase of
         LocalVarValueType ->
-          return ( MIL.ReturnE funMonad (MIL.VarE $ varMil var)
+          return ( MIL.ReturnE funMonad (MIL.VarE milVar)
                  , MIL.SrcTyApp funMonad (srcTypeMil varType))
         LocalVarFunType ->
-          return ( MIL.ReturnE funMonad (MIL.VarE $ varMil var)
+          return ( MIL.ReturnE funMonad (MIL.VarE milVar)
                  , MIL.SrcTyApp funMonad (srcTypeMil varType))
         GlobalFunWithParams ->
-          return ( MIL.ReturnE funMonad (MIL.VarE $ varMil var)
+          return ( MIL.ReturnE funMonad (MIL.VarE milVar)
                  , MIL.SrcTyApp funMonad (srcTypeMil varType))
         GlobalFunWithoutParams ->
-          return ( MIL.VarE $ varMil var
+          return ( MIL.VarE milVar
                  , funSrcTypeMil varType)
 
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 _ ->
@@ -380,9 +420,26 @@ varMil (Var varStr) = MIL.Var varStr
 
 newMilVar :: CodeGenM MIL.Var
 newMilVar = do
-  i <- get
-  modify (+1)
+  i <- fst <$> get
+  modify $ first (+1)
   return $ MIL.Var ("var_" ++ show i)
+
+-- TODO: reset between functions
+nextVar :: Var -> CodeGenM MIL.Var
+nextVar var@(Var varStr) = do
+  varMap <- snd <$> get
+  let i' = case Map.lookup var varMap of
+             Just i -> i + 1
+             Nothing -> 1
+  modify (second $ Map.insert var i')
+  return $ MIL.Var (varStr ++ "_" ++ show i')
+
+currentVar :: Var -> CodeGenM MIL.Var
+currentVar var@(Var varStr) = do
+  varMap <- snd <$> get
+  return $ case Map.lookup var varMap of
+             Just i -> MIL.Var (varStr ++ "_" ++ show i)
+             Nothing -> varMil var
 
 getTypeEnv :: (TypeEnv, ClassTypes) -> TypeEnv
 getTypeEnv = fst
