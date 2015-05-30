@@ -5,3 +5,15 @@ def main : Unit =>
   unit;
 end
 
+def f : Unit =>
+  a : Mutable Int <- 2;
+  a <- 3;
+end
+
+def g : Unit =>
+  a : Mutable Int <- 4;
+  a <- 5;
+  a;
+  unit;
+end
+

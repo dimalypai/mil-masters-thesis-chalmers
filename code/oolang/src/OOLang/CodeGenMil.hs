@@ -113,6 +113,7 @@ codeGenFunDef (FunDef _ srcFunName tyFunType tyStmts) = do
                    then pureSrcMonadMil
                    else impureSrcMonadMil
   let milFunSrcType = srcFunTypeMil tyFunType retType
+  resetVariablesMap
   (funBody, _) <- codeGenStmts tyStmts funMonad
   let funParams = getFunParams tyFunType
   let funBodyWithParams = foldr (\tyVarBinder e ->
@@ -130,7 +131,8 @@ codeGenStmts :: [TyStmt] -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenStmts [DeclS _ decl] funMonad =
   codeGenDecl decl funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
                             , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
-codeGenStmts [stmt@(AssignS {})] funMonad =
+codeGenStmts [stmt@(AssignS {})] funMonad = do
+  preCodeGenAssign stmt
   codeGenAssign stmt funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
                               , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
 codeGenStmts [tyStmt] funMonad = codeGenStmt tyStmt funMonad
@@ -424,7 +426,11 @@ newMilVar = do
   modify $ first (+1)
   return $ MIL.Var ("var_" ++ show i)
 
--- TODO: reset between functions
+-- | Since VarMap is used for local variables, it needs to be reset between
+-- functions.
+resetVariablesMap :: CodeGenM ()
+resetVariablesMap = modify (second $ const Map.empty)
+
 nextVar :: Var -> CodeGenM MIL.Var
 nextVar var@(Var varStr) = do
   varMap <- snd <$> get

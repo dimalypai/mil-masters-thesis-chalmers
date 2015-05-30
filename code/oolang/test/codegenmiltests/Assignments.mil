@@ -55,3 +55,26 @@ main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
         in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
              unit;
 
+f : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  let (a : Int) <-
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+      2
+  in let (a_1 : Int) <-
+       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+         3
+     in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+          unit;
+
+g : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  let (a : Int) <-
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+      4
+  in let (a_1 : Int) <-
+       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+         5
+     in let (var_1 : Int) <-
+          return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+            a_1
+        in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+             unit;
+
