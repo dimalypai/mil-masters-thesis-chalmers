@@ -110,7 +110,7 @@ builtInMilFunDefs =
 printStringMilDef :: MIL.SrcFunDef
 printStringMilDef =
   MIL.mkSrcFunDef "printString" (getMilBuiltInFunType $ MIL.FunName "printString")
-    (MIL.mkSrcLambda (MIL.Var "s") (MIL.mkSimpleSrcType "String") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
+    (MIL.mkSrcLambda (MIL.Var "s_") (MIL.mkSimpleSrcType "String") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
 
 readStringMilDef :: MIL.SrcFunDef
 readStringMilDef =
@@ -120,7 +120,7 @@ readStringMilDef =
 printBoolMilDef :: MIL.SrcFunDef
 printBoolMilDef =
   MIL.mkSrcFunDef "printBool" (getMilBuiltInFunType $ MIL.FunName "printBool")
-    (MIL.mkSrcLambda (MIL.Var "b") (MIL.mkSimpleSrcType "Bool") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
+    (MIL.mkSrcLambda (MIL.Var "b_") (MIL.mkSimpleSrcType "Bool") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
 
 readBoolMilDef :: MIL.SrcFunDef
 readBoolMilDef =
@@ -130,7 +130,7 @@ readBoolMilDef =
 printIntMilDef :: MIL.SrcFunDef
 printIntMilDef =
   MIL.mkSrcFunDef "printInt" (getMilBuiltInFunType $ MIL.FunName "printInt")
-    (MIL.mkSrcLambda (MIL.Var "i") (MIL.mkSimpleSrcType "Int") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
+    (MIL.mkSrcLambda (MIL.Var "i_") (MIL.mkSimpleSrcType "Int") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
 
 readIntMilDef :: MIL.SrcFunDef
 readIntMilDef =
@@ -140,7 +140,7 @@ readIntMilDef =
 printFloatMilDef :: MIL.SrcFunDef
 printFloatMilDef =
   MIL.mkSrcFunDef "printFloat" (getMilBuiltInFunType $ MIL.FunName "printFloat")
-    (MIL.mkSrcLambda (MIL.Var "f") (MIL.mkSimpleSrcType "Float") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
+    (MIL.mkSrcLambda (MIL.Var "f_") (MIL.mkSimpleSrcType "Float") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
 
 readFloatMilDef :: MIL.SrcFunDef
 readFloatMilDef =
