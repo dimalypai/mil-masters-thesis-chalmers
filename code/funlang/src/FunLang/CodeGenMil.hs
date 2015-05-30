@@ -438,6 +438,10 @@ monadSrcFunTypeMil t@(SrcTyCon srcTypeName) =
 monadSrcFunTypeMil st = MIL.applyMonadType pureMonadMil <$> monadSrcTypeMil st
 -}
 
+-- TODO: Try not to have a monad in front of State functions and use returns when needed instead.
+-- Should probably simplify code a bit.
+-- Think more about binds and when effects actually happen, again.
+
 -- | TODO
 srcTypeMil :: SrcType -> MIL.SrcType
 srcTypeMil (SrcTyCon srcTypeName) = MIL.SrcTyTypeCon (typeNameMil $ getTypeName srcTypeName)
