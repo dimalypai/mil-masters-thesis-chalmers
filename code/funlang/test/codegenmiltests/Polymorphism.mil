@@ -16,8 +16,13 @@ con_False : (State ::: (Error Unit ::: NonTerm)) Bool =
 printString : (State ::: (Error Unit ::: NonTerm)) (String -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) =
   return [State ::: (Error Unit ::: NonTerm)]
     \(s_ : String) ->
-      return [State ::: (Error Unit ::: (NonTerm ::: IO))]
-        unit;
+      case s_ of
+        | Empty_Str => return [State ::: (Error Unit ::: (NonTerm ::: IO))] unit
+        | Cons_Str (c_ : Char) (cs_ : String) =>
+            let (unit_0 : Unit) <- lift [IO => State ::: (Error Unit ::: (NonTerm ::: IO))] print_char c_
+            in let (printString_ : String -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) <- printString
+               in printString_ cs_
+      end;
 
 readString : (State ::: (Error Unit ::: (NonTerm ::: IO))) String =
   return [State ::: (Error Unit ::: (NonTerm ::: IO))]
