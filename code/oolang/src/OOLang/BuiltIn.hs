@@ -47,21 +47,6 @@ impureSrcMonadMilWithStateBase =
     MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "NonTerm")
       (MIL.mkSimpleSrcType "State")
 
-pureMonadMil :: MIL.MonadType
-pureMonadMil =
-  MIL.MTyMonadCons (MIL.SinMonadApp (MIL.SinMonad MIL.Error) exceptionType) $
-    MIL.MTyMonad (MIL.SinMonad MIL.NonTerm)
-
-impureMonadMil :: MIL.MonadType
-impureMonadMil =
-  MIL.MTyMonadCons (MIL.SinMonadApp (MIL.SinMonad MIL.Error) exceptionType) $
-    MIL.MTyMonadCons (MIL.SinMonad MIL.NonTerm) $
-      MIL.MTyMonadCons (MIL.SinMonad MIL.State) $
-        MIL.MTyMonad (MIL.SinMonad MIL.IO)
-
-exceptionType :: MIL.Type
-exceptionType = MIL.unitType
-
 exceptionSrcType :: MIL.SrcType
 exceptionSrcType = MIL.mkSimpleSrcType "Unit"
 
