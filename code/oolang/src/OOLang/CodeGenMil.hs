@@ -552,8 +552,19 @@ builtInMilFunDefs =
 
 printStringMilDef :: MIL.SrcFunDef
 printStringMilDef =
-  MIL.mkSrcFunDef "printString" (getMilBuiltInFunType $ MIL.FunName "printString")
-    (MIL.mkSrcLambda (MIL.Var "s_") (MIL.mkSimpleSrcType "String") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
+  MIL.mkSrcFunDef "printString" (getMilBuiltInFunType $ MIL.FunName "printString") $
+    MIL.mkSrcLambda (MIL.Var "s_") (MIL.mkSimpleSrcType "String") $
+      MIL.CaseE (MIL.mkSrcVar "s_")
+        [ MIL.CaseAlt (MIL.ConP (MIL.ConName "Empty_Str") [],
+            MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
+        , MIL.CaseAlt (MIL.ConP (MIL.ConName "Cons_Str")
+              [ MIL.VarBinder (MIL.Var "c_", MIL.mkSimpleSrcType "Char")
+              , MIL.VarBinder (MIL.Var "cs_", MIL.mkSimpleSrcType "String")],
+            MIL.mkSrcLet (MIL.Var "unit_0") (MIL.mkSimpleSrcType "Unit")
+              (MIL.LiftE (MIL.AppE (MIL.mkSrcVar "print_char") (MIL.mkSrcVar "c_"))
+                 (MIL.mkSimpleSrcType "IO")
+                 impureSrcMonadMil)
+              (MIL.AppE (MIL.mkSrcVar "printString") (MIL.mkSrcVar "cs_")))]
 
 readStringMilDef :: MIL.SrcFunDef
 readStringMilDef =
