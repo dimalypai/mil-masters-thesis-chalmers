@@ -10,6 +10,9 @@ mkSrcFunDef funNameStr funType bodyExpr =
 mkCharLit :: Char -> Expr v ct mt t
 mkCharLit = LitE . CharLit
 
+mkSrcVar :: String -> SrcExpr
+mkSrcVar = VarE . Var
+
 mkSrcLambda :: Var -> SrcType -> SrcExpr -> SrcExpr
 mkSrcLambda var varType bodyExpr =
   LambdaE (VarBinder (var, varType)) bodyExpr
