@@ -180,6 +180,7 @@ preCodeGenAssign :: TyStmt -> CodeGenM ()
 preCodeGenAssign (AssignS _ srcAssignOp tyExprLeft _ _) = do
   case getAssignOp srcAssignOp of
     AssignMut -> preCodeGenAssignMut tyExprLeft
+    _ -> return ()
 
 -- | Code generation for assignments.
 -- It takes an expression which will become a body of the monadic bind, where a
@@ -189,6 +190,7 @@ codeGenAssign :: TyStmt -> MIL.SrcType -> (MIL.SrcExpr, MIL.SrcType) -> CodeGenM
 codeGenAssign (AssignS _ srcAssignOp tyExprLeft tyExprRight _) funMonad milBodyExprWithType =
   case getAssignOp srcAssignOp of
     AssignMut -> codeGenAssignMut tyExprLeft tyExprRight funMonad milBodyExprWithType
+    AssignRef -> codeGenAssignRef tyExprLeft tyExprRight funMonad milBodyExprWithType
 
 preCodeGenAssignMut :: TyExpr -> CodeGenM ()
 preCodeGenAssignMut tyExprLeft =
@@ -203,6 +205,23 @@ codeGenAssignMut tyExprLeft tyExprRight funMonad (milBodyExpr, milBodyExprType) 
       (milExprRight, milExprRightType) <- codeGenExpr tyExprRight funMonad
       return ( MIL.mkSrcLet milVar (MIL.getSrcResultType milExprRightType) milExprRight milBodyExpr
              , milBodyExprType)
+
+codeGenAssignRef :: TyExpr -> TyExpr -> MIL.SrcType -> (MIL.SrcExpr, MIL.SrcType) -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
+codeGenAssignRef tyExprLeft tyExprRight funMonad (milBodyExpr, milBodyExprType) =
+  case tyExprLeft of
+    VarE _ _ var _ -> do
+      (milExprRight, milExprRightType) <- codeGenExpr tyExprRight funMonad
+      exprRightVar <- newMilVar
+      stmtResultVar <- newMilVar
+      return ( MIL.mkSrcLet stmtResultVar (MIL.mkSimpleSrcType "Unit")
+                 (MIL.mkSrcLet exprRightVar (MIL.getSrcResultType milExprRightType) milExprRight $
+                    MIL.LiftE (MIL.AppE (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "write_ref") (MIL.getSrcResultType milExprRightType))
+                                                  (MIL.VarE $ varMil var))
+                                        (MIL.VarE exprRightVar))
+                      (MIL.mkSimpleSrcType "State")
+                      impureSrcMonadMilWithStateBase)
+                 milBodyExpr
+             , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
 
 -- | Expression code generation.
 -- Takes a monad of the containing function.
