@@ -7,42 +7,102 @@ type String
   | Cons_Str Char String;
 
 printString : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
-  \(s_ : String) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+  \(s_ : String) ->
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+      unit;
 
 readString : (Error Unit ::: (NonTerm ::: (State ::: IO))) String =
-  return [Error Unit ::: (NonTerm ::: (State ::: IO))] Empty_Str;
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    Empty_Str;
 
 printBool : Bool -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
-  \(b_ : Bool) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+  \(b_ : Bool) ->
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+      unit;
 
 readBool : (Error Unit ::: (NonTerm ::: (State ::: IO))) Bool =
-  return [Error Unit ::: (NonTerm ::: (State ::: IO))] True;
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    True;
 
 printInt : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
-  \(i_ : Int) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+  \(i_ : Int) ->
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+      unit;
 
 readInt : (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
-  return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1;
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    1;
 
 printFloat : Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
-  \(f_ : Float) -> return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+  \(f_ : Float) ->
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+      unit;
 
 readFloat : (Error Unit ::: (NonTerm ::: (State ::: IO))) Float =
-  return [Error Unit ::: (NonTerm ::: (State ::: IO))] 1.0;
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    1.0;
 
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
-  let (a1 : Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit in
-  let (b : Bool) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] True in
-  let (a2 : Unit) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] a1 in
-  let (c : Maybe Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] Nothing [Int] in
-  let (d1 : Maybe Int) <-
-    let (var_0 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 2 in
-    return [Error Unit ::: (NonTerm ::: (State ::: IO))] Just [Int] var_0 in
-  let (d2 : Maybe Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] d1 in
-  let (e1 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] 3 in
-  let (e2 : Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] e1 in
-  let (f : Maybe Bool) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] Nothing [Bool] in
-  let (g : Maybe Int) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] Nothing [Int] in
-  let (h : Maybe (Maybe Bool)) <- return [Error Unit ::: (NonTerm ::: (State ::: IO))] Nothing [Maybe Bool] in
-  return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit;
+  let (a1 : Unit) <-
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+      unit
+  in let (b : Bool) <-
+       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+         True
+     in let (a2 : Unit) <-
+          return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+            a1
+        in let (c : Maybe Int) <-
+             return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+               Nothing [Int]
+           in let (d1 : Maybe Int) <-
+                let (var_4 : Int) <-
+                  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                    2
+                in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                     Just [Int] var_4
+              in let (d2 : Maybe Int) <-
+                   return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                     d1
+                 in let (e1 : Int) <-
+                      return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                        3
+                    in let (e2 : Int) <-
+                         return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                           e1
+                       in let (f : Maybe Bool) <-
+                            return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                              Nothing [Bool]
+                          in let (g : Maybe Int) <-
+                               return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                 Nothing [Int]
+                             in let (h : Maybe (Maybe Bool)) <-
+                                  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                    Nothing [Maybe Bool]
+                                in let (i : Ref (Maybe Int)) <-
+                                     let (var_3 : Maybe Int) <-
+                                       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                         Nothing [Int]
+                                     in lift [State => Error Unit ::: (NonTerm ::: State)] new_ref [Maybe Int] var_3
+                                   in let (j1 : Ref (Maybe Int)) <-
+                                        let (var_2 : Maybe Int) <-
+                                          let (var_1 : Int) <-
+                                            return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                              1
+                                          in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                               Just [Int] var_1
+                                        in lift [State => Error Unit ::: (NonTerm ::: State)] new_ref [Maybe Int] var_2
+                                      in let (j2 : Ref (Maybe Int)) <-
+                                           return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                             j1
+                                         in let (k1 : Ref Int) <-
+                                              let (var_0 : Int) <-
+                                                return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                  2
+                                              in lift [State => Error Unit ::: (NonTerm ::: State)] new_ref [Int] var_0
+                                            in let (k2 : Ref Int) <-
+                                                 return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                   k1
+                                               in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                    unit;
 

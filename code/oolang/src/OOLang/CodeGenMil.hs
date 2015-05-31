@@ -230,6 +230,18 @@ codeGenExpr tyExpr funMonad =
           return ( MIL.VarE milVar
                  , funSrcTypeMil varType)
 
+    NewRefE _ _ tyRefUnderExpr -> do
+      (milRefUnderExpr, milRefUnderExprType) <- codeGenExpr tyRefUnderExpr funMonad
+      refUnderExprVar <- newMilVar
+      let milRefUnderType = MIL.getSrcResultType milRefUnderExprType
+      let milRefType = MIL.SrcTyApp (MIL.mkSimpleSrcType "Ref") milRefUnderType
+      return ( MIL.mkSrcLet refUnderExprVar milRefUnderType milRefUnderExpr $
+                 (MIL.LiftE (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "new_ref") milRefUnderType)
+                                      (MIL.VarE refUnderExprVar))
+                    (MIL.mkSimpleSrcType "State")
+                    impureSrcMonadMilWithStateBase)
+             , MIL.SrcTyApp funMonad milRefType)
+
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 _ ->
       codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
 
@@ -385,6 +397,7 @@ srcTypeMil (TyArrow t1 t2) = MIL.SrcTyArrow (srcTypeMil t1) (funSrcTypeMil t2)
 srcTypeMil (TyPure t)      = MIL.SrcTyApp pureSrcMonadMil (srcTypeMil t)
 srcTypeMil (TyMaybe t)     = MIL.SrcTyApp (MIL.mkSimpleSrcType "Maybe") (srcTypeMil t)
 srcTypeMil (TyMutable t)   = srcTypeMil t
+srcTypeMil (TyRef t)       = MIL.SrcTyApp (MIL.mkSimpleSrcType "Ref") (srcTypeMil t)
 
 -- | See Note [Type transformation].
 funSrcTypeMil :: Type -> MIL.SrcType

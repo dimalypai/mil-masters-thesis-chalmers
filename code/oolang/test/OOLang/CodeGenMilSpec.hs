@@ -38,7 +38,6 @@ spec =
     it "generates MIL code for different types of variable occurences" $
       testCase "Variables"
 
-    -- TODO: test Refs
     it "generates MIL code for declaration statements" $
       testCase "DeclarationStatements"
 

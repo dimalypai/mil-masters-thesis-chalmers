@@ -10,5 +10,10 @@ def main : Unit =>
   f : Mutable (Maybe Bool);
   g : Mutable (Maybe Int) <- nothing [Maybe Int];
   h : Mutable (Maybe (Maybe Bool));
+  i : Ref (Maybe Int);
+  j1 : Ref (Maybe Int) = ref (just 1);
+  j2 : Ref (Maybe Int) = j1;
+  k1 : Ref Int = ref 2;
+  k2 : Ref Int = k1;
 end
 
