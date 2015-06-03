@@ -512,8 +512,10 @@ builtInMilFunDefs =
   [ conTrue
   , conFalse
   , printStringMilDef
-  , readStringMilDef
-  , printIntMilDef
+  ]
+  ++ readStringMilDef
+  ++
+  [ printIntMilDef
   , readIntMilDef
   , printFloatMilDef
   , readFloatMilDef
@@ -553,10 +555,34 @@ printStringMilDef =
                     (MIL.mkSrcVar "printString") $
                     MIL.AppE (MIL.mkSrcVar "printString_") (MIL.mkSrcVar "cs_")))])
 
-readStringMilDef :: MIL.SrcFunDef
+readStringMilDef :: [MIL.SrcFunDef]
 readStringMilDef =
-  MIL.mkSrcFunDef "readString" (monadTypeMil (getBuiltInFunctionType $ FunName "readString"))
-    (MIL.ReturnE ioSrcMonadMil (MIL.mkSrcConName "Empty_Str"))
+  [ MIL.mkSrcFunDef "readString" (monadTypeMil (getBuiltInFunctionType $ FunName "readString")) $
+      MIL.AppE (MIL.mkSrcVar "readString_") (MIL.mkSrcConName "Empty_Str")
+  , MIL.mkSrcFunDef "readString_" (MIL.SrcTyArrow (MIL.mkSimpleSrcType "String")
+                                                  (MIL.SrcTyApp ioSrcMonadMil (MIL.mkSimpleSrcType "String"))) $
+      MIL.mkSrcLambda (MIL.Var "acc_") (MIL.mkSimpleSrcType "String") $
+        MIL.mkSrcLet (MIL.Var "c_") (MIL.mkSimpleSrcType "Char")
+          (MIL.LiftE (MIL.mkSrcVar "read_char") (MIL.mkSimpleSrcType "IO") ioSrcMonadMil)
+          (MIL.CaseE (MIL.mkSrcVar "c_")
+             [ MIL.CaseAlt (MIL.LitP $ MIL.CharLit ' ',
+                 MIL.ReturnE ioSrcMonadMil (MIL.AppE (MIL.AppE (MIL.mkSrcVar "reverseString_") (MIL.mkSrcVar "acc_")) (MIL.mkSrcConName "Empty_Str")))
+             , MIL.CaseAlt (MIL.DefaultP,
+                 MIL.AppE (MIL.mkSrcVar "readString_") (MIL.AppE (MIL.AppE (MIL.mkSrcConName "Cons_Str") (MIL.mkSrcVar "c_")) (MIL.mkSrcVar "acc_")))])
+  , MIL.mkSrcFunDef "reverseString_" (MIL.SrcTyArrow (MIL.mkSimpleSrcType "String")
+                                                     (MIL.SrcTyArrow (MIL.mkSimpleSrcType "String") (MIL.mkSimpleSrcType "String"))) $
+      MIL.mkSrcLambda (MIL.Var "s_") (MIL.mkSimpleSrcType "String") $
+        MIL.mkSrcLambda (MIL.Var "acc_") (MIL.mkSimpleSrcType "String") $
+          MIL.CaseE (MIL.mkSrcVar "s_")
+            [ MIL.CaseAlt (MIL.ConP (MIL.ConName "Empty_Str") [],
+                MIL.mkSrcVar "acc_")
+            , MIL.CaseAlt (MIL.ConP (MIL.ConName "Cons_Str")
+                  [ MIL.VarBinder (MIL.Var "c_", MIL.mkSimpleSrcType "Char")
+                  , MIL.VarBinder (MIL.Var "cs_", MIL.mkSimpleSrcType "String")],
+                MIL.AppE (MIL.AppE (MIL.mkSrcVar "reverseString_") (MIL.mkSrcVar "cs_"))
+                         (MIL.AppE (MIL.AppE (MIL.mkSrcConName "Cons_Str") (MIL.mkSrcVar "c_")) (MIL.mkSrcVar "acc_")))
+            ]
+  ]
 
 printIntMilDef :: MIL.SrcFunDef
 printIntMilDef =

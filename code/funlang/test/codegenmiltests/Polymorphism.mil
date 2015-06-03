@@ -25,8 +25,24 @@ printString : (State ::: (Error Unit ::: NonTerm)) (String -> (State ::: (Error 
       end;
 
 readString : (State ::: (Error Unit ::: (NonTerm ::: IO))) String =
-  return [State ::: (Error Unit ::: (NonTerm ::: IO))]
-    Empty_Str;
+  readString_ Empty_Str;
+
+readString_ : String -> (State ::: (Error Unit ::: (NonTerm ::: IO))) String =
+  \(acc_ : String) ->
+    let (c_ : Char) <- lift [IO => State ::: (Error Unit ::: (NonTerm ::: IO))] read_char
+    in case c_ of
+         | ' ' => return [State ::: (Error Unit ::: (NonTerm ::: IO))] reverseString_ acc_ Empty_Str
+         | _ => readString_ (Cons_Str c_ acc_)
+       end;
+
+reverseString_ : String -> String -> String =
+  \(s_ : String) ->
+    \(acc_ : String) ->
+      case s_ of
+        | Empty_Str => acc_
+        | Cons_Str (c_ : Char) (cs_ : String) =>
+            reverseString_ cs_ (Cons_Str c_ acc_)
+      end;
 
 printInt : (State ::: (Error Unit ::: NonTerm)) (Int -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) =
   return [State ::: (Error Unit ::: NonTerm)]
