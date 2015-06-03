@@ -541,8 +541,10 @@ getMilBuiltInFunType milFunName = fromJust $ lookup milFunName builtInMilFunType
 builtInMilFunDefs :: [MIL.SrcFunDef]
 builtInMilFunDefs =
   [ printStringMilDef
-  , readStringMilDef
-  , printBoolMilDef
+  ]
+  ++ readStringMilDef
+  ++
+  [ printBoolMilDef
   , readBoolMilDef
   , printIntMilDef
   , readIntMilDef
@@ -566,20 +568,77 @@ printStringMilDef =
                  impureSrcMonadMil)
               (MIL.AppE (MIL.mkSrcVar "printString") (MIL.mkSrcVar "cs_")))]
 
-readStringMilDef :: MIL.SrcFunDef
+readStringMilDef :: [MIL.SrcFunDef]
 readStringMilDef =
-  MIL.mkSrcFunDef "readString" (getMilBuiltInFunType $ MIL.FunName "readString")
-    (MIL.ReturnE impureSrcMonadMil (MIL.mkSrcConName "Empty_Str"))
+  [ MIL.mkSrcFunDef "readString" (getMilBuiltInFunType $ MIL.FunName "readString") $
+      MIL.AppE (MIL.mkSrcVar "readString_") (MIL.mkSrcConName "Empty_Str")
+  , MIL.mkSrcFunDef "readString_" (MIL.SrcTyArrow (MIL.mkSimpleSrcType "String")
+                                                  (MIL.SrcTyApp impureSrcMonadMil (MIL.mkSimpleSrcType "String"))) $
+      MIL.mkSrcLambda (MIL.Var "acc_") (MIL.mkSimpleSrcType "String") $
+        MIL.mkSrcLet (MIL.Var "c_") (MIL.mkSimpleSrcType "Char")
+          (MIL.LiftE (MIL.mkSrcVar "read_char") (MIL.mkSimpleSrcType "IO") impureSrcMonadMil)
+          (MIL.CaseE (MIL.mkSrcVar "c_")
+             [ MIL.CaseAlt (MIL.LitP $ MIL.CharLit ' ',
+                 MIL.ReturnE impureSrcMonadMil (MIL.AppE (MIL.AppE (MIL.mkSrcVar "reverseString_") (MIL.mkSrcVar "acc_")) (MIL.mkSrcConName "Empty_Str")))
+             , MIL.CaseAlt (MIL.DefaultP,
+                 MIL.AppE (MIL.mkSrcVar "readString_") (MIL.AppE (MIL.AppE (MIL.mkSrcConName "Cons_Str") (MIL.mkSrcVar "c_")) (MIL.mkSrcVar "acc_")))])
+  , MIL.mkSrcFunDef "reverseString_" (MIL.SrcTyArrow (MIL.mkSimpleSrcType "String")
+                                                     (MIL.SrcTyArrow (MIL.mkSimpleSrcType "String") (MIL.mkSimpleSrcType "String"))) $
+      MIL.mkSrcLambda (MIL.Var "s_") (MIL.mkSimpleSrcType "String") $
+        MIL.mkSrcLambda (MIL.Var "acc_") (MIL.mkSimpleSrcType "String") $
+          MIL.CaseE (MIL.mkSrcVar "s_")
+            [ MIL.CaseAlt (MIL.ConP (MIL.ConName "Empty_Str") [],
+                MIL.mkSrcVar "acc_")
+            , MIL.CaseAlt (MIL.ConP (MIL.ConName "Cons_Str")
+                  [ MIL.VarBinder (MIL.Var "c_", MIL.mkSimpleSrcType "Char")
+                  , MIL.VarBinder (MIL.Var "cs_", MIL.mkSimpleSrcType "String")],
+                MIL.AppE (MIL.AppE (MIL.mkSrcVar "reverseString_") (MIL.mkSrcVar "cs_"))
+                         (MIL.AppE (MIL.AppE (MIL.mkSrcConName "Cons_Str") (MIL.mkSrcVar "c_")) (MIL.mkSrcVar "acc_")))
+            ]
+  ]
 
 printBoolMilDef :: MIL.SrcFunDef
 printBoolMilDef =
-  MIL.mkSrcFunDef "printBool" (getMilBuiltInFunType $ MIL.FunName "printBool")
-    (MIL.mkSrcLambda (MIL.Var "b_") (MIL.mkSimpleSrcType "Bool") $ MIL.ReturnE impureSrcMonadMil (MIL.LitE MIL.UnitLit))
+  MIL.mkSrcFunDef "printBool" (getMilBuiltInFunType $ MIL.FunName "printBool") $
+    MIL.mkSrcLambda (MIL.Var "b_") (MIL.mkSimpleSrcType "Bool") $
+      MIL.CaseE (MIL.mkSrcVar "b_")
+        [ MIL.CaseAlt (MIL.ConP (MIL.ConName "True") [],
+            MIL.AppE (MIL.mkSrcVar "printString") (stringMil "true"))
+        , MIL.CaseAlt (MIL.ConP (MIL.ConName "False") [],
+            MIL.AppE (MIL.mkSrcVar "printString") (stringMil "false"))
+        ]
 
 readBoolMilDef :: MIL.SrcFunDef
 readBoolMilDef =
-  MIL.mkSrcFunDef "readBool" (getMilBuiltInFunType $ MIL.FunName "readBool")
-    (MIL.ReturnE impureSrcMonadMil (MIL.mkSrcConName "True"))
+  MIL.mkSrcFunDef "readBool" (getMilBuiltInFunType $ MIL.FunName "readBool") $
+    MIL.mkSrcLet (MIL.Var "c_1") (MIL.mkSimpleSrcType "Char")
+      (MIL.LiftE (MIL.mkSrcVar "read_char") (MIL.mkSimpleSrcType "IO") impureSrcMonadMil)
+      (MIL.CaseE (MIL.mkSrcVar "c_1")
+         [ readBoolCaseAlt "true" "True" 2
+         , readBoolCaseAlt "false" "False" 2
+         , readBoolErrorCaseAlt
+         ])
+
+readBoolCaseAlt :: String -> String -> Int -> MIL.SrcCaseAlt
+readBoolCaseAlt "" conNameStr _ =
+  MIL.CaseAlt (MIL.LitP $ MIL.CharLit ' ',
+    MIL.ReturnE impureSrcMonadMil (MIL.mkSrcConName conNameStr))
+readBoolCaseAlt (c:cs) conNameStr i =
+  MIL.CaseAlt (MIL.LitP $ MIL.CharLit c,
+    MIL.mkSrcLet (MIL.Var $ "c_" ++ show i) (MIL.mkSimpleSrcType "Char")
+      (MIL.LiftE (MIL.mkSrcVar "read_char") (MIL.mkSimpleSrcType "IO") impureSrcMonadMil)
+      (MIL.CaseE (MIL.mkSrcVar $ "c_" ++ show i)
+         [ readBoolCaseAlt cs conNameStr (i+1)
+         , readBoolErrorCaseAlt
+         ]))
+
+readBoolErrorCaseAlt :: MIL.SrcCaseAlt
+readBoolErrorCaseAlt =
+  MIL.CaseAlt (MIL.DefaultP,
+    MIL.mkSrcLet (MIL.Var "errRes_") (MIL.mkSimpleSrcType "Bool")
+      (MIL.AppE (MIL.TypeAppE (MIL.TypeAppE (MIL.mkSrcVar "throw_error") (MIL.mkSimpleSrcType "Unit")) (MIL.mkSimpleSrcType "Bool"))
+                (MIL.LitE MIL.UnitLit))
+      (MIL.ReturnE impureSrcMonadMil (MIL.mkSrcVar "errRes_")))
 
 printIntMilDef :: MIL.SrcFunDef
 printIntMilDef =
@@ -601,66 +660,10 @@ readFloatMilDef =
   MIL.mkSrcFunDef "readFloat" (getMilBuiltInFunType $ MIL.FunName "readFloat")
     (MIL.ReturnE impureSrcMonadMil (MIL.LitE $ MIL.FloatLit 1.0))
 
-{-
-  [ MIL.FunDef (MIL.FunName "printString")
-      (getMilBuiltInFunType (MIL.FunName "printString"))
-      (MIL.LambdaE (MIL.VarBinder (MIL.Var "str", stringTypeMil))
-         (MIL.CaseE (MIL.VarE $ MIL.VarBinder (MIL.Var "str", stringTypeMil))
-            [ MIL.CaseAlt (MIL.ConP (MIL.ConName "Empty_Str") [],
-                MIL.ReturnE (MIL.MTyMonad MIL.IO) (MIL.LitE MIL.UnitLit))
-            ]))
-
-  , MIL.FunDef (MIL.FunName "printBool")
-      (getMilBuiltInFunType (MIL.FunName "printBool"))
-      (MIL.LambdaE (MIL.VarBinder (MIL.Var "b", MIL.boolType))
-         (MIL.CaseE (MIL.VarE $ MIL.VarBinder (MIL.Var "b", MIL.boolType))
-            [ MIL.CaseAlt (MIL.ConP (MIL.ConName "True") [],
-                MIL.AppE (MIL.VarE $ MIL.VarBinder ( MIL.Var "printString"
-                                                   , getMilBuiltInFunType (MIL.FunName "printString")))
-                         (stringMil "true"))
-            , MIL.CaseAlt (MIL.ConP (MIL.ConName "False") [],
-                MIL.AppE (MIL.VarE $ MIL.VarBinder ( MIL.Var "printString"
-                                                   , getMilBuiltInFunType (MIL.FunName "printString")))
-                         (stringMil "false"))]))
-
-  , MIL.FunDef (MIL.FunName "readBool")
-      (getMilBuiltInFunType (MIL.FunName "readBool"))
-      (MIL.LetE (MIL.VarBinder (MIL.Var "c_1", MIL.charType))
-         (MIL.VarE $ MIL.VarBinder (MIL.Var "read_char", MIL.getBuiltInFunctionType (MIL.FunName "read_char")))
-         (MIL.CaseE (MIL.VarE $ MIL.VarBinder (MIL.Var "c_1", MIL.charType))
-            [ readBoolCaseAlt "true" (MIL.ConName "True") 2
-            , readBoolCaseAlt "false" (MIL.ConName "False") 2
-            , readBoolErrorCaseAlt]))
-  ]
-
-readBoolCaseAlt :: String -> MIL.ConName -> Int -> MIL.CaseAlt
-readBoolCaseAlt "" conName _ =
-  MIL.CaseAlt ( MIL.LitP $ MIL.CharLit ' '
-              , MIL.ReturnE impureMonadMil (MIL.ConNameE conName MIL.boolType))
-readBoolCaseAlt (c:cs) conName i =
-  MIL.CaseAlt ( MIL.LitP $ MIL.CharLit c
-              , MIL.LetE (MIL.VarBinder (MIL.Var ("c_" ++ show i), MIL.charType))
-                  (MIL.VarE $ MIL.VarBinder (MIL.Var "read_char", MIL.getBuiltInFunctionType (MIL.FunName "read_char")))
-                  (MIL.CaseE (MIL.VarE $ MIL.VarBinder (MIL.Var ("c_" ++ show i), MIL.charType))
-                     [ readBoolCaseAlt cs conName (i+1)
-                     , readBoolErrorCaseAlt]))
-
-readBoolErrorCaseAlt :: MIL.CaseAlt
-readBoolErrorCaseAlt =
-  MIL.CaseAlt (MIL.DefaultP,
-                 MIL.AppE
-                   (MIL.TypeAppE
-                      (MIL.TypeAppE
-                         (MIL.VarE $ MIL.VarBinder ( MIL.Var "throw_error"
-                                                   , MIL.getBuiltInFunctionType (MIL.FunName "throw_error")))
-                         MIL.unitType)
-                      MIL.boolType)
-                   (MIL.LitE MIL.UnitLit))
--}
-
 stringMil :: String -> MIL.SrcExpr
 stringMil "" = MIL.mkSrcConName "Empty_Str"
 stringMil (c:cs) =
   MIL.AppE (MIL.AppE (MIL.mkSrcConName "Cons_Str")
                      (MIL.mkCharLit c))
            (stringMil cs)
+
