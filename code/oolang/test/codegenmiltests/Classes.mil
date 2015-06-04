@@ -1,99 +1,156 @@
-type Bool
-  = True
-  | False;
-
 type Maybe A
   = Nothing
   | Just A;
 
-alias Impure_M = Error Unit ::: State ::: NonTerm ::: IO ::: Id;
+type String
+  = Empty_Str
+  | Cons_Str Char String;
 
-type Super_Data = Super_Data {Int};
 
-type Super = Super {Unit -> Unit -> Id Int, Unit -> Id Bool, Super_Data};
 
-type Child_Data = Child_Data {Int, Float};
-
-type Child = Child {Unit -> Unit -> Id Int, Unit -> Id Bool, Unit -> Id Float, Child_Data};
-
-new_Super_Data : Super_Data =
-  Super_Data {1};
-
-class_Super : Super_Data -> Id Super =
-  \(self_data : Super_Data) ->
-    case self_data of
-      | Super_Data self_fields =>
-          case self_fields of
-            | {self_superField} =>
-                let rec (self : Super) =
-                  case self of
-                    | Super self_methods =>
-                        case self_methods of
-                          | {self_method, self_superMethod, var_0} =>
-                              Super {\(var_0 : Unit) ->
-                                       \(u : Unit) ->
-                                         return [Id] self_superField, \(var_1 : Unit) ->
-                                                                        return [Id] True, self_data} in return [Id] self
-                        end
-                  end
-          end
+printString : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(s_ : String) ->
+    case s_ of
+      | Empty_Str => return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                       unit
+      | Cons_Str (c_ : Char) (cs_ : String) => let (unit_0 : Unit) <-
+                                                 lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] print_char c_
+                                               in printString cs_
     end;
 
-new_Super : Id Super =
-  class_Super new_Super_Data;
+readString : (Error Unit ::: (NonTerm ::: (State ::: IO))) String =
+  readString_ Empty_Str;
 
-class_Child : Child_Data -> Id Child =
-  \(self_data : Child_Data) ->
-    let (super : Super) <- class_Super self_data in
-      case super of
-        | Super super_methods =>
-            case super_methods of
-              | {super_method, super_superMethod} =>
-                  case self_data of
-                    | Child_Data self_fields =>
-                        case self_fields of
-                          | {self_superField, self_childField} =>
-                              let rec (self : Child) =
-                                case self of
-                                  | Child self_methods =>
-                                      case self_methods of
-                                        | {self_method, self_superMethod, self_childMethod} =>
-                                            Child {\(var_0 : Unit) ->
-                                                     \(u : Unit) ->
-                                                       super_method u, super_superMethod, \(var_1 : Unit) -> self_superField} in return [Id] self;
-                                      end
-                                end
-                        end
-                  end
-            end
+readString_ : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) String =
+  \(acc_ : String) ->
+    let (c_ : Char) <-
+      lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+    in case c_ of
+         | ' ' => return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                    reverseString_ acc_ Empty_Str
+         | _ => readString_ (Cons_Str c_ acc_)
+       end;
+
+reverseString_ : String -> String -> String =
+  \(s_ : String) ->
+    \(acc_ : String) ->
+      case s_ of
+        | Empty_Str => acc_
+        | Cons_Str (c_ : Char) (cs_ : String) => reverseString_ cs_ (Cons_Str c_ acc_)
       end;
 
-new_Child_Data : Child_Data =
-  case new_Super_Data of
-    | Super_Data {super_superField} => Child_Data {super_superField, 1.0e-2}
-  end;
-
-new_Child : Id Child =
-  class_Child new_Child_Data;
-
-main : Impure_M Unit =
-  let (objSuper : Super) <- lift [Id -> Impure_M] new_Super in
-    let (objChild : Child) <- lift [Id -> Impure_M] new_Child in
-      let (_ : Int) <- lift [Id -> Impure_M] fun objSuper in
-        case objChild of
-          | Child objChild_methods =>
-              let (_ : Int) <- lift [Id -> Impure_M] fun (Super objChild_methods) in
-                return [Impure_M] unit;
-              end
-        end;
-
-fun : Super -> Id Int =
-  \(obj : Super) ->
-    case obj of
-      | Super obj_methods =>
-          case obj_methods of
-            | {obj_method, obj_superMethod} =>
-                obj_method unit unit
-          end
+printBool : Bool -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(b_ : Bool) ->
+    case b_ of
+      | True => printString (Cons_Str 't' (Cons_Str 'r' (Cons_Str 'u' (Cons_Str 'e' Empty_Str))))
+      | False => printString (Cons_Str 'f' (Cons_Str 'a' (Cons_Str 'l' (Cons_Str 's' (Cons_Str 'e' Empty_Str)))))
     end;
+
+readBool : (Error Unit ::: (NonTerm ::: (State ::: IO))) Bool =
+  let (c_1 : Char) <-
+    lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+  in case c_1 of
+       | 't' => let (c_2 : Char) <-
+                  lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                in case c_2 of
+                     | 'r' => let (c_3 : Char) <-
+                                lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                              in case c_3 of
+                                   | 'u' => let (c_4 : Char) <-
+                                              lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                                            in case c_4 of
+                                                 | 'e' => let (c_5 : Char) <-
+                                                            lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                                                          in case c_5 of
+                                                               | ' ' => return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                                          True
+                                                               | _ => let (errRes_ : Bool) <-
+                                                                        throw_error [Unit] [Bool] unit
+                                                                      in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                                           errRes_
+                                                             end
+                                                 | _ => let (errRes_ : Bool) <-
+                                                          throw_error [Unit] [Bool] unit
+                                                        in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                             errRes_
+                                               end
+                                   | _ => let (errRes_ : Bool) <-
+                                            throw_error [Unit] [Bool] unit
+                                          in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                               errRes_
+                                 end
+                     | _ => let (errRes_ : Bool) <-
+                              throw_error [Unit] [Bool] unit
+                            in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                 errRes_
+                   end
+       | 'f' => let (c_2 : Char) <-
+                  lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                in case c_2 of
+                     | 'a' => let (c_3 : Char) <-
+                                lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                              in case c_3 of
+                                   | 'l' => let (c_4 : Char) <-
+                                              lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                                            in case c_4 of
+                                                 | 's' => let (c_5 : Char) <-
+                                                            lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                                                          in case c_5 of
+                                                               | 'e' => let (c_6 : Char) <-
+                                                                          lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                                                                        in case c_6 of
+                                                                             | ' ' => return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                                                        False
+                                                                             | _ => let (errRes_ : Bool) <-
+                                                                                      throw_error [Unit] [Bool] unit
+                                                                                    in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                                                         errRes_
+                                                                           end
+                                                               | _ => let (errRes_ : Bool) <-
+                                                                        throw_error [Unit] [Bool] unit
+                                                                      in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                                           errRes_
+                                                             end
+                                                 | _ => let (errRes_ : Bool) <-
+                                                          throw_error [Unit] [Bool] unit
+                                                        in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                             errRes_
+                                               end
+                                   | _ => let (errRes_ : Bool) <-
+                                            throw_error [Unit] [Bool] unit
+                                          in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                               errRes_
+                                 end
+                     | _ => let (errRes_ : Bool) <-
+                              throw_error [Unit] [Bool] unit
+                            in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                 errRes_
+                   end
+       | _ => let (errRes_ : Bool) <-
+                throw_error [Unit] [Bool] unit
+              in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                   errRes_
+     end;
+
+printInt : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(i_ : Int) ->
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+      unit;
+
+readInt : (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    1;
+
+printFloat : Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(f_ : Float) ->
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+      unit;
+
+readFloat : (Error Unit ::: (NonTerm ::: (State ::: IO))) Float =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    1.0;
+
+main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    unit;
 

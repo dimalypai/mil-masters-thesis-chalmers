@@ -1,40 +1,11 @@
-main : Unit =>
-  objSuper : Super = Super.new;
-  objChild : Child = Child.new;
-  fun objSuper;
-  fun objChild;
+def main : Unit =>
   unit;
 end
 
-def fun : {obj : Super} -> Pure Int =>
-  obj.method unit;
-end
 
 class Super =>
-  superField : Int = 1;
 
-  def method : {u : Unit} -> Pure Int =>
-    self.superField;
-  end
 
-  def superMethod : Pure Bool =>
-    True;
-  end
 end
 
-class Child =>
-  childField : Float = 0.01;
-
-  def method : {u : Unit} -> Pure Int =>
-    super.method u;
-    self.chieldField;
-    2;
-  end
-
-  def childMethod : Pure Float =>
-    self.superMethod;
-    super.superField;
-    self.chieldField;
-  end
-end
 
