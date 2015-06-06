@@ -111,7 +111,7 @@ atomexpr
   : literal { LitE $1 }
   | lowerId { VarE (Var $1) }
   | upperId { ConNameE (ConName $1) () }
-  | '{' seplist1(expr, ',') '}' { TupleE $2 }
+  | '{' seplist(expr, ',') '}' { TupleE $2 }
   | '(' expr ')' { $2 }
 
 literal :: { Literal }
@@ -132,7 +132,7 @@ pattern
   : literal { LitP $1 }
   | varbinder { VarP $1 }
   | upperId list(varbinder) { ConP (ConName $1) $2 }
-  | '{' seplist1(tupleelempattern, ',') '}' { TupleP $2 }
+  | '{' seplist(tupleelempattern, ',') '}' { TupleP $2 }
   | '_' { DefaultP }
 
 tupleelempattern :: { SrcVarBinder }
@@ -154,7 +154,7 @@ appsrctype
 atomsrctype :: { SrcType }
 atomsrctype
   : upperId { SrcTyTypeCon (TypeName $1) }
-  | '{' seplist1(srctype, ',') '}' { SrcTyTuple $2 }
+  | '{' seplist(srctype, ',') '}' { SrcTyTuple $2 }
   | '(' srctype ')' { $2 }
 
 typevar :: { TypeVar }
