@@ -163,6 +163,8 @@ class_Super : Super_Data -> Super =
     Super;
 
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
-  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
-    unit;
+  let (objSuper : Super) <-
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))] new_Super
+  in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+       unit;
 

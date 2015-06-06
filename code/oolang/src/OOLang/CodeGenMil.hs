@@ -260,6 +260,12 @@ codeGenExpr tyExpr funMonad =
           return ( MIL.VarE milVar
                  , funSrcTypeMil varType)
 
+    -- Only 'new'
+    ClassAccessE _ t srcClassName _ -> do
+      let className = getClassName srcClassName
+      return ( MIL.ReturnE funMonad $ MIL.VarE (MIL.funNameToVar $ classConstructorNameMil className)
+             , MIL.SrcTyApp funMonad (srcTypeMil t))
+
     NewRefE _ _ tyRefUnderExpr -> do
       (milRefUnderExpr, milRefUnderExprType) <- codeGenExpr tyRefUnderExpr funMonad
       refUnderExprVar <- newMilVar
