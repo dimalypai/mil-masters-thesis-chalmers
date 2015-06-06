@@ -142,7 +142,7 @@ collectClassField className (FieldDecl _ (Decl _ srcVarBinder _ _) _) = do
 -- | Checks if a field with the same name is already defined.
 -- Checks if a method with the same name and different type is already
 -- defined in this hierarchy (we don't allow overloading/hiding).
--- Checks that the method doesn't have a name `self` and `super`.
+-- Checks that the method doesn't have names: `self`, `super`, `new`.
 -- Class methods can shadow global function names because we reference class
 -- members with `self` or `super`.
 -- Checks that the specified method type is correct (used types are defined).

@@ -123,7 +123,6 @@ codeGenClassDataConstructor className tyFieldDecls = do
   return $ MIL.FunDef (classDataConstructorNameMil className)
     (MIL.SrcTyApp pureSrcMonadMil (classDataSrcTypeMil className)) fieldDeclsExpr
 
--- | TODO: constructor.
 codeGenClassFieldDecls :: ClassName -> [TyFieldDecl] -> CodeGenM MIL.SrcExpr
 codeGenClassFieldDecls className tyFieldDecls = do
   let fieldVars = map (classFieldVar . getVar . getFieldDeclVarName) tyFieldDecls
