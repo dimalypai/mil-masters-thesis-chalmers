@@ -143,7 +143,6 @@ srctype
   : appsrctype { $1 }
   | appsrctype '->' srctype { SrcTyArrow $1 $3 }
   | forall typevar '.' srctype { SrcTyForAll $2 $4 }
-  | '{' seplist1(srctype, ',') '}' { SrcTyTuple $2 }
   | appsrctype ':::' appsrctype { SrcTyMonadCons $1 $3 }
 
 -- This production is introduced in order to avoid shift/reduce conflicts
@@ -155,6 +154,7 @@ appsrctype
 atomsrctype :: { SrcType }
 atomsrctype
   : upperId { SrcTyTypeCon (TypeName $1) }
+  | '{' seplist1(srctype, ',') '}' { SrcTyTuple $2 }
   | '(' srctype ')' { $2 }
 
 typevar :: { TypeVar }
