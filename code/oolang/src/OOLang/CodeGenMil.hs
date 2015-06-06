@@ -17,7 +17,7 @@ import Control.Monad.State
 import Control.Applicative
 import qualified Data.Map as Map
 -- Used just to transform components of a pair
-import Control.Arrow (first, second)
+import Control.Arrow (first, second, (***))
 import Data.Maybe (fromMaybe, isJust, fromJust)
 
 import OOLang.AST
@@ -68,9 +68,9 @@ codeGenProgram (Program _ tyClassDefs tyFunDefs) = do
     collectClassTypes (getClassName srcClassName) cts)
     classTypes tyClassDefs
   local (second $ const classTypes') $ do
-    classMilFunDefs <- concat <$> mapM codeGenClassDef tyClassDefs
+    (classMilTypeDefs, classMilFunDefs) <- (concat *** concat) <$> (unzip <$> mapM codeGenClassDef tyClassDefs)
     milFunDefs <- mapM codeGenFunDef tyFunDefs
-    return $ MIL.Program (builtInMilTypeDefs, builtInMilFunDefs ++ (classMilFunDefs ++ milFunDefs))
+    return $ MIL.Program (builtInMilTypeDefs ++ classMilTypeDefs, builtInMilFunDefs ++ (classMilFunDefs ++ milFunDefs))
 
 -- | Collects information about the class: field and methods names. Constructs
 -- a type of the object representation.
@@ -85,10 +85,21 @@ collectClassTypes className classTypes = do
                                       , MIL.SrcTyTuple $ map srcTypeMil methodTypes]
   return $ Map.insert className (fieldNames, methodNames, classTupleType) classTypes
 
-codeGenClassDef :: TyClassDef -> CodeGenM [MIL.SrcFunDef]
+codeGenClassDef :: TyClassDef -> CodeGenM ([MIL.SrcTypeDef], [MIL.SrcFunDef])
 codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) = do
-  let (_, tyMethodDecls) = partitionClassMembers tyMembers
-  mapM codeGenClassMethod tyMethodDecls
+  let className = getClassName srcClassName
+  let (tyFieldDecls, tyMethodDecls) = partitionClassMembers tyMembers
+  let classMilTypeDefs = [ MIL.TypeDef (classDataTypeNameMil className) [] [MIL.ConDef (classDataConNameMil className) []]
+                         , MIL.TypeDef (typeNameMil className) [] [MIL.ConDef (conNameMil className) []]
+                         ]
+  let classMilFunDefs = [ MIL.FunDef (classDataConstructorNameMil className) (classDataSrcTypeMil className)
+                            (MIL.ConNameE (classDataConNameMil className) ())
+                        , MIL.FunDef (classConstructorNameMil className) (classSrcTypeMil className)
+                            (MIL.AppE (MIL.VarE (MIL.funNameToVar $ classDefNameMil className)) (MIL.VarE (MIL.funNameToVar $ classDataConstructorNameMil className)))
+                        , MIL.FunDef (classDefNameMil className) (classDefSrcTypeMil className)
+                            (MIL.mkSrcLambda (MIL.Var "self_data") (classDataSrcTypeMil className) (MIL.ConNameE (conNameMil className) ()))
+                        ]
+  return (classMilTypeDefs, classMilFunDefs)
 
 -- | TODO: inits (together with constructor).
 -- TODO: use
@@ -436,19 +447,46 @@ funSrcTypeMilRetType (ReturnType (TyPure t))  = MIL.SrcTyApp pureSrcMonadMil (sr
 funSrcTypeMilRetType (ReturnType (TyMaybe t)) = MIL.SrcTyApp (MIL.mkSimpleSrcType "Maybe") (srcTypeMil t)
 funSrcTypeMilRetType (ReturnType t) = MIL.SrcTyApp impureSrcMonadMil (srcTypeMil t)
 
--- * Conversion utils
+-- * Conversion utils, name helpers
 
 typeNameMil :: ClassName -> MIL.TypeName
 typeNameMil (ClassName classNameStr) = MIL.TypeName classNameStr
 
+classDataTypeNameMil :: ClassName -> MIL.TypeName
+classDataTypeNameMil (ClassName classNameStr) = MIL.TypeName (classNameStr ++ classDataSuffix)
+
 conNameMil :: ClassName -> MIL.ConName
 conNameMil (ClassName classNameStr) = MIL.ConName classNameStr
+
+classDataConNameMil :: ClassName -> MIL.ConName
+classDataConNameMil (ClassName classNameStr) = MIL.ConName (classNameStr ++ classDataSuffix)
 
 funNameMil :: FunName -> MIL.FunName
 funNameMil (FunName funNameStr) = MIL.FunName funNameStr
 
+classDataConstructorNameMil :: ClassName -> MIL.FunName
+classDataConstructorNameMil (ClassName classNameStr) = MIL.FunName ("new_" ++ (classNameStr ++ classDataSuffix))
+
+classConstructorNameMil :: ClassName -> MIL.FunName
+classConstructorNameMil (ClassName classNameStr) = MIL.FunName ("new_" ++ classNameStr)
+
+classDefNameMil :: ClassName -> MIL.FunName
+classDefNameMil (ClassName classNameStr) = MIL.FunName ("class_" ++ classNameStr)
+
 varMil :: Var -> MIL.Var
 varMil (Var varStr) = MIL.Var varStr
+
+classDataSrcTypeMil :: ClassName -> MIL.SrcType
+classDataSrcTypeMil (ClassName classNameStr) = MIL.mkSimpleSrcType (classNameStr ++ classDataSuffix)
+
+classSrcTypeMil :: ClassName -> MIL.SrcType
+classSrcTypeMil (ClassName classNameStr) = MIL.mkSimpleSrcType classNameStr
+
+classDefSrcTypeMil :: ClassName -> MIL.SrcType
+classDefSrcTypeMil className = MIL.SrcTyArrow (classDataSrcTypeMil className) (classSrcTypeMil className)
+
+classDataSuffix :: String
+classDataSuffix = "_Data"
 
 -- * CodeGenM operations
 

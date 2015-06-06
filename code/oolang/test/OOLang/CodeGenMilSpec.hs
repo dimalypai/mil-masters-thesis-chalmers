@@ -47,6 +47,9 @@ spec =
     it "generates MIL code for assignment statements" $
       testCase "Assignments"
 
+    it "generates MIL code for classes" $
+      testCase "Classes"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test (by comparing pretty printed

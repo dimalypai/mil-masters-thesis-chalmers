@@ -6,7 +6,9 @@ type String
   = Empty_Str
   | Cons_Str Char String;
 
+type Super_Data = Super_Data;
 
+type Super = Super;
 
 printString : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   \(s_ : String) ->
@@ -149,6 +151,16 @@ printFloat : Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
 readFloat : (Error Unit ::: (NonTerm ::: (State ::: IO))) Float =
   return [Error Unit ::: (NonTerm ::: (State ::: IO))]
     1.0;
+
+new_Super_Data : Super_Data =
+  Super_Data;
+
+new_Super : Super =
+  class_Super new_Super_Data;
+
+class_Super : Super_Data -> Super =
+  \(self_data : Super_Data) ->
+    Super;
 
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   return [Error Unit ::: (NonTerm ::: (State ::: IO))]
