@@ -3,8 +3,12 @@ def main : Unit =>
   unit;
 end
 
+class Empty =>
+end
 
 class Super =>
+  superField : Int = 1;
+  superField2 : Bool = true;
 
 
 end

@@ -17,6 +17,9 @@ getInitOpS (Init _ initOpS _) = initOpS
 getInitExpr :: Init t s -> Expr t s
 getInitExpr (Init _ _ e) = e
 
+getFieldDeclVarName :: FieldDecl t s -> VarS s
+getFieldDeclVarName (FieldDecl _ decl _) = getDeclVarName decl
+
 getDeclVarName :: Declaration t s -> VarS s
 getDeclVarName (Decl _ varBinder _ _) = getBinderVar varBinder
 

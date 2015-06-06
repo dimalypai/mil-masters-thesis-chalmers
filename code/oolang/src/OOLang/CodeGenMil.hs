@@ -89,27 +89,69 @@ codeGenClassDef :: TyClassDef -> CodeGenM ([MIL.SrcTypeDef], [MIL.SrcFunDef])
 codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) = do
   let className = getClassName srcClassName
   let (tyFieldDecls, tyMethodDecls) = partitionClassMembers tyMembers
-  let classMilTypeDefs = [ MIL.TypeDef (classDataTypeNameMil className) [] [MIL.ConDef (classDataConNameMil className) []]
-                         , MIL.TypeDef (typeNameMil className) [] [MIL.ConDef (conNameMil className) []]
+  classDataTypeDef <- codeGenClassDataTypeDef className tyFieldDecls
+  let classMilTypeDefs = [ classDataTypeDef
+                         , codeGenClassTypeDef className
                          ]
-  let classMilFunDefs = [ MIL.FunDef (classDataConstructorNameMil className) (classDataSrcTypeMil className)
-                            (MIL.ConNameE (classDataConNameMil className) ())
-                        , MIL.FunDef (classConstructorNameMil className) (classSrcTypeMil className)
-                            (MIL.AppE (MIL.VarE (MIL.funNameToVar $ classDefNameMil className)) (MIL.VarE (MIL.funNameToVar $ classDataConstructorNameMil className)))
-                        , MIL.FunDef (classDefNameMil className) (classDefSrcTypeMil className)
-                            (MIL.mkSrcLambda (MIL.Var "self_data") (classDataSrcTypeMil className) (MIL.ConNameE (conNameMil className) ()))
+  classDataConstructor <- codeGenClassDataConstructor className tyFieldDecls
+  let classMilFunDefs = [ classDataConstructor
+                        , codeGenClassConstructor className
+                        , codeGenClassFunDef className
                         ]
   return (classMilTypeDefs, classMilFunDefs)
 
--- | TODO: inits (together with constructor).
--- TODO: use
-{-
-codeGenClassField :: ClassName -> TyFieldDecl -> CodeGenM MIL.SrcType
-codeGenClassField className (FieldDecl _ tyDecl _) = do
+codeGenClassDataTypeDef :: ClassName -> [TyFieldDecl] -> CodeGenM MIL.SrcTypeDef
+codeGenClassDataTypeDef className tyFieldDecls = do
+  fieldTypes <- mapM (classFieldTypeMil className) tyFieldDecls
+  return $ MIL.TypeDef (classDataTypeNameMil className) []
+    [MIL.ConDef (classDataConNameMil className) [MIL.SrcTyTuple fieldTypes]]
+
+classFieldTypeMil :: ClassName -> TyFieldDecl -> CodeGenM MIL.SrcType
+classFieldTypeMil className (FieldDecl _ tyDecl _) = do
   let fieldName = getVar $ getDeclVarName tyDecl
   fieldType <- asks (getClassFieldType className fieldName . getClassTypeEnv . getTypeEnv)
-  return $ typeMil fieldType
--}
+  return $ srcTypeMil fieldType
+
+codeGenClassTypeDef :: ClassName -> MIL.SrcTypeDef
+codeGenClassTypeDef className =
+  MIL.TypeDef (typeNameMil className) []
+    [MIL.ConDef (conNameMil className) [MIL.SrcTyTuple [classDataSrcTypeMil className]]]
+
+codeGenClassDataConstructor :: ClassName -> [TyFieldDecl] -> CodeGenM MIL.SrcFunDef
+codeGenClassDataConstructor className tyFieldDecls = do
+  fieldDeclsExpr <- codeGenClassFieldDecls className tyFieldDecls
+  return $ MIL.FunDef (classDataConstructorNameMil className)
+    (MIL.SrcTyApp pureSrcMonadMil (classDataSrcTypeMil className)) fieldDeclsExpr
+
+-- | TODO: constructor.
+codeGenClassFieldDecls :: ClassName -> [TyFieldDecl] -> CodeGenM MIL.SrcExpr
+codeGenClassFieldDecls className tyFieldDecls = do
+  let fieldVars = map (classFieldVar . getVar . getFieldDeclVarName) tyFieldDecls
+  let conExpr = MIL.ReturnE pureSrcMonadMil $
+       MIL.AppE (MIL.ConNameE (classDataConNameMil className) ()) (MIL.TupleE $ map (MIL.VarE . varMil) fieldVars)
+  codeGenFields conExpr tyFieldDecls
+
+-- | Takes an expression that will use a sequence of class field bind
+-- expressions at the end.
+-- Starts with this expression at the bottom and builds a sequence of binds
+-- upwards (hence reverse).
+codeGenFields :: MIL.SrcExpr -> [TyFieldDecl] -> CodeGenM MIL.SrcExpr
+codeGenFields milBodyExpr tyFieldDecls =
+  foldM (\e (FieldDecl _ tyDecl _) -> fst <$> codeGenDecl tyDecl classFieldVar pureSrcMonadMil (e, undefined))
+    milBodyExpr (reverse tyFieldDecls)
+
+codeGenClassConstructor :: ClassName -> MIL.SrcFunDef
+codeGenClassConstructor className =
+  MIL.FunDef (classConstructorNameMil className) (MIL.SrcTyApp pureSrcMonadMil (classSrcTypeMil className)) $
+    MIL.mkSrcLet (MIL.Var classDataVarName) (classDataSrcTypeMil className) (MIL.VarE (MIL.funNameToVar $ classDataConstructorNameMil className))
+      (MIL.AppE (MIL.VarE (MIL.funNameToVar $ classDefNameMil className)) (MIL.mkSrcVar classDataVarName))
+
+codeGenClassFunDef :: ClassName -> MIL.SrcFunDef
+codeGenClassFunDef className =
+  MIL.FunDef (classDefNameMil className) (classDefSrcTypeMil className) $
+    MIL.mkSrcLambda (MIL.Var classDataVarName) (classDataSrcTypeMil className) $
+      MIL.ReturnE pureSrcMonadMil (MIL.AppE (MIL.ConNameE (conNameMil className) ()) (MIL.TupleE [MIL.mkSrcVar classDataVarName]))
+
 -- | TODO: add method specifics.
 codeGenClassMethod :: TyMethodDecl -> CodeGenM MIL.SrcFunDef
 codeGenClassMethod (MethodDecl _ tyFunDef _) = codeGenFunDef tyFunDef
@@ -140,8 +182,8 @@ codeGenFunDef (FunDef _ srcFunName tyFunType tyStmts) = do
 -- variable scope right.
 codeGenStmts :: [TyStmt] -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenStmts [DeclS _ decl] funMonad =
-  codeGenDecl decl funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
-                            , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
+  codeGenDecl decl id funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
+                               , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
 codeGenStmts [stmt@(AssignS {})] funMonad = do
   preCodeGenAssign stmt
   codeGenAssign stmt funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
@@ -150,7 +192,7 @@ codeGenStmts [tyStmt] funMonad = codeGenStmt tyStmt funMonad
 
 codeGenStmts ((DeclS _ decl):tyStmts) funMonad = do
   milBodyExprWithType <- codeGenStmts tyStmts funMonad
-  codeGenDecl decl funMonad milBodyExprWithType
+  codeGenDecl decl id funMonad milBodyExprWithType
 codeGenStmts (stmt@(AssignS {}):tyStmts) funMonad = do
   preCodeGenAssign stmt
   milBodyExprWithType <- codeGenStmts tyStmts funMonad
@@ -174,15 +216,17 @@ codeGenStmt tyStmt funMonad =
 -- | Code generation for declarations.
 -- It takes an expression which will become a body of the monadic bind, where a
 -- declared variable will be in scope and a type of this expression.
-codeGenDecl :: TyDeclaration -> MIL.SrcType -> (MIL.SrcExpr, MIL.SrcType) -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
-codeGenDecl (Decl _ tyVarBinder mTyInit _) funMonad (milBodyExpr, milBodyExprType) = do
+-- It also takes a function to transform a variable that is being declared.
+-- Used to add extra prefixes/suffixes to the name.
+codeGenDecl :: TyDeclaration -> (Var -> Var) -> MIL.SrcType -> (MIL.SrcExpr, MIL.SrcType) -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
+codeGenDecl (Decl _ tyVarBinder mTyInit _) varTransform funMonad (milBodyExpr, milBodyExprType) = do
   let var = getVar $ getBinderVar tyVarBinder
   (milInitExpr, milInitExprType) <-
     case mTyInit of
       Just tyInit -> codeGenExpr (getInitExpr tyInit) funMonad
       -- It may be a variable with Mutable type, so we need 'getUnderType'.
       Nothing -> codeGenExpr (maybeDefaultExpr $ getUnderType $ getTypeOf tyVarBinder) funMonad
-  return ( MIL.mkSrcLet (varMil var) (MIL.getSrcResultType milInitExprType) milInitExpr milBodyExpr
+  return ( MIL.mkSrcLet (varMil $ varTransform var) (MIL.getSrcResultType milInitExprType) milInitExpr milBodyExpr
          , milBodyExprType)
 
 -- | Fresh name for new assigned variable occurence should be generated
@@ -263,8 +307,8 @@ codeGenExpr tyExpr funMonad =
     -- Only 'new'
     ClassAccessE _ t srcClassName _ -> do
       let className = getClassName srcClassName
-      return ( MIL.ReturnE funMonad $ MIL.VarE (MIL.funNameToVar $ classConstructorNameMil className)
-             , MIL.SrcTyApp funMonad (srcTypeMil t))
+      return ( MIL.VarE (MIL.funNameToVar $ classConstructorNameMil className)
+             , MIL.SrcTyApp pureSrcMonadMil (srcTypeMil t))
 
     NewRefE _ _ tyRefUnderExpr -> do
       (milRefUnderExpr, milRefUnderExprType) <- codeGenExpr tyRefUnderExpr funMonad
@@ -482,6 +526,9 @@ classDefNameMil (ClassName classNameStr) = MIL.FunName ("class_" ++ classNameStr
 varMil :: Var -> MIL.Var
 varMil (Var varStr) = MIL.Var varStr
 
+classFieldVar :: Var -> Var
+classFieldVar (Var varStr) = Var ("self_" ++ varStr)
+
 classDataSrcTypeMil :: ClassName -> MIL.SrcType
 classDataSrcTypeMil (ClassName classNameStr) = MIL.mkSimpleSrcType (classNameStr ++ classDataSuffix)
 
@@ -489,10 +536,14 @@ classSrcTypeMil :: ClassName -> MIL.SrcType
 classSrcTypeMil (ClassName classNameStr) = MIL.mkSimpleSrcType classNameStr
 
 classDefSrcTypeMil :: ClassName -> MIL.SrcType
-classDefSrcTypeMil className = MIL.SrcTyArrow (classDataSrcTypeMil className) (classSrcTypeMil className)
+classDefSrcTypeMil className =
+  MIL.SrcTyArrow (classDataSrcTypeMil className) (MIL.SrcTyApp pureSrcMonadMil (classSrcTypeMil className))
 
 classDataSuffix :: String
 classDataSuffix = "_Data"
+
+classDataVarName :: String
+classDataVarName = "self_data"
 
 -- * CodeGenM operations
 

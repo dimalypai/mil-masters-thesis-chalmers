@@ -6,9 +6,13 @@ type String
   = Empty_Str
   | Cons_Str Char String;
 
-type Super_Data = Super_Data;
+type Empty_Data = Empty_Data {};
 
-type Super = Super;
+type Empty = Empty {Empty_Data};
+
+type Super_Data = Super_Data {Int, Bool};
+
+type Super = Super {Super_Data};
 
 printString : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   \(s_ : String) ->
@@ -152,19 +156,32 @@ readFloat : (Error Unit ::: (NonTerm ::: (State ::: IO))) Float =
   return [Error Unit ::: (NonTerm ::: (State ::: IO))]
     1.0;
 
-new_Super_Data : Super_Data =
-  Super_Data;
+new_Empty_Data : (Error Unit ::: NonTerm) Empty_Data =
+  return [Error Unit ::: NonTerm] Empty_Data {};
 
-new_Super : Super =
-  class_Super new_Super_Data;
+new_Empty : (Error Unit ::: NonTerm) Empty =
+  let (self_data : Empty_Data) <- new_Empty_Data
+  in class_Empty self_data;
 
-class_Super : Super_Data -> Super =
+class_Empty : Empty_Data -> (Error Unit ::: NonTerm) Empty =
+  \(self_data : Empty_Data) ->
+    return [Error Unit ::: NonTerm] Empty {self_data};
+
+new_Super_Data : (Error Unit ::: NonTerm) Super_Data =
+  let (self_superField : Int) <- return [Error Unit ::: NonTerm] 1
+  in let (self_superField2 : Bool) <- return [Error Unit ::: NonTerm] True
+     in return [Error Unit ::: NonTerm] Super_Data {self_superField, self_superField2};
+
+new_Super : (Error Unit ::: NonTerm) Super =
+  let (self_data : Super_Data) <- new_Super_Data
+  in class_Super self_data;
+
+class_Super : Super_Data -> (Error Unit ::: NonTerm) Super =
   \(self_data : Super_Data) ->
-    Super;
+    return [Error Unit ::: NonTerm] Super {self_data};
 
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
-  let (objSuper : Super) <-
-    return [Error Unit ::: (NonTerm ::: (State ::: IO))] new_Super
+  let (objSuper : Super) <- new_Super
   in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
        unit;
 
