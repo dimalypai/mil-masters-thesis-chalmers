@@ -14,7 +14,7 @@ type Super_Data = Super_Data {Int, Bool};
 
 type Super = Super {Super_Data};
 
-type Child_Data = Child_Data {Int, Bool};
+type Child_Data = Child_Data {Int, Bool, Float};
 
 type Child = Child {Child_Data};
 
@@ -187,7 +187,8 @@ class_Super : Super_Data -> (Error Unit ::: NonTerm) Super =
 new_Child_Data : (Error Unit ::: NonTerm) Child_Data =
   let (self_superField : Int) <- return [Error Unit ::: NonTerm] 1
   in let (self_superField2 : Bool) <- return [Error Unit ::: NonTerm] True
-        in return [Error Unit ::: NonTerm] Child_Data {self_superField, self_superField2};
+     in let (self_childField : Float) <- return [Error Unit ::: NonTerm] 1.0e-2
+        in return [Error Unit ::: NonTerm] Child_Data {self_superField, self_superField2, self_childField};
 
 new_Child : (Error Unit ::: NonTerm) Child =
   let (self_data : Child_Data) <- new_Child_Data

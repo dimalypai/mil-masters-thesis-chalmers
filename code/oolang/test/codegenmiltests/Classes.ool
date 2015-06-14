@@ -15,5 +15,6 @@ class Super
 end
 
 class Child < Super
+  childField : Float = 0.01;
 end
 
