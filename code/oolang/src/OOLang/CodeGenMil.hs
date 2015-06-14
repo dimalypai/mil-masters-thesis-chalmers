@@ -19,6 +19,7 @@ import qualified Data.Map as Map
 -- Used just to transform components of a pair
 import Control.Arrow (first, second, (***))
 import Data.Maybe (fromMaybe, isJust, fromJust)
+import Data.List (sortBy)
 
 import OOLang.AST
 import OOLang.AST.TypeAnnotated
@@ -38,17 +39,17 @@ import System.IO.Unsafe
 -- Takes a type checked program in OOLang and a type environment and produces a
 -- source program in MIL.
 codeGen :: TyProgram -> TypeEnv -> MIL.SrcProgram
-codeGen tyProgram typeEnv = unsafePerformIO $ runReaderT (evalStateTFrom (0, Map.empty) (runCG $ codeGenProgram tyProgram)) (typeEnv, Map.empty)
+codeGen tyProgram typeEnv = unsafePerformIO $ runReaderT (evalStateTFrom (0, Map.empty, Map.empty) (runCG $ codeGenProgram tyProgram)) typeEnv
 
--- | Code generation monad. Uses 'StateT' for providing fresh variable names
--- and 'Reader' for querying the type environment and class types.
--- 'IO' may be used for debug printing.
-newtype CodeGenM a = CG { runCG :: StateT (NameSupply, VarMap) (ReaderT (TypeEnv, ClassTypes) IO) a }
-  deriving (Monad, MonadState (NameSupply, VarMap), MonadReader (TypeEnv, ClassTypes), Functor, Applicative, MonadIO)
+-- | Code generation monad. Uses 'StateT' for providing fresh variable names,
+-- names for variable occurences (for Mutable assignments) and to keep
+-- generated code for class field initialisation. 'Reader' is used for querying
+-- the type environment.  'IO' may be used for debug printing.
+newtype CodeGenM a = CG { runCG :: StateT (NameSupply, VarMap, ClassMap) (ReaderT TypeEnv IO) a }
+  deriving (Monad, MonadState (NameSupply, VarMap, ClassMap), MonadReader TypeEnv, Functor, Applicative, MonadIO)
 
--- | All field and method names accessible from a class and a MIL type of the
--- object representation.
-type ClassTypes = Map.Map ClassName ([Var], [FunName], MIL.SrcType)
+-- | Keeps an MIL expression of field initialisation for a class.
+type ClassMap = Map.Map ClassName MIL.SrcExpr
 
 -- | A counter for generating unique variable names.
 type NameSupply = Int
@@ -57,43 +58,67 @@ type NameSupply = Int
 -- and generate fresh names for new occurences. Used for assignments.
 type VarMap = Map.Map Var Int
 
--- | Entry point into the type checking of the program.
--- There is a list of MIL functions generated for each class definition.
+-- | Entry point into the code generation of a program.
+-- There is a list of MIL type definitions and functions generated for each
+-- class definition (in order: from base to subclasses).
 -- There is an MIL function generated for each function definition.
 -- All these definitions are then regrouped and the built-ins are added.
 codeGenProgram :: TyProgram -> CodeGenM MIL.SrcProgram
 codeGenProgram (Program _ tyClassDefs tyFunDefs) = do
-  classTypes <- asks getClassTypes
-  classTypes' <- foldM (\cts (ClassDef _ srcClassName _ _) ->
-    collectClassTypes (getClassName srcClassName) cts)
-    classTypes tyClassDefs
-  local (second $ const classTypes') $ do
-    (classMilTypeDefs, classMilFunDefs) <- (concat *** concat) <$> (unzip <$> mapM codeGenClassDef tyClassDefs)
-    milFunDefs <- mapM codeGenFunDef tyFunDefs
-    return $ MIL.Program (builtInMilTypeDefs ++ classMilTypeDefs, builtInMilFunDefs ++ (classMilFunDefs ++ milFunDefs))
+  sortedTyClassDefs <- sortClassesByHierarchyDepth tyClassDefs
+  (classMilTypeDefs, classMilFunDefs) <- (concat *** concat) <$> (unzip <$> mapM codeGenClassDef sortedTyClassDefs)
+  milFunDefs <- mapM codeGenFunDef tyFunDefs
+  return $ MIL.Program (builtInMilTypeDefs ++ classMilTypeDefs, builtInMilFunDefs ++ (classMilFunDefs ++ milFunDefs))
 
--- | Collects information about the class: field and methods names. Constructs
--- a type of the object representation.
-collectClassTypes :: ClassName -> ClassTypes -> CodeGenM ClassTypes
-collectClassTypes className classTypes = do
-  classTypeEnv <- asks (getClassTypeEnv . getTypeEnv)
-  let (fieldNames, fieldTypes) = unzip (getClassFieldsAssoc className classTypeEnv)
-      (methodNames, methodTypeInfos) = unzip (getClassMethodsAssoc className classTypeEnv)
-      methodTypes = map ftiType methodTypeInfos
-      -- TODO: virtual methods and self parameters
-      classTupleType = MIL.SrcTyTuple [ MIL.SrcTyTuple $ map srcTypeMil fieldTypes
-                                      , MIL.SrcTyTuple $ map srcTypeMil methodTypes]
-  return $ Map.insert className (fieldNames, methodNames, classTupleType) classTypes
+-- | Code must be generated for base classes first and then for all the
+-- subsequent subclasses. This is done, because of usage of field
+-- initialisation code of superclasses in subclasses.
+sortClassesByHierarchyDepth :: [TyClassDef] -> CodeGenM [TyClassDef]
+sortClassesByHierarchyDepth tyClassDefs = do
+  depths <- mapM getClassDefHierarchyDepth tyClassDefs
+  let tyClassDefsWithDepths = zip tyClassDefs depths
+  return (map fst $ sortBy hierarchyDepthComparison tyClassDefsWithDepths)
 
+-- | Class depth is a number of super classes for a class.
+-- Class that has no super class has depth 0.
+getClassDefHierarchyDepth :: TyClassDef -> CodeGenM Int
+getClassDefHierarchyDepth (ClassDef _ srcClassName _ _) = do
+  let className = getClassName srcClassName
+  classTypeEnv <- asks getClassTypeEnv
+  return $ getClassDepth className classTypeEnv 0
+
+getClassDepth :: ClassName -> ClassTypeEnv -> Int -> Int
+getClassDepth className classTypeEnv depthAcc =
+  case getSuperClass className classTypeEnv of
+    Just superClassName -> getClassDepth superClassName classTypeEnv (depthAcc + 1)
+    Nothing -> depthAcc
+
+hierarchyDepthComparison :: (TyClassDef, Int) -> (TyClassDef, Int) -> Ordering
+hierarchyDepthComparison (_, depth1) (_, depth2) = compare depth1 depth2
+
+-- | There are several things generated for every class definition.
+-- There are two data type definitions: one for class data that contains all
+-- the fields and one for the whole class which contains all the methods and
+-- data.
+-- There are also three function definitions: data constructor, class
+-- constructor and a function for class definition.
+-- Data constructor is a function that contains field initialisation code and
+-- produces a value of class data type.
+-- Class constructor is a function that will be used in object construction
+-- expressions, so it basically constructs an object of this class by
+-- constructing the data part and using class definition part.
+-- Class definition function takes a data part and produces an object using
+-- full class definition (methods).
 codeGenClassDef :: TyClassDef -> CodeGenM ([MIL.SrcTypeDef], [MIL.SrcFunDef])
 codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) = do
   let className = getClassName srcClassName
+  let mSuperClassName = getClassName <$> mSuperSrcClassName
   let (tyFieldDecls, tyMethodDecls) = partitionClassMembers tyMembers
   classDataTypeDef <- codeGenClassDataTypeDef className tyFieldDecls
   let classMilTypeDefs = [ classDataTypeDef
                          , codeGenClassTypeDef className
                          ]
-  classDataConstructor <- codeGenClassDataConstructor className tyFieldDecls
+  classDataConstructor <- codeGenClassDataConstructor className mSuperClassName tyFieldDecls
   let classMilFunDefs = [ classDataConstructor
                         , codeGenClassConstructor className
                         , codeGenClassFunDef className
@@ -102,33 +127,44 @@ codeGenClassDef (ClassDef _ srcClassName mSuperSrcClassName tyMembers) = do
 
 codeGenClassDataTypeDef :: ClassName -> [TyFieldDecl] -> CodeGenM MIL.SrcTypeDef
 codeGenClassDataTypeDef className tyFieldDecls = do
-  fieldTypes <- mapM (classFieldTypeMil className) tyFieldDecls
+  classTypeEnv <- asks getClassTypeEnv
+  let (_, fieldTypes) = unzip (getClassFieldsAssoc className classTypeEnv)
   return $ MIL.TypeDef (classDataTypeNameMil className) []
-    [MIL.ConDef (classDataConNameMil className) [MIL.SrcTyTuple fieldTypes]]
-
-classFieldTypeMil :: ClassName -> TyFieldDecl -> CodeGenM MIL.SrcType
-classFieldTypeMil className (FieldDecl _ tyDecl _) = do
-  let fieldName = getVar $ getDeclVarName tyDecl
-  fieldType <- asks (getClassFieldType className fieldName . getClassTypeEnv . getTypeEnv)
-  return $ srcTypeMil fieldType
+    [MIL.ConDef (classDataConNameMil className) [MIL.SrcTyTuple (map srcTypeMil fieldTypes)]]
 
 codeGenClassTypeDef :: ClassName -> MIL.SrcTypeDef
 codeGenClassTypeDef className =
   MIL.TypeDef (typeNameMil className) []
     [MIL.ConDef (conNameMil className) [MIL.SrcTyTuple [classDataSrcTypeMil className]]]
 
-codeGenClassDataConstructor :: ClassName -> [TyFieldDecl] -> CodeGenM MIL.SrcFunDef
-codeGenClassDataConstructor className tyFieldDecls = do
-  fieldDeclsExpr <- codeGenClassFieldDecls className tyFieldDecls
+codeGenClassDataConstructor :: ClassName -> Maybe ClassName -> [TyFieldDecl] -> CodeGenM MIL.SrcFunDef
+codeGenClassDataConstructor className mSuperClassName tyFieldDecls = do
+  fieldDeclsExpr <- codeGenClassFieldDecls className mSuperClassName tyFieldDecls
   return $ MIL.FunDef (classDataConstructorNameMil className)
     (MIL.SrcTyApp pureSrcMonadMil (classDataSrcTypeMil className)) fieldDeclsExpr
 
-codeGenClassFieldDecls :: ClassName -> [TyFieldDecl] -> CodeGenM MIL.SrcExpr
-codeGenClassFieldDecls className tyFieldDecls = do
-  let fieldVars = map (classFieldVar . getVar . getFieldDeclVarName) tyFieldDecls
+-- | Code generation of field initialisation and class data construction.
+-- Produces a sequence of bind expressions (field initialisations only for
+-- fields defined in this class) with class data constructor application at the
+-- bottom. Then gets field initialisation code for a super class (if any) from
+-- the ClassMap and replaces the bottom part (class data constructor
+-- application) with generated code for this class.
+-- Puts the result in the ClassMap to be used in subclasses if there are any.
+codeGenClassFieldDecls :: ClassName -> Maybe ClassName -> [TyFieldDecl] -> CodeGenM MIL.SrcExpr
+codeGenClassFieldDecls className mSuperClassName tyFieldDecls = do
+  classTypeEnv <- asks getClassTypeEnv
+  let (fieldNames, _) = unzip (getClassFieldsAssoc className classTypeEnv)
   let conExpr = MIL.ReturnE pureSrcMonadMil $
-       MIL.AppE (MIL.ConNameE (classDataConNameMil className) ()) (MIL.TupleE $ map (MIL.VarE . varMil) fieldVars)
-  codeGenFields conExpr tyFieldDecls
+                  MIL.AppE (MIL.ConNameE (classDataConNameMil className) ()) (MIL.TupleE $ map (MIL.VarE . varMil . classFieldVar) fieldNames)
+  fieldDeclsExpr <- codeGenFields conExpr tyFieldDecls
+  classMap <- getClassMap
+  let fieldDeclsExprWithSuper = case mSuperClassName of
+                                  Just superClassName ->
+                                    let superFieldDeclsExpr = classMap Map.! superClassName
+                                    in fieldDeclsExpr `replacesConstructorExprIn` superFieldDeclsExpr
+                                  Nothing -> fieldDeclsExpr
+  modifyClassMap (Map.insert className fieldDeclsExprWithSuper)
+  return fieldDeclsExprWithSuper
 
 -- | Takes an expression that will use a sequence of class field bind
 -- expressions at the end.
@@ -138,6 +174,13 @@ codeGenFields :: MIL.SrcExpr -> [TyFieldDecl] -> CodeGenM MIL.SrcExpr
 codeGenFields milBodyExpr tyFieldDecls =
   foldM (\e (FieldDecl _ tyDecl _) -> fst <$> codeGenDecl tyDecl classFieldVar pureSrcMonadMil (e, undefined))
     milBodyExpr (reverse tyFieldDecls)
+
+-- | First expression replaces a return expression (containing class data
+-- constructor) at the bottom of a bind sequence in the second expression.
+replacesConstructorExprIn :: MIL.SrcExpr -> MIL.SrcExpr -> MIL.SrcExpr
+e `replacesConstructorExprIn` (MIL.LetE vb bindExpr bodyExpr) =
+  MIL.LetE vb bindExpr (e `replacesConstructorExprIn` bodyExpr)
+e `replacesConstructorExprIn` (MIL.ReturnE {}) = e
 
 codeGenClassConstructor :: ClassName -> MIL.SrcFunDef
 codeGenClassConstructor className =
@@ -158,8 +201,8 @@ codeGenClassMethod (MethodDecl _ tyFunDef _) = codeGenFunDef tyFunDef
 codeGenFunDef :: TyFunDef -> CodeGenM MIL.SrcFunDef
 codeGenFunDef (FunDef _ srcFunName tyFunType tyStmts) = do
   let funName = getFunName srcFunName
-  funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv . getTypeEnv)
-  retType <- asks (ftiReturnType . getFunTypeInfo funName . getFunTypeEnv . getTypeEnv)
+  funType <- asks (ftiType . getFunTypeInfo funName . getFunTypeEnv)
+  retType <- asks (ftiReturnType . getFunTypeInfo funName . getFunTypeEnv)
   let isPure = isPureType $ unReturn retType
   let funMonad = if isPure
                    then pureSrcMonadMil
@@ -394,10 +437,10 @@ data VarCase
 getVarCase :: Var -> Type -> CodeGenM VarCase
 getVarCase var varType = do
   let funName = varToFunName var
-  isGlobalFun <- asks (isFunctionDefined funName . getFunTypeEnv . getTypeEnv)
+  isGlobalFun <- asks (isFunctionDefined funName . getFunTypeEnv)
   if isGlobalFun
     then do
-      arity <- asks (ftiArity . getFunTypeInfo funName . getFunTypeEnv . getTypeEnv)
+      arity <- asks (ftiArity . getFunTypeInfo funName . getFunTypeEnv)
       if arity == 0
         then return GlobalFunWithoutParams
         else return GlobalFunWithParams
@@ -548,36 +591,50 @@ classDataVarName = "self_data"
 
 newMilVar :: CodeGenM MIL.Var
 newMilVar = do
-  i <- fst <$> get
-  modify $ first (+1)
+  i <- getNameSupply
+  modifyNameSupply (+1)
   return $ MIL.Var ("var_" ++ show i)
 
 -- | Since VarMap is used for local variables, it needs to be reset between
 -- functions.
 resetVariablesMap :: CodeGenM ()
-resetVariablesMap = modify (second $ const Map.empty)
+resetVariablesMap = modifyVarMap (const Map.empty)
 
 nextVar :: Var -> CodeGenM MIL.Var
 nextVar var@(Var varStr) = do
-  varMap <- snd <$> get
+  varMap <- getVarMap
   let i' = case Map.lookup var varMap of
              Just i -> i + 1
              Nothing -> 1
-  modify (second $ Map.insert var i')
+  modifyVarMap (Map.insert var i')
   return $ MIL.Var (varStr ++ "_" ++ show i')
 
 currentVar :: Var -> CodeGenM MIL.Var
 currentVar var@(Var varStr) = do
-  varMap <- snd <$> get
+  varMap <- getVarMap
   return $ case Map.lookup var varMap of
              Just i -> MIL.Var (varStr ++ "_" ++ show i)
              Nothing -> varMil var
 
-getTypeEnv :: (TypeEnv, ClassTypes) -> TypeEnv
-getTypeEnv = fst
+-- * CodeGenM helpers
 
-getClassTypes :: (TypeEnv, ClassTypes) -> ClassTypes
-getClassTypes = snd
+getNameSupply :: CodeGenM NameSupply
+getNameSupply = (\(ns, _, _) -> ns) <$> get
+
+getVarMap :: CodeGenM VarMap
+getVarMap = (\(_, varMap, _) -> varMap) <$> get
+
+getClassMap :: CodeGenM ClassMap
+getClassMap = (\(_, _, classMap) -> classMap) <$> get
+
+modifyNameSupply :: (NameSupply -> NameSupply) -> CodeGenM ()
+modifyNameSupply f = modify (\(ns, varMap, classMap) -> (f ns, varMap, classMap))
+
+modifyVarMap :: (VarMap -> VarMap) -> CodeGenM ()
+modifyVarMap f = modify (\(ns, varMap, classMap) -> (ns, f varMap, classMap))
+
+modifyClassMap :: (ClassMap -> ClassMap) -> CodeGenM ()
+modifyClassMap f = modify (\(ns, varMap, classMap) -> (ns, varMap, f classMap))
 
 -- * Built-ins
 

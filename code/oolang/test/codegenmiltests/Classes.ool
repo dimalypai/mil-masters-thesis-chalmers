@@ -1,5 +1,6 @@
 def main : Unit =>
   objSuper : Super = Super.new;
+  objChild : Child = Child.new;
   unit;
 end
 
@@ -13,4 +14,6 @@ class Super =>
 
 end
 
+class Child < Super =>
+end
 
