@@ -190,8 +190,8 @@ seplist1(p, s) : seplist1rev(p, s) { reverse $1 }
 
 -- Helper for seplist1. Returns reversed list because of using left recursion
 -- for performace.
-seplist1rev(p, s) : p                  { [$1] }
-                  | seplist1(p, s) s p { $3 : $1 }
+seplist1rev(p, s) : p                     { [$1] }
+                  | seplist1rev(p, s) s p { $3 : $1 }
 
 {
 

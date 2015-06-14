@@ -1,5 +1,8 @@
 type T = MkT
 
+# Bug in the Parser
+type S = S1 | S2 | S3
+
 type Bool = True | False
 
 type Tree2 A B = Empty B
