@@ -74,19 +74,22 @@ spec =
                   []
                   [ FunDef (srcSp 1 1 3 3)
                       (FunName "f", srcSp 1 5 1 5)
-                      (FunType (srcSp 1 9 1 56)
+                      (FunType (srcSp 1 9 1 71)
                          [ VarBinder (srcSp 1 9 1 17) ()
                              (Var "x", srcSp 1 10 1 10)
                              (SrcTyInt $ srcSp 1 14 1 16)
                          , VarBinder (srcSp 1 22 1 31) ()
                              (Var "y", srcSp 1 23 1 23)
-                             (SrcTyBool $ srcSp 1 27 1 30)]
-                         (SrcTyArrow (srcSp 1 36 1 56)
-                            (SrcTyParen (srcSp 1 36 1 48)
-                               (SrcTyArrow (srcSp 1 37 1 47)
-                                 (SrcTyInt $ srcSp 1 37 1 39)
-                                 (SrcTyBool $ srcSp 1 44 1 47)))
-                            (SrcTyUnit $ srcSp 1 53 1 56)))
+                             (SrcTyBool $ srcSp 1 27 1 30)
+                         , VarBinder (srcSp 1 36 1 46) ()
+                             (Var "z", srcSp 1 37 1 37)
+                             (SrcTyFloat $ srcSp 1 41 1 45)]
+                         (SrcTyArrow (srcSp 1 51 1 71)
+                            (SrcTyParen (srcSp 1 51 1 63)
+                               (SrcTyArrow (srcSp 1 52 1 62)
+                                 (SrcTyInt $ srcSp 1 52 1 54)
+                                 (SrcTyBool $ srcSp 1 59 1 62)))
+                            (SrcTyUnit $ srcSp 1 68 1 71)))
                       [ExprS (srcSp 2 3 2 7)
                          (LitE (UnitLit (srcSp 2 3 2 6) ()))]
                   , FunDef (srcSp 5 1 7 3)
@@ -103,12 +106,12 @@ spec =
       let baseName = "ClassesAndFunctions"
           fileName = mkFileName baseName
           srcSp = mkSrcSpan fileName
-          ast = Program (srcSp 1 1 7 26)
-                  [ ClassDef (srcSp 1 1 1 18)
+          ast = Program (srcSp 1 1 7 23)
+                  [ ClassDef (srcSp 1 1 1 15)
                       (ClassName "Super", srcSp 1 7 1 11)
                       Nothing
                       []
-                  , ClassDef (srcSp 7 1 7 26)
+                  , ClassDef (srcSp 7 1 7 23)
                       (ClassName "Child", srcSp 7 7 7 11)
                       (Just (ClassName "Super", srcSp 7 15 7 19))
                       []]
@@ -410,9 +413,6 @@ spec =
       it "given a class definition with lower case name" $
         failureCase "ClassNameLower"
 
-      it "given a class definition with missing fat arrow" $
-        failureCase "ClassMissingFatArrow"
-
       it "given a class definition with missing end" $
         failureCase "ClassMissingEnd"
 
@@ -430,9 +430,6 @@ spec =
 
       it "given a function definition with missing type" $
         failureCase "MissingFunType"
-
-      it "given a function definition with missing fat arrow" $
-        failureCase "FunMissingFatArrow"
 
       it "given a function definition with missing end" $
         failureCase "FunMissingEnd"

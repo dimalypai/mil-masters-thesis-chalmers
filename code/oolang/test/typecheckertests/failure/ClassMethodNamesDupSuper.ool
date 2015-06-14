@@ -1,13 +1,13 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class Super =>
-  def method : Pure Unit =>
+class Super
+  def method : Pure Unit
     unit;
   end
 end
 
-class Child < Super =>
-  def method : Pure Int =>
+class Child < Super
+  def method : Pure Int
     1;
   end
 end

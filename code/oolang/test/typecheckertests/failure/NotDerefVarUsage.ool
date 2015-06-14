@@ -1,10 +1,10 @@
-def main : Unit =>
+def main : Unit
   objRefC : Ref C = ref C.new;
   objRefC.fun;
 end
 
-class C =>
-  def fun : Unit =>
+class C
+  def fun : Unit
     unit;
   end
 end

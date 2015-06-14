@@ -1,25 +1,25 @@
-def main : Unit =>
+def main : Unit
   intFun;
   intPureFun;
   unit;
 end
 
-def intFun : Int =>
+def intFun : Int
   intPureFun;
 end
 
-def intPureFun : Pure Int =>
+def intPureFun : Pure Int
   1;
 end
 
-def severalLitsImpure : Unit =>
+def severalLitsImpure : Unit
   0.01;
   true;
   "string";
   unit;
 end
 
-def severalLitsPure : Pure (Maybe Int) =>
+def severalLitsPure : Pure (Maybe Int)
   1;
   false;
   nothing [Maybe Int];

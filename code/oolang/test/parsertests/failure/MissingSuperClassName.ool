@@ -1,2 +1,2 @@
-class Circle < =>
+class Circle <
 end

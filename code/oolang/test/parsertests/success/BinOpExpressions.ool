@@ -1,4 +1,4 @@
-def fun : Unit =>
+def fun : Unit
   1 + 2 + (3 + 4) * 5 = 2 * 3 * 4;
   x ?? y ?? z;
 end

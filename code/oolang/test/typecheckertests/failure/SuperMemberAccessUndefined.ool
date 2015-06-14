@@ -1,9 +1,9 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class Super =>
+class Super
 end
 
-class Child < Super =>
+class Child < Super
   field : Int = super.member;
 end
 

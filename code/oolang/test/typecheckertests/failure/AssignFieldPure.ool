@@ -1,9 +1,9 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class C =>
+class C
   field : Mutable Int <- 1;
 
-  def method : Pure Unit =>
+  def method : Pure Unit
     self.field <- 2;
   end
 end

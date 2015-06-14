@@ -1,11 +1,11 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class C =>
-  def impure : Unit =>
+class C
+  def impure : Unit
     unit;
   end
 
-  def pure : Pure Unit =>
+  def pure : Pure Unit
     self.impure;
     unit;
   end

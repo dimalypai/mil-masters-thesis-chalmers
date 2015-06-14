@@ -1,4 +1,4 @@
-def main : Unit =>
+def main : Unit
   x : Mutable Int <- 1;
   x := 2;
 end

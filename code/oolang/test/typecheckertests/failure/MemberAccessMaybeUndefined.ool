@@ -1,8 +1,8 @@
-def main : Unit =>
+def main : Unit
   objC : Maybe C = just C.new;
   objC ? method;
 end
 
-class C =>
+class C
 end
 

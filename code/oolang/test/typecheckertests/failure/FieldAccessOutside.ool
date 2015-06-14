@@ -1,4 +1,4 @@
-def main : Unit =>
+def main : Unit
   # It is called `self` on purpose, since this could be used during the type
   # checking and relying only on this would be incorrect
   self : C = C.new;
@@ -7,7 +7,7 @@ def main : Unit =>
   self.field <- unit;
 end
 
-class C =>
+class C
   field : Mutable Unit <- unit;
 end
 

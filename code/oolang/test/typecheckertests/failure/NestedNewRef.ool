@@ -1,4 +1,4 @@
-def main : Unit =>
+def main : Unit
   !(!(ref (ref unit)));
 end
 

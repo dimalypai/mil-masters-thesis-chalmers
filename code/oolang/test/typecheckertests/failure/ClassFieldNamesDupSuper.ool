@@ -1,10 +1,10 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class Super =>
+class Super
   field : Int = 1;
 end
 
-class Child < Super =>
+class Child < Super
   field : Bool = true;
 end
 

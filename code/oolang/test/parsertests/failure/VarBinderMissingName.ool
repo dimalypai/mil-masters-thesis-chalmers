@@ -1,1 +1,1 @@
-def fun : {Int} -> Unit => unit; end
+def fun : {Int} => Unit unit; end

@@ -1,6 +1,6 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-def f : {a : (Pure Int)} -> Unit =>
+def f : {a : (Pure Int)} => Unit
   unit;
 end
 

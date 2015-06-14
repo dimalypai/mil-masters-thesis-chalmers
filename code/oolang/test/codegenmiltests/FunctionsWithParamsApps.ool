@@ -1,4 +1,4 @@
-def main : Unit =>
+def main : Unit
   intId;
   intId 1;
   intImpureId;
@@ -6,47 +6,47 @@ def main : Unit =>
   unit;
 end
 
-def intId : {a : Int} -> Pure Int =>
+def intId : {a : Int} => Pure Int
   a;
 end
 
-def intImpureId : {a : Int} -> Int =>
+def intImpureId : {a : Int} => Int
   a;
 end
 
-def pureFunParam : {f : Int -> Pure Int} -> Int -> Pure Int =>
+def pureFunParam : {f : Int -> Pure Int} => Int -> Pure Int
   f;
 end
 
-def pureFunParamPureOnTop : {f : Int -> Pure Int} -> Pure (Int -> Pure Int) =>
+def pureFunParamPureOnTop : {f : Int -> Pure Int} => Pure (Int -> Pure Int)
   f;
 end
 
-def impureFunParam : {f : Int -> Int} -> Int -> Int =>
+def impureFunParam : {f : Int -> Int} => Int -> Int
   f;
 end
 
-def pureFun : {a : Int} -> {b : Bool} -> Pure Unit =>
+def pureFun : {a : Int} -> {b : Bool} => Pure Unit
   unit;
 end
 
-def impureFun : {a : Float} -> {b : Float} -> Unit =>
+def impureFun : {a : Float} -> {b : Float} => Unit
   unit;
 end
 
-def partialPure : Pure (Bool -> Pure Unit) =>
+def partialPure : Pure (Bool -> Pure Unit)
   pureFun 1;
 end
 
-def partialImpure : Pure (Float -> Unit) =>
+def partialImpure : Pure (Float -> Unit)
   impureFun 0.01;
 end
 
-def fullPure : Pure Unit =>
+def fullPure : Pure Unit
   pureFun 1 true;
 end
 
-def fullPureAndImpure : Unit =>
+def fullPureAndImpure : Unit
   impureFun 0.01 0.02;
   pureFun 2 false;
 end

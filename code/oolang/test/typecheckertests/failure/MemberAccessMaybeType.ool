@@ -1,9 +1,9 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class C =>
+class C
   mSelf : Maybe C;
 
-  def method : Pure Unit =>
+  def method : Pure Unit
     self.mSelf.method;
   end
 end

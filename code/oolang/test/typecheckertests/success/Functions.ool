@@ -1,4 +1,4 @@
-def main : Unit =>
+def main : Unit
   s : String = readString;
   printString s;
   b : Bool = readBool;
@@ -12,128 +12,128 @@ def main : Unit =>
   unit;
 end
 
-class A => end
+class A end
 
-class B < A => end
+class B < A end
 
 # Class params, pure, int literal, parens
-def fun : {a : A} -> {b : A -> B} -> Pure Int =>
+def fun : {a : A} -> {b : A -> B} => Pure Int
   ((1));
 end
 
 # Param reference, pure, the same param name as in fun
-def paramRefPure : {a : Int} -> Pure Int =>
+def paramRefPure : {a : Int} => Pure Int
   a;
 end
 
 # Calling global function without params, impure
-def mainCall : Unit =>
+def mainCall : Unit
   main;
 end
 
 # Function for applications, pure
-def curryFun : {a : Int} -> {b : Float} -> Pure Unit =>
+def curryFun : {a : Int} -> {b : Float} => Pure Unit
   unit;
 end
 
 # Partial application of curryFun, pure
-def curryFunPartialApp : Pure (Float -> Pure Unit) =>
+def curryFunPartialApp : Pure (Float -> Pure Unit)
   curryFun 1;
 end
 
 # Final application of curryFun via curryFunPartialApp, pure
-def curryFunFinalApp : Pure Unit =>
+def curryFunFinalApp : Pure Unit
   curryFunPartialApp 0.01;
 end
 
 # Application of curryFun at once, nested pure application
 # Declared as impure, but it is pure
-def curryFunAtOnce : Unit =>
+def curryFunAtOnce : Unit
   curryFun (paramRefPure 1) 0.01;
 end
 
 # Pure function as parameter, pure
-def pureFunPureParam : {f : Int -> Pure (Float -> Pure Unit)} -> Pure Unit =>
+def pureFunPureParam : {f : Int -> Pure (Float -> Pure Unit)} => Pure Unit
   f 1 0.01;
 end
 
 # Regression. Impure return type (of Pure function)
-def impurelyReturnPureFun : {f : Int -> Pure Int} -> Int -> Pure Int =>
+def impurelyReturnPureFun : {f : Int -> Pure Int} => Int -> Pure Int
   main;
   f;
 end
 
 # Pure version of impurelyReturnPureFun.
-def purelyReturnPureFun : {f : Int -> Pure Int} -> Pure (Int -> Pure Int) =>
+def purelyReturnPureFun : {f : Int -> Pure Int} => Pure (Int -> Pure Int)
   f;
 end
 
 # Impure function as parameter, partial application as return value, impure
-def impureFunPartialAppReturn : {f : Int -> Float -> Unit} -> Float -> Unit =>
+def impureFunPartialAppReturn : {f : Int -> Float -> Unit} => Float -> Unit
   f 1;
 end
 
 # Partially pure function as parameter, partial application, pure
-def impureFunPartialAppPure : {f : Int -> Pure (Float -> Unit)} -> Pure Int =>
+def impureFunPartialAppPure : {f : Int -> Pure (Float -> Unit)} => Pure Int
   f 1;
   1;
 end
 
 # Impure function as parameter, full application, impure
-def impureFunParamFullApp : {f : Int -> Float -> Unit} -> Int =>
+def impureFunParamFullApp : {f : Int -> Float -> Unit} => Int
   f 1 0.01;
   1;
 end
 
 # Impure function to be referenced globally from pure
-def globalImpure : {a : Int} -> {b : Float} -> Unit =>
+def globalImpure : {a : Int} -> {b : Float} => Unit
   unit;
 end
 
 # Pure function that partially applies global impure function
 # and then calls pure function
-def purePartialAppGlobalImpure : Pure Unit =>
+def purePartialAppGlobalImpure : Pure Unit
   globalImpure 1;
   curryFunFinalApp;
 end
 
-def immutablePureDecl : Pure Unit =>
+def immutablePureDecl : Pure Unit
   x : Int = 1;
   y : Maybe Int;
   z : Int = x;
 end
 
-def mutablePureDecl : Pure Unit =>
+def mutablePureDecl : Pure Unit
   x : Mutable Int <- 1;
   y : Mutable (Maybe Int);
   z : Mutable Int <- x;
 end
 
-def immutableImpureDecl : Unit =>
+def immutableImpureDecl : Unit
   x : Unit = main;
 end
 
-def mutableImpureDecl : Unit =>
+def mutableImpureDecl : Unit
   x : Mutable Unit <- main;
 end
 
-def refPureDecl : Pure Unit =>
+def refPureDecl : Pure Unit
   x : Ref (Maybe Int);
 end
 
-def refImpureDecl : Unit =>
+def refImpureDecl : Unit
   x : Ref Int = ref 1;
 end
 
 # Mix of mutable and immutable declarations
-def mutableImmutableDecl : Pure Unit =>
+def mutableImmutableDecl : Pure Unit
   x : Int = 1;
   y : Mutable Int <- x;
   z : Int = y;
 end
 
 # Different pure assignments
-def pureAssign : Pure Unit =>
+def pureAssign : Pure Unit
   x : Mutable Int <- 0;
   x <- 1;
   y : Int = 2;
@@ -142,27 +142,27 @@ def pureAssign : Pure Unit =>
   x <- paramRefPure 1;
 end
 
-def impureAssign : Unit =>
+def impureAssign : Unit
   x : Mutable Unit <- unit;
   x <- main;
   y : Ref Int = ref 1;
   y := 2;
 end
 
-def nothingLit : Pure (Maybe Unit) =>
+def nothingLit : Pure (Maybe Unit)
   nothing [Maybe Unit];
 end
 
-def refFun : {r : Ref Int} -> Ref Unit =>
+def refFun : {r : Ref Int} => Ref Unit
   x : Int = !r;
   ref unit;
 end
 
-def justFun : Maybe Int =>
+def justFun : Maybe Int
   just 1;
 end
 
-def exceptionsFun : Pure Int =>
+def exceptionsFun : Pure Int
   x : Int = 1;
   try
     1;
@@ -175,7 +175,7 @@ def exceptionsFun : Pure Int =>
   end;
 end
 
-def exceptionsFunEmptyCatch : Pure Unit =>
+def exceptionsFunEmptyCatch : Pure Unit
   try
     unit;
   catch
@@ -184,15 +184,15 @@ def exceptionsFunEmptyCatch : Pure Unit =>
   end;
 end
 
-def arithOp : Int =>
+def arithOp : Int
   1 + 2 * arithOp;
 end
 
-def cmpOp : Pure Bool =>
+def cmpOp : Pure Bool
   unit = unit;
 end
 
-def nothingCoalesce : Int =>
+def nothingCoalesce : Int
   just 1 ?? 0;
 end
 

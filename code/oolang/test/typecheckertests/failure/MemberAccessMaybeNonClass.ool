@@ -1,4 +1,4 @@
-def main : Unit =>
+def main : Unit
   x : Maybe Int = just 1;
   x ? method;
 end

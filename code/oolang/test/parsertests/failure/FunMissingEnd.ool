@@ -1,5 +1,5 @@
-def fun : Unit => unit;
+def fun : Unit unit;
 
-def g : Int =>
+def g : Int
   unit;
 end

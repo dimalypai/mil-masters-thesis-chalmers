@@ -134,11 +134,11 @@ topdef : classdef { TopClassDef $1 }
 
 classdef :: { SrcClassDef }
 classdef
-  : class upperId opt(superclass) '=>' list(memberdecl) end
+  : class upperId opt(superclass) list(memberdecl) end
       {% withFileName $ \fileName ->
-           ClassDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $6] fileName)
+           ClassDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $5] fileName)
                     (ClassName $ getTokId $2, mkTokSrcSpan $2 fileName)
-                    $3 $5 }
+                    $3 $4 }
 
 memberdecl :: { SrcMemberDecl }
 memberdecl : decl ';' {% withFileName $ \fileName ->
@@ -151,11 +151,11 @@ memberdecl : decl ';' {% withFileName $ \fileName ->
 
 fundef :: { SrcFunDef }
 fundef
-  : def lowerId ':' funtype '=>' list1(stmt) end
+  : def lowerId ':' funtype list1(stmt) end
       {% withFileName $ \fileName ->
-           FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $7] fileName)
+           FunDef (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $6] fileName)
                   (FunName $ getTokId $2, mkTokSrcSpan $2 fileName)
-                  $4 $6 }
+                  $4 $5 }
 
 stmt :: { SrcStmt }
 stmt
@@ -338,7 +338,7 @@ funtype
 
 funargs :: { [SrcVarBinder] }
 funargs : {- empty -}                 { [] }
-        | seplist1(funarg, '->') '->' { $1 }
+        | seplist1(funarg, '->') '=>' { $1 }
 
 funarg :: { SrcVarBinder }
 funarg
@@ -381,8 +381,8 @@ seplist1(p, s) : seplist1rev(p, s) { reverse $1 }
 
 -- Helper for seplist1. Returns reversed list because of using left recursion
 -- for performace.
-seplist1rev(p, s) : p                  { [$1] }
-                  | seplist1(p, s) s p { $3 : $1 }
+seplist1rev(p, s) : p                     { [$1] }
+                  | seplist1rev(p, s) s p { $3 : $1 }
 
 {
 

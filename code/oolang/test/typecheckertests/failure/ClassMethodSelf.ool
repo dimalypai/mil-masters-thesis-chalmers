@@ -1,7 +1,7 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class C =>
-  def self : Pure Unit =>
+class C
+  def self : Pure Unit
     unit;
   end
 end

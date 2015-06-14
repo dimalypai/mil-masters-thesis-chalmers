@@ -1,4 +1,4 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class A < B => end
+class A < B end
 

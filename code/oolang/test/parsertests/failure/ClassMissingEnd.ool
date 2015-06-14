@@ -1,4 +1,4 @@
-class Shape =>
+class Shape
 
-class Circle =>
+class Circle
 end

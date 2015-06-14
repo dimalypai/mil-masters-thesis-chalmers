@@ -1,10 +1,10 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class Super =>
+class Super
 end
 
-class Child < Super =>
-  def method : Unit =>
+class Child < Super
+  def method : Unit
     super <- unit;
   end
 end

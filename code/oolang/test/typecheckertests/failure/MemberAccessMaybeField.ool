@@ -1,9 +1,9 @@
-def main : Unit =>
+def main : Unit
   objC : Maybe C = just C.new;
   objC ? field;
 end
 
-class C =>
+class C
   field : Int = 1;
 end
 

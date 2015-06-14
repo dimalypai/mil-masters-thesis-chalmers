@@ -1,4 +1,4 @@
-def main : Unit =>
+def main : Unit
   main unit;
 end
 

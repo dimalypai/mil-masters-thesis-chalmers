@@ -1,6 +1,6 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-def fun : {a : Ref Int} -> Pure Unit =>
+def fun : {a : Ref Int} => Pure Unit
   a := 2;
 end
 

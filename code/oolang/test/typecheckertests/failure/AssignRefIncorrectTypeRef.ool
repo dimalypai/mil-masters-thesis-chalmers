@@ -1,4 +1,4 @@
-def main : Unit =>
+def main : Unit
   x : Ref Int = ref 1;
   x := ref 2;
 end

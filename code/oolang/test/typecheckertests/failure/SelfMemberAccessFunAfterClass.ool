@@ -1,10 +1,10 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class C =>
+class C
   field : Int = 1;
 end
 
-def fun : Pure Int =>
+def fun : Pure Int
   self.field;
 end
 

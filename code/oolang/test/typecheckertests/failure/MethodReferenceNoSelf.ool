@@ -1,11 +1,11 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class C =>
-  def method : Pure Int =>
+class C
+  def method : Pure Int
     1;
   end
 
-  def methodCall : Pure Int =>
+  def methodCall : Pure Int
     method;
   end
 end

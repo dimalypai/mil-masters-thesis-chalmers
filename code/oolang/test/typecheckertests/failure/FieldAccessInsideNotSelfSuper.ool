@@ -2,12 +2,12 @@
 # There was a bug in type checking field access. It was relying only on being
 # inside of the class, not paying attention to `self` or `super`.
 
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class C =>
+class C
   field : Int = 1;
 
-  def method : Pure Int =>
+  def method : Pure Int
     c : C = C.new;
     c.field;
   end

@@ -1,9 +1,9 @@
-def main : Unit =>
+def main : Unit
   objA : A = B.new;
 end
 
-class A =>
+class A
 end
 
-class B =>
+class B
 end

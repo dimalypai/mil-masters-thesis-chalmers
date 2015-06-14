@@ -1,3 +1,3 @@
-fun : Unit =>
+fun : Unit
   unit;
 end

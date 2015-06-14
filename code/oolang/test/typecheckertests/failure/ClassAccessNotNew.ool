@@ -1,8 +1,8 @@
-def main : Unit =>
+def main : Unit
   C.old;
   unit;
 end
 
-class C =>
+class C
 end
 

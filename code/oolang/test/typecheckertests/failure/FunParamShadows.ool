@@ -1,6 +1,6 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-def fun : {main : Int} -> Unit =>
+def fun : {main : Int} => Unit
   unit;
 end
 

@@ -1,4 +1,4 @@
-def main : Unit =>
+def main : Unit
   # Subtyping
   objSuper : Super = GrandChild.new;
 
@@ -15,13 +15,13 @@ end
 
 # Object construction
 # Double method call
-def fun : Pure Int =>
+def fun : Pure Int
   objChild : Child = Child.new;
   objChild.getSuper.fun;
   1;
 end
 
-class C =>
+class C
   # Shadow global function
   main : Int = 1;
 
@@ -30,27 +30,27 @@ class C =>
 
   # Shadow global function
   # Member access with Mutable
-  def fun : Pure Int =>
+  def fun : Pure Int
     selfMutable : Mutable C <- self;
     selfMutable.pureMethod;
   end
 
   # Partial application of impure
   # Almost the same with Maybe (revealed a need for "maybe application")
-  def pureMethod : Pure Int =>
+  def pureMethod : Pure Int
     self.impureParamMethod 1;
     (just self) ? impureParamMethod;
     self.main;
   end
 
   # Partially applying impure method as return value, impure
-  def impurePartialMethod : Float -> Unit =>
+  def impurePartialMethod : Float -> Unit
     self.impureParamMethod 1;
   end
 
   # Fully applying impure method, impure
   # Mutual recursion
-  def impureMethod : Unit =>
+  def impureMethod : Unit
     self.impureParamMethod 1 0.01;
     unit;
   end
@@ -58,36 +58,36 @@ class C =>
   # Impure method with parameter
   # Calling impure method without parameters
   # Mutual recursion
-  def impureParamMethod : {a : Int} -> {b : Float} -> Unit =>
+  def impureParamMethod : {a : Int} -> {b : Float} => Unit
     self.impureMethod;
   end
 
   # Mutate class field, impure
-  def fieldMutate : Unit =>
+  def fieldMutate : Unit
     self.unitField <- unit;
   end
 
   # Mutate local variable, pure
-  def localMutate : Pure Unit =>
+  def localMutate : Pure Unit
     unitLocal : Mutable Unit <- unit;
     unitLocal <- unit;
   end
 end
 
 # The same field and method names as in C
-class Super =>
+class Super
   # Shadow global function
   main : Int = 1;
 
   unitField : Mutable Unit <- unit;
 
   # Shadow global function
-  def fun : Pure Unit =>
+  def fun : Pure Unit
     self.unitField;
   end
 end
 
-class Child < Super =>
+class Child < Super
   # Super reference
   super2 : Super = super;
 
@@ -95,26 +95,26 @@ class Child < Super =>
   superMethod : Unit = super.fun;
 
   # Method override, super class field
-  def fun : Pure Unit =>
+  def fun : Pure Unit
     super.fun;
     super.unitField;
     self.unitField;
   end
 
-  def getSuper : Pure Super =>
+  def getSuper : Pure Super
     self.super2;
   end
 
   # Mutate a field in the super class, impure
-  def superFieldMutate : Unit =>
+  def superFieldMutate : Unit
     super.unitField <- unit;
   end
 end
 
-class GrandChild < Child =>
+class GrandChild < Child
   fieldRef : Ref (Maybe Int);
 
-  def fieldRefAssign : Unit =>
+  def fieldRefAssign : Unit
     self.fieldRef := nothing [Maybe Int];
   end
 end

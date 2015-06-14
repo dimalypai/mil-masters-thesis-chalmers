@@ -1,6 +1,6 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class C =>
+class C
   field1 : Int = field2;
   field2 : Int = 1;
 end

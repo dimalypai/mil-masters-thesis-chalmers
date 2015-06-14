@@ -1,8 +1,8 @@
-class A < C => end
+class A < C end
 
-class B < A => end
+class B < A end
 
-class C < B => end
+class C < B end
 
-def main : Unit => unit; end
+def main : Unit unit; end
 

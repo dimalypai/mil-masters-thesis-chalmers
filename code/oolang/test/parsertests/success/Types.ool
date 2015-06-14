@@ -1,6 +1,6 @@
 def fun : (Int -> Int)
        -> Mutable (Maybe (Pure (Bool -> Bool)))
        -> Ref Bool
-       -> Ref (Maybe Bool -> Maybe Int) =>
+       -> Ref (Maybe Bool -> Maybe Int)
   unit;
 end

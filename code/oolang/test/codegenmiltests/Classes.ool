@@ -1,19 +1,19 @@
-def main : Unit =>
+def main : Unit
   objSuper : Super = Super.new;
   objChild : Child = Child.new;
   unit;
 end
 
-class Empty =>
+class Empty
 end
 
-class Super =>
+class Super
   superField : Int = 1;
   superField2 : Bool = true;
 
 
 end
 
-class Child < Super =>
+class Child < Super
 end
 

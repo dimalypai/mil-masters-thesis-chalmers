@@ -1,9 +1,9 @@
-class Shape =>
+class Shape
   x : Mutable Int;
 end
 
-class Circle < Shape =>
-  def area : Pure Int =>
+class Circle < Shape
+  def area : Pure Int
     1;
   end
 end

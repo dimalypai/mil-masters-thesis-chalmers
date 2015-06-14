@@ -1,4 +1,4 @@
-def fun : Unit =>
+def fun : Unit
   x : Mutable Int;
   y : Int = 1;
   z : Mutable Int <- 1;

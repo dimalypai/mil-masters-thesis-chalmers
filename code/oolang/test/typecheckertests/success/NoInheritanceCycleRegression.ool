@@ -3,16 +3,16 @@
 # three classes in the hierarchy. There was a tail call in the DFS so it was
 # not cleaning up the stack of vertices after that.
 
-def main : Unit =>
+def main : Unit
   unit;
 end
 
-class D =>
+class D
 end
 
-class B < D =>
+class B < D
 end
 
-class C < B =>
+class C < B
 end
 

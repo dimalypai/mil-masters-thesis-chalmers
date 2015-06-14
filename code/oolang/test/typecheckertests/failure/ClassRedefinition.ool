@@ -1,6 +1,6 @@
-class C => end
+class C end
 
-class C => end
+class C end
 
-def main : Unit => unit; end
+def main : Unit unit; end
 

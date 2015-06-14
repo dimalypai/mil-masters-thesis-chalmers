@@ -1,6 +1,6 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-def f : Unit =>
+def f : Unit
   a : (Mutable (Ref Int));
   unit;
 end

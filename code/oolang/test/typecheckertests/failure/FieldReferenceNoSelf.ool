@@ -1,9 +1,9 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class C =>
+class C
   field : Int = 1;
 
-  def method : Pure Int =>
+  def method : Pure Int
     field;
   end
 end

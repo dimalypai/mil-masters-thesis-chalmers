@@ -1,10 +1,10 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-def fun : {a : Int} -> Unit =>
+def fun : {a : Int} => Unit
   unit;
 end
 
-def fun2 : Unit =>
+def fun2 : Unit
   fun 0.01;
 end
 

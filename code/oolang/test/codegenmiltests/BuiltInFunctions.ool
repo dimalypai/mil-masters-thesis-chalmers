@@ -1,4 +1,4 @@
-def main : Unit =>
+def main : Unit
   s : String = readString;
   printString;
   printString s;

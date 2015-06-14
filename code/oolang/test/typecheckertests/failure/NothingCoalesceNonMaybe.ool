@@ -1,8 +1,8 @@
-def main : Unit =>
+def main : Unit
   unit;
 end
 
-def f : Int =>
+def f : Int
   1 ?? 0;
 end
 

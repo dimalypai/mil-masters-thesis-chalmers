@@ -1,11 +1,11 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class Super =>
+class Super
   field : Int = 1;
 end
 
-class Child < Super =>
-  def field : Pure Int =>
+class Child < Super
+  def field : Pure Int
     1;
   end
 end

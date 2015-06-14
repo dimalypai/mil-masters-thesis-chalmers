@@ -1,6 +1,6 @@
-def main : Unit => unit; end
+def main : Unit unit; end
 
-class C =>
+class C
   x : Ref Int <- 1;
 end
 
