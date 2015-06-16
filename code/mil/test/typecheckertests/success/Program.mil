@@ -4,6 +4,8 @@ type Pair A B = MkPair A B;
 
 type Impure A = MkImpure ((IO ::: NonTerm) A);
 
+type TypeWithTuple = MkTuple {Int, Bool};
+
 main : Unit = unit;
 
 conTFun : T = MkT;
@@ -57,6 +59,11 @@ conPat : {Int, Bool} =
 tuplePat : Int =
   case {True, 1} of
     | {b : Bool, i : Int} => i
+  end;
+
+conTuplePat : {Int, Bool} =
+  case MkTuple {1, True} of
+    | MkTuple (t : {Int, Bool}) => t
   end;
 
 defaultPat : Int =

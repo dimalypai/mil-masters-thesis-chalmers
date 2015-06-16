@@ -202,6 +202,7 @@ conFieldTypesFromType t typeArgs = init $ conFieldTypesFromType' t typeArgs
         conFieldTypesFromType' tyCon@(TyTypeCon {}) [] = [tyCon]
         conFieldTypesFromType' tyApp@(TyApp {}) [] = [tyApp]
         conFieldTypesFromType' tyVar@(TyVar {}) [] = [tyVar]
+        conFieldTypesFromType' tyTuple@(TyTuple {}) [] = [tyTuple]
         conFieldTypesFromType'          _ _ = error "conFieldTypesFromType: kind checking must have gone wrong"
 
 -- * Helpers for monadic types
