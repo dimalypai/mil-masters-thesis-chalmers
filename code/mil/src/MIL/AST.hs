@@ -247,6 +247,7 @@ getExprPrec ConNameE    {} = 6
 getExprPrec LetE        {} = 2
 getExprPrec ReturnE     {} = 2
 getExprPrec LiftE       {} = 2
+getExprPrec CaseE       {} = 2
 getExprPrec TupleE      {} = 6
 
 -- | Returns whether the first expression has a lower precedence than the
