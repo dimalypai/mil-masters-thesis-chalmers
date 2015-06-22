@@ -1,3 +1,5 @@
+{-# LANGUAGE ExistentialQuantification #-}
+
 -- | Module for type checking errors and their pretty printing.
 module OOLang.TypeChecker.TcError
   ( TcError(..)
@@ -46,8 +48,8 @@ data TcError =
   | MemberAlreadyDefined MemberName SrcSpan
   | MemberNotDefined MemberName ClassName SrcExpr
   | MethodNotDefined FunName ClassName SrcExpr
-  | NotObject SrcExpr Type
-  | MemberAccessWithMaybe SrcExpr Type
+  | forall t . NotObject (Expr t SrcSpan) Type
+  | forall t . MemberAccessWithMaybe (Expr t SrcSpan) Type
   | MemberAccessMaybeWithNonMaybe SrcExpr Type
   | ClassAccessNotNew SrcSpan
   | AssignToFunction SrcSpan

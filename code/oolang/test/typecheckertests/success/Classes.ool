@@ -1,4 +1,8 @@
 def main : Unit
+  # Method calls with arguments
+  objC : C = C.new;
+  objC.impureParamMethod 1 0.01;
+
   # Subtyping
   objSuper : Super = GrandChild.new;
 

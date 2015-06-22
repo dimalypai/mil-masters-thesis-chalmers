@@ -29,6 +29,7 @@ import OOLang.TypeChecker.TypeCheckM
 import OOLang.TypeChecker.TypeEnv
 import OOLang.TypeChecker.TcError
 import OOLang.TypeChecker.Helpers
+import OOLang.SrcSpan
 import OOLang.Utils
 
 -- | Main batch entry point to the TypeChecker.
@@ -651,14 +652,14 @@ typeOfLiteral (NothingLit _ _ st) = do
 -- 'TyClass' inside. Throws an error for Maybe (with a suggestion for using `?`
 -- member access) and all other types.
 -- Takes an expression for error reporting.
-tryGetClassName :: Type -> SrcExpr -> TypeCheckM ClassName
-tryGetClassName objType srcExpr =
+tryGetClassName :: Type -> Expr t SrcSpan -> TypeCheckM ClassName
+tryGetClassName objType expr =
   case objType of
     TyClass className -> return className
-    TyMutable mutUnderType -> tryGetClassName mutUnderType srcExpr
-    TyPure pureUnderType -> tryGetClassName pureUnderType srcExpr
-    TyMaybe {} -> throwError $ MemberAccessWithMaybe srcExpr objType
-    _ -> throwError $ NotObject srcExpr objType
+    TyMutable mutUnderType -> tryGetClassName mutUnderType expr
+    TyPure pureUnderType -> tryGetClassName pureUnderType expr
+    TyMaybe {} -> throwError $ MemberAccessWithMaybe expr objType
+    _ -> throwError $ NotObject expr objType
 
 -- * Binary operations type checking
 
@@ -719,9 +720,9 @@ tcApp tyExpr1 tyExpr2 mClassName =
                          let parametersLeft = arity - 1 /= 0
                          return (parametersLeft || isPureType retType))
                      (return $ isPureType resultType)
-                 MemberAccessE _ _ _ srcMemberName _ -> do
+                 MemberAccessE _ _ tyObjExpr srcMemberName _ -> do
                    let methodName = memberNameToFunName $ getMemberName srcMemberName
-                       className = fromJust mClassName  -- It must be supplied
+                   className <- tryGetClassName (getTypeOf tyObjExpr) tyObjExpr
                    ifM (isClassMethodDefinedM className methodName)
                      (do retType <- unReturn <$> (ftiReturnType <$> getClassMethodTypeInfoM className methodName)
                          arity <- ftiArity <$> getClassMethodTypeInfoM className methodName
