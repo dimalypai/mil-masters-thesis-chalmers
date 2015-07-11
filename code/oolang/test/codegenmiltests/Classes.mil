@@ -157,7 +157,8 @@ new_Empty : (Error Unit ::: NonTerm) {{}, {}} =
 
 class_Empty : {} -> (Error Unit ::: NonTerm) {{}, {}} =
   \(self_data : {}) ->
-    return [Error Unit ::: NonTerm] {self_data, {}};
+    let rec (self : {{}, {}}) <- {self_data, {}}
+    in return [Error Unit ::: NonTerm] self;
 
 new_Super_Data : (Error Unit ::: NonTerm) {Int, Bool} =
   let (self_superField : Int) <- return [Error Unit ::: NonTerm] 1
@@ -170,12 +171,24 @@ new_Super : (Error Unit ::: NonTerm) {{Int, Bool}, {Unit -> Unit -> (Error Unit 
 
 class_Super : {Int, Bool} -> (Error Unit ::: NonTerm) {{Int, Bool}, {Unit -> Unit -> (Error Unit ::: NonTerm) Int}} =
   \(self_data : {Int, Bool}) ->
-    return [Error Unit ::: NonTerm]
+    let rec (self : {{Int, Bool}, {Unit -> Unit -> (Error Unit ::: NonTerm) Int}}) <-
       { self_data
       , {\(lazy_ : Unit) ->
           \(u : Unit) ->
-            return [Error Unit ::: NonTerm] 1}
-      };
+            let (var_0 : Int) <- return [Error Unit ::: NonTerm] 1
+            in let (var_1 : {{Int, Bool}, {Unit -> Unit -> (Error Unit ::: NonTerm) Int}}) <- return [Error Unit ::: NonTerm] self
+               in case var_1 of
+                 | {var_2 : {Int, Bool}, var_3 : {Unit -> Unit -> (Error Unit ::: NonTerm) Int}} =>
+                     case var_2 of
+                       | {superField : Int, superField2 : Bool} =>
+                           case var_3 of
+                             | {method : Unit -> Unit -> (Error Unit ::: NonTerm) Int} => return [Error Unit ::: NonTerm] superField
+                           end
+                     end
+               end
+        }
+      }
+    in return [Error Unit ::: NonTerm] self;
 
 new_Child_Data : (Error Unit ::: NonTerm) {Int, Bool, Float} =
   let (self_superField : Int) <- return [Error Unit ::: NonTerm] 1
@@ -190,16 +203,17 @@ new_Child : (Error Unit ::: NonTerm) {{Int, Bool, Float}, {Unit -> Unit -> (Erro
 class_Child : {Int, Bool, Float} -> (Error Unit ::: NonTerm) {{Int, Bool, Float}, {Unit -> Unit -> (Error Unit ::: NonTerm) Int}} =
   \(self_data : {Int, Bool, Float}) ->
     let (super_ : {{Int, Bool}, {Unit -> Unit -> (Error Unit ::: NonTerm) Int}}) <- new_Super
-    in return [Error Unit ::: NonTerm]
-      case super_ of
-        | {super_data : {Int, Bool}, super_methods : {Unit -> Unit -> (Error Unit ::: NonTerm) Int}} =>
-            case super_methods of
-              | {super_method : Unit -> Unit -> (Error Unit ::: NonTerm) Int} =>
-                  { self_data
-                  , {super_method}
-                  }
-              end
-      end;
+    in let rec (self : {{Int, Bool, Float}, {Unit -> Unit -> (Error Unit ::: NonTerm) Int}}) <-
+         case super_ of
+           | {super_data : {Int, Bool}, super_methods : {Unit -> Unit -> (Error Unit ::: NonTerm) Int}} =>
+               case super_methods of
+                 | {super_method : Unit -> Unit -> (Error Unit ::: NonTerm) Int} =>
+                     { self_data
+                     , {super_method}
+                     }
+               end
+         end
+       in return [Error Unit ::: NonTerm] self;
 
 main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   let (objSuper : {{Int, Bool}, {Unit -> Unit -> (Error Unit ::: NonTerm) Int}}) <- new_Super

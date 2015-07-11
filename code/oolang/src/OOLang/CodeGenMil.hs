@@ -25,8 +25,8 @@ import OOLang.AST
 import OOLang.AST.TypeAnnotated
 import OOLang.AST.Helpers
 import OOLang.TypeChecker
-import OOLang.TypeChecker.TypeEnv hiding (getSuperClass, getClassMethodsAssoc)
-import qualified OOLang.TypeChecker.TypeEnv as TypeEnv (getSuperClass, getClassMethodsAssoc)
+import OOLang.TypeChecker.TypeEnv hiding (getSuperClass, getClassFieldsAssoc, getClassMethodsAssoc)
+import qualified OOLang.TypeChecker.TypeEnv as TypeEnv (getSuperClass, getClassFieldsAssoc, getClassMethodsAssoc)
 import OOLang.BuiltIn
 import OOLang.Utils
 import qualified MIL.AST as MIL
@@ -139,7 +139,7 @@ codeGenClassDataConstructor className mSuperClassName tyFieldDecls = do
 codeGenClassFieldDecls :: ClassName -> Maybe ClassName -> [TyFieldDecl] -> CodeGenM MIL.SrcExpr
 codeGenClassFieldDecls className mSuperClassName tyFieldDecls = do
   classTypeEnv <- asks getClassTypeEnv
-  let (fieldNames, _) = unzip (getClassFieldsAssoc className classTypeEnv)
+  let (fieldNames, _) = unzip (TypeEnv.getClassFieldsAssoc className classTypeEnv)
   let conExpr = MIL.ReturnE pureSrcMonadMil $
                   MIL.TupleE (map (MIL.VarE . varMil . classFieldVar) fieldNames)
   fieldDeclsExpr <- codeGenFields conExpr tyFieldDecls
@@ -210,18 +210,20 @@ codeGenClassFunDef className tyMethodDecls = do
       return $ MIL.FunDef (classDefNameMil className) classFunDefType $
         MIL.mkSrcLambda (MIL.Var classDataVarName) classFieldsType $
           MIL.mkSrcLet (MIL.Var superClassVarName) superClassTypeMil (MIL.VarE (MIL.funNameToVar $ classConstructorNameMil superClassName)) $
-            MIL.ReturnE pureSrcMonadMil $
+            MIL.mkSrcLetRec [(MIL.Var selfVarName, classTypeMil,
               MIL.CaseE (MIL.mkSrcVar superClassVarName)
                 [MIL.CaseAlt (MIL.TupleP [ MIL.VarBinder (MIL.Var superClassDataVarName, superClassFieldsType)
                                          , MIL.VarBinder (MIL.Var superClassMethodsVarName, superClassMethodsType)],
                    MIL.CaseE (MIL.mkSrcVar superClassMethodsVarName)
                      [MIL.CaseAlt (superClassMethodsPattern,
-                        MIL.TupleE [MIL.mkSrcVar classDataVarName, classMethodsExpr])])]
+                        MIL.TupleE [MIL.mkSrcVar classDataVarName, classMethodsExpr])])])]
+              (MIL.ReturnE pureSrcMonadMil (MIL.mkSrcVar selfVarName))
 
     Nothing ->
       return $ MIL.FunDef (classDefNameMil className) classFunDefType $
         MIL.mkSrcLambda (MIL.Var classDataVarName) classFieldsType $
-          MIL.ReturnE pureSrcMonadMil (MIL.TupleE [MIL.mkSrcVar classDataVarName, classMethodsExpr])
+          MIL.mkSrcLetRec [(MIL.Var selfVarName, classTypeMil, MIL.TupleE [MIL.mkSrcVar classDataVarName, classMethodsExpr])] $
+            MIL.ReturnE pureSrcMonadMil (MIL.mkSrcVar selfVarName)
 
 -- | Class method body expression generation is almost exactly the same as
 -- function code generation, but it gets one extra Unit parameter at the
@@ -393,7 +395,39 @@ codeGenExpr tyExpr funMonad =
           t <- funSrcTypeMil varType
           return (MIL.VarE milVar, t)
 
-    MemberAccessE {} -> undefined
+    MemberAccessE _ t tyObjExpr srcMemberName _ -> do
+      (objMilExpr, objMilExprType) <- codeGenExpr tyObjExpr funMonad
+      let memberMilVar = varMil $ memberNameToVar $ getMemberName srcMemberName
+
+      let TyClass className = getTypeOf tyObjExpr
+
+      fieldsType <- getClassFieldsType className
+      methodsType <- getClassMethodsType className
+
+      classMethods <- getClassMethodsAssoc className
+      methodsPattern <- MIL.TupleP <$> forM classMethods (\(methodName, methodType) -> do
+        methodSrcTypeMil <- methodSrcTypeMil $ ftiType methodType
+        return $ MIL.VarBinder (varMil (funNameToVar methodName), methodSrcTypeMil))
+
+      classFields <- getClassFieldsAssoc className
+      fieldsPattern <- MIL.TupleP <$> forM classFields (\(fieldName, fieldType) -> do
+        fieldSrcTypeMil <- srcTypeMil fieldType
+        return $ MIL.VarBinder (varMil fieldName, fieldSrcTypeMil))
+
+      t' <- srcTypeMil t
+      objExprMilVar <- newMilVar
+      fieldsMilVar <- newMilVar
+      methodsMilVar <- newMilVar
+      return $ ( MIL.mkSrcLet objExprMilVar (MIL.getSrcResultType objMilExprType) objMilExpr $
+                   MIL.CaseE (MIL.VarE objExprMilVar)
+                     [MIL.CaseAlt (MIL.TupleP [ MIL.VarBinder (fieldsMilVar, fieldsType)
+                                              , MIL.VarBinder (methodsMilVar, methodsType)],
+                        MIL.CaseE (MIL.VarE fieldsMilVar)
+                          [MIL.CaseAlt (fieldsPattern,
+                             MIL.CaseE (MIL.VarE methodsMilVar)
+                               [MIL.CaseAlt (methodsPattern,
+                                  MIL.ReturnE funMonad (MIL.VarE memberMilVar))])])]
+               , t')
 
     -- Only 'new'
     ClassAccessE _ t srcClassName _ -> do
@@ -581,7 +615,7 @@ srcTypeMil (TyRef t)       = MIL.SrcTyApp (MIL.mkSimpleSrcType "Ref") <$> srcTyp
 getClassFieldsType :: ClassName -> CodeGenM MIL.SrcType
 getClassFieldsType className = do
   classTypeEnv <- asks getClassTypeEnv
-  let (_, fieldTypes) = unzip (getClassFieldsAssoc className classTypeEnv)
+  let (_, fieldTypes) = unzip (TypeEnv.getClassFieldsAssoc className classTypeEnv)
   MIL.SrcTyTuple <$> mapM srcTypeMil fieldTypes
 
 getClassMethodsType :: ClassName -> CodeGenM MIL.SrcType
@@ -644,6 +678,9 @@ superMethodName (FunName funNameStr) = FunName ("super_" ++ funNameStr)
 classDataSuffix :: String
 classDataSuffix = "_Data"
 
+selfVarName :: String
+selfVarName = "self"
+
 classDataVarName :: String
 classDataVarName = "self_data"
 
@@ -699,6 +736,10 @@ getClassMap = (\(_, _, classMap) -> classMap) <$> get
 getSuperClass :: ClassName -> CodeGenM (Maybe ClassName)
 getSuperClass className =
   TypeEnv.getSuperClass className <$> asks getClassTypeEnv
+
+getClassFieldsAssoc :: ClassName -> CodeGenM [(Var, Type)]
+getClassFieldsAssoc className =
+  TypeEnv.getClassFieldsAssoc className <$> asks getClassTypeEnv
 
 getClassMethodsAssoc :: ClassName -> CodeGenM [(FunName, FunTypeInfo)]
 getClassMethodsAssoc className =

@@ -13,6 +13,7 @@ class Super
 
   def method : {u : Unit} => Pure Int
     1;
+    self.superField;
   end
 
 end
