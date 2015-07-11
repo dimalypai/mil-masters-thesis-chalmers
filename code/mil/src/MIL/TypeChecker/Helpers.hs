@@ -208,8 +208,9 @@ conFieldTypesFromType t typeArgs = init $ conFieldTypesFromType' t typeArgs
 -- * Helpers for monadic types
 
 -- | Checks if two types are compatible. For most types this simply means alpha
--- equivalence. For monadic types this means non-commutative monad
--- compatibility (mt1 is a prefix of mt2). (see 'isCompatibleMonadWith').
+-- equivalence. For some types it means subtyping. For monadic types this means
+-- non-commutative monad compatibility (mt1 is a prefix of mt2). (see
+-- 'isCompatibleMonadWith').
 --
 -- This operation is reflexive.
 -- This operation is *not* commutative.
@@ -218,7 +219,18 @@ isCompatibleWith (TyMonad mt1) (TyMonad mt2) =
   mt1 `isCompatibleMonadWithNotCommut` mt2
 isCompatibleWith (TyApp mt1@(TyMonad _) t1) (TyApp mt2@(TyMonad _) t2) =
   (mt1 `isCompatibleWith` mt2) && (t1 `alphaEq` t2)  -- TODO: t1 `isCompatibleWith` t2 ?
-isCompatibleWith t1 t2 = t1 `alphaEq` t2
+isCompatibleWith t1 t2 = t1 `isSubTypeOf` t2
+
+-- | Subtyping relation.
+-- For tuple types it is width and depth subtyping.
+-- All other types just use alpha equivalence.
+--
+-- This operation is reflexive.
+-- This operation is *not* commutative (for tuples).
+isSubTypeOf :: Type -> Type -> Bool
+isSubTypeOf (TyTuple elemTypes1) (TyTuple elemTypes2) =
+  length elemTypes1 >= length elemTypes2 && and (zipWith isSubTypeOf elemTypes1 elemTypes2)
+isSubTypeOf t1 t2 = t1 `alphaEq` t2
 
 -- | Not commutative version of 'isCompatibleMonadWith'.
 isCompatibleMonadWithNotCommut :: MonadType -> MonadType -> Bool

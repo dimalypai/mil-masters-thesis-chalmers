@@ -266,6 +266,31 @@ spec = do
           t2 = TyApp (TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad NonTerm))) boolType
       in (t1 `isCompatibleWith` t2) `shouldBe` not (t2 `isCompatibleWith` t1)
 
+  describe "isSubTypeOf" $ do
+    it "is reflexive" $
+      let t = TyTuple [boolType, intType]
+      in t `isSubTypeOf` t
+
+    it "is not commutative for tuples" $
+      let t1 = TyTuple [intType]
+          t2 = TyTuple [intType, boolType]
+      in (t1 `isSubTypeOf` t2) `shouldBe` not (t2 `isSubTypeOf` t1)
+
+    it "supports width subtyping for tuples" $
+      let t1 = TyTuple [intType, boolType]
+          t2 = TyTuple [intType]
+      in t1 `isSubTypeOf` t2
+
+    it "supports depth subtyping for tuples" $
+      let t1 = TyTuple [TyTuple [intType, boolType], boolType]
+          t2 = TyTuple [TyTuple [intType]]
+      in t1 `isSubTypeOf` t2
+
+    it "is alpha equivalence for types other than tuples" $
+      let t1 = TyForAll (TypeVar "A") (TyVar $ TypeVar "A")
+          t2 = TyForAll (TypeVar "B") (TyVar $ TypeVar "B")
+      in t1 `isSubTypeOf` t2
+
   describe "highestEffectMonadType" $ do
     it "returns the one which has more effects in the stack (both cons)" $
       let mt1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)

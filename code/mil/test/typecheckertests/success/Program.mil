@@ -39,6 +39,8 @@ appCon : Pair Int Bool = MkPair [Int] [Bool] 1 True;
 
 tup : {Int, {}, {Char}, Bool -> Float} = {1, {}, {'a'}, \(b : Bool) -> 0.01};
 
+subTypeTup : {{Int}} = {{1, True}, False};
+
 litPat : Unit =
   case 1 of
     | 0 => unit
