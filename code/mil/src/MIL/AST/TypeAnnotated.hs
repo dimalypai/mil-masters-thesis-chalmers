@@ -41,6 +41,7 @@ instance TypeAnnotated TyExpr where
     in TyApp (TyMonad $ highestEffectMonadType bindMonadType bodyMonadType) bodyResultType
   getTypeOf (ReturnE mt retExpr) = applyMonadType mt (getTypeOf retExpr)
   getTypeOf (LiftE expr _mt1 mt2) = applyMonadType mt2 (getMonadResultType $ getTypeOf expr)
+  getTypeOf (LetRecE _ bodyExpr) = getTypeOf bodyExpr
   getTypeOf (CaseE _scrutExpr caseAlts) = getTypeOf (head caseAlts)
   getTypeOf (TupleE elems) = TyTuple (map getTypeOf elems)
 

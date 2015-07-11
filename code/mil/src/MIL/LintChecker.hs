@@ -214,6 +214,32 @@ lcExpr expr =
       unless (mt1 `isMonadSuffixOf` mt2) $
         throwError $ IncorrectLifting mt1 mt2
 
+    LetRecE binders bodyExpr -> do
+      localTypeEnv <- foldM (\localTyEnv (varBinder, _) -> do
+        let var = getBinderVar varBinder
+            varType = getBinderType varBinder
+
+        isBound <- isVarBoundM var
+        -- It is important to check in both places, since localTyEnv is not
+        -- queried by 'isVarBoundM'.
+        when (isBound || isVarInLocalEnv var localTyEnv) $
+          throwError $ VarShadowing var
+
+        checkType varType
+
+        -- Extend local type environment with the variable introduced by the
+        -- binder.
+        -- This is safe, since we ensure above that all variable and function
+        -- names are distinct.
+        return $ addLocalVar var varType localTyEnv)
+          emptyLocalTypeEnv binders
+
+      forM_ binders (\(vb, bindExpr) -> do
+        locallyWithEnvM localTypeEnv (lcExpr bindExpr)
+        checkBinding bindExpr vb)
+
+      locallyWithEnvM localTypeEnv (lcExpr bodyExpr)
+
     CaseE scrutExpr caseAlts -> do
       lcExpr scrutExpr
       lcCaseAlts (getTypeOf scrutExpr) caseAlts

@@ -186,6 +186,18 @@ spec =
       it "given less effectful computation in let-body than in let-bind" $
         failureCase "MoreEffectsLetBody"
 
+      it "given a let rec that shadows existing function" $
+        failureCase "LetRecShadowsFun"
+
+      it "given a let rec with duplicated variables" $
+        failureCase "LetRecDuplicatedVars"
+
+      it "given a let rec with a type mismatch between variable binder and binder expression" $
+        failureCase "LetRecExprVarBinderTypeMismatch"
+
+      it "given a function body with let rec of incorrect type" $
+        failureCase "LetRecIncorrectType"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test.

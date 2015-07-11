@@ -226,6 +226,36 @@ tcExpr expr =
 
       return $ LiftE tyExpr mt1 mt2
 
+    LetRecE srcBinders srcBodyExpr -> do
+      (revTyVarBinders, localTypeEnv) <- foldM (\(revTyVBs, localTyEnv) (srcVarBinder, _) -> do
+        let var = getBinderVar srcVarBinder
+
+        isBound <- isVarBoundM var
+        -- It is important to check in both places, since localTyEnv is not
+        -- queried by 'isVarBoundM'.
+        when (isBound || isVarInLocalEnv var localTyEnv) $
+          throwError $ VarShadowing var
+
+        varType <- srcTypeToType (getBinderType srcVarBinder)
+        -- Extend local type environment with the variable introduced by the
+        -- binder.
+        -- This is safe, since we ensure above that all variable and function
+        -- names are distinct.
+        let tyVarBinder = VarBinder (var, varType)
+        return (tyVarBinder : revTyVBs, addLocalVar var varType localTyEnv))
+          ([], emptyLocalTypeEnv) srcBinders
+
+      let tyVarBinders = reverse revTyVarBinders
+
+      tyBinders <- forM (zip tyVarBinders srcBinders) (\(tyVB, (_, srcBindExpr)) -> do
+        tyBindExpr <- locallyWithEnvM localTypeEnv (tcExpr srcBindExpr)
+        checkBinding tyBindExpr tyVB
+        return (tyVB, tyBindExpr))
+
+      tyBodyExpr <- locallyWithEnvM localTypeEnv (tcExpr srcBodyExpr)
+
+      return $ LetRecE tyBinders tyBodyExpr
+
     CaseE srcScrutExpr srcCaseAlts -> do
       tyScrutExpr <- tcExpr srcScrutExpr
       tyCaseAlts <- tcCaseAlts (getTypeOf tyScrutExpr) srcCaseAlts

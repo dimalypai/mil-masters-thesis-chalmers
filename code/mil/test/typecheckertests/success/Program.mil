@@ -113,3 +113,12 @@ passIOComp : (IO ::: State) Int = takesMonadicComp (return [IO] 1);
 relaxedLift : (NonTerm ::: (IO ::: State)) Int =
   lift [IO ::: State => NonTerm ::: (IO ::: State)] return [IO] 1;
 
+letRec : Int =
+  let rec (x : Int) <- x
+  in x;
+
+multLetRec : {Int, Int} =
+  let rec (x : Int) <- y;
+          (y : Int) <- x
+  in {x, y};
+

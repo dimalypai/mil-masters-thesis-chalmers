@@ -1,0 +1,5 @@
+main : Unit =
+  let rec (x : Int) <- 1;
+          (x : Float) <- x
+  in unit;
+

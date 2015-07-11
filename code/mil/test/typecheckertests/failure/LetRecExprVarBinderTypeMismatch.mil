@@ -1,0 +1,4 @@
+main : Unit =
+  let rec (x : Int) <- True
+  in unit;
+

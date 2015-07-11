@@ -5,6 +5,7 @@ module MIL.TypeChecker.Common
   , checkMain
   , checkShadowing
   , isMonadicExpr
+  , checkBinding
   , checkMonadicBinding
   ) where
 
@@ -77,6 +78,14 @@ isMonadicExpr tyExpr =
     _ -> False
 
 -- | Checks that binder expression is type compatible with the binder.
+checkBinding :: TyExpr -> TyVarBinder -> TypeCheckM ()
+checkBinding tyBindExpr tyVarBinder = do
+  let bindExprType = getTypeOf tyBindExpr
+      varType = getBinderType tyVarBinder
+  unless (bindExprType `alphaEq` varType) $
+    throwError $ IncorrectExprType varType bindExprType tyBindExpr
+
+-- | Checks that monadic binder expression is type compatible with the binder.
 checkMonadicBinding :: TyExpr -> TyVarBinder -> TypeCheckM ()
 checkMonadicBinding tyBindExpr tyVarBinder = do
   let bindExprType = getTypeOf tyBindExpr
