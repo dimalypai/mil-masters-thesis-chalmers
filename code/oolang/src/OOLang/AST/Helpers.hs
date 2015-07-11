@@ -98,6 +98,9 @@ getInitOp = fst
 varToFunName :: Var -> FunName
 varToFunName (Var varName) = FunName varName
 
+funNameToVar :: FunName -> Var
+funNameToVar (FunName funName) = Var funName
+
 memberNameToVar :: MemberName -> Var
 memberNameToVar (MemberName nameStr) = Var nameStr
 

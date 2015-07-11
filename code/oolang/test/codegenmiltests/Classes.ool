@@ -11,6 +11,9 @@ class Super
   superField : Int = 1;
   superField2 : Bool = true;
 
+  def method : {u : Unit} => Pure Int
+    1;
+  end
 
 end
 
