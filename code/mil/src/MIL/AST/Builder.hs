@@ -24,6 +24,11 @@ mkSrcLet :: Var -> SrcType -> SrcExpr -> SrcExpr -> SrcExpr
 mkSrcLet var varType bindExpr bodyExpr =
   LetE (VarBinder (var, varType)) bindExpr bodyExpr
 
+mkSrcLetRec :: [(Var, SrcType, SrcExpr)] -> SrcExpr -> SrcExpr
+mkSrcLetRec binderTriples bodyExpr =
+    LetRecE (map mkBinder binderTriples) bodyExpr
+  where mkBinder (var, varType, bindExpr) = (VarBinder (var, varType), bindExpr)
+
 mkTypeVar :: String -> Type
 mkTypeVar = TyVar . TypeVar
 
