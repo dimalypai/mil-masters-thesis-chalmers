@@ -71,9 +71,8 @@ instance (PrettyVar v, Pretty mt, Pretty t) => Pretty (Expr v ct mt t) where
   prPrn (LetRecE varBinds e) =
     text "let rec" <+>
       (hsep $ punctuate semi $
-         map (\(varBind, bindE) -> prPrn varBind <+> text "<-" <+> prPrn bindE) varBinds) <+>
-      text "in" $+$
-      nest indLvl (prPrn e)
+         map (\(varBind, bindE) -> prPrn varBind <+> text "<-" $+$ nest indLvl (prPrn bindE)) varBinds) $+$
+      text "in" <+> prPrn e
   prPrn (CaseE e caseAlts) =
     text "case" <+> prPrn e <+> text "of" $+$
     nest indLvl (vsep $ map prPrn caseAlts) $+$
@@ -87,13 +86,14 @@ instance Pretty Literal where
   prPrn (CharLit c)   = quotes (char c)
 
 instance (PrettyVar v, Pretty mt, Pretty t) => Pretty (CaseAlt v ct mt t) where
-  prPrn (CaseAlt (pat, e)) = text "|" <+> prPrn pat <+> text "=>" <+> prPrn e
+  prPrn (CaseAlt (pat, e)) = text "|" <+> prPrn pat <+> text "=>" $+$ nest (2 * indLvl) (prPrn e)
 
 instance Pretty t => Pretty (Pattern t) where
   prPrn (LitP lit) = prPrn lit
   prPrn (VarP varBinder) = prPrn varBinder
   prPrn (ConP conName varBinders) = prPrn conName <+> hsep (map prPrn varBinders)
-  prPrn (TupleP varBinders) = braces (hsep $ punctuate comma $ map prPrn varBinders)
+  prPrn (TupleP varBinders) =
+    braces (hsep $ punctuate comma $ map (\(VarBinder (v, t)) -> prPrn v <+> colon <+> prPrn t) varBinders)
   prPrn DefaultP = text "_"
 
 instance Pretty SrcType where
