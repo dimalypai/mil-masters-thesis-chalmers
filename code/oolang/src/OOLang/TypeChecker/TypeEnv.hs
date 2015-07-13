@@ -222,7 +222,13 @@ getClassMethodType className methodName =
 -- are defined.
 getClassMethodTypeInfo :: ClassName -> FunName -> ClassTypeEnv -> FunTypeInfo
 getClassMethodTypeInfo className methodName classTypeEnv =
-  fromJust $ Map.lookup methodName (ctiClassMethods (fromJust $ Map.lookup className classTypeEnv))
+  let classTypeInfo = getClassTypeInfo className classTypeEnv
+      mMethodTypeInfo = Map.lookup methodName (ctiClassMethods classTypeInfo) in
+  case mMethodTypeInfo of
+    Just methodTypeInfo -> methodTypeInfo
+    Nothing ->
+      let mSuperClassName = getSuperClass className classTypeEnv
+      in getClassMethodTypeInfo (fromJust mSuperClassName) methodName classTypeEnv
 
 -- | Returns a super class of the given class if it has one.
 --

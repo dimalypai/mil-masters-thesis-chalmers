@@ -1,7 +1,13 @@
 def main : Unit
   objSuper : Super = Super.new;
   objChild : Child = Child.new;
+  fun objSuper;
+  fun objChild;
   unit;
+end
+
+def fun : {obj : Super} => Pure Int
+  1;
 end
 
 class Empty
@@ -20,5 +26,16 @@ end
 
 class Child < Super
   childField : Float = 0.01;
+
+  def method : {u : Unit} => Pure Int
+    self.childField;
+    2;
+  end
+
+  def childMethod : Pure Float
+    super.superField;
+    self.superField;
+    self.childField;
+  end
 end
 

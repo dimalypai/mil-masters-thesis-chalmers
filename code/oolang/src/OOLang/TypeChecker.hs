@@ -166,7 +166,13 @@ collectClassMethod className (MethodDecl _ (FunDef _ srcFunName srcFunType _) _)
     unlessM (isClassMethodOverrideM className methodName methodType) $
       throwError $ MemberAlreadyDefined memberName methodNameSrcSpan
 
-  addClassMethodM className methodName methodType retType arity srcFunType
+  -- This means that even if a method is overriden in the subclass, it will not
+  -- be present in the TypeEnv on its level, but rather only on the superclass
+  -- level (where it was originally defined). This may not be the best
+  -- solution, but it seems to cover the use cases so far. Another solution
+  -- could be to fix the querying of the TypeEnv to return only unique methods.
+  unlessM (isClassMethodOverrideM className methodName methodType) $
+    addClassMethodM className methodName methodType retType arity srcFunType
 
 -- | Checks if the function is already defined.
 -- Checks that the specified function type is correct (used types are defined).

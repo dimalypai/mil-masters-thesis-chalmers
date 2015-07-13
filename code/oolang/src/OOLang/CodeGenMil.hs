@@ -414,7 +414,7 @@ codeGenExpr tyExpr funMonad =
         fieldSrcTypeMil <- srcTypeMil fieldType
         return $ MIL.VarBinder (varMil fieldName, fieldSrcTypeMil))
 
-      t' <- srcTypeMil t
+      t' <- MIL.SrcTyApp funMonad <$> srcTypeMil t
       objExprMilVar <- newMilVar
       fieldsMilVar <- newMilVar
       methodsMilVar <- newMilVar
@@ -685,7 +685,7 @@ classDataVarName :: String
 classDataVarName = "self_data"
 
 superClassVarName :: String
-superClassVarName = "super_"
+superClassVarName = "super"
 
 superClassDataVarName :: String
 superClassDataVarName = "super_data"
