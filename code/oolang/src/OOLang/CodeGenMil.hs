@@ -25,8 +25,20 @@ import OOLang.AST
 import OOLang.AST.TypeAnnotated
 import OOLang.AST.Helpers
 import OOLang.TypeChecker
-import OOLang.TypeChecker.TypeEnv hiding (getSuperClass, getClassFieldsAssoc, getClassMethodsAssoc)
-import qualified OOLang.TypeChecker.TypeEnv as TypeEnv (getSuperClass, getClassFieldsAssoc, getClassMethodsAssoc)
+import OOLang.TypeChecker.TypeEnv hiding
+  ( getSuperClass
+  , getClassFieldsAssoc
+  , getClassMethodsAssoc
+  , isClassMethodDefined
+  , getClassMethodType
+  )
+import qualified OOLang.TypeChecker.TypeEnv as TypeEnv
+  ( getSuperClass
+  , getClassFieldsAssoc
+  , getClassMethodsAssoc
+  , isClassMethodDefined
+  , getClassMethodType
+  )
 import OOLang.BuiltIn
 import OOLang.Utils
 import qualified MIL.AST as MIL
@@ -397,7 +409,8 @@ codeGenExpr tyExpr funMonad =
 
     MemberAccessE _ t tyObjExpr srcMemberName _ -> do
       (objMilExpr, objMilExprType) <- codeGenExpr tyObjExpr funMonad
-      let memberMilVar = varMil $ memberNameToVar $ getMemberName srcMemberName
+      let memberName = getMemberName srcMemberName
+      let memberMilVar = varMil $ memberNameToVar memberName
 
       let TyClass className = getTypeOf tyObjExpr
 
@@ -414,10 +427,30 @@ codeGenExpr tyExpr funMonad =
         fieldSrcTypeMil <- srcTypeMil fieldType
         return $ MIL.VarBinder (varMil fieldName, fieldSrcTypeMil))
 
-      t' <- MIL.SrcTyApp funMonad <$> srcTypeMil t
       objExprMilVar <- newMilVar
       fieldsMilVar <- newMilVar
       methodsMilVar <- newMilVar
+      (memberExpr, memberAccessTypeMil) <-
+        ifM (isClassMethodDefined className (memberNameToFunName memberName))
+          (do methodArity <- getClassMethodArity className (memberNameToFunName memberName)
+              if methodArity == 0
+                then do memberTempMilVar <- newMilVar
+                        methodType <- getClassMethodType className (memberNameToFunName memberName)
+                        methodTypeMil <- srcTypeMil methodType
+                        -- Parameterless method types already have monad at the
+                        -- top. At this point we also want their effect to
+                        -- happen, so bind is needed.
+                        -- Lazy unit argument is supplied as well.
+                        t' <- srcTypeMil t
+                        return ( MIL.mkSrcLet memberTempMilVar (MIL.getSrcResultType methodTypeMil)
+                                    (MIL.AppE (MIL.VarE memberMilVar) (MIL.LitE MIL.UnitLit)) $
+                                    (MIL.ReturnE funMonad $ MIL.VarE memberTempMilVar)
+                               , t')
+                else do t' <- MIL.SrcTyApp funMonad <$> srcTypeMil t
+                        return ( MIL.ReturnE funMonad (MIL.AppE (MIL.VarE memberMilVar) (MIL.LitE MIL.UnitLit))
+                               , t'))
+          (do t' <- MIL.SrcTyApp funMonad <$> srcTypeMil t
+              return (MIL.ReturnE funMonad (MIL.VarE memberMilVar), t'))
       return $ ( MIL.mkSrcLet objExprMilVar (MIL.getSrcResultType objMilExprType) objMilExpr $
                    MIL.CaseE (MIL.VarE objExprMilVar)
                      [MIL.CaseAlt (MIL.TupleP [ MIL.VarBinder (fieldsMilVar, fieldsType)
@@ -425,9 +458,8 @@ codeGenExpr tyExpr funMonad =
                         MIL.CaseE (MIL.VarE fieldsMilVar)
                           [MIL.CaseAlt (fieldsPattern,
                              MIL.CaseE (MIL.VarE methodsMilVar)
-                               [MIL.CaseAlt (methodsPattern,
-                                  MIL.ReturnE funMonad (MIL.VarE memberMilVar))])])]
-               , t')
+                               [MIL.CaseAlt (methodsPattern, memberExpr)])])]
+               , memberAccessTypeMil)
 
     -- Only 'new'
     ClassAccessE _ t srcClassName _ -> do
@@ -744,6 +776,18 @@ getClassFieldsAssoc className =
 getClassMethodsAssoc :: ClassName -> CodeGenM [(FunName, FunTypeInfo)]
 getClassMethodsAssoc className =
   TypeEnv.getClassMethodsAssoc className <$> asks getClassTypeEnv
+
+isClassMethodDefined :: ClassName -> FunName -> CodeGenM Bool
+isClassMethodDefined className methodName =
+  TypeEnv.isClassMethodDefined className methodName <$> asks getClassTypeEnv
+
+getClassMethodArity :: ClassName -> FunName -> CodeGenM Int
+getClassMethodArity className methodName =
+  asks (ftiArity . getClassMethodTypeInfo className methodName . getClassTypeEnv)
+
+getClassMethodType :: ClassName -> FunName -> CodeGenM Type
+getClassMethodType className methodName =
+  asks (ftiType . getClassMethodTypeInfo className methodName . getClassTypeEnv)
 
 modifyNameSupply :: (NameSupply -> NameSupply) -> CodeGenM ()
 modifyNameSupply f = modify (\(ns, varMap, classMap) -> (f ns, varMap, classMap))
