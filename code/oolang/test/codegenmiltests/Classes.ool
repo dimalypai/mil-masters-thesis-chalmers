@@ -26,6 +26,18 @@ class Super
   def superMethod : Pure Bool
     self.superMethod;
   end
+
+  def methodWithLocalAssign : Pure Unit
+    x : Mutable Int <- 0;
+    x <- 1;
+    x <- 2;
+  end
+
+  def methodWithLocalAssign2 : Pure Unit
+    x : Mutable Bool <- true;
+    x <- false;
+    x <- true;
+  end
 end
 
 class Child < Super
