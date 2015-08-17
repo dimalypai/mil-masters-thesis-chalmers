@@ -2,6 +2,8 @@ def main : Unit
   a : Mutable Int <- 0;
   a <- 1;
   a;
+  a <- 2;
+  a;
   r : Ref Int = ref 0;
   r := 1;
   unit;

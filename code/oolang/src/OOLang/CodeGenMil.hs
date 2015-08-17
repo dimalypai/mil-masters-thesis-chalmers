@@ -288,8 +288,10 @@ codeGenStmts [DeclS _ decl] funMonad =
                                , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
 codeGenStmts [stmt@(AssignS {})] funMonad = do
   preCodeGenAssign stmt
-  codeGenAssign stmt funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
-                              , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
+  result <- codeGenAssign stmt funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
+                                        , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
+  postCodeGenAssign stmt
+  return result
 codeGenStmts [tyStmt] funMonad = codeGenStmt tyStmt funMonad
 
 codeGenStmts ((DeclS _ decl):tyStmts) funMonad = do
@@ -298,7 +300,9 @@ codeGenStmts ((DeclS _ decl):tyStmts) funMonad = do
 codeGenStmts (stmt@(AssignS {}):tyStmts) funMonad = do
   preCodeGenAssign stmt
   milBodyExprWithType <- codeGenStmts tyStmts funMonad
-  codeGenAssign stmt funMonad milBodyExprWithType
+  result <- codeGenAssign stmt funMonad milBodyExprWithType
+  postCodeGenAssign stmt
+  return result
 codeGenStmts (tyStmt:tyStmts) funMonad = do
   (milBindExpr, milBindExprType) <- codeGenStmt tyStmt funMonad
   var <- newMilVar
@@ -334,9 +338,18 @@ codeGenDecl (Decl _ tyVarBinder mTyInit _) varTransform funMonad (milBodyExpr, m
 -- | Fresh name for new assigned variable occurence should be generated
 -- separately, because of the order in which code is generated for statements.
 preCodeGenAssign :: TyStmt -> CodeGenM ()
-preCodeGenAssign (AssignS _ srcAssignOp tyExprLeft _ _) = do
+preCodeGenAssign (AssignS _ srcAssignOp tyExprLeft _ _) =
   case getAssignOp srcAssignOp of
     AssignMut -> preCodeGenAssignMut tyExprLeft
+    _ -> return ()
+
+-- | Because of the order in which code is generated for statements,
+-- there should be a post step to be able to fix the environment.
+-- See 'postCodeGenAssignMut'.
+postCodeGenAssign :: TyStmt -> CodeGenM ()
+postCodeGenAssign (AssignS _ srcAssignOp tyExprLeft _ _) =
+  case getAssignOp srcAssignOp of
+    AssignMut -> postCodeGenAssignMut tyExprLeft
     _ -> return ()
 
 -- | Code generation for assignments.
@@ -353,6 +366,13 @@ preCodeGenAssignMut :: TyExpr -> CodeGenM ()
 preCodeGenAssignMut tyExprLeft =
   case tyExprLeft of
     VarE _ _ var _ -> void $ nextVar var
+
+-- | Fresh name for new assigned variable occurence should be fixed
+-- back after the assignment statement code generation.
+postCodeGenAssignMut :: TyExpr -> CodeGenM ()
+postCodeGenAssignMut tyExprLeft =
+  case tyExprLeft of
+    VarE _ _ var _ -> void $ previousVar var
 
 codeGenAssignMut :: TyExpr -> TyExpr -> MIL.SrcType -> (MIL.SrcExpr, MIL.SrcType) -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenAssignMut tyExprLeft tyExprRight funMonad (milBodyExpr, milBodyExprType) =
@@ -744,6 +764,15 @@ nextVar var@(Var varStr) = do
   let i' = case Map.lookup var varMap of
              Just i -> i + 1
              Nothing -> 1
+  modifyVarMap (Map.insert var i')
+  return $ MIL.Var (varStr ++ "_" ++ show i')
+
+previousVar :: Var -> CodeGenM MIL.Var
+previousVar var@(Var varStr) = do
+  varMap <- getVarMap
+  let i' = case Map.lookup var varMap of
+             Just i -> i - 1
+             Nothing -> error "Cannot get previousVar"
   modifyVarMap (Map.insert var i')
   return $ MIL.Var (varStr ++ "_" ++ show i')
 

@@ -130,21 +130,27 @@ main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   in let (a_1 : Int) <-
        return [Error Unit ::: (NonTerm ::: (State ::: IO))]
          1
-     in let (var_0 : Int) <-
-          return [Error Unit ::: (NonTerm ::: (State ::: IO))]
-            a_1
-        in let (r : Ref Int) <-
-             let (var_3 : Int) <-
-               return [Error Unit ::: (NonTerm ::: (State ::: IO))]
-                 0
-             in lift [State => Error Unit ::: (NonTerm ::: State)] new_ref [Int] var_3
-           in let (var_2 : Unit) <-
-                let (var_1 : Int) <-
-                  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
-                    1
-                in lift [State => Error Unit ::: (NonTerm ::: State)] write_ref [Int] r var_1
-              in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
-                   unit;
+  in let (var_0 : Int) <-
+       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+         a_1
+  in let (a_2 : Int) <-
+       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+         2
+  in let (var_1 : Int) <-
+       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+         a_2
+  in let (r : Ref Int) <-
+       let (var_4 : Int) <-
+         return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+           0
+       in lift [State => Error Unit ::: (NonTerm ::: State)] new_ref [Int] var_4
+  in let (var_3 : Unit) <-
+       let (var_2 : Int) <-
+         return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+           1
+       in lift [State => Error Unit ::: (NonTerm ::: State)] write_ref [Int] r var_2
+  in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+       unit;
 
 f : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   let (a : Int) <-
@@ -163,7 +169,7 @@ g : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
   in let (a_1 : Int) <-
        return [Error Unit ::: (NonTerm ::: (State ::: IO))]
          5
-     in let (var_4 : Int) <-
+     in let (var_5 : Int) <-
           return [Error Unit ::: (NonTerm ::: (State ::: IO))]
             a_1
         in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
