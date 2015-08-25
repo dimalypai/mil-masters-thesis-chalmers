@@ -65,6 +65,7 @@ tokens :-
   return    { \p s -> (KW_Return,    posn p s) }
   static    { \p s -> (KW_Static,    posn p s) }
   then      { \p s -> (KW_Then,      posn p s) }
+  throw     { \p s -> (KW_Throw,     posn p s) }
   true      { \p s -> (KW_True,      posn p s) }
   try       { \p s -> (KW_Try,       posn p s) }
   unit      { \p s -> (KW_Unit,      posn p s) }
@@ -154,6 +155,7 @@ data Token =
   | KW_Return
   | KW_Static
   | KW_Then
+  | KW_Throw
   | KW_True
   | KW_Try
   | KW_Unit
@@ -237,6 +239,7 @@ instance Show Token where
   show KW_Return    = "return"
   show KW_Static    = "static"
   show KW_Then      = "then"
+  show KW_Throw     = "throw"
   show KW_True      = "true"
   show KW_Try       = "try"
   show KW_Unit      = "unit"

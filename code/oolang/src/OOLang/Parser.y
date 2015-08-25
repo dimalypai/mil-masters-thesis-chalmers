@@ -48,6 +48,7 @@ import OOLang.Parser.ParseError
   return    { $$@(KW_Return,    _) }
   static    { $$@(KW_Static,    _) }
   then      { $$@(KW_Then,      _) }
+  throw     { $$@(KW_Throw,     _) }
   true      { $$@(KW_True,      _) }
   try       { $$@(KW_Try,       _) }
   unit      { $$@(KW_Unit,      _) }
@@ -179,6 +180,9 @@ stmt
       {% withFileName $ \fileName ->
            WhileS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $6] fileName)
                   $2 $4 }
+  | throw ';'
+      {% withFileName $ \fileName ->
+           ThrowS (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $2] fileName) }
   | try list1(stmt) catch list(stmt) finally list(stmt) end ';'
       {% withFileName $ \fileName ->
            TryS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $8] fileName)

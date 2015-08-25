@@ -15,7 +15,9 @@ instance TypeAnnotated Stmt where
   getTypeOf (ExprS _ e) = getTypeOf e
   getTypeOf (AssignS {}) = TyUnit
   -- Type of try block should be the same as the type of catch block.
+  -- finally does not return a value, so it's type is not considered.
   getTypeOf (TryS _ tryStmts _ _) = getTypeOf $ last tryStmts
+  getTypeOf (ThrowS _) = TyUnit
 
 instance TypeAnnotated Expr where
   getTypeOf (LitE lit) = getTypeOf lit

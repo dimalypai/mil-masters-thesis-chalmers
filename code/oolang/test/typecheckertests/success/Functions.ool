@@ -177,7 +177,7 @@ end
 
 def exceptionsFunEmptyCatch : Pure Unit
   try
-    unit;
+    throw;
   catch
   finally
     1;

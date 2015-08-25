@@ -248,8 +248,7 @@ spec =
                          (LitE (BoolLit (srcSp 6 9 6 12) () True))
                          []
                      , TryS (srcSp 8 3 13 6)
-                         [ExprS (srcSp 9 5 9 9)
-                            (LitE $ UnitLit (srcSp 9 5 9 8) ())]
+                         [ThrowS (srcSp 9 5 9 10)]
                          [ExprS (srcSp 11 5 11 6)
                             (LitE $ IntLit (srcSp 11 5 11 5) () 1)]
                          []]]

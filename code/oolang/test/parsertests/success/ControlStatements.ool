@@ -6,7 +6,7 @@ def fun : Unit
   while true do
   end;
   try
-    unit;
+    throw;
   catch
     1;
   finally
