@@ -18,7 +18,7 @@ instance PureAnnotated Stmt where
     and (map getPurityOf tryStmts ++
          map getPurityOf catchStmts ++
          map getPurityOf finallyStmts)
-  getPurityOf (ThrowS _) = True
+  getPurityOf (ThrowS {}) = True
 
 instance PureAnnotated Expr where
   getPurityOf (LitE {}) = True

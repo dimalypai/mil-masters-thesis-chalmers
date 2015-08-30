@@ -167,6 +167,7 @@ def exceptionsFun : Pure Int
   try
     1;
     y : Int = 2;
+    throw [Int];
     x;
   catch
     y : Int = 3;
@@ -177,7 +178,7 @@ end
 
 def exceptionsFunEmptyCatch : Pure Unit
   try
-    throw;
+    throw [Unit];
   catch
   finally
     1;

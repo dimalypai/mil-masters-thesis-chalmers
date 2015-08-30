@@ -1,0 +1,2 @@
+OOLang type checking error at ThrowIncorrectType.ool:5,5-5,9:
+  Catch block has to return a value of type 'Int', but it returns a value of type 'Unit'

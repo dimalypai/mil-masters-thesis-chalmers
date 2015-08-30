@@ -180,9 +180,9 @@ stmt
       {% withFileName $ \fileName ->
            WhileS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $6] fileName)
                   $2 $4 }
-  | throw ';'
+  | throw '[' type ']' ';'
       {% withFileName $ \fileName ->
-           ThrowS (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $2] fileName) }
+           ThrowS (combineSrcSpans [getSrcSpan $1, getTokSrcSpan $5] fileName) () $3 }
   | try list1(stmt) catch list(stmt) finally list(stmt) end ';'
       {% withFileName $ \fileName ->
            TryS (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $8] fileName)

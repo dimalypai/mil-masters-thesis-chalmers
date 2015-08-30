@@ -17,7 +17,7 @@ instance TypeAnnotated Stmt where
   -- Type of try block should be the same as the type of catch block.
   -- finally does not return a value, so it's type is not considered.
   getTypeOf (TryS _ tryStmts _ _) = getTypeOf $ last tryStmts
-  getTypeOf (ThrowS _) = TyUnit
+  getTypeOf (ThrowS _ t _) = t
 
 instance TypeAnnotated Expr where
   getTypeOf (LitE lit) = getTypeOf lit

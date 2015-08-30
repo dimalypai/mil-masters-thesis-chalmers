@@ -1,0 +1,10 @@
+def main : Unit
+  try
+    throw [Int];
+  catch
+    unit;
+  finally
+    1;
+  end;
+end
+

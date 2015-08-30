@@ -117,7 +117,7 @@ data Stmt t s = DeclS s (Declaration t s)
               | WhileS s (Expr t s) [Stmt t s]
               | WhenS s (Expr t s) [Stmt t s] [Stmt t s]
               | ReturnS s (Expr t s)
-              | ThrowS s
+              | ThrowS s t (TypeS s)
                 -- | First list of statements is not empty.
               | TryS s [Stmt t s] [Stmt t s] [Stmt t s]
   deriving Show

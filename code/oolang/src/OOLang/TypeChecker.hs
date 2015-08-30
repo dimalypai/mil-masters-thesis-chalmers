@@ -450,7 +450,9 @@ tcStmt mClassName srcStmt =
       let exprRightPure = getPurityOf tyExprRight
       return $ AssignS s srcAssignOp tyExprLeft tyExprRight (assignPurity && exprRightPure)
 
-    ThrowS s -> return $ ThrowS s
+    ThrowS s _ srcType -> do
+      t <- srcTypeToType srcType
+      return $ ThrowS s t srcType
 
     TryS s srcTryStmts srcCatchStmts srcFinallyStmts -> do
       tyTryStmts <- locally $ mapM (tcStmt mClassName) srcTryStmts

@@ -24,6 +24,8 @@ instance SrcAnnotated (Stmt a) where
   ann (DeclS s _) = s
   ann (ExprS s _) = s
   ann (AssignS s _ _ _ _) = s
+  ann (TryS s _ _ _) = s
+  ann (ThrowS s _ _) = s
 
 instance SrcAnnotated (Expr a) where
   ann (LitE lit) = ann lit

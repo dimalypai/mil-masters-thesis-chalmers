@@ -382,6 +382,9 @@ spec =
       it "given an incorrect return type in catch block" $
         failureCase "CatchIncorrectType"
 
+      it "given an incorrect type of throw statement" $
+        failureCase "ThrowIncorrectType"
+
       it "given a catch block usage of a variable defined inside try block" $
         failureCase "TryVarUsageCatch"
 
