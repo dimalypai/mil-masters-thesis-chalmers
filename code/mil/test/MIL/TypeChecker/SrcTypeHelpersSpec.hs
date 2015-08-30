@@ -204,26 +204,26 @@ spec = do
     it "transforms a type variable correctly" $
       let srcType = SrcTyTypeCon (TypeName "A")
           expT = mkTypeVar "A" in
-      fst <$> runTypeCheckM (srcTypeToTypeWithTypeVars (Set.fromList [TypeVar "A"]) srcType) initTypeEnv
+      fst <$> runTypeCheckM (srcTypeToTypeWithTypeVars (Set.fromList [TypeVar "A"]) srcType) (initTypeEnv defaultMonadError)
         `shouldBe` Right expT
 
   describe "srcTypeToTypeWithTypeVarsOfKind" $ do
     it "performs kind checking for function type" $
       let srcType = SrcTyArrow (SrcTyTypeCon $ TypeName "Unit") (SrcTyTypeCon $ TypeName "Bool")
           tcError = SrcTypeIncorrectKind srcType StarK (mkKind 1) in
-      fst <$> runTypeCheckM (srcTypeToTypeWithTypeVarsOfKind Set.empty (mkKind 1) srcType) initTypeEnv
+      fst <$> runTypeCheckM (srcTypeToTypeWithTypeVarsOfKind Set.empty (mkKind 1) srcType) (initTypeEnv defaultMonadError)
         `shouldBe` Left tcError
 
     it "performs kind checking for forall type" $
       let srcType = SrcTyForAll (TypeVar "A") (SrcTyTypeCon $ TypeName "Id")
           t = TyForAll (TypeVar "A") (TyMonad $ MTyMonad (SinMonad Id)) in
-      fst <$> runTypeCheckM (srcTypeToTypeWithTypeVarsOfKind Set.empty (mkKind 1) srcType) initTypeEnv
+      fst <$> runTypeCheckM (srcTypeToTypeWithTypeVarsOfKind Set.empty (mkKind 1) srcType) (initTypeEnv defaultMonadError)
         `shouldBe` Right t
 
     it "performs kind checking for tuple type" $
       let srcType = SrcTyTuple [SrcTyTypeCon (TypeName "Unit")]
           tcError = SrcTypeIncorrectKind srcType StarK (mkKind 1) in
-      fst <$> runTypeCheckM (srcTypeToTypeWithTypeVarsOfKind Set.empty (mkKind 1) srcType) initTypeEnv
+      fst <$> runTypeCheckM (srcTypeToTypeWithTypeVarsOfKind Set.empty (mkKind 1) srcType) (initTypeEnv defaultMonadError)
         `shouldBe` Left tcError
 
 -- * Infrastructure
@@ -233,7 +233,7 @@ successCase = successCaseWithSetup (return ())
 
 successCaseWithSetup :: TypeCheckM () -> SrcType -> Type -> IO ()
 successCaseWithSetup setup srcType expT =
-  fst <$> runTypeCheckM (setup >> srcTypeToType srcType) initTypeEnv
+  fst <$> runTypeCheckM (setup >> srcTypeToType srcType) (initTypeEnv defaultMonadError)
     `shouldBe` Right expT
 
 failureCase :: SrcType -> TcError -> IO ()
@@ -241,6 +241,6 @@ failureCase = failureCaseWithSetup (return ())
 
 failureCaseWithSetup :: TypeCheckM () -> SrcType -> TcError -> IO ()
 failureCaseWithSetup setup srcType tcError =
-  fst <$> runTypeCheckM (setup >> srcTypeToType srcType) initTypeEnv
+  fst <$> runTypeCheckM (setup >> srcTypeToType srcType) (initTypeEnv defaultMonadError)
     `shouldBe` Left tcError
 

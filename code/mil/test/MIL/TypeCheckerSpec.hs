@@ -6,6 +6,7 @@ import System.FilePath ((</>), (<.>))
 import Control.Monad (liftM2)
 import Control.Applicative ((<$>))
 
+import MIL.BuiltIn
 import MIL.Parser
 import MIL.TypeChecker
 import MIL.TestUtils
@@ -206,7 +207,7 @@ successCase :: String -> IO ()
 successCase baseName = do
   input <- successRead baseName
   let srcProgram = parseMil input
-  case typeCheck srcProgram of
+  case typeCheck srcProgram defaultMonadError of
     Right (tyProgram, _) -> True `shouldBe` True
     Left err -> error $ prPrint err
 
@@ -220,7 +221,7 @@ failureCase :: String -> IO ()
 failureCase baseName = do
   (input, errMsg) <- failureRead baseName
   let srcProgram = parseMil input
-  let Left err = typeCheck srcProgram
+  let Left err = typeCheck srcProgram defaultMonadError
   prPrint err `shouldBe` errMsg
 
 -- | Takes a file base name and reads a source program and expected error

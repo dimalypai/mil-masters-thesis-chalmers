@@ -26,8 +26,8 @@ import MIL.TypeChecker.AlphaEq
 import MIL.Utils
 
 -- | Main entry point to the TypeChecker.
-typeCheck :: SrcProgram -> Either TcError (TyProgram, TypeEnv)
-typeCheck srcProgram = runTypeCheckM (tcProgram srcProgram) initTypeEnv
+typeCheck :: SrcProgram -> (Type -> MonadType) -> Either TcError (TyProgram, TypeEnv)
+typeCheck srcProgram monadError = runTypeCheckM (tcProgram srcProgram) (initTypeEnv monadError)
 
 -- | Entry point into the type checking of the program.
 tcProgram :: SrcProgram -> TypeCheckM TyProgram

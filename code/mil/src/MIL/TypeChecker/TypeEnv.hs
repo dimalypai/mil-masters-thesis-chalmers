@@ -61,10 +61,11 @@ mkTypeEnv dataTypeEnv dataConTypeEnv funTypeEnv =
   TypeEnv (dataTypeEnv, dataConTypeEnv, funTypeEnv)
 
 -- | Initial type environment.
-initTypeEnv :: TypeEnv
-initTypeEnv = mkTypeEnv (Map.fromList $ map (second builtInDataTypeInfo) builtInDataTypes)
-                        (Map.fromList $ map (second $ uncurry DataConTypeInfo) builtInDataCons)
-                        (Map.fromList builtInFunctions)
+initTypeEnv :: (Type -> MonadType) -> TypeEnv
+initTypeEnv monadError =
+  mkTypeEnv (Map.fromList $ map (second builtInDataTypeInfo) builtInDataTypes)
+    (Map.fromList $ map (second $ uncurry DataConTypeInfo) builtInDataCons)
+    (Map.fromList $ builtInFunctions monadError)
 
 -- * Data type environment
 
