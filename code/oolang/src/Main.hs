@@ -155,7 +155,7 @@ readProgram = readProgram' 1 []
 -- Returns a typed MIL program in the case of success.
 typeCheckMil :: MIL.SrcProgram -> String -> IO (Maybe MIL.TyProgram)
 typeCheckMil srcMilProgram phase =
-  case MIL.typeCheck srcMilProgram monadError of
+  case MIL.typeCheck srcMilProgram of
     Left milTcErr -> do
       putStrLn (phase ++ ":")
       putStrLn (MIL.prPrint milTcErr)
@@ -166,7 +166,7 @@ typeCheckMil srcMilProgram phase =
 -- Takes a string for a phase to improve error message.
 lintCheckMil :: MIL.TyProgram -> String -> IO ()
 lintCheckMil tyMilProgram phase =
-  case MIL.lintCheck tyMilProgram monadError of
+  case MIL.lintCheck tyMilProgram of
     Left milTcErr -> do
       putStrLn (phase ++ ":")
       putStrLn (MIL.prPrint milTcErr)

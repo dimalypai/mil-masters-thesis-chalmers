@@ -73,18 +73,12 @@ stateType :: Type -> Type
 stateType t = TyApp (TyMonad $ MTyMonad $ SinMonad State) t
 
 errorType :: Type -> Type -> Type
-errorType = errorTypeParam defaultMonadError
-
-errorTypeParam :: (Type -> MonadType) -> Type -> Type -> Type
-errorTypeParam monadError et at = TyApp (TyMonad $ monadError et) at
-
-defaultMonadError :: Type -> MonadType
-defaultMonadError = MTyMonad . SinMonadApp (SinMonad Error)
+errorType et at = TyApp (TyMonad $ MTyMonad $ SinMonadApp (SinMonad Error) et) at
 
 -- * Built-in functions
 
-builtInFunctions :: (Type -> MonadType) -> [(FunName, Type)]
-builtInFunctions monadError =
+builtInFunctions :: [(FunName, Type)]
+builtInFunctions =
   [
   -- IO functions
     (FunName "print_char", TyArrow charType   (ioType unitType))
@@ -117,4 +111,9 @@ builtInFunctions monadError =
   , (FunName "eq_float", TyArrow floatType (TyArrow floatType boolType))
   , (FunName "eq_char",  TyArrow charType (TyArrow charType boolType))
   ]
+
+-- Unsafe. Make sure that there exists such a built-in function.
+getBuiltInFunctionType :: FunName -> Type
+getBuiltInFunctionType funName =
+  fromJust $ lookup funName builtInFunctions
 

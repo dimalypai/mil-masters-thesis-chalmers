@@ -9,7 +9,6 @@
 -- subexpressions and introduce sequencing.
 module FunLang.CodeGenMil
   ( codeGen
-  , monadError
   ) where
 
 import Control.Monad.Reader
@@ -497,12 +496,6 @@ ioSrcMonadMil =
     MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
       MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "NonTerm") $
         (MIL.mkSimpleSrcType "IO")
-
-monadError :: MIL.Type -> MIL.MonadType
-monadError et =
-  MIL.MTyMonadCons (MIL.SinMonad MIL.State) $
-    MIL.MTyMonadCons (MIL.SinMonadApp (MIL.SinMonad MIL.Error) et) $
-      MIL.MTyMonad (MIL.SinMonad MIL.NonTerm)
 
 exceptionSrcType :: MIL.SrcType
 exceptionSrcType = MIL.mkSimpleSrcType "Unit"

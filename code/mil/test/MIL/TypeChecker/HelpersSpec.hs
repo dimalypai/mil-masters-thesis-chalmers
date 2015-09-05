@@ -155,25 +155,25 @@ spec = do
   describe "checkTypeWithTypeVars" $ do
     it "checks a type variable" $
       let t = mkTypeVar "A" in
-      fst <$> runTypeCheckM (checkTypeWithTypeVars (Set.fromList [TypeVar "A"]) t) (initTypeEnv defaultMonadError)
+      fst <$> runTypeCheckM (checkTypeWithTypeVars (Set.fromList [TypeVar "A"]) t) initTypeEnv
         `shouldBe` Right ()
 
   describe "checkTypeWithTypeVarsOfKind" $ do
     it "performs kind checking for function type" $
       let t = TyArrow unitType boolType
           tcError = TypeIncorrectKind t StarK (mkKind 1) in
-      fst <$> runTypeCheckM (checkTypeWithTypeVarsOfKind Set.empty (mkKind 1) t) (initTypeEnv defaultMonadError)
+      fst <$> runTypeCheckM (checkTypeWithTypeVarsOfKind Set.empty (mkKind 1) t) initTypeEnv
         `shouldBe` Left tcError
 
     it "performs kind checking for forall type" $
       let t = TyForAll (TypeVar "A") (TyMonad $ MTyMonad (SinMonad Id)) in
-      fst <$> runTypeCheckM (checkTypeWithTypeVarsOfKind Set.empty (mkKind 1) t) (initTypeEnv defaultMonadError)
+      fst <$> runTypeCheckM (checkTypeWithTypeVarsOfKind Set.empty (mkKind 1) t) initTypeEnv
         `shouldBe` Right ()
 
     it "performs kind checking for tuple type" $
       let t = TyTuple [unitType]
           tcError = TypeIncorrectKind t StarK (mkKind 1) in
-      fst <$> runTypeCheckM (checkTypeWithTypeVarsOfKind Set.empty (mkKind 1) t) (initTypeEnv defaultMonadError)
+      fst <$> runTypeCheckM (checkTypeWithTypeVarsOfKind Set.empty (mkKind 1) t) initTypeEnv
         `shouldBe` Left tcError
 
   describe "isMonadSuffixOf" $ do
@@ -324,7 +324,7 @@ successCase = successCaseWithSetup (return ())
 
 successCaseWithSetup :: TypeCheckM () -> Type -> IO ()
 successCaseWithSetup setup t =
-  fst <$> runTypeCheckM (setup >> checkType t) (initTypeEnv defaultMonadError)
+  fst <$> runTypeCheckM (setup >> checkType t) initTypeEnv
     `shouldBe` Right ()
 
 failureCase :: Type -> TcError -> IO ()
@@ -332,6 +332,6 @@ failureCase = failureCaseWithSetup (return ())
 
 failureCaseWithSetup :: TypeCheckM () -> Type -> TcError -> IO ()
 failureCaseWithSetup setup t tcError =
-  fst <$> runTypeCheckM (setup >> checkType t) (initTypeEnv defaultMonadError)
+  fst <$> runTypeCheckM (setup >> checkType t) initTypeEnv
     `shouldBe` Left tcError
 

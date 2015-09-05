@@ -10,7 +10,6 @@
 -- give fresh names to subexpressions and introduce sequencing.
 module OOLang.CodeGenMil
   ( codeGen
-  , monadError
   ) where
 
 import Control.Monad.Reader
@@ -847,13 +846,6 @@ impureSrcMonadMilWithStateBase =
   MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
     MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "NonTerm")
       (MIL.mkSimpleSrcType "State")
-
-monadError :: (MIL.Type -> MIL.MonadType)
-monadError et =
-  MIL.MTyMonadCons (MIL.SinMonadApp (MIL.SinMonad MIL.Error) et) $
-    MIL.MTyMonadCons (MIL.SinMonad MIL.NonTerm) $
-      MIL.MTyMonadCons (MIL.SinMonad MIL.State) $
-        MIL.MTyMonad $ MIL.SinMonad MIL.IO
 
 exceptionSrcType :: MIL.SrcType
 exceptionSrcType = MIL.mkSimpleSrcType "Unit"
