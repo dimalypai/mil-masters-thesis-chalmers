@@ -50,6 +50,9 @@ spec =
     it "generates MIL code for classes" $
       testCase "Classes"
 
+    it "generates MIL code for exceptions" $
+      testCase "Exceptions"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test (by comparing pretty printed
