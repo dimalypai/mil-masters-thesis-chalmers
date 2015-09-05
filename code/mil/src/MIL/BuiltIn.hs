@@ -100,8 +100,8 @@ builtInFunctions monadError =
   , (FunName "throw_error", TyForAll (TypeVar "E") $ TyForAll (TypeVar "A")
       (TyArrow (mkTypeVar "E") (errorType (mkTypeVar "E") (mkTypeVar "A"))))
   , (FunName "catch_error", TyForAll (TypeVar "E") $ TyForAll (TypeVar "A")
-      (TyArrow (errorTypeParam monadError (mkTypeVar "E") (mkTypeVar "A"))
-               (TyArrow (TyArrow (mkTypeVar "E") (errorTypeParam monadError (mkTypeVar "E") (mkTypeVar "A")))
+      (TyArrow (errorType (mkTypeVar "E") (mkTypeVar "A"))
+               (TyArrow (TyArrow (mkTypeVar "E") (errorType (mkTypeVar "E") (mkTypeVar "A")))
                         (errorType (mkTypeVar "E") (mkTypeVar "A")))))
   -- Arithmetic functions
   , (FunName "add_int",   TyArrow intType (TyArrow intType intType))

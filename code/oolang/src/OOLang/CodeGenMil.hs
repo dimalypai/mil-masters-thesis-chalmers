@@ -317,28 +317,6 @@ codeGenStmt tyStmt funMonad =
   case tyStmt of
     ExprS _ tyExpr -> codeGenExpr tyExpr funMonad
 
-    TryS _ tyTryStmts tyCatchStmts tyFinallyStmts -> do
-      (tryMilExpr, tryMilType) <- codeGenStmts tyTryStmts funMonad
-      (catchMilExpr, _) <- codeGenStmts tyCatchStmts funMonad
-      (finallyMilExpr, finallyMilType) <- codeGenStmts tyFinallyStmts funMonad  -- TODO: empty finally, Unit?
-      tryCatchMilVar <- newMilVar
-      finallyMilVar <- newMilVar
-      return ( MIL.mkSrcLet tryCatchMilVar (MIL.getSrcResultType tryMilType)
-                 (MIL.AppE
-                    (MIL.AppE (MIL.TypeAppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "catch_error") (MIL.mkSimpleSrcType "Unit")) (MIL.getSrcResultType tryMilType))
-                              tryMilExpr)
-                    (MIL.mkSrcLambda (MIL.Var "error_") (MIL.mkSimpleSrcType "Unit") catchMilExpr)) $
-                 MIL.mkSrcLet finallyMilVar (MIL.getSrcResultType finallyMilType) finallyMilExpr
-                   (MIL.ReturnE funMonad (MIL.VarE tryCatchMilVar))
-             , tryMilType)
-
-    ThrowS _ t _ -> do
-      t' <- srcTypeMil t
-      return ( MIL.AppE (MIL.TypeAppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "throw_error") (MIL.mkSimpleSrcType "Unit"))
-                                      t')
-                        (MIL.LitE MIL.UnitLit)
-             , MIL.SrcTyApp funMonad t')
-
     AssignS {} -> error "codeGenStmt: AssignS should have a special treatment."
     DeclS {} -> error "codeGenStmt: DeclS should have a special treatment."
 
@@ -421,7 +399,7 @@ codeGenAssignRef tyExprLeft tyExprRight funMonad (milBodyExpr, milBodyExprType) 
                       (MIL.mkSimpleSrcType "State")
                       impureSrcMonadMilWithStateBase)
                  milBodyExpr
-             , milBodyExprType)
+             , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
 
 -- | Expression code generation.
 -- Takes a monad of the containing function.
@@ -522,18 +500,6 @@ codeGenExpr tyExpr funMonad =
                     impureSrcMonadMilWithStateBase)
              , MIL.SrcTyApp funMonad milRefType)
 
-    DerefE _ refUnderType tyRefExpr -> do
-      (milRefExpr, _) <- codeGenExpr tyRefExpr funMonad
-      refExprVar <- newMilVar
-      milRefUnderType <- srcTypeMil refUnderType
-      let milRefType = MIL.SrcTyApp (MIL.mkSimpleSrcType "Ref") milRefUnderType
-      return ( MIL.mkSrcLet refExprVar milRefType milRefExpr $
-                 MIL.LiftE (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "read_ref") milRefUnderType)
-                                     (MIL.VarE refExprVar))
-                   (MIL.mkSimpleSrcType "State")
-                   impureSrcMonadMilWithStateBase
-             , MIL.SrcTyApp funMonad milRefUnderType)
-
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 _ ->
       codeGenBinOp (getBinOp srcBinOp) tyExpr1 tyExpr2 resultType funMonad
 
@@ -625,8 +591,8 @@ codeGenBinOp binOp tyExpr1 tyExpr2 resultType funMonad =
   case binOp of
     App -> do
       (milExpr1, milExpr1Type) <- codeGenExpr tyExpr1 funMonad
-      var1 <- newMilVar
       (milExpr2, milExpr2Type) <- codeGenExpr tyExpr2 funMonad
+      var1 <- newMilVar
       var2 <- newMilVar
       (appE, milResultType) <- if isValueType resultType
                                  then do

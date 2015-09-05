@@ -219,8 +219,6 @@ isCompatibleWith (TyMonad mt1) (TyMonad mt2) =
   mt1 `isCompatibleMonadWithNotCommut` mt2
 isCompatibleWith (TyApp mt1@(TyMonad _) t1) (TyApp mt2@(TyMonad _) t2) =
   (mt1 `isCompatibleWith` mt2) && (t1 `alphaEq` t2)  -- TODO: t1 `isCompatibleWith` t2 ?
-isCompatibleWith (TyArrow t11 t12) (TyArrow t21 t22) =
-  (t11 `alphaEq` t21) && (t12 `isCompatibleWith` t22)  -- TODO: test
 isCompatibleWith t1 t2 = t1 `isSubTypeOf` t2
 
 -- | Subtyping relation.
