@@ -1,0 +1,25 @@
+def main : Unit
+  x : Ref Int = ref 0;
+  try
+    x := 1;
+    throw [Int];
+    2;
+  catch
+    printString "catch";
+    3;
+  finally
+    printString "finally";
+  end;
+  printInt !x;
+end
+
+def pureFun : Pure Unit
+  try
+    throw [Unit];
+  catch
+    unit;
+  finally
+    1;
+  end;
+end
+
