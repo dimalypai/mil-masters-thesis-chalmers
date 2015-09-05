@@ -27,8 +27,8 @@ import MIL.TypeChecker.AlphaEq
 import MIL.Utils
 
 -- | Main entry point to the LintChecker.
-lintCheck :: TyProgram -> Either TcError TypeEnv
-lintCheck program = snd <$> runTypeCheckM (lcProgram program) initTypeEnv
+lintCheck :: TyProgram -> [Type -> MonadType] -> Either TcError TypeEnv
+lintCheck program monadTypeCons = snd <$> runTypeCheckM (lcProgram program) (initTypeEnv monadTypeCons)
 
 -- | Entry point into the lint checking of the program.
 lcProgram :: TyProgram -> TypeCheckM ()

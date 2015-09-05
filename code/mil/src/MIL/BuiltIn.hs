@@ -73,12 +73,18 @@ stateType :: Type -> Type
 stateType t = TyApp (TyMonad $ MTyMonad $ SinMonad State) t
 
 errorType :: Type -> Type -> Type
-errorType et at = TyApp (TyMonad $ MTyMonad $ SinMonadApp (SinMonad Error) et) at
+errorType = errorTypeParam defaultMonadError
+
+errorTypeParam :: (Type -> MonadType) -> Type -> Type -> Type
+errorTypeParam monadError et at = TyApp (TyMonad $ monadError et) at
+
+defaultMonadError :: Type -> MonadType
+defaultMonadError = MTyMonad . SinMonadApp (SinMonad Error)
 
 -- * Built-in functions
 
-builtInFunctions :: [(FunName, Type)]
-builtInFunctions =
+builtInFunctions :: [Type -> MonadType] -> [(FunName, Type)]
+builtInFunctions monadTypeCons =
   [
   -- IO functions
     (FunName "print_char", TyArrow charType   (ioType unitType))
@@ -93,10 +99,14 @@ builtInFunctions =
   -- Error functions
   , (FunName "throw_error", TyForAll (TypeVar "E") $ TyForAll (TypeVar "A")
       (TyArrow (mkTypeVar "E") (errorType (mkTypeVar "E") (mkTypeVar "A"))))
-  , (FunName "catch_error", TyForAll (TypeVar "E") $ TyForAll (TypeVar "A")
-      (TyArrow (errorType (mkTypeVar "E") (mkTypeVar "A"))
-               (TyArrow (TyArrow (mkTypeVar "E") (errorType (mkTypeVar "E") (mkTypeVar "A")))
-                        (errorType (mkTypeVar "E") (mkTypeVar "A")))))
+  , (FunName "catch_error_1", TyForAll (TypeVar "E") $ TyForAll (TypeVar "A")
+      (TyArrow (errorTypeParam (monadTypeCons !! 0) (mkTypeVar "E") (mkTypeVar "A"))
+               (TyArrow (TyArrow (mkTypeVar "E") (errorTypeParam (monadTypeCons !! 0) (mkTypeVar "E") (mkTypeVar "A")))
+                        (errorTypeParam (monadTypeCons !! 0) (mkTypeVar "E") (mkTypeVar "A")))))
+  , (FunName "catch_error_2", TyForAll (TypeVar "E") $ TyForAll (TypeVar "A")
+      (TyArrow (errorTypeParam (monadTypeCons !! 1) (mkTypeVar "E") (mkTypeVar "A"))
+               (TyArrow (TyArrow (mkTypeVar "E") (errorTypeParam (monadTypeCons !! 1) (mkTypeVar "E") (mkTypeVar "A")))
+                        (errorTypeParam (monadTypeCons !! 1) (mkTypeVar "E") (mkTypeVar "A")))))
   -- Arithmetic functions
   , (FunName "add_int",   TyArrow intType (TyArrow intType intType))
   , (FunName "add_float", TyArrow floatType (TyArrow floatType floatType))
@@ -111,9 +121,4 @@ builtInFunctions =
   , (FunName "eq_float", TyArrow floatType (TyArrow floatType boolType))
   , (FunName "eq_char",  TyArrow charType (TyArrow charType boolType))
   ]
-
--- Unsafe. Make sure that there exists such a built-in function.
-getBuiltInFunctionType :: FunName -> Type
-getBuiltInFunctionType funName =
-  fromJust $ lookup funName builtInFunctions
 
