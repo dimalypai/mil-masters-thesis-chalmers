@@ -62,10 +62,10 @@ testCase baseName = do
       case typeCheck srcProgram of
         Right (tyProgram, typeEnv) -> do
           let srcMilProgram = MIL.parseMil output
-          case MIL.typeCheck srcMilProgram of
+          case MIL.typeCheck srcMilProgram monadErrorTypeCons of
             Right (tyMilProgram, _) -> do
               let srcGenMilProgram = codeGen tyProgram typeEnv
-              case MIL.typeCheck srcGenMilProgram of
+              case MIL.typeCheck srcGenMilProgram monadErrorTypeCons of
                 Right (tyGenMilProgram, _) -> MIL.prPrint tyGenMilProgram `shouldBe` MIL.prPrint tyMilProgram
                 Left tcErr -> MIL.prPrint tcErr `shouldBe` ""
             Left tcErr -> MIL.prPrint tcErr `shouldBe` ""
