@@ -1,0 +1,15 @@
+main : IO Unit
+main = do
+  printInt (1 catch 2);
+  printInt (throw [Int] catch 2);
+  return unit;
+end;;
+
+putOneAndThrow : State Int Unit
+putOneAndThrow = do
+  put [Int] (throw [Int] catch 2);
+end;;
+
+pureFun : Int
+pureFun = 1 catch 2;;
+

@@ -234,6 +234,17 @@ codeGenExpr funMonad tyExpr =
                      milTyAppExpr
                  , milExprType)
 
+    ThrowE _ _ srcType -> do
+      let t' = srcTypeMil srcType
+      return ( MIL.LiftE
+                 (MIL.AppE (MIL.TypeAppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "throw_error") (MIL.mkSimpleSrcType "Unit"))
+                                         t')
+                           (MIL.LitE MIL.UnitLit))
+                 (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") (MIL.mkSimpleSrcType "Unit"))
+                 (MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "State") $
+                    (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType))
+             , MIL.SrcTyApp funMonad t')
+
     DoE _ _ tyStmts -> codeGenDoBlock funMonad tyStmts
 
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 ->
@@ -286,6 +297,18 @@ codeGenBinOp funMonad binOp tyExpr1 tyExpr2 resultType = do
           _ ->
             return ( milLetSequenceWithoutBody appE
                    , milResultType)
+
+    Catch -> do
+      (milExpr1, milExpr1Type) <- codeGenExpr funMonad tyExpr1
+      (milExpr2, _) <- codeGenExpr funMonad tyExpr2
+      let catchErrorFunName = if funMonad == pureSrcMonadMil
+                                then "catch_error_1"
+                                else "catch_error_2"
+      return ( MIL.AppE
+                 (MIL.AppE (MIL.TypeAppE (MIL.TypeAppE (MIL.VarE $ MIL.Var catchErrorFunName) (MIL.mkSimpleSrcType "Unit")) (MIL.getSrcResultType milExpr1Type))
+                           milExpr1)
+                 (MIL.mkSrcLambda (MIL.Var "error_") (MIL.mkSimpleSrcType "Unit") milExpr2)
+             , milExpr1Type)
 
 codeGenDoBlock :: MIL.SrcType -> [TyStmt] -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenDoBlock funMonad [ExprS _ tyExpr] = codeGenExpr funMonad tyExpr

@@ -43,6 +43,9 @@ spec =
     it "generates MIL code for built-in functions" $
       testCase "BuiltInFunctions"
 
+    it "generates MIL code for exceptions" $
+      testCase "Exceptions"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test (by comparing pretty printed
