@@ -194,7 +194,8 @@ compiler flags args = do
             putStrLn (ppShow tyProgram)
           let srcMilProgram = codeGen tyProgram programTypeEnv
           mTyMilProgram <- typeCheckMil srcMilProgram "Before Optimiser"
-          putStrLn (MIL.prPrint srcMilProgram)
+          when (not (Opt `elem` flags)) $ do
+            putStrLn (MIL.prPrint srcMilProgram)
           case mTyMilProgram of
             Just tyMilProgram -> do
               when (Opt `elem` flags) $ do
