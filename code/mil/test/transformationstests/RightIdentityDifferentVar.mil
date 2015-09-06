@@ -1,0 +1,5 @@
+main : Id Unit =
+  let (x : Unit) <- return [Id] unit
+  in let (y : Int) <- return [Id] 1
+  in return [Id] x;
+

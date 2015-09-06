@@ -39,6 +39,9 @@ spec = do
     it "applies right identity monad law (all syntactic forms)" $
       testCase "RightIdentityFullSyntax" rightIdentity
 
+    it "does not apply when different variable than in the bind is returned" $
+      testCase "RightIdentityDifferentVar" rightIdentity
+
   describe "associativity" $ do
     it "applies associativity monad law (simplest case)" $
       testCase "Associativity" associativity
