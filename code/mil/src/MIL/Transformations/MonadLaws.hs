@@ -24,7 +24,12 @@ leftIdentityExpr expr =
         _ -> LetE varBinder (leftIdentityExpr e1) (leftIdentityExpr e2)
     ReturnE tm e -> ReturnE tm (leftIdentityExpr e)
     LiftE e tm1 tm2 -> LiftE (leftIdentityExpr e) tm1 tm2
-    _ -> expr
+    LetRecE binders e -> LetRecE (map (\(vb, be) -> (vb, leftIdentityExpr be)) binders) (leftIdentityExpr e)
+    CaseE e caseAlts -> CaseE (leftIdentityExpr e) (map (\(CaseAlt (p, ae)) -> CaseAlt (p, leftIdentityExpr ae)) caseAlts)
+    TupleE es -> TupleE (map leftIdentityExpr es)
+    LitE {} -> expr
+    ConNameE {} -> expr
+    VarE {} -> expr
 
 rightIdentity :: TyProgram -> TyProgram
 rightIdentity (Program (typeDefs, funDefs)) =
@@ -47,7 +52,12 @@ rightIdentityExpr expr =
         _ -> LetE varBinder (rightIdentityExpr e1) (rightIdentityExpr e2)
     ReturnE tm e -> ReturnE tm (rightIdentityExpr e)
     LiftE e tm1 tm2 -> LiftE (rightIdentityExpr e) tm1 tm2
-    _ -> expr
+    LetRecE binders e -> LetRecE (map (\(vb, be) -> (vb, rightIdentityExpr be)) binders) (rightIdentityExpr e)
+    CaseE e caseAlts -> CaseE (rightIdentityExpr e) (map (\(CaseAlt (p, ae)) -> CaseAlt (p, rightIdentityExpr ae)) caseAlts)
+    TupleE es -> TupleE (map rightIdentityExpr es)
+    LitE {} -> expr
+    ConNameE {} -> expr
+    VarE {} -> expr
 
 associativity :: TyProgram -> TyProgram
 associativity (Program (typeDefs, funDefs)) =
@@ -71,7 +81,12 @@ associativityExpr expr =
         _ -> LetE varBinder (associativityExpr e1) (associativityExpr e2)
     ReturnE tm e -> ReturnE tm (associativityExpr e)
     LiftE e tm1 tm2 -> LiftE (associativityExpr e) tm1 tm2
-    _ -> expr
+    LetRecE binders e -> LetRecE (map (\(vb, be) -> (vb, associativityExpr be)) binders) (associativityExpr e)
+    CaseE e caseAlts -> CaseE (associativityExpr e) (map (\(CaseAlt (p, ae)) -> CaseAlt (p, associativityExpr ae)) caseAlts)
+    TupleE es -> TupleE (map associativityExpr es)
+    LitE {} -> expr
+    ConNameE {} -> expr
+    VarE {} -> expr
 
 -- | TODO: name capturing
 replaceExprIn :: (TyExpr, TyExpr) -> TyExpr -> TyExpr
@@ -86,5 +101,10 @@ re@(oldExpr, newExpr) `replaceExprIn` expr =
            LetE varBinder e1 e2 -> LetE varBinder (re `replaceExprIn` e1) (re `replaceExprIn` e2)
            ReturnE tm e -> ReturnE tm (re `replaceExprIn` e)
            LiftE e tm1 tm2 -> LiftE (re `replaceExprIn` e) tm1 tm2
-           _ -> expr
+           LetRecE binders e -> LetRecE (map (\(vb, be) -> (vb, re `replaceExprIn` be)) binders) (re `replaceExprIn` e)
+           CaseE e caseAlts -> CaseE (re `replaceExprIn` e) (map (\(CaseAlt (p, ae)) -> CaseAlt (p, re `replaceExprIn` ae)) caseAlts)
+           TupleE es -> TupleE (map (replaceExprIn re) es)
+           LitE {} -> expr
+           ConNameE {} -> expr
+           VarE {} -> expr
 

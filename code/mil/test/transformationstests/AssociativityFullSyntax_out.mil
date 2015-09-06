@@ -1,6 +1,10 @@
 main : Id Int =
   (/\A . \(x : A) ->
      let (a : Unit) <- lift [Id => Id] return [Id] unit
+     in let rec (r : Int) <-
+       case {1, 2} of
+         | {y : Int, z : Int} => y
+       end
      in let (c : Int) <- return [Id] 1
      in let (b : Int) <- return [Id] c
      in return [Id] b)
