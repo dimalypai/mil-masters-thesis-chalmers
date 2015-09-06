@@ -1,0 +1,7 @@
+main : Id Int =
+  (/\A . \(x : A) ->
+     let (a : Unit) <- lift [Id => Id] return [Id] unit
+     in return [Id] 1)
+     [Unit]
+     unit;
+

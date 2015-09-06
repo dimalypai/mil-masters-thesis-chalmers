@@ -29,13 +29,22 @@ spec = do
     it "applies left identity monad law (simplest case)" $
       testCase "LeftIdentity" leftIdentity
 
+    it "applies left identity monad law (all syntactic forms)" $
+      testCase "LeftIdentityFullSyntax" leftIdentity
+
   describe "rightIdentity" $ do
     it "applies right identity monad law (simplest case)" $
       testCase "RightIdentity" rightIdentity
 
+    it "applies right identity monad law (all syntactic forms)" $
+      testCase "RightIdentityFullSyntax" rightIdentity
+
   describe "associativity" $ do
     it "applies associativity monad law (simplest case)" $
       testCase "Associativity" associativity
+
+    it "applies associativity monad law (all syntactic forms)" $
+      testCase "AssociativityFullSyntax" associativity
 
 testCase :: String -> (TyProgram -> TyProgram) -> IO ()
 testCase baseName trans = do

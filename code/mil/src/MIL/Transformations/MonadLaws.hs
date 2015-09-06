@@ -20,8 +20,6 @@ leftIdentityExpr expr =
     TypeAppE e t -> TypeAppE (leftIdentityExpr e) t
     LetE varBinder e1 e2 ->
       case e1 of
-        -- TODO: leftIdentityExpr on top?
-        -- What if it is not used? Depends on the effect
         ReturnE tm e -> (VarE varBinder, leftIdentityExpr e) `replaceExprIn` (leftIdentityExpr e2)
         _ -> LetE varBinder (leftIdentityExpr e1) (leftIdentityExpr e2)
     ReturnE tm e -> ReturnE tm (leftIdentityExpr e)
