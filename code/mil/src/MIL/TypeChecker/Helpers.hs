@@ -217,8 +217,14 @@ conFieldTypesFromType t typeArgs = init $ conFieldTypesFromType' t typeArgs
 isCompatibleWith :: Type -> Type -> Bool
 isCompatibleWith (TyMonad mt1) (TyMonad mt2) =
   mt1 `isCompatibleMonadWithNotCommut` mt2
+isCompatibleWith (TyApp mt1@(TyMonad _) t1@(TyMonad {})) (TyApp mt2@(TyMonad _) t2@(TyMonad {})) =
+  (mt1 `isCompatibleWith` mt2) && (t1 `alphaEq` t2)
 isCompatibleWith (TyApp mt1@(TyMonad _) t1) (TyApp mt2@(TyMonad _) t2) =
-  (mt1 `isCompatibleWith` mt2) && (t1 `alphaEq` t2)  -- TODO: t1 `isCompatibleWith` t2 ?
+  (mt1 `isCompatibleWith` mt2) && (t1 `isCompatibleWith` t2)
+isCompatibleWith (TyArrow t11 t12) (TyArrow t21 t22) =
+  (t21 `isCompatibleWith` t11) && (t12 `isCompatibleWith` t22)
+isCompatibleWith (TyForAll tv1 t1) (TyForAll tv2 t2) =
+  t1 `isCompatibleWith` ((tv2, TyVar tv1) `substTypeIn` t2)
 isCompatibleWith t1 t2 = t1 `isSubTypeOf` t2
 
 -- | Subtyping relation.

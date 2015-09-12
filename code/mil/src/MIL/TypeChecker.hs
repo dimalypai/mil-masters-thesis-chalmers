@@ -12,6 +12,7 @@ module MIL.TypeChecker
 import qualified Data.Set as Set
 import Control.Applicative
 import Data.Maybe (listToMaybe)
+import Data.List (foldl1')
 
 import MIL.AST
 import MIL.AST.Helpers
@@ -268,13 +269,20 @@ tcExpr expr =
 tcCaseAlts :: Type -> [SrcCaseAlt] -> TypeCheckM [TyCaseAlt]
 tcCaseAlts scrutType srcCaseAlts = do
   tyCaseAlts <- mapM (tcCaseAlt scrutType) srcCaseAlts
-  -- There is at least one case alternative and all types should be the same.
-  let caseExprType = getTypeOf (head tyCaseAlts)
-  -- TODO: more than alphaEq. isCompatibleWith?
-  -- we would then take effect of the first alternative which might be not the highest
+  let caseAltTypes = map getTypeOf tyCaseAlts
+  let caseExprType =
+        foldl1' (\acc t ->
+          case (acc, t) of
+            (TyApp (TyMonad mtAcc) _, TyApp (TyMonad mt) _) ->
+              if highestEffectMonadType mtAcc mt == mtAcc
+                then acc
+                else t
+            (TyApp (TyMonad {}) _, _) -> acc
+            (_, TyApp (TyMonad {}) _) -> t
+            (_, _) -> acc) caseAltTypes
   let mCaseAltWithIncorrectType =
         listToMaybe $
-          filter (\tyCaseAlt -> not (getTypeOf tyCaseAlt `alphaEq` caseExprType))
+          filter (\tyCaseAlt -> not (getTypeOf tyCaseAlt `isCompatibleWith` caseExprType))
             tyCaseAlts
   case mCaseAltWithIncorrectType of
     Just caseAltWithIncorrectType ->

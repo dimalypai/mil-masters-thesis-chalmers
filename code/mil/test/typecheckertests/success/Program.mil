@@ -73,6 +73,13 @@ defaultPat : Int =
     | _ => 1
   end;
 
+caseAltEffects : (Error Unit ::: (IO ::: State)) Unit =
+  case 1 of
+    | 0 => throw_error [Unit] [Unit] unit
+    | 1 => return [Error Unit ::: (IO ::: State)] unit
+    | 2 => return [Error Unit ::: IO] unit
+  end;
+
 ioFun : IO Unit =
   return [IO] unit;
 

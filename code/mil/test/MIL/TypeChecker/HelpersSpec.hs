@@ -266,6 +266,21 @@ spec = do
           t2 = TyApp (TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad NonTerm))) boolType
       in (t1 `isCompatibleWith` t2) `shouldBe` not (t2 `isCompatibleWith` t1)
 
+    it "is covariant in the monad application result type (when it is not a monad itself)" $
+      let t1 = TyApp (TyMonad $ MTyMonad (SinMonad IO)) (TyTuple [boolType, unitType])
+          t2 = TyApp (TyMonad $ MTyMonad (SinMonad IO)) (TyTuple [boolType])
+      in t1 `isCompatibleWith` t2
+
+    it "is covariant in the return type and contravariant in the argument type for function types" $
+      let t1 = TyArrow (TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State)) (TyMonad $ MTyMonad (SinMonad IO))
+          t2 = TyArrow (TyMonad $ MTyMonad (SinMonad IO)) (TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State))
+      in t1 `isCompatibleWith` t2
+
+    it "considers a type under forall type" $
+      let t1 = TyForAll (TypeVar "A") (TyMonad $ MTyMonad (SinMonad IO))
+          t2 = TyForAll (TypeVar "B") (TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State))
+      in t1 `isCompatibleWith` t2
+
   describe "isSubTypeOf" $ do
     it "is reflexive" $
       let t = TyTuple [boolType, intType]

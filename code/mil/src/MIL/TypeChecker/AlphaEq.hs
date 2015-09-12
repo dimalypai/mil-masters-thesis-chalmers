@@ -24,7 +24,6 @@ instance AlphaEq Type where
     (t11 `alphaEq` t21) && (t12 `alphaEq` t22)
   alphaEq (TyForAll tv1 t1) (TyForAll tv2 t2) =
     t1 `alphaEq` ((tv2, TyVar tv1) `substTypeIn` t2)
-  -- TODO: width subtyping
   alphaEq (TyTuple elemTypes1) (TyTuple elemTypes2) =
     let lengthEq = length elemTypes1 == length elemTypes2
         elemsAlphaEq = zipWith alphaEq elemTypes1 elemTypes2
