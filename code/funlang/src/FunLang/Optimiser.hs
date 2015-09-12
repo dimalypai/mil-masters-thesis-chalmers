@@ -11,4 +11,6 @@ optimiseMil milProgram =
   |> MILTrans.associativity
   |> MILTrans.leftIdentity
   |> MILTrans.rightIdentity
+  |> MILTrans.associativity
+  |> MILTrans.associativity
 

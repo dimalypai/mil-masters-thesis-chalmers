@@ -1,0 +1,14 @@
+main : IO Unit
+main = do
+  i : Int <- readInt;
+  printString "Hello from main";
+  printInt i;
+end;;
+
+stateManip : State Int Unit
+stateManip = do
+  i : Int <- get [Int];
+  put [Int] i;
+  modify [Int] (\(s : Int) -> s);
+end;;
+

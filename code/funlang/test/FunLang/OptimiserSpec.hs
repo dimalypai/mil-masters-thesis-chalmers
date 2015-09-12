@@ -34,6 +34,9 @@ spec =
     it "optimises the code (simple data constructor and function applications)" $
       testCase "DataConFunctionApps"
 
+    it "optimises the code (monads)" $
+      testCase "Monads"
+
 -- | Takes a file base name and performs a test (by comparing pretty printed
 -- code).
 testCase :: String -> IO ()
