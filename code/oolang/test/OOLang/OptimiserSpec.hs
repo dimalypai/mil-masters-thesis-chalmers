@@ -34,6 +34,9 @@ spec =
     it "optimises the code (immutable variables and function calls)" $
       testCase "ImmutableVarsFunctionCalls"
 
+    it "optimises the code for classes" $
+      testCase "Classes"
+
 -- | Takes a file base name and performs a test (by comparing pretty printed
 -- code).
 testCase :: String -> IO ()
