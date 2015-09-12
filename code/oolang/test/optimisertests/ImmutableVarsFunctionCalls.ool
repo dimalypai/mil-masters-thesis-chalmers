@@ -1,0 +1,10 @@
+def main : Unit
+  s : String = "Hello";
+  printString s;
+  ui : Int = 1;
+  i : Int = 42;
+  i2 : Int = i;
+  printInt i;
+  printInt i2;
+end
+
