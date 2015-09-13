@@ -1,0 +1,2 @@
+main : Int = mul_int 2 3;
+

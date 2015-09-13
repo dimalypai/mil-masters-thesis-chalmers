@@ -1,0 +1,2 @@
+main : Float = mul_float 1.2 2.3;
+

@@ -1,0 +1,2 @@
+main : Int = sub_int 3 2;
+
