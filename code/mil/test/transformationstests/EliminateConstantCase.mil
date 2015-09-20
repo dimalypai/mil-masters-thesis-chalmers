@@ -1,0 +1,13 @@
+main : IO Unit =
+  case True of
+    | True => print_char 't'
+    | False => print_char 'f'
+  end;
+
+fun : State Int =
+  case 1 of
+    | 0 => return [State] 0
+    | 1 => return [State] 1
+    | _ => return [State] 2
+  end;
+

@@ -1,0 +1,6 @@
+main : IO Unit =
+  print_char 't';
+
+fun : State Int =
+  return [State] 1;
+

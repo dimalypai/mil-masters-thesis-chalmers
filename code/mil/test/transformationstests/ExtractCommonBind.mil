@@ -1,0 +1,23 @@
+main : IO Unit =
+  case 1 of
+    | 0 => let (x : Int) <- return [IO] 0 in return [IO] unit
+    | 1 => let (x : Int) <- return [IO] 1 in return [IO] unit
+  end;
+
+fun : IO Unit =
+  case 1 of
+    | 0 => return [IO] unit
+  end;
+
+fun2 : IO Unit =
+  case 1 of
+    | 0 => let (x : Int) <- return [IO] 0 in return [IO] unit
+    | 1 => let (y : Int) <- return [IO] 1 in return [IO] unit
+  end;
+
+fun3 : IO Int =
+  case 1 of
+    | 0 => let (x : Int) <- return [IO] 0 in return [IO] 0
+    | 1 => let (x : Int) <- return [IO] 1 in return [IO] 1
+  end;
+
