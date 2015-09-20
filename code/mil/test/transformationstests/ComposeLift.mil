@@ -1,0 +1,6 @@
+main : (Error Unit ::: (NonTerm ::: State)) Unit =
+  lift [NonTerm ::: State => Error Unit ::: (NonTerm ::: State)] lift [State => NonTerm ::: State] return [State] unit;
+
+fun : (IO ::: State) Unit =
+  lift [State => IO ::: State] return [State] unit;
+

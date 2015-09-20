@@ -1,0 +1,5 @@
+main : Id Unit = lift [Id => Id] return [Id] unit;
+
+fun : (IO ::: State) Unit =
+  lift [State => IO ::: State] return [State] unit;
+
