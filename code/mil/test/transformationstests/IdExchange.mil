@@ -1,0 +1,13 @@
+main : Id Unit =
+  let (x : Int) <- id1
+  in let (y : Float) <- id2
+  in return [Id] unit;
+
+id1 : Id Int = return [Id] 1;
+id2 : Id Float = return [Id] 2.0;
+
+io : IO Unit =
+  let (c1 : Char) <- read_char
+  in let (c2 : Char) <- read_char
+  in return [IO] unit;
+
