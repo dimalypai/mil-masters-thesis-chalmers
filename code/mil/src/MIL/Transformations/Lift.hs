@@ -24,7 +24,7 @@ liftIdentityExpr expr =
     LiftE e tm1 tm2 ->
       if tm1 `alphaEq` tm2
         then e
-        else expr
+        else LiftE (liftIdentityExpr e) tm1 tm2
     LetRecE binders e -> LetRecE (map (\(vb, be) -> (vb, liftIdentityExpr be)) binders) (liftIdentityExpr e)
     CaseE e caseAlts -> CaseE (liftIdentityExpr e) (map (\(CaseAlt (p, ae)) -> CaseAlt (p, liftIdentityExpr ae)) caseAlts)
     TupleE es -> TupleE (map liftIdentityExpr es)
@@ -49,10 +49,10 @@ composeLiftExpr expr =
     TypeAppE e t -> TypeAppE (composeLiftExpr e) t
     LetE varBinder e1 e2 -> LetE varBinder (composeLiftExpr e1) (composeLiftExpr e2)
     ReturnE tm e -> ReturnE tm (composeLiftExpr e)
-    LiftE e _ tm2 ->
+    LiftE e tm1 tm2 ->
       case e of
         LiftE e' tm1 _ -> LiftE e' tm1 tm2
-        _ -> expr
+        _ -> LiftE (composeLiftExpr e) tm1 tm2
     LetRecE binders e -> LetRecE (map (\(vb, be) -> (vb, composeLiftExpr be)) binders) (composeLiftExpr e)
     CaseE e caseAlts -> CaseE (composeLiftExpr e) (map (\(CaseAlt (p, ae)) -> CaseAlt (p, composeLiftExpr ae)) caseAlts)
     TupleE es -> TupleE (map composeLiftExpr es)
