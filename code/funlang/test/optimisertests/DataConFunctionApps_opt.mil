@@ -154,21 +154,21 @@ main : (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit =
     unit;
 
 fun : (State ::: (Error Unit ::: NonTerm)) (Pair Int Unit) =
-  let (var_7 : Int -> (State ::: (Error Unit ::: NonTerm)) (Unit -> (State ::: (Error Unit ::: NonTerm)) (Pair Int Unit))) <-
-    let (var_3 : forall A . (State ::: (Error Unit ::: NonTerm)) (forall B . (State ::: (Error Unit ::: NonTerm)) (A -> (State ::: (Error Unit ::: NonTerm)) (B -> (State ::: (Error Unit ::: NonTerm)) (Pair A B))))) <-
-      con_MkPair
-    in let (var_5 : forall B . (State ::: (Error Unit ::: NonTerm)) (Int -> (State ::: (Error Unit ::: NonTerm)) (B -> (State ::: (Error Unit ::: NonTerm)) (Pair Int B)))) <-
-         var_3 [Int]
-       in var_5 [Unit]
-  in let (var_16 : Unit -> (State ::: (Error Unit ::: NonTerm)) (Pair Int Unit)) <-
-       var_7 1
-     in let (var_13 : Unit -> (State ::: (Error Unit ::: NonTerm)) Unit) <-
-          let (var_10 : Int -> (State ::: (Error Unit ::: NonTerm)) (Unit -> (State ::: (Error Unit ::: NonTerm)) Unit)) <-
-            lambdaFun
-          in var_10 1
-        in let (var_17 : Unit) <-
-             var_13 unit
-           in var_16 var_17;
+  let (var_3 : forall A . (State ::: (Error Unit ::: NonTerm)) (forall B . (State ::: (Error Unit ::: NonTerm)) (A -> (State ::: (Error Unit ::: NonTerm)) (B -> (State ::: (Error Unit ::: NonTerm)) (Pair A B))))) <-
+    con_MkPair
+  in let (var_5 : forall B . (State ::: (Error Unit ::: NonTerm)) (Int -> (State ::: (Error Unit ::: NonTerm)) (B -> (State ::: (Error Unit ::: NonTerm)) (Pair Int B)))) <-
+       var_3 [Int]
+     in let (var_7 : Int -> (State ::: (Error Unit ::: NonTerm)) (Unit -> (State ::: (Error Unit ::: NonTerm)) (Pair Int Unit))) <-
+          var_5 [Unit]
+        in let (var_16 : Unit -> (State ::: (Error Unit ::: NonTerm)) (Pair Int Unit)) <-
+             var_7 1
+           in let (var_10 : Int -> (State ::: (Error Unit ::: NonTerm)) (Unit -> (State ::: (Error Unit ::: NonTerm)) Unit)) <-
+                lambdaFun
+              in let (var_13 : Unit -> (State ::: (Error Unit ::: NonTerm)) Unit) <-
+                   var_10 1
+                 in let (var_17 : Unit) <-
+                      var_13 unit
+                    in var_16 var_17;
 
 lambdaFun : (State ::: (Error Unit ::: NonTerm)) (Int -> (State ::: (Error Unit ::: NonTerm)) (Unit -> (State ::: (Error Unit ::: NonTerm)) Unit)) =
   return [State ::: (Error Unit ::: NonTerm)]
