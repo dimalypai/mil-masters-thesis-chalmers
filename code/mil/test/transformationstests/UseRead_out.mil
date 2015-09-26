@@ -1,6 +1,9 @@
 main : State Unit =
   let (x : Ref Int) <- new_ref [Int] 1
+  in let (y : Ref Int) <- new_ref [Int] 2
   in let (a : Int) <- read_ref [Int] x
   in let (b : Int) <- return [State] a
+  in let (c : Int) <- read_ref [Int] y
+  in let (d : Int) <- read_ref [Int] x
   in return [State] unit;
 

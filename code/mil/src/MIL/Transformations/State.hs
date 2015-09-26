@@ -72,7 +72,39 @@ exchangeReadExpr expr =
 
 
 useRead :: TyProgram -> TyProgram
-useRead = undefined
+useRead (Program (typeDefs, funDefs)) =
+  Program (typeDefs, map useReadFun funDefs)
+
+useReadFun :: TyFunDef -> TyFunDef
+useReadFun (FunDef funName funType funBody) =
+  FunDef funName funType (useReadExpr funBody)
+
+useReadExpr :: TyExpr -> TyExpr
+useReadExpr expr =
+  case expr of
+    LambdaE varBinder e -> LambdaE varBinder (useReadExpr e)
+    AppE e1 e2 -> AppE (useReadExpr e1) (useReadExpr e2)
+    TypeLambdaE typeVar e -> TypeLambdaE typeVar (useReadExpr e)
+    TypeAppE e t -> TypeAppE (useReadExpr e) t
+    LetE varBinder e1 e2 ->
+      case e2 of
+        LetE varBinder' e1' e2' ->
+          case (e1, e1') of
+            (  AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _) (VarE (VarBinder (refVar1, _)))
+             , AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _) (VarE (VarBinder (refVar2, _)))) | refVar1 == refVar2 ->
+              LetE varBinder (useReadExpr e1)
+                (LetE varBinder' (ReturnE (MTyMonad (SinMonad State)) (VarE varBinder)) (useReadExpr e2'))
+            _ -> LetE varBinder (useReadExpr e1) (useReadExpr e2)
+        _ -> LetE varBinder (useReadExpr e1) (useReadExpr e2)
+    ReturnE tm e -> ReturnE tm (useReadExpr e)
+    LiftE e tm1 tm2 -> LiftE (useReadExpr e) tm1 tm2
+    LetRecE binders e -> LetRecE (map (\(vb, be) -> (vb, useReadExpr be)) binders) (useReadExpr e)
+    CaseE e caseAlts -> CaseE (useReadExpr e) (map (\(CaseAlt (p, ae)) -> CaseAlt (p, useReadExpr ae)) caseAlts)
+    TupleE es -> TupleE (map useReadExpr es)
+    LitE {} -> expr
+    ConNameE {} -> expr
+    VarE {} -> expr
+
 
 useWrite :: TyProgram -> TyProgram
 useWrite = undefined
