@@ -1,0 +1,5 @@
+main : State Unit =
+  let (y : Ref Int) <- new_ref [Int] 2
+  in let (x : Ref Int) <- new_ref [Int] 1
+  in return [State] unit;
+
