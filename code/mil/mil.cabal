@@ -24,8 +24,14 @@ library
                        MIL.Parser
                        MIL.PrettyPrinter
                        MIL.TypeChecker
-                       MIL.Transformations.IdExprMonadElimination
                        MIL.Transformations.MonadLaws
+                       MIL.Transformations.Id
+                       MIL.Transformations.Lift
+                       MIL.Transformations.Error
+                       MIL.Transformations.State
+                       MIL.Transformations.CaseExpression
+                       MIL.Transformations.ConstantFolding
+                       MIL.Transformations.Helpers
   other-modules:       MIL.TypeChecker.Helpers
                        MIL.TypeChecker.SrcTypeHelpers
                        MIL.TypeChecker.AlphaEq

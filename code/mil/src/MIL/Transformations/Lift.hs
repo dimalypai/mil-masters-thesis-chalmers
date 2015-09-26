@@ -51,7 +51,7 @@ composeLiftExpr expr =
     ReturnE tm e -> ReturnE tm (composeLiftExpr e)
     LiftE e tm1 tm2 ->
       case e of
-        LiftE e' tm1 _ -> LiftE e' tm1 tm2
+        LiftE e' tm1' _ -> LiftE e' tm1' tm2
         _ -> LiftE (composeLiftExpr e) tm1 tm2
     LetRecE binders e -> LetRecE (map (\(vb, be) -> (vb, composeLiftExpr be)) binders) (composeLiftExpr e)
     CaseE e caseAlts -> CaseE (composeLiftExpr e) (map (\(CaseAlt (p, ae)) -> CaseAlt (p, composeLiftExpr ae)) caseAlts)
