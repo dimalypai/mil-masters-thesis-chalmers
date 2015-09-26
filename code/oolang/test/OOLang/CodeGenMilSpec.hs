@@ -56,6 +56,9 @@ spec =
     it "generates MIL code for arithmetic operations" $
       testCase "Arithmetic"
 
+    it "generates MIL code for when statements" $
+      testCase "WhenStatement"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test (by comparing pretty printed

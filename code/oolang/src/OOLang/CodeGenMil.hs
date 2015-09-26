@@ -284,6 +284,10 @@ codeGenFunDef (FunDef _ srcFunName tyFunType tyStmts) = do
 -- Declaration and assignment statements need a special treatment to get
 -- variable scope right.
 codeGenStmts :: [TyStmt] -> MIL.SrcType -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
+-- When a statement block is empty, it means it returns unit
+codeGenStmts [] funMonad =
+  return ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
+         , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
 codeGenStmts [DeclS _ decl] funMonad =
   codeGenDecl decl id funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
                                , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
@@ -317,10 +321,21 @@ codeGenStmt tyStmt funMonad =
   case tyStmt of
     ExprS _ tyExpr -> codeGenExpr tyExpr funMonad
 
+    WhenS _ tyCondExpr tyThenStmts tyOtherwiseStmts -> do
+      (milCondExpr, milCondExprType) <- codeGenExpr tyCondExpr funMonad
+      milCondVar <- newMilVar
+      (thenMilExpr, thenMilType) <- codeGenStmts tyThenStmts funMonad
+      (otherwiseMilExpr, _) <- codeGenStmts tyOtherwiseStmts funMonad
+      return ( MIL.mkSrcLet milCondVar (MIL.getSrcResultType milCondExprType) milCondExpr $
+                 MIL.CaseE (MIL.VarE milCondVar)
+                   [ MIL.CaseAlt (MIL.ConP (MIL.ConName "True") [], thenMilExpr)
+                   , MIL.CaseAlt (MIL.ConP (MIL.ConName "False") [], otherwiseMilExpr)]
+             , thenMilType)
+
     TryS _ tyTryStmts tyCatchStmts tyFinallyStmts -> do
       (tryMilExpr, tryMilType) <- codeGenStmts tyTryStmts funMonad
       (catchMilExpr, _) <- codeGenStmts tyCatchStmts funMonad
-      (finallyMilExpr, finallyMilType) <- codeGenStmts tyFinallyStmts funMonad  -- TODO: empty finally, Unit?
+      (finallyMilExpr, finallyMilType) <- codeGenStmts tyFinallyStmts funMonad
       tryCatchMilVar <- newMilVar
       finallyMilVar <- newMilVar
       let catchErrorFunName = if funMonad == pureSrcMonadMil

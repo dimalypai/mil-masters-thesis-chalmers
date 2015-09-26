@@ -1,0 +1,12 @@
+def main : Unit
+  when true do
+  otherwise
+  end;
+  when false do
+    1;
+  otherwise
+    2;
+  end;
+  unit;
+end
+
