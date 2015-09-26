@@ -115,7 +115,7 @@ builtInFunctions monadTypeCons =
   , (FunName "mul_int",   TyArrow intType (TyArrow intType intType))
   , (FunName "mul_float", TyArrow floatType (TyArrow floatType floatType))
   , (FunName "div_int",   TyArrow intType (TyArrow intType (errorType unitType intType)))
-  , (FunName "div_float", TyArrow floatType (TyArrow floatType (errorType unitType intType)))
+  , (FunName "div_float", TyArrow floatType (TyArrow floatType (errorType unitType floatType)))
   -- Comparison functions
   , (FunName "eq_int",   TyArrow intType (TyArrow intType boolType))
   , (FunName "eq_float", TyArrow floatType (TyArrow floatType boolType))
