@@ -647,6 +647,55 @@ codeGenBinOp binOp tyExpr1 tyExpr2 resultType funMonad =
                  MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2
                    appE
              , milResultType)
+
+    Add ->
+      let arithFunName = case getTypeOf tyExpr1 of
+                           TyFloat -> "add_float"
+                           TyInt -> "add_int"
+                           _ -> error "codeGenBinOp: unsupported type for Add"
+      in codeGenArith tyExpr1 tyExpr2 resultType funMonad arithFunName
+
+    Sub ->
+      let arithFunName = case getTypeOf tyExpr1 of
+                           TyFloat -> "sub_float"
+                           TyInt -> "sub_int"
+                           _ -> error "codeGenBinOp: unsupported type for Sub"
+      in codeGenArith tyExpr1 tyExpr2 resultType funMonad arithFunName
+
+    Mul ->
+      let arithFunName = case getTypeOf tyExpr1 of
+                           TyFloat -> "mul_float"
+                           TyInt -> "mul_int"
+                           _ -> error "codeGenBinOp: unsupported type for Mul"
+      in codeGenArith tyExpr1 tyExpr2 resultType funMonad arithFunName
+
+    Div -> do
+      let arithFunName = case getTypeOf tyExpr1 of
+                           TyFloat -> "div_float"
+                           TyInt -> "div_int"
+                           _ -> error "codeGenBinOp: unsupported type for Div"
+      (milExpr1, milExpr1Type) <- codeGenExpr tyExpr1 funMonad
+      var1 <- newMilVar
+      (milExpr2, milExpr2Type) <- codeGenExpr tyExpr2 funMonad
+      var2 <- newMilVar
+      milResultType <- funSrcTypeMil resultType
+      return ( MIL.mkSrcLet var1 (MIL.getSrcResultType milExpr1Type) milExpr1 $
+                 MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2
+                   (MIL.AppE (MIL.AppE (MIL.VarE $ MIL.Var arithFunName) (MIL.VarE var1)) (MIL.VarE var2))
+             , milResultType)
+
+codeGenArith :: TyExpr -> TyExpr -> Type -> MIL.SrcType -> String -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
+codeGenArith  tyExpr1 tyExpr2 resultType funMonad arithFunName = do
+  (milExpr1, milExpr1Type) <- codeGenExpr tyExpr1 funMonad
+  var1 <- newMilVar
+  (milExpr2, milExpr2Type) <- codeGenExpr tyExpr2 funMonad
+  var2 <- newMilVar
+  milResultType <- srcTypeMil resultType
+  return ( MIL.mkSrcLet var1 (MIL.getSrcResultType milExpr1Type) milExpr1 $
+             MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2 $
+               MIL.ReturnE funMonad (MIL.AppE (MIL.AppE (MIL.VarE $ MIL.Var arithFunName) (MIL.VarE var1)) (MIL.VarE var2))
+         , MIL.SrcTyApp funMonad milResultType)
+
 {-
   let (appBodyExpr, appBodyType) = case (isValueType resultType, isPureFunType resultType, funMonad == pureMonadMil) of
                                      (True, False, True) -> MIL.ReturnE funMonad appE  -- TODO: should this be possible?

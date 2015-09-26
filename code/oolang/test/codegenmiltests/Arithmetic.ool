@@ -1,0 +1,13 @@
+def main : Unit
+  a : Int = 2 + 3;
+  b : Int = 3 - 2;
+  c : Int = 2 * 2;
+  d : Int = a + c;
+  e : Float = 2.0 + 3.0;
+  f : Float = 3.0 - 2.0;
+  g : Float = 2.0 * 2.0;
+  h : Float = e + g;
+  i : Int = 6 / 2;
+  j : Float = 6.0 / 2.0;
+end
+
