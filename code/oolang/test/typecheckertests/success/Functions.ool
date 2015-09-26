@@ -197,3 +197,12 @@ def nothingCoalesce : Int
   just 1 ?? 0;
 end
 
+def whenStmt : Int
+  b : Bool = true;
+  when b do
+    1;
+  otherwise
+    2;
+  end;
+end
+

@@ -450,6 +450,22 @@ tcStmt mClassName srcStmt =
       let exprRightPure = getPurityOf tyExprRight
       return $ AssignS s srcAssignOp tyExprLeft tyExprRight (assignPurity && exprRightPure)
 
+    WhenS s srcCondExpr srcThenStmts srcOtherwiseStmts -> do
+      tyCondExpr <- tcExpr mClassName srcCondExpr
+      let condType = getTypeOf tyCondExpr
+      when (condType /= TyBool) $
+        throwError $ WhenConditionIncorrectType condType (getSrcSpan srcCondExpr)
+
+      tyThenStmts <- locally $ mapM (tcStmt mClassName) srcThenStmts
+      tyOtherwiseStmts <- locally $ mapM (tcStmt mClassName) srcOtherwiseStmts
+
+      let thenBlockType = if null tyThenStmts then TyUnit else getTypeOf $ last tyThenStmts
+      let otherwiseBlockType = if null tyOtherwiseStmts then TyUnit else getTypeOf $ last tyOtherwiseStmts
+      when (thenBlockType /= otherwiseBlockType) $
+        throwError $ OtherwiseIncorrectType thenBlockType otherwiseBlockType (getSrcSpan $ last tyOtherwiseStmts)
+
+      return $ WhenS s tyCondExpr tyThenStmts tyOtherwiseStmts
+
     ThrowS s _ srcType -> do
       t <- srcTypeToType srcType
       return $ ThrowS s t srcType

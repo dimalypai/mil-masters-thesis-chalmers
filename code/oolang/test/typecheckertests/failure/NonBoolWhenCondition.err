@@ -1,0 +1,2 @@
+OOLang type checking error at NonBoolWhenCondition.ool:2,8-2,8:
+  Incorrect type of when condition. It has to have type Bool, but has type 'Int'

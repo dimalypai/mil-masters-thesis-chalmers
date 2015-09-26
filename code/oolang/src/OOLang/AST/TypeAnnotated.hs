@@ -14,6 +14,8 @@ instance TypeAnnotated Stmt where
   getTypeOf (DeclS {}) = TyUnit
   getTypeOf (ExprS _ e) = getTypeOf e
   getTypeOf (AssignS {}) = TyUnit
+  -- Type of last then and otherwise statements should be the same
+  getTypeOf (WhenS _ _ thenStmts _otherwiseStmts) = getTypeOf $ last thenStmts
   -- Type of try block should be the same as the type of catch block.
   -- finally does not return a value, so it's type is not considered.
   getTypeOf (TryS _ tryStmts _ _) = getTypeOf $ last tryStmts

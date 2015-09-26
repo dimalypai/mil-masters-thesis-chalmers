@@ -64,6 +64,8 @@ data TcError =
   | NotArithType Type SrcSpan
   | NotComparableType Type SrcSpan
   | NothingCoalesceNonMaybe Type SrcSpan
+  | WhenConditionIncorrectType Type SrcSpan
+  | OtherwiseIncorrectType Type Type SrcSpan
   | OtherError String  -- ^ Contains error message.
 
 instance Error TcError where
@@ -275,6 +277,15 @@ instance Pretty TcError where
     tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
     nest indLvl (text "Incorrect usage of the nothing coalesce operator (`??`) with the expression of type" <+> quotes (prPrn t) <>
       text ". It can be used only with an expression of Maybe type on the left-hand side.")
+
+  prPrn (WhenConditionIncorrectType t srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Incorrect type of when condition. It has to have type Bool, but has type" <+> quotes (prPrn t))
+
+  prPrn (OtherwiseIncorrectType expType actType srcSpan) =
+    tcErrorHeaderSpan <> prPrn srcSpan <> colon $+$
+    nest indLvl (text "Otherwise block has to return a value of type" <+> quotes (prPrn expType) <>
+      text ", but it returns a value of type" <+> quotes (prPrn actType))
 
   prPrn (OtherError errMsg) = tcErrorHeader <> colon <+> text errMsg
 

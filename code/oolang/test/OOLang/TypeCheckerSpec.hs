@@ -415,6 +415,12 @@ spec =
       it "given a nothing coalesce operator with non-Maybe type" $
         failureCase "NothingCoalesceNonMaybe"
 
+      it "given a non-Bool condition in when" $
+        failureCase "NonBoolWhenCondition"
+
+      it "given a different types of branches in when" $
+        failureCase "WhenDifferentBranchTypes"
+
 -- Infrastructure
 
 -- | Takes a file base name and performs a test.

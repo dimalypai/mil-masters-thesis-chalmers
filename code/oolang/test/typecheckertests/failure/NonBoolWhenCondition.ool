@@ -1,0 +1,6 @@
+def main : Unit
+  when 1 do
+  otherwise
+  end;
+end
+
