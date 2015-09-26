@@ -37,6 +37,9 @@ spec =
     it "optimises the code (monads)" $
       testCase "Monads"
 
+    it "folds constants" $
+      testCase "ConstantFolding"
+
 -- | Takes a file base name and performs a test (by comparing pretty printed
 -- code).
 testCase :: String -> IO ()
