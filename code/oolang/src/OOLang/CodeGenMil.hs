@@ -699,6 +699,19 @@ codeGenBinOp binOp tyExpr1 tyExpr2 resultType funMonad =
                    (MIL.AppE (MIL.AppE (MIL.VarE $ MIL.Var arithFunName) (MIL.VarE var1)) (MIL.VarE var2))
              , milResultType)
 
+    NothingCoalesce -> do
+      (milMaybeExpr, milMaybeExprType) <- codeGenExpr tyExpr1 funMonad
+      maybeMilVar <- newMilVar
+      (milDefaultExpr, milDefaultExprType) <- codeGenExpr tyExpr2 funMonad
+      milUnderMaybeVar <- newMilVar
+      milMaybeUnderType <- srcTypeMil (getMaybeUnderType $ getTypeOf tyExpr1)
+      return ( MIL.mkSrcLet maybeMilVar (MIL.getSrcResultType milMaybeExprType) milMaybeExpr $
+                 MIL.CaseE (MIL.VarE maybeMilVar)
+                   [ MIL.CaseAlt ( MIL.ConP (MIL.ConName "Just") [MIL.VarBinder (milUnderMaybeVar, milMaybeUnderType)]
+                                 , MIL.ReturnE funMonad (MIL.VarE milUnderMaybeVar))
+                   , MIL.CaseAlt (MIL.ConP (MIL.ConName "Nothing") [], milDefaultExpr)]
+             , milDefaultExprType)
+
 codeGenArith :: TyExpr -> TyExpr -> Type -> MIL.SrcType -> String -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenArith  tyExpr1 tyExpr2 resultType funMonad arithFunName = do
   (milExpr1, milExpr1Type) <- codeGenExpr tyExpr1 funMonad

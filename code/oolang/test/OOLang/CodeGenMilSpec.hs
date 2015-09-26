@@ -59,6 +59,9 @@ spec =
     it "generates MIL code for when statements" $
       testCase "WhenStatement"
 
+    it "generates MIL code for Nothing coalesce operator" $
+      testCase "NothingCoalesce"
+
 -- * Infrastructure
 
 -- | Takes a file base name and performs a test (by comparing pretty printed

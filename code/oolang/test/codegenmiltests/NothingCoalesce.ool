@@ -1,0 +1,5 @@
+def main : Unit
+  x : Maybe Int;
+  y : Int = x ?? 0;
+end
+
