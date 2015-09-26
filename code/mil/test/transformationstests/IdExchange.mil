@@ -1,6 +1,8 @@
 main : Id Unit =
   let (x : Int) <- id1
   in let (y : Float) <- id2
+  in let (a : Unit) <- return [Id] unit
+  in let (b : Unit) <- return [Id] a
   in return [Id] unit;
 
 id1 : Id Int = return [Id] 1;
