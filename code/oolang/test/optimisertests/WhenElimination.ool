@@ -1,0 +1,14 @@
+def main : Unit
+  when true do
+    printString "true";
+  otherwise
+    printString "false";
+  end;
+  b : Bool = false;
+  when b do
+    printString "true";
+  otherwise
+    printString "false";
+  end;
+end
+

@@ -40,6 +40,9 @@ spec =
     it "folds constants" $
       testCase "ConstantFolding"
 
+    it "eliminates redundant when statements" $
+      testCase "WhenElimination"
+
 -- | Takes a file base name and performs a test (by comparing pretty printed
 -- code).
 testCase :: String -> IO ()

@@ -1,0 +1,154 @@
+type Maybe A
+  = Nothing
+  | Just A;
+
+type String
+  = Empty_Str
+  | Cons_Str Char String;
+
+printString : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(s_ : String) ->
+    case s_ of
+      | Empty_Str =>
+          return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+            unit
+      | Cons_Str (c_ : Char) (cs_ : String) =>
+          let (unit_0 : Unit) <-
+            lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] print_char c_
+          in printString cs_
+    end;
+
+readString : (Error Unit ::: (NonTerm ::: (State ::: IO))) String =
+  readString_ Empty_Str;
+
+readString_ : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) String =
+  \(acc_ : String) ->
+    let (c_ : Char) <-
+      lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+    in case c_ of
+         | ' ' =>
+             return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+               reverseString_ acc_ Empty_Str
+         | _ =>
+             readString_ (Cons_Str c_ acc_)
+       end;
+
+reverseString_ : String -> String -> String =
+  \(s_ : String) ->
+    \(acc_ : String) ->
+      case s_ of
+        | Empty_Str =>
+            acc_
+        | Cons_Str (c_ : Char) (cs_ : String) =>
+            reverseString_ cs_ (Cons_Str c_ acc_)
+      end;
+
+printBool : Bool -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(b_ : Bool) ->
+    case b_ of
+      | True =>
+          printString (Cons_Str 't' (Cons_Str 'r' (Cons_Str 'u' (Cons_Str 'e' Empty_Str))))
+      | False =>
+          printString (Cons_Str 'f' (Cons_Str 'a' (Cons_Str 'l' (Cons_Str 's' (Cons_Str 'e' Empty_Str)))))
+    end;
+
+readBool : (Error Unit ::: (NonTerm ::: (State ::: IO))) Bool =
+  let (c_1 : Char) <-
+    lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+  in case c_1 of
+       | 't' =>
+           let (c_2 : Char) <-
+             lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+           in case c_2 of
+                | 'r' =>
+                    let (c_3 : Char) <-
+                      lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                    in case c_3 of
+                         | 'u' =>
+                             let (c_4 : Char) <-
+                               lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                             in case c_4 of
+                                  | 'e' =>
+                                      let (c_5 : Char) <-
+                                        lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                                      in case c_5 of
+                                           | ' ' =>
+                                               return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                 True
+                                           | _ =>
+                                               throw_error [Unit] [Bool] unit
+                                         end
+                                  | _ =>
+                                      throw_error [Unit] [Bool] unit
+                                end
+                         | _ =>
+                             throw_error [Unit] [Bool] unit
+                       end
+                | _ =>
+                    throw_error [Unit] [Bool] unit
+              end
+       | 'f' =>
+           let (c_2 : Char) <-
+             lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+           in case c_2 of
+                | 'a' =>
+                    let (c_3 : Char) <-
+                      lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                    in case c_3 of
+                         | 'l' =>
+                             let (c_4 : Char) <-
+                               lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                             in case c_4 of
+                                  | 's' =>
+                                      let (c_5 : Char) <-
+                                        lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                                      in case c_5 of
+                                           | 'e' =>
+                                               let (c_6 : Char) <-
+                                                 lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                                               in case c_6 of
+                                                    | ' ' =>
+                                                        return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+                                                          False
+                                                    | _ =>
+                                                        throw_error [Unit] [Bool] unit
+                                                  end
+                                           | _ =>
+                                               throw_error [Unit] [Bool] unit
+                                         end
+                                  | _ =>
+                                      throw_error [Unit] [Bool] unit
+                                end
+                         | _ =>
+                             throw_error [Unit] [Bool] unit
+                       end
+                | _ =>
+                    throw_error [Unit] [Bool] unit
+              end
+       | _ =>
+           throw_error [Unit] [Bool] unit
+     end;
+
+printInt : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(i_ : Int) ->
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+      unit;
+
+readInt : (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    1;
+
+printFloat : Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  \(f_ : Float) ->
+    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+      unit;
+
+readFloat : (Error Unit ::: (NonTerm ::: (State ::: IO))) Float =
+  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    1.0;
+
+main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+  let (var_5 : Unit) <-
+    printString (Cons_Str 't' (Cons_Str 'r' (Cons_Str 'u' (Cons_Str 'e' Empty_Str))))
+  in printString (Cons_Str 'f' (Cons_Str 'a' (Cons_Str 'l' (Cons_Str 's' (Cons_Str 'e' Empty_Str)))));
+
