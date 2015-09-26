@@ -23,7 +23,8 @@ exchangeExpr expr =
       case e2 of
         LetE varBinder' e1' e2' ->
           case getTypeOf expr of
-            TyApp (TyMonad (MTyMonad (SinMonad Id))) _ -> LetE varBinder' e1' (LetE varBinder e1 e2')
+            TyApp (TyMonad (MTyMonad (SinMonad Id))) _ ->
+              LetE varBinder' (exchangeExpr e1') (LetE varBinder (exchangeExpr e1) (exchangeExpr e2'))
             _ -> LetE varBinder (exchangeExpr e1) (exchangeExpr e2)
         _ -> LetE varBinder (exchangeExpr e1) (exchangeExpr e2)
     ReturnE tm e -> ReturnE tm (exchangeExpr e)
