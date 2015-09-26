@@ -1,0 +1,17 @@
+def main : Unit
+  a : Int = 2 + 3;
+  b : Int = 3 - 2;
+  printInt b;  # Make sure it is not optimized away completely
+  c : Int = 2 * 2;
+  d : Int = a + c;
+  printInt d;  # Make sure it is not optimized away completely
+  e : Float = 2.0 + 3.0;
+  f : Float = 3.0 - 2.0;
+  printFloat f;  # Make sure it is not optimized away completely
+  g : Float = 2.0 * 2.0;
+  h : Float = e + g;
+  printFloat h;  # Make sure it is not optimized away completely
+  i : Int = 6 / 2;
+  j : Float = 6.0 / 2.0;
+end
+
