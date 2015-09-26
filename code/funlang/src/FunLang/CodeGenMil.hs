@@ -310,6 +310,55 @@ codeGenBinOp funMonad binOp tyExpr1 tyExpr2 resultType = do
                  (MIL.mkSrcLambda (MIL.Var "error_") (MIL.mkSimpleSrcType "Unit") milExpr2)
              , milExpr1Type)
 
+    Add ->
+      let arithFunName = case getTypeOf tyExpr1 of
+                           TyApp (TypeName "Float") [] -> "add_float"
+                           TyApp (TypeName "Int") [] -> "add_int"
+                           _ -> error "codeGenBinOp: unsupported type for Add"
+      in codeGenArith funMonad tyExpr1 tyExpr2 resultType arithFunName
+
+    Sub ->
+      let arithFunName = case getTypeOf tyExpr1 of
+                           TyApp (TypeName "Float") [] -> "sub_float"
+                           TyApp (TypeName "Int") [] -> "sub_int"
+                           _ -> error "codeGenBinOp: unsupported type for Add"
+      in codeGenArith funMonad tyExpr1 tyExpr2 resultType arithFunName
+
+    Mul ->
+      let arithFunName = case getTypeOf tyExpr1 of
+                           TyApp (TypeName "Float") [] -> "mul_float"
+                           TyApp (TypeName "Int") [] -> "mul_int"
+                           _ -> error "codeGenBinOp: unsupported type for Add"
+      in codeGenArith funMonad tyExpr1 tyExpr2 resultType arithFunName
+
+    Div -> do
+      let arithFunName = case getTypeOf tyExpr1 of
+                           TyApp (TypeName "Float") [] -> "div_float"
+                           TyApp (TypeName "Int") [] -> "div_int"
+                           _ -> error "codeGenBinOp: unsupported type for Div"
+      (milExpr1, milExpr1Type) <- codeGenExpr funMonad tyExpr1
+      (milExpr2, milExpr2Type) <- codeGenExpr funMonad tyExpr2
+      var1 <- newMilVar
+      var2 <- newMilVar
+      let milResultType = monadTypeMil resultType
+      return ( MIL.mkSrcLet var1 (MIL.getSrcResultType milExpr1Type) milExpr1 $
+                 MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2 $
+                   MIL.LiftE (MIL.AppE (MIL.AppE (MIL.VarE $ MIL.Var arithFunName) (MIL.VarE var1)) (MIL.VarE var2))
+                     (MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") (MIL.mkSimpleSrcType "Unit")) (MIL.mkSimpleSrcType "NonTerm")) funMonad
+             , milResultType)
+
+codeGenArith :: MIL.SrcType -> TyExpr -> TyExpr -> Type -> String -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
+codeGenArith funMonad tyExpr1 tyExpr2 resultType arithFunName = do
+  (milExpr1, milExpr1Type) <- codeGenExpr funMonad tyExpr1
+  (milExpr2, milExpr2Type) <- codeGenExpr funMonad tyExpr2
+  var1 <- newMilVar
+  var2 <- newMilVar
+  let milResultType = monadTypeMil resultType
+  return ( MIL.mkSrcLet var1 (MIL.getSrcResultType milExpr1Type) milExpr1 $
+             MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2 $
+               MIL.ReturnE funMonad (MIL.AppE (MIL.AppE (MIL.VarE $ MIL.Var arithFunName) (MIL.VarE var1)) (MIL.VarE var2))
+         , milResultType)
+
 codeGenDoBlock :: MIL.SrcType -> [TyStmt] -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
 codeGenDoBlock funMonad [ExprS _ tyExpr] = codeGenExpr funMonad tyExpr
 codeGenDoBlock funMonad [ReturnS _ t tyExpr] = do

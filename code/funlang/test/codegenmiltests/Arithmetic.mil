@@ -1,0 +1,268 @@
+type String
+  = Empty_Str
+  | Cons_Str Char String;
+
+con_True : (State ::: (Error Unit ::: NonTerm)) Bool =
+  return [State ::: (Error Unit ::: NonTerm)]
+    True;
+
+con_False : (State ::: (Error Unit ::: NonTerm)) Bool =
+  return [State ::: (Error Unit ::: NonTerm)]
+    False;
+
+printString : (State ::: (Error Unit ::: NonTerm)) (String -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) =
+  return [State ::: (Error Unit ::: NonTerm)]
+    \(s_ : String) ->
+      case s_ of
+        | Empty_Str =>
+            return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+              unit
+        | Cons_Str (c_ : Char) (cs_ : String) =>
+            let (unit_0 : Unit) <-
+              lift [IO => State ::: (Error Unit ::: (NonTerm ::: IO))] print_char c_
+            in let (printString_ : String -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) <-
+                 printString
+               in printString_ cs_
+      end;
+
+readString : (State ::: (Error Unit ::: (NonTerm ::: IO))) String =
+  readString_ Empty_Str;
+
+readString_ : String -> (State ::: (Error Unit ::: (NonTerm ::: IO))) String =
+  \(acc_ : String) ->
+    let (c_ : Char) <-
+      lift [IO => State ::: (Error Unit ::: (NonTerm ::: IO))] read_char
+    in case c_ of
+         | ' ' =>
+             return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+               reverseString_ acc_ Empty_Str
+         | _ =>
+             readString_ (Cons_Str c_ acc_)
+       end;
+
+reverseString_ : String -> String -> String =
+  \(s_ : String) ->
+    \(acc_ : String) ->
+      case s_ of
+        | Empty_Str =>
+            acc_
+        | Cons_Str (c_ : Char) (cs_ : String) =>
+            reverseString_ cs_ (Cons_Str c_ acc_)
+      end;
+
+printInt : (State ::: (Error Unit ::: NonTerm)) (Int -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) =
+  return [State ::: (Error Unit ::: NonTerm)]
+    \(i_ : Int) ->
+      return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+        unit;
+
+readInt : (State ::: (Error Unit ::: (NonTerm ::: IO))) Int =
+  return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+    1;
+
+printFloat : (State ::: (Error Unit ::: NonTerm)) (Float -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) =
+  return [State ::: (Error Unit ::: NonTerm)]
+    \(f_ : Float) ->
+      return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+        unit;
+
+readFloat : (State ::: (Error Unit ::: (NonTerm ::: IO))) Float =
+  return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+    1.0;
+
+evalState : (State ::: (Error Unit ::: NonTerm)) (forall S_ . (State ::: (Error Unit ::: NonTerm)) (forall A_ . (State ::: (Error Unit ::: NonTerm)) ((State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_) -> (State ::: (Error Unit ::: NonTerm)) (S_ -> (State ::: (Error Unit ::: NonTerm)) A_)))) =
+  return [State ::: (Error Unit ::: NonTerm)]
+    /\S_ .
+      return [State ::: (Error Unit ::: NonTerm)]
+        /\A_ .
+          return [State ::: (Error Unit ::: NonTerm)]
+            \(sa : (State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_)) ->
+              return [State ::: (Error Unit ::: NonTerm)]
+                \(s : S_) ->
+                  let (state_ : Ref S_) <-
+                    new_ref [S_] s
+                  in let (sa_f : Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_) <-
+                       sa
+                     in sa_f state_;
+
+execState : (State ::: (Error Unit ::: NonTerm)) (forall S_ . (State ::: (Error Unit ::: NonTerm)) (forall A_ . (State ::: (Error Unit ::: NonTerm)) ((State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_) -> (State ::: (Error Unit ::: NonTerm)) (S_ -> (State ::: (Error Unit ::: NonTerm)) S_)))) =
+  return [State ::: (Error Unit ::: NonTerm)]
+    /\S_ .
+      return [State ::: (Error Unit ::: NonTerm)]
+        /\A_ .
+          return [State ::: (Error Unit ::: NonTerm)]
+            \(sa : (State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_)) ->
+              return [State ::: (Error Unit ::: NonTerm)]
+                \(s : S_) ->
+                  let (state_ : Ref S_) <-
+                    new_ref [S_] s
+                  in let (res : A_) <-
+                       let (sa_f : Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_) <-
+                         sa
+                       in sa_f state_
+                     in read_ref [S_] state_;
+
+get : (State ::: (Error Unit ::: NonTerm)) (forall S_ . (State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) S_)) =
+  return [State ::: (Error Unit ::: NonTerm)]
+    /\S_ .
+      return [State ::: (Error Unit ::: NonTerm)]
+        \(state_ : Ref S_) ->
+          let (state_value : S_) <-
+            read_ref [S_] state_
+          in return [State ::: (Error Unit ::: NonTerm)]
+               state_value;
+
+put : (State ::: (Error Unit ::: NonTerm)) (forall S_ . (State ::: (Error Unit ::: NonTerm)) (S_ -> (State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) Unit))) =
+  return [State ::: (Error Unit ::: NonTerm)]
+    /\S_ .
+      return [State ::: (Error Unit ::: NonTerm)]
+        \(state_value : S_) ->
+          return [State ::: (Error Unit ::: NonTerm)]
+            \(state_ : Ref S_) ->
+              let (unit_var : Unit) <-
+                write_ref [S_] state_ state_value
+              in return [State ::: (Error Unit ::: NonTerm)]
+                   unit;
+
+modify : (State ::: (Error Unit ::: NonTerm)) (forall S_ . (State ::: (Error Unit ::: NonTerm)) ((S_ -> (State ::: (Error Unit ::: NonTerm)) S_) -> (State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) Unit))) =
+  return [State ::: (Error Unit ::: NonTerm)]
+    /\S_ .
+      return [State ::: (Error Unit ::: NonTerm)]
+        \(state_function : S_ -> (State ::: (Error Unit ::: NonTerm)) S_) ->
+          return [State ::: (Error Unit ::: NonTerm)]
+            \(state_ : Ref S_) ->
+              let (state_value : S_) <-
+                read_ref [S_] state_
+              in let (new_state_value : S_) <-
+                   state_function state_value
+                 in write_ref [S_] state_ state_value;
+
+main : (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit =
+  let (var_0 : Unit) <-
+    return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+      unit
+  in return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+       var_0;
+
+a : (State ::: (Error Unit ::: NonTerm)) Int =
+  let (var_1 : Int) <-
+    return [State ::: (Error Unit ::: NonTerm)]
+      2
+  in let (var_2 : Int) <-
+       return [State ::: (Error Unit ::: NonTerm)]
+         3
+     in return [State ::: (Error Unit ::: NonTerm)]
+          add_int var_1 var_2;
+
+b : (State ::: (Error Unit ::: NonTerm)) Int =
+  let (var_3 : Int) <-
+    return [State ::: (Error Unit ::: NonTerm)]
+      3
+  in let (var_4 : Int) <-
+       return [State ::: (Error Unit ::: NonTerm)]
+         2
+     in return [State ::: (Error Unit ::: NonTerm)]
+          sub_int var_3 var_4;
+
+c : (State ::: (Error Unit ::: NonTerm)) Int =
+  let (var_5 : Int) <-
+    return [State ::: (Error Unit ::: NonTerm)]
+      2
+  in let (var_6 : Int) <-
+       return [State ::: (Error Unit ::: NonTerm)]
+         2
+     in return [State ::: (Error Unit ::: NonTerm)]
+          mul_int var_5 var_6;
+
+d : (State ::: (Error Unit ::: NonTerm)) Int =
+  let (var_11 : Int) <-
+    let (var_7 : Int) <-
+      return [State ::: (Error Unit ::: NonTerm)]
+        2
+    in let (var_8 : Int) <-
+         return [State ::: (Error Unit ::: NonTerm)]
+           3
+       in return [State ::: (Error Unit ::: NonTerm)]
+            add_int var_7 var_8
+  in let (var_12 : Int) <-
+       let (var_9 : Int) <-
+         return [State ::: (Error Unit ::: NonTerm)]
+           2
+       in let (var_10 : Int) <-
+            return [State ::: (Error Unit ::: NonTerm)]
+              2
+          in return [State ::: (Error Unit ::: NonTerm)]
+               mul_int var_9 var_10
+     in return [State ::: (Error Unit ::: NonTerm)]
+          add_int var_11 var_12;
+
+e : (State ::: (Error Unit ::: NonTerm)) Float =
+  let (var_13 : Float) <-
+    return [State ::: (Error Unit ::: NonTerm)]
+      2.0
+  in let (var_14 : Float) <-
+       return [State ::: (Error Unit ::: NonTerm)]
+         3.0
+     in return [State ::: (Error Unit ::: NonTerm)]
+          add_float var_13 var_14;
+
+f : (State ::: (Error Unit ::: NonTerm)) Float =
+  let (var_15 : Float) <-
+    return [State ::: (Error Unit ::: NonTerm)]
+      3.0
+  in let (var_16 : Float) <-
+       return [State ::: (Error Unit ::: NonTerm)]
+         2.0
+     in return [State ::: (Error Unit ::: NonTerm)]
+          sub_float var_15 var_16;
+
+g : (State ::: (Error Unit ::: NonTerm)) Float =
+  let (var_17 : Float) <-
+    return [State ::: (Error Unit ::: NonTerm)]
+      2.0
+  in let (var_18 : Float) <-
+       return [State ::: (Error Unit ::: NonTerm)]
+         2.0
+     in return [State ::: (Error Unit ::: NonTerm)]
+          mul_float var_17 var_18;
+
+h : (State ::: (Error Unit ::: NonTerm)) Float =
+  let (var_23 : Float) <-
+    let (var_19 : Float) <-
+      return [State ::: (Error Unit ::: NonTerm)]
+        2.0
+    in let (var_20 : Float) <-
+         return [State ::: (Error Unit ::: NonTerm)]
+           3.0
+       in return [State ::: (Error Unit ::: NonTerm)]
+            add_float var_19 var_20
+  in let (var_24 : Float) <-
+       let (var_21 : Float) <-
+         return [State ::: (Error Unit ::: NonTerm)]
+           2.0
+       in let (var_22 : Float) <-
+            return [State ::: (Error Unit ::: NonTerm)]
+              2.0
+          in return [State ::: (Error Unit ::: NonTerm)]
+               mul_float var_21 var_22
+     in return [State ::: (Error Unit ::: NonTerm)]
+          add_float var_23 var_24;
+
+i : (State ::: (Error Unit ::: NonTerm)) Int =
+  let (var_25 : Int) <-
+    return [State ::: (Error Unit ::: NonTerm)]
+      6
+  in let (var_26 : Int) <-
+       return [State ::: (Error Unit ::: NonTerm)]
+         2
+     in lift [Error Unit ::: NonTerm => State ::: (Error Unit ::: NonTerm)] div_int var_25 var_26;
+
+j : (State ::: (Error Unit ::: NonTerm)) Float =
+  let (var_27 : Float) <-
+    return [State ::: (Error Unit ::: NonTerm)]
+      6.0
+  in let (var_28 : Float) <-
+       return [State ::: (Error Unit ::: NonTerm)]
+         2.0
+     in lift [Error Unit ::: NonTerm => State ::: (Error Unit ::: NonTerm)] div_float var_27 var_28;
+

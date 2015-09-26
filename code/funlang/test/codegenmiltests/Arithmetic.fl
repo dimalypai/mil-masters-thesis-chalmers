@@ -1,0 +1,26 @@
+main : IO Unit
+main = do
+  return unit;
+end;;
+
+a : Int
+a = 2 + 3;;
+b : Int
+b = 3 - 2;;
+c : Int
+c = 2 * 2;;
+d : Int
+d = (2 + 3) + (2 * 2);;
+e : Float
+e = 2.0 + 3.0;;
+f : Float
+f = 3.0 - 2.0;;
+g : Float
+g = 2.0 * 2.0;;
+h : Float
+h = (2.0 + 3.0) + (2.0 * 2.0);;
+i : Int
+i = 6 / 2;;
+j : Float
+j = 6.0 / 2.0;;
+
