@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveDataTypeable #-}
+
 -- | Main AST module. Defines data types and type synonyms representing syntax
 -- tree and some helper functions.
 --
@@ -24,6 +26,9 @@
 --
 -- Derived 'Eq' instances on AST nodes are used for testing purposes.
 module MIL.AST where
+
+import Data.Data
+import Data.Generics.Uniplate.Data
 
 -- | Program:
 --
@@ -113,7 +118,7 @@ data Expr v ct mt t
   | LetRecE [(VarBinder t, Expr v ct mt t)] (Expr v ct mt t)
   | CaseE (Expr v ct mt t) [CaseAlt v ct mt t]
   | TupleE [Expr v ct mt t]
-  deriving (Show, Eq)
+  deriving (Show, Eq, Data, Typeable)
 
 type SrcExpr = Expr Var () SrcType SrcType
 type TyExpr  = Expr TyVarBinder Type MonadType Type
@@ -123,10 +128,10 @@ data Literal = UnitLit
              | IntLit Int
              | FloatLit Double
              | CharLit Char
-  deriving (Show, Eq)
+  deriving (Show, Eq, Data, Typeable)
 
 newtype CaseAlt v ct mt t = CaseAlt (Pattern t, Expr v ct mt t)
-  deriving (Show, Eq)
+  deriving (Show, Eq, Data, Typeable)
 
 type SrcCaseAlt = CaseAlt Var () SrcType SrcType
 type TyCaseAlt  = CaseAlt TyVarBinder Type MonadType Type
@@ -143,7 +148,7 @@ data Pattern t
   | TupleP [VarBinder t]
     -- | Default alternative: underscore.
   | DefaultP
-  deriving (Show, Eq)
+  deriving (Show, Eq, Data, Typeable)
 
 type SrcPattern = Pattern SrcType
 type TyPattern  = Pattern Type
@@ -179,21 +184,21 @@ data Type
   | TyApp Type Type
   | TyTuple [Type]
   | TyMonad MonadType
-  deriving (Show, Eq)
+  deriving (Show, Eq, Data, Typeable)
 
 -- | Monadic type. It is either a single monad or a monad on top of another
 -- 'MonadType'. This represents a monad transformers stack, basically.
 data MonadType
   = MTyMonad SingleMonad
   | MTyMonadCons SingleMonad MonadType
-  deriving (Show, Eq)
+  deriving (Show, Eq, Data, Typeable)
 
 -- | Single monad can be either just built-in monad or an application to some
 -- type (relevant for parameterised monads, like 'Error').
 data SingleMonad
   = SinMonad MilMonad
   | SinMonadApp SingleMonad Type
-  deriving (Show, Eq)
+  deriving (Show, Eq, Data, Typeable)
 
 -- | "Type of the type".
 -- This representation is more general that we allow in the language. Also note,
@@ -206,22 +211,22 @@ data Kind = StarK
   deriving (Show, Eq)
 
 newtype VarBinder t = VarBinder (Var, t)
-  deriving (Show, Eq)
+  deriving (Show, Eq, Data, Typeable)
 
 type SrcVarBinder = VarBinder SrcType
 type TyVarBinder  = VarBinder Type
 
 newtype Var = Var String
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Data, Typeable)
 
 newtype TypeVar = TypeVar String
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Data, Typeable)
 
 newtype TypeName = TypeName String
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Data, Typeable)
 
 newtype ConName = ConName String
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq, Ord, Data, Typeable)
 
 newtype FunName = FunName String
   deriving (Show, Eq, Ord)
@@ -232,7 +237,7 @@ data MilMonad = Id
               | Error
               | NonTerm
               | IO
-  deriving (Show, Read, Eq)
+  deriving (Show, Read, Eq, Data, Typeable)
 
 -- * Precedences
 
