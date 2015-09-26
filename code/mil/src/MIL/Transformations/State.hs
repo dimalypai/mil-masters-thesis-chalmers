@@ -2,6 +2,8 @@
 module MIL.Transformations.State where
 
 import MIL.AST
+import MIL.AST.Helpers
+import MIL.Transformations.Helpers
 
 exchangeNew :: TyProgram -> TyProgram
 exchangeNew (Program (typeDefs, funDefs)) =
@@ -37,7 +39,37 @@ exchangeNewExpr expr =
 
 
 exchangeRead :: TyProgram -> TyProgram
-exchangeRead = undefined
+exchangeRead (Program (typeDefs, funDefs)) =
+  Program (typeDefs, map exchangeReadFun funDefs)
+
+exchangeReadFun :: TyFunDef -> TyFunDef
+exchangeReadFun (FunDef funName funType funBody) =
+  FunDef funName funType (exchangeReadExpr funBody)
+
+exchangeReadExpr :: TyExpr -> TyExpr
+exchangeReadExpr expr =
+  case expr of
+    LambdaE varBinder e -> LambdaE varBinder (exchangeReadExpr e)
+    AppE e1 e2 -> AppE (exchangeReadExpr e1) (exchangeReadExpr e2)
+    TypeLambdaE typeVar e -> TypeLambdaE typeVar (exchangeReadExpr e)
+    TypeAppE e t -> TypeAppE (exchangeReadExpr e) t
+    LetE varBinder e1 e2 ->
+      case e2 of
+        LetE varBinder' e1' e2' | getBinderVar varBinder `isNotUsedIn` e1' ->
+          case (e1, e1') of
+            (AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _) _, AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _) _) ->
+              LetE varBinder' (exchangeReadExpr e1') (LetE varBinder (exchangeReadExpr e1) (exchangeReadExpr e2'))
+            _ -> LetE varBinder (exchangeReadExpr e1) (exchangeReadExpr e2)
+        _ -> LetE varBinder (exchangeReadExpr e1) (exchangeReadExpr e2)
+    ReturnE tm e -> ReturnE tm (exchangeReadExpr e)
+    LiftE e tm1 tm2 -> LiftE (exchangeReadExpr e) tm1 tm2
+    LetRecE binders e -> LetRecE (map (\(vb, be) -> (vb, exchangeReadExpr be)) binders) (exchangeReadExpr e)
+    CaseE e caseAlts -> CaseE (exchangeReadExpr e) (map (\(CaseAlt (p, ae)) -> CaseAlt (p, exchangeReadExpr ae)) caseAlts)
+    TupleE es -> TupleE (map exchangeReadExpr es)
+    LitE {} -> expr
+    ConNameE {} -> expr
+    VarE {} -> expr
+
 
 useRead :: TyProgram -> TyProgram
 useRead = undefined
