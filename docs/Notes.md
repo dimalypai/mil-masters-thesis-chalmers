@@ -226,8 +226,8 @@ Meeting 2014-04-22
 
 * Daan Leijen, Microsoft Research: Koka language
 * Effect: functions in references:
-  f <- newRef (\() -> ())
-  f := \() -> !f()
+  f <- newRef (\\() -> ())
+  f := \\() -> !f()
   (!f) ()
 * Non-termination with type recursion:
   data A = A (A -> ())
@@ -569,3 +569,32 @@ General thoughts. March
   in OOLang (roughly), because if we evaluate them before passing to a function
   then arguments never can have monadic types, because this is a lie, effects
   have happened already.
+
+2015 Meeting preparation
+========================
+
+* Current state (looking at tests)
+    + CodeGen implemented
+    + Transformations implemented
+    + Some features are not implemented
+        - Comparisons
+        - case in FunLang
+        - built-in functions implementation
+        - probably, something else
+* Problems
+    + Effect stacks and NonTerm (get rid of NonTerm)
+    + Promise for modularity does not hold (transformation composition and reuse)
+    + Object mutability in OOLang (no Mutable, Refs should work)
+    + Interesting transformations are not applicable for source languages (effect inference/weakening)
+* Way forward
+    + MIL interpreter? Compiler to Haskell
+    + What to leave out?
+    + Report writing
+        - Describe what we did without too much referencing
+        - Have a separate part about connections
+        - Describe source languages in isolation
+        - Typing rules and grammar for MIL expressions
+        - Compilation schemes would be nice to have
+        - Interesting MIL implementation details can be there
+        - uniplate examples might be good to include
+
