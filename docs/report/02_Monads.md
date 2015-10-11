@@ -86,9 +86,10 @@ returns a monad, or in other words, if $M$ is a monad, so is $T\ M$.
 Monad transformers are used to add new operations to a monad without changing
 the computation in that monad, for example state manipulation can be added to
 collecting ouput. They also compose easily, meaning that it is possible to
-apply a monad transformer to another monad transformer. There is one caveat,
-though, namely, that some of the monad transformer/monad combination effects
-depend on the order in which they are combined.
+apply a monad transformer to another monad transformer. The resulting structure
+is usually called *monad transformer stack*. There is one caveat, though,
+namely, that some of the monad transformer/monad combination effects depend on
+the order in which they are combined.
 
 Monad transformer comes with $lift$ operation, which embeds a computation in
 monad $M$ into monad $T\ M$. It has the following type:
