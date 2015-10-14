@@ -165,7 +165,7 @@ compiled code.
 
 There is a growing interest in bringing controlled and expressive effects into
 programming languages. This section is by no means a comprehensive survey of
-the current state of effects systems, supporting libraries and programming
+the current state of effect systems, supporting libraries and programming
 languages, but rather a few examples of different directions that are being
 explored.
 
@@ -183,20 +183,79 @@ inferred. The supported effects are the following:
 * $write<h>$ (writing to a heap $h$)
 * $io$ (input/output operations)
 
-...
+The effect system is based on row polymorphism. This enables the fact that
+effects can be combined into rows, for example $<exn, div>$ means that a
+function can throw an exception and can diverge, which is basically the
+Haskell's notion of purity, but more than that, effects can be polymorphic,
+like $<exn, div | E>$, where $E$ is an effect variable.
 
 The next is an example of a library-based approach. Extensible effects
 \cite{ExtensibleEffects} is a library for the Haskell programming language. It
-is positioned as an alternative to monad transformers. ...
-The central concept of this library is a monad called $Eff$.
+is positioned as an alternative to monad transformers. The central concept of
+this library is a monad $Eff\ r$, where $r$ is a type parameter that represents
+an *open union* of individual effects, that are combined ($r$ stands for
+"requests"). One of the main ideas behind the library is that effects come from
+communication between a client and an effect handler (authority). The
+implementation is described in detail in the paper together with the examples
+of implementation of different effects as a user code (meaning, it can be done
+outside of the library). The authors provide a detailed analysis of monad
+transformers and problems with their expressiveness. One of the highlights of
+differences from monad transformers is that effects of the same type can be
+combined and as opposed to monad transformers, no explicit lifting is needed,
+appropriate operations are found by types. Another difference is that the order
+of effects is chosen only when running a computation, not when defining the
+computation and in addition to that handled effects are subtracted from the
+type. The authors claim that their framework subsumes the Monad Transformers
+Library (MTL) in Haskell and allows to express computations, that are not
+possible with MTL and at the same time inducing less overhead compared to MTL.
 
 Another related to "Extensible effects" approach is based on *algebraic
 effects* \cite{Brady}. $Effects$ is a domain-specific language (DSL) for Idris
-programming language \cite{Idris}. ...
+programming language \cite{Idris}. In the general case, there is a type $EffM$
+that describes a program using some *computation context* (which can be a
+monad, for example, but it does not have to be), lists of input and output
+effects as well as the program's return type. Programming using $Effects$ from
+a user point of view is quite alike monadic programming in Haskell, since, for
+example, monadic do-notation is used. Each effect is associated with a
+*resource*, which can denote storage for stateful computations, for example. To
+run an effectful computation one must specify an initial value of the resource.
+To solve the problem similar to the one solved by lifting in monad
+transformers, $Effects$ uses *labelled* effects to resolve the ambiguity.  An
+effect is usually implemented as an algebraic data type (ADT) as well as an
+implementation of the handler for this effect. Handlers can be implemented for
+specific contexts as well as for the general case. The author highlights that
+monads and monad transformers can express more concepts, but $Effects$ capture
+many useful use cases. Implementation of common effects and examples of their
+usage as well as DSL implementation in Idris is described in details in the
+paper.
 
 The next example of programming with effects is another programming language,
-called Eff \cite{Eff}. Eff is a programming language, which is based on the
-algebraic approach to effects, similarly to the previous example. ...
+called Eff \cite{Eff}. Eff is based on the algebraic approach to effects,
+similarly to the previous example. In fact, in \cite{Brady} the author mentions
+that Eff was a source of inspiration for the work on the $Effects$ DSL. In Eff
+effects are viewed as algebraic operations and they together with handlers have
+first-class support. The language is statically typed and supports parametric
+polymorphism and type inference. In addition to the usual types, Eff also has
+effect types and handler types. An effect type denotes a collection of related
+operations, a handler type describes that handlers work on computations of one
+type and produce computations of some other type. There are several specific
+language constructs in Eff, namely *instantiation* of an effect instance ($new\
+ref$ or $new\ channel$, for example), *operation*, which can be applied when
+bundled with an effect instance, a *handler*, which is somewhat reminiscent to
+the pattern matching constructs found in functional languages. It defines which
+computation to perform depending on the evaluation of another computation,
+which can result in a value or an effect operation. A handler can be applied to
+a computation using the with-handle construct. The last of these specific
+constructs is a *resource*, which allows to create an effect instance that is
+associated with the resource.  In this case resource describes how to handle
+different operations for this effect instance as well as defining an initial
+state. The language constructs, its type system and denotation semantics is
+layed out in the paper. The authors also provide many interesting examples,
+ranging from stateful computations to transactions, backtracking and
+cooperative multithreading. Unfortunately, the Eff's type system does not
+capture effects in the types and it is highlighted in the paper that the
+language would benefit from a system that provides a static analysis of
+effects.
 
 One of the most recent ideas in expressing effects is a *polymonad*, which is a
 generalisation of monads \cite{Polymonads}. The main idea is that polymonads
@@ -209,6 +268,7 @@ Comparing to the monadic $bind$:
 $$bind :: M\ a \to (a \to M\ b) \to M\ b$$
 
 Polymonadic bind allows to compose computations with three different types
-instead of one.
-Laws
+instead of one. Similar to monads, polymonads must satisfy a number of laws.
+Polymonads allow to express different type and effects systems and information
+flow tracking, as an example.
 
