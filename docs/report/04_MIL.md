@@ -14,21 +14,86 @@ programming languages and support reasoning about programs with effects and
 their transformation for the purpose of optimisations. Monadic Intermediate
 Language (MIL) is the result of this effort.
 
-MIL is a rather small functional language. Its type system is based on System F
-(or polymorphic lambda calculus) \cite{SystemF}. Effects are modelled with
-monads and monad transformers are used to combine them. MIL also has a number
-of additional features allowing to more easily express many features found in
-modern programming languages.
+MIL is a rather small strict functional language. Its type system is based on
+System F (or polymorphic lambda calculus) \cite{SystemF}. Effects are modelled
+with monads and monad transformers are used to combine them. MIL also has a
+number of additional features allowing to more easily express many features
+found in modern programming languages.
 
 ## MIL by example
 
+In this section we will look at some examples to get the feel for MIL syntax.
+Some common terminology will also be established.
+
 ### Data types
+
+MIL supports simple algebraic data types (ADTs), found in many statically typed
+functional programming languages. Here are the examples of the usual
+definitions of `Bool` and `List` data types:
 
 ~~~
 type Bool = True | False;
 
 type List A = Nil | Cons A (List A);
 ~~~
+
+Here, `Bool` and `List` are also called *type constructors*. `List` type is
+*parameterised*, it takes one *type parameter* `A`, which can be instantiated
+with any type. We say that type `Bool` has *kind* `*` (star) and type `List`
+has kind `* => *` meaning that it takes a type and returns a type (hence the
+name type constructor). Kinds can be thought of as *types of types*. Type
+`Bool` has two *data constructors*: `True` and `False`.  `List` also has two
+data constructors: `Nil` for empty list and `Cons` which carries a value of
+type `A` and a list. This means that `List` data type is *recursive*.
+
+Every data constructor can be used as a function. For example, `True` has just
+type `Bool` (because it does not have any other data associated with it, so it
+is just a value of type `Bool`), `Cons` has type `forall A . A -> List A ->
+List A`, meaning that for any type `A` (`A` has kind `*`) it can be applied to
+a value of type `A` and a value of type `List A` producing `List A`. Data
+constructors can also be partially applied.
+
+### Functions and expressions
+
+Simple functions in MIL can be definied as follows:
+
+~~~
+intId : Int -> Int = \(i : Int) -> i;
+~~~
+
+MIL is *explicitly typed* (there is no type inference like in Haskell or ML),
+so the types of functions and variable binders must be specified. In this
+example, `intId` is the identity function for integers, it has the type `Int ->
+Int` (it takes an integer and returns an integer). The body of the function is
+a lambda expression.
+
+Polymorphic functions look like this:
+
+~~~
+id : forall A . A -> A = /\A . \(x : A) -> x;
+~~~
+
+This a polymorphic version of the identity function, which works on any type.
+It has a *universally-quantified* type (using `forall` keyword). The body of
+the function is the so-called "big lambda" or "type lambda", which introduces a
+*type variable* `A` (and `forall A` in the type) and then a lambda expression,
+where the variable binder for `x` uses the type variable `A`.
+
+Functions are applied using juxtaposition (placing arguments next to functions
+using a whitespace). Square brackets are used for *type application*
+(instantiating a type variable in a `forall` type). For example, applying `id`
+to `True`:
+
+~~~
+true : Bool = id [Bool] True;
+~~~
+
+Regarding expressions, MIL supports the ones shown above (data constructors,
+variables, applications, type applications, lambda and type lambda expressions)
+and also integer, floating point and character literals as well as tuples (with
+*width and depth subtyping*, see "Type system" section in this chapter and
+\cite{Pierce}). These are not all kinds of expressions, some of them will be
+covered in separate sections.
 
 ### Bind and Return
 
@@ -45,6 +110,12 @@ lift [IO -> State ::: IO] unit
 
 ### Pattern matching
 
+MIL supports simple *pattern matching* with `case` expression. An expression
+which we match on (*scrutinee*) is evaluated and checked against patterns in
+the order they are written. For the first successful match the right-hand side
+(after `=>`) of the corresponding *case alternative* is the result of the
+`case` expression.
+
 ~~~
 case x of
   | True => 0
@@ -52,7 +123,24 @@ case x of
 end
 ~~~
 
+Possible patterns are literals, variable binders, data constructors (with
+variable binders for their data elements), tuples (with variable binders for
+elements) and the *default pattern* (underscore), which matches anything.
+Patterns cannot be nested.
+
 ### Recursive binding
+
+Recursive bindings inside a function can be introduced using `let rec`
+expression. It can specify several bindings (which can be mutually recursive)
+at once. The result of `let rec` expression is a value of the *body expression*
+(after `in`).
+
+~~~
+let rec
+  (isEven : Int -> Bool) <- \(i : Int) -> ... isOdd ...;
+  (isOdd : Int -> Bool) <- \(i : Int) -> ... isEven ...
+in isEven 4
+~~~
 
 ### Built-in functions
 
