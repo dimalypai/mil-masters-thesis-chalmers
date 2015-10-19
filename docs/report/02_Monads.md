@@ -1,3 +1,5 @@
+{>> I expected to see examples of monads in this chapter. It's very hard to get a feeling for monads based on the introduction you give here. In future chapters I expect that you will refer to various monads and monad transformers, such as state, exceptions etc. This is the perfect place to introduce them. <<}
+
 # Monads, semantics and functional programming
 
 > *This chapter introduces monads -- the central concept of this thesis.
@@ -14,7 +16,7 @@ concept, which comes from category theory. But here it is more useful to use a
 definition adopted in functional programming.
 
 *Monad* is a triple of a type constructor $M$ and two operations: $bind$ and
-$return$ (also known as $unit$). Type constructor $M$ has one type parameter.
+$return$ (also known as $unit$){>> If you don't plan to use the term 'unit', don't mention it. It will only confuse the reader. <<} . Type constructor $M$ has one type parameter.
 In Haskell, monad concept is represented by a type class, which also has some
 additional operations. Monad operations have the following types:
 
@@ -63,7 +65,7 @@ proposed in \cite{MoggiAbstractView}.
 
 ## Monads in Haskell
 
-Later, following and building on top of Moggi's work, a group of researchers
+Later, following and building on top of Moggi's work, {== a group of researchers ==}{>> It was Phil Wadler who, first and foremost, popularized Monads in FP. It's worth to single him out. All the rest of the development built on his work <<}
 related to the Haskell programming language incorporated monads as a way of
 structuring pure functional programs. First, monads were used to combine
 input/output and lazy evaluation, and then they became an integral part of
