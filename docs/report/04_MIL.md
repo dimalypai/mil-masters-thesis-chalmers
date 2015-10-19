@@ -92,21 +92,34 @@ Regarding expressions, MIL supports the ones shown above (data constructors,
 variables, applications, type applications, lambda and type lambda expressions)
 and also integer, floating point and character literals as well as tuples (with
 *width and depth subtyping*, see "Type system" section in this chapter and
-\cite{Pierce}). These are not all kinds of expressions, some of them will be
+\cite{TAPL}). These are not all kinds of expressions, some of them will be
 covered in separate sections.
 
 ### Bind and Return
 
+The bread and butter of MIL is monadic $bind$ and $return$. The following
+example uses $bind$ (`let ... in` expression) to bind the result of `read_char`
+built-in function to the variable `c` and then return it in the `IO` monad:
+
 ~~~
-let (c : Char) <- read_char in
-  return [IO] c
+let (c : Char) <- read_char
+in return [IO] c
 ~~~
+
+$return$ needs to be annotated with a monad.
 
 ### Lifting
 
+Another crucial piece is the monad transformer $lift$ operation. The following
+example demostrates how to lift a computation in the `IO` monad into a
+combination of `State` and `IO` monads:
+
 ~~~
-lift [IO -> State ::: IO] unit
+lift [IO => State ::: IO] return [IO] unit
 ~~~
+
+The typing rules and details of monads combination will be covered in the "Type
+system" section.
 
 ### Pattern matching
 
@@ -142,12 +155,31 @@ let rec
 in isEven 4
 ~~~
 
-### Built-in functions
+### Built-in data types and functions
+
+MIL has several built-in types: `Unit` (which has only one value, which is the
+`unit` literal), `Bool` (defined as in one of the data type examples earlier),
+`Int` (for arbitrary integers), `Float` (for double precision floating point
+numbers), `Char` (for characters) and `Ref` (for reference cells).
+
+MIL also provides a number of built-in functions.  Here is the list with most
+of them and their types:
 
 ~~~
 read_char : IO Char
-
 print_char : Char -> IO Unit
+new_ref : forall A . A -> State (Ref A)
+read_ref : forall A . Ref A -> State A
+write_ref : forall A . Ref A -> A -> State Unit
+throw_error : forall E . forall A . E -> Error E A
+add_int : Int -> Int -> Int
+add_float : Float -> Float -> Float
+sub_int : Int -> Int -> Int
+sub_float : Float -> Float -> Float
+mul_int : Int -> Int -> Int
+mul_float : Float -> Float -> Float
+div_int : Int -> Int -> Error Unit Int
+div_float : Float -> Float -> Error Unit Float
 ~~~
 
 ## Grammar
