@@ -11,6 +11,8 @@
 
 ## Intermediate representations based on monads
 
+{>> I suggest creating different subsections for each intermediate language. It will make the text easier to read. <<}
+
 First, we will describe some of the ideas behind an intermediate language
 proposed in "Bridging the gulf" \cite{BridgingTheGulf}. The main intention of
 the work was to design a common intermediate language for compiling ML and
@@ -52,7 +54,7 @@ problem of combining monads was not addressed in "Bridging the gulf".  Several
 monad transformation rules are given, but they were not in the main focus of
 this paper.
 
-Next, let's look at an intermediate language from "Optimizing ML Using a
+Next, {== let's look at ==}{>> A little too informal <<} an intermediate language from "Optimizing ML Using a
 Hierarchy of Monadic Types" \cite{Tolmach}. The main property of this IL is
 that it has a fixed hierarchy of monadic types (every next monad includes the
 effects of the previous ones):
@@ -61,6 +63,8 @@ effects of the previous ones):
 * $LIFT$ (for potentially non-terminating computations)
 * $EXN$ (for computations that may raise an exception)
 * $ST$ (for stateful computations).
+
+{>> I expect the above monads to have been introduced in the introduction <<}
 
 In addition to the classical monad operations ($bind$ and $return$), an
 embedding operation named $up$ is introduced, which corresponds to the $lift$
@@ -99,7 +103,7 @@ expressed in terms of try-catch-in.  A distinction between value types and
 computation types is made similarly to \cite{BridgingTheGulf}.  A computation
 type is effectively a value type with effects. The following effects are
 covered: non-termination, reading from a reference, writing to a reference,
-allocating a new reference and raising an exception. Note, how fine-grained the
+allocating a new reference and raising an exception {>> You don't use a bullet point list here, although you used that when describing Tolmach's language. I suggest you harmonize the presentation <<}. Note, how fine-grained the
 effects for stateful computations are.  Effects are combined using sets and
 inclusion of these sets introduces a subtyping relation. All possible
 exceptions are also included in the set of effects. Authors provide a number of
@@ -115,6 +119,8 @@ Introduction. For the monadic part, it has $unit$ ($return$) operation and $;$
 operations in the monad.  The authors highlight that the monadic structure
 gives GRIN a very "functional flavour" and therefore a nice setup for doing
 analysis and transformations.
+
+{>> What is the effect that the GRIN monad captures? <<}
 
 ## Monad transformers and modular effects
 
@@ -132,7 +138,7 @@ features are "pluggable" and the evaluation of each feature is implemented
 separately (in different type class instances in Haskell, in this case).
 Features have a strong relation to the effects performed (where effects
 correspond to monad transformers). By adjusting the order of monad transformers
-in the stack, one can choose the semantics of the language. Another key idea
+in the stack, one can choose {~~ the ~> different ~~} semantics of the language. Another key idea
 that allows this kind of implementation is *extensible union types*, which is
 used to specify different parts of the language's AST (abstract syntax tree) in
 a modular way. A continuation of this work "Modular Denotational Semantics for
@@ -189,6 +195,8 @@ function can throw an exception and can diverge, which is basically the
 Haskell's notion of purity, but more than that, effects can be polymorphic,
 like $<exn, div | E>$, where $E$ is an effect variable.
 
+{>> The following text on algebraic effects feels disorganized. I suggest that you start with early papers on algebraic effects and work you way through the references in chronological order, just as you have in other sections. <<}
+
 The next is an example of a library-based approach. Extensible effects
 \cite{ExtensibleEffects} is a library for the Haskell programming language. It
 is positioned as an alternative to monad transformers. The central concept of
@@ -201,13 +209,13 @@ of implementation of different effects as a user code (meaning, it can be done
 outside of the library). The authors provide a detailed analysis of monad
 transformers and problems with their expressiveness. One of the highlights of
 differences from monad transformers is that effects of the same type can be
-combined and as opposed to monad transformers, no explicit lifting is needed,
+combined and as {== opposed to monad transformers ==}{>> It would have been good to mention this issue about monad transformers in the introduction <<}, no explicit lifting is needed,
 appropriate operations are found by types. Another difference is that the order
 of effects is chosen only when running a computation, not when defining the
 computation and in addition to that handled effects are subtracted from the
 type. The authors claim that their framework subsumes the Monad Transformers
 Library (MTL) in Haskell and allows to express computations, that are not
-possible with MTL and at the same time inducing less overhead compared to MTL.
+possible with MTL and at the same time inducing less overhead compared to MTL. {>> What does overhead mean here? Algebraic effects tend to be slower than monad transformers, which is also worth mentioning. <<}
 
 Another related to "Extensible effects" approach is based on *algebraic
 effects* \cite{Brady}. $Effects$ is a domain-specific language (DSL) for Idris
@@ -256,6 +264,8 @@ cooperative multithreading. Unfortunately, the Eff's type system does not
 capture effects in the types and it is highlighted in the paper that the
 language would benefit from a system that provides a static analysis of
 effects.
+
+{>> I would put the text about polymonads before algegraic effects. Also, it'd be good to explain what polymonads are good for. <<}
 
 One of the most recent ideas in expressing effects is a *polymonad*, which is a
 generalisation of monads \cite{Polymonads}. The main idea is that polymonads

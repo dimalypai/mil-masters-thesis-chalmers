@@ -1,7 +1,9 @@
 # Introduction
 
+{>> Rather than spending a lot of text on what a compiler looks like, it is important that you very early say what your project is about. The reader shouldn't have to read several pages to get the overarching idea. Once you've prested the idea, it's a good idea to explain things in more detail as you do. But I'd like you to add some text early on which explains your project concisely. <<}
+
 Modern compilers are one of the most complex and sophisticated software
-products in the world. But the vast majority of them follows more or less the
+products in the world. {>> This is a very bold statement. And bold is good, but I wonder if you can substantiate your claim somehow. With a reference for instance <<} But the vast majority of them follows more or less the
 same structure known for many years, which is called *compiler pipeline*.
 
 Compiler pipeline is a chain of phases, which together form the compilation
@@ -14,7 +16,7 @@ of data types etc. Synthesis (often called the *back end* of the compiler) uses
 information produced during the analysis to generate a program in a target
 language, usually performing a lot of program transformations and optimisations
 along the way \cite{DragonBook}.
-A typical compiler pipeline is pictured in Figure ... These phases not
+A typical compiler pipeline is pictured in Figure ... These phases {++ do ++} not
 necessarily happen one after another in a sequence, some of them might be
 combined, for example, but it is a convenient way of thinking about a compiler
 structure.
@@ -29,15 +31,15 @@ TODO: Figure 1. Compiler pipeline
 -> (intermediate representation) -> Target code generation
 -> Target program
 
-One of the central parts of almost any compiler is it's *intermediate
+One of the central parts of {== almost any compiler ==}{>> in particular optimizing compilers. There are some compilers which doesn't have intermediate languages <<} is {~~ it's ~> its ~~} *intermediate
 representation(s)* (IR) or *intermediate language(s)* (IL). Intermediate
-representation is a data structure that represents a program during the
+representation is a data structure that represents {== a ==}{>> not just 'a' program, the program that is being compiled! <<} program during the
 compilation process. Some intermediate representations are also called
 languages, because they have a symbolic representation. In this text these two
 terms will be used interchangeably. One of the simplest examples of an IR is a
 syntax tree, built by parsing a source language. Well-designed intermediate
 representation should allow to abstract away unnecessary details while
-expressing the necessary ones at certain compilation stages, it should be
+expressing the necessary ones at certain compilation stages{~~ , it ~> . It ~~} should be
 fairly easy to produce as well as translate further. Many compilers use several
 different IRs, where they diverge from the source language and resemble a
 compilation target's language or architecture more and more as compilation
@@ -58,10 +60,10 @@ compilers. Some of the most notable are:
 * Representations based on static single assignment form (SSA) \cite{SSA}, the
   main idea of which is that every variable in a program is assigned exactly
   once. There are many useful and powerful optimisations that can be expressed
-  using SSA form \cite{ComputingSSA}.
+  using SSA form \cite{ComputingSSA}. {>> All optimizations that can be expressed on SSA form can also be expressed on, say, three address code. However, some analyses become simpler/more accurate when using SSA. <<}
 * A-normal form (ANF) introduced by Sabry and Felleisen \cite{ReasoningCPS} and
   further developed in \cite{EssenceCPS} is a representation that resembles CPS
-  (continuation-passing style) and requires all arguments to functions to be
+  (continuation-passing style) {>> you haven't explained what CPS is <<} and requires all arguments to functions to be
   trivial (constants, lambda abstractions and variables) and that the result of
   any non-trivial expression is let-bound or is returned from a function. It has
   been shown that there is a correspondence between CPS-based intermediate
@@ -87,6 +89,7 @@ compilers. Some of the most notable are:
   use of SSA form, has a simple type system, abstracts away some low-level
   details such as calling convention \cite{LLVM}.
 
+{>> It's not clear whether the above list is meant to be an overview of categories for IRs, like TAC or SSA, or specific IRs, like LLVM or Core. My suggestion is that you list categories of IRs and under those categories you can list specific, famous examples, like LLVM and Core. <<}
 
 A major part of most modern industrial compilers is code optimisation. Compiler
 writers try to make compiled programs perform as good as possible regarding
@@ -99,7 +102,7 @@ observable behaviour. Combining these two aspects is extremely difficult given
 a myriad of effects that modern programming languages allow to perform. It
 includes, but is not limited to input/output, throwing exceptions, modifying
 state, non-termination. Intermediate representation can play a significant role
-here. This work tries to use an intermediate language based on monads and monad
+here. {>> How? <<} This work tries to use an intermediate language based on monads and monad
 transformers to allow powerful transformations and optimisations in the
 presence of effects. This is done by using these structures to encode effects
 right in the program and applying algebraic properties and laws to perform code
@@ -119,3 +122,4 @@ A lot of inspiration and intuition for this work comes from the Haskell
 programming language \cite{HaskellReport}, thus some familiarity with Haskell
 is assumed.
 
+{>> I was hoping to see some explanation of the problem you're trying to solve. Why is it better to use a monadic intermediate language? What is the problem with other forms of IRs? It'd be good if you can say a few words about that. <<}
