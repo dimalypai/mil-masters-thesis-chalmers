@@ -11,7 +11,7 @@
 
 ## Intermediate representations based on monads
 
-{>> I suggest creating different subsections for each intermediate language. It will make the text easier to read. <<}
+### Common IL for ML and Haskell
 
 First, we will describe some of the ideas behind an intermediate language
 proposed in "Bridging the gulf" \cite{BridgingTheGulf}. The main intention of
@@ -54,7 +54,9 @@ problem of combining monads was not addressed in "Bridging the gulf".  Several
 monad transformation rules are given, but they were not in the main focus of
 this paper.
 
-Next, {== let's look at ==}{>> A little too informal <<} an intermediate language from "Optimizing ML Using a
+### Optimizing ML using a hierarchy of monadic types
+
+Next, we will look at an intermediate language from "Optimizing ML Using a
 Hierarchy of Monadic Types" \cite{Tolmach}. The main property of this IL is
 that it has a fixed hierarchy of monadic types (every next monad includes the
 effects of the previous ones):
@@ -63,8 +65,6 @@ effects of the previous ones):
 * $LIFT$ (for potentially non-terminating computations)
 * $EXN$ (for computations that may raise an exception)
 * $ST$ (for stateful computations).
-
-{>> I expect the above monads to have been introduced in the introduction <<}
 
 In addition to the classical monad operations ($bind$ and $return$), an
 embedding operation named $up$ is introduced, which corresponds to the $lift$
@@ -88,6 +88,8 @@ help to achieve any significant performance improvements for generated ML code,
 but some measurements were ongoing. At the time of this thesis writing no
 published results of these measurements have been found.
 
+### MIL-lite
+
 The next work we are going to describe is an intermediate language MIL-lite
 from "Monads, Effects and Transformations" \cite{Benton}. MIL-lite is a
 fragment of the monadic intermediate language used in the MLj compiler. A big
@@ -102,25 +104,32 @@ optimising transformations and is very general. let expression is actually
 expressed in terms of try-catch-in.  A distinction between value types and
 computation types is made similarly to \cite{BridgingTheGulf}.  A computation
 type is effectively a value type with effects. The following effects are
-covered: non-termination, reading from a reference, writing to a reference,
-allocating a new reference and raising an exception {>> You don't use a bullet point list here, although you used that when describing Tolmach's language. I suggest you harmonize the presentation <<}. Note, how fine-grained the
-effects for stateful computations are.  Effects are combined using sets and
-inclusion of these sets introduces a subtyping relation. All possible
-exceptions are also included in the set of effects. Authors provide a number of
-effect-independent and effect-dependent equivalences and use the reasoning
-about semantics of effects to prove some of them.
+covered:
 
-The last IR described in this section is the one from "The GRIN
-project" \cite{GRIN}.  GRIN (Graph Reduction Intermediate Notation) is a
-monadic intermediate code that is used in a back end of a compiler for lazy
-functional languages. GRIN resembles three-address code mentioned in the
-Introduction. For the monadic part, it has $unit$ ($return$) operation and $;$
-(semicolon) is a monadic bind. There are $store$, $fetch$ and $update$
-operations in the monad.  The authors highlight that the monadic structure
-gives GRIN a very "functional flavour" and therefore a nice setup for doing
-analysis and transformations.
+* non-termination
+* allocating a new reference
+* reading from a reference
+* writing to a reference
+* raising an exception
 
-{>> What is the effect that the GRIN monad captures? <<}
+Note, how fine-grained the effects for stateful computations are. Effects are
+combined using sets and inclusion of these sets introduces a subtyping
+relation. All possible exceptions are also included in the set of effects.
+Authors provide a number of effect-independent and effect-dependent
+equivalences and use the reasoning about semantics of effects to prove some of
+them.
+
+### The GRIN project
+
+The last IR described in this section is the one from "The GRIN project"
+\cite{GRIN}. GRIN (Graph Reduction Intermediate Notation) is a monadic
+intermediate code that is used in a back end of a compiler for lazy functional
+languages. GRIN resembles three-address code mentioned in the Introduction. For
+the monadic part, it has $unit$ operation and $;$ (semicolon) as a monadic
+bind. The monad is a kind of State monad with a heap as an underlying storage.
+There are $store$, $fetch$ and $update$ operations in the monad.  The authors
+highlight that the monadic structure gives GRIN a very "functional flavour" and
+therefore a nice setup for doing analysis and transformations.
 
 ## Monad transformers and modular effects
 
@@ -138,13 +147,13 @@ features are "pluggable" and the evaluation of each feature is implemented
 separately (in different type class instances in Haskell, in this case).
 Features have a strong relation to the effects performed (where effects
 correspond to monad transformers). By adjusting the order of monad transformers
-in the stack, one can choose {~~ the ~> different ~~} semantics of the language. Another key idea
-that allows this kind of implementation is *extensible union types*, which is
-used to specify different parts of the language's AST (abstract syntax tree) in
-a modular way. A continuation of this work "Modular Denotational Semantics for
-Compiler Construction" \cite{ModularSemanticsCC} applies the results to define
-a modular monadic semantics and use it for a compiler. Authors describe usage
-of monad laws to transform programs and reason about them.
+in the stack, one can choose different semantics of the language. Another key
+idea that allows this kind of implementation is *extensible union types*, which
+is used to specify different parts of the language's AST (abstract syntax tree)
+in a modular way. A continuation of this work "Modular Denotational Semantics
+for Compiler Construction" \cite{ModularSemanticsCC} applies the results to
+define a modular monadic semantics and use it for a compiler. Authors describe
+usage of monad laws to transform programs and reason about them.
 
 What was not addressed in the work described above in particular is more
 low-level code generation. So, later, Harrison and Kamin in
@@ -175,6 +184,8 @@ the current state of effect systems, supporting libraries and programming
 languages, but rather a few examples of different directions that are being
 explored.
 
+### Koka programming language
+
 First, we will look at the Koka programming language \cite{Koka}, which is a
 function-oriented language with JavaScript-like syntax. One of the main
 features of Koka is that the effect of every function is automatically
@@ -195,77 +206,7 @@ function can throw an exception and can diverge, which is basically the
 Haskell's notion of purity, but more than that, effects can be polymorphic,
 like $<exn, div | E>$, where $E$ is an effect variable.
 
-{>> The following text on algebraic effects feels disorganized. I suggest that you start with early papers on algebraic effects and work you way through the references in chronological order, just as you have in other sections. <<}
-
-The next is an example of a library-based approach. Extensible effects
-\cite{ExtensibleEffects} is a library for the Haskell programming language. It
-is positioned as an alternative to monad transformers. The central concept of
-this library is a monad $Eff\ r$, where $r$ is a type parameter that represents
-an *open union* of individual effects, that are combined ($r$ stands for
-"requests"). One of the main ideas behind the library is that effects come from
-communication between a client and an effect handler (authority). The
-implementation is described in detail in the paper together with the examples
-of implementation of different effects as a user code (meaning, it can be done
-outside of the library). The authors provide a detailed analysis of monad
-transformers and problems with their expressiveness. One of the highlights of
-differences from monad transformers is that effects of the same type can be
-combined and as {== opposed to monad transformers ==}{>> It would have been good to mention this issue about monad transformers in the introduction <<}, no explicit lifting is needed,
-appropriate operations are found by types. Another difference is that the order
-of effects is chosen only when running a computation, not when defining the
-computation and in addition to that handled effects are subtracted from the
-type. The authors claim that their framework subsumes the Monad Transformers
-Library (MTL) in Haskell and allows to express computations, that are not
-possible with MTL and at the same time inducing less overhead compared to MTL. {>> What does overhead mean here? Algebraic effects tend to be slower than monad transformers, which is also worth mentioning. <<}
-
-Another related to "Extensible effects" approach is based on *algebraic
-effects* \cite{Brady}. $Effects$ is a domain-specific language (DSL) for Idris
-programming language \cite{Idris}. In the general case, there is a type $EffM$
-that describes a program using some *computation context* (which can be a
-monad, for example, but it does not have to be), lists of input and output
-effects as well as the program's return type. Programming using $Effects$ from
-a user point of view is quite alike monadic programming in Haskell, since, for
-example, monadic do-notation is used. Each effect is associated with a
-*resource*, which can denote storage for stateful computations, for example. To
-run an effectful computation one must specify an initial value of the resource.
-To solve the problem similar to the one solved by lifting in monad
-transformers, $Effects$ uses *labelled* effects to resolve the ambiguity.  An
-effect is usually implemented as an algebraic data type (ADT) as well as an
-implementation of the handler for this effect. Handlers can be implemented for
-specific contexts as well as for the general case. The author highlights that
-monads and monad transformers can express more concepts, but $Effects$ capture
-many useful use cases. Implementation of common effects and examples of their
-usage as well as DSL implementation in Idris is described in details in the
-paper.
-
-The next example of programming with effects is another programming language,
-called Eff \cite{Eff}. Eff is based on the algebraic approach to effects,
-similarly to the previous example. In fact, in \cite{Brady} the author mentions
-that Eff was a source of inspiration for the work on the $Effects$ DSL. In Eff
-effects are viewed as algebraic operations and they together with handlers have
-first-class support. The language is statically typed and supports parametric
-polymorphism and type inference. In addition to the usual types, Eff also has
-effect types and handler types. An effect type denotes a collection of related
-operations, a handler type describes that handlers work on computations of one
-type and produce computations of some other type. There are several specific
-language constructs in Eff, namely *instantiation* of an effect instance ($new\
-ref$ or $new\ channel$, for example), *operation*, which can be applied when
-bundled with an effect instance, a *handler*, which is somewhat reminiscent to
-the pattern matching constructs found in functional languages. It defines which
-computation to perform depending on the evaluation of another computation,
-which can result in a value or an effect operation. A handler can be applied to
-a computation using the with-handle construct. The last of these specific
-constructs is a *resource*, which allows to create an effect instance that is
-associated with the resource.  In this case resource describes how to handle
-different operations for this effect instance as well as defining an initial
-state. The language constructs, its type system and denotation semantics is
-layed out in the paper. The authors also provide many interesting examples,
-ranging from stateful computations to transactions, backtracking and
-cooperative multithreading. Unfortunately, the Eff's type system does not
-capture effects in the types and it is highlighted in the paper that the
-language would benefit from a system that provides a static analysis of
-effects.
-
-{>> I would put the text about polymonads before algegraic effects. Also, it'd be good to explain what polymonads are good for. <<}
+### Polymonads
 
 One of the most recent ideas in expressing effects is a *polymonad*, which is a
 generalisation of monads \cite{Polymonads}. The main idea is that polymonads
@@ -281,4 +222,107 @@ Polymonadic bind allows to compose computations with three different types
 instead of one. Similar to monads, polymonads must satisfy a number of laws.
 Polymonads allow to express different type and effects systems and information
 flow tracking, as an example.
+
+An interesting example of what polymonads can model is *contextual effects*.
+Hicks et al. describe them as effects "which augment traditional effects with
+the notion of *prior* and *future* effects of an expression within a broader
+context". An example they give is a system where memory is partitioned into
+regions and read and write operations have a region as part of their effect.
+Then a sequence of read operations, for example, can capture which regions were
+read before and after every operation.
+
+Another powerful application of polymonads is encoding of *session types*.
+Session types allow to express a very important nowadays notion of
+communication between different parties by capturing a communication protocol
+in types \cite{SessionTypes}.
+
+### Eff programming language
+
+The next example of programming with effects is another programming language,
+called Eff \cite{Eff}. In Eff effects are viewed as algebraic operations and
+they together with their handlers have first-class support. This is an approach
+known as *algebraic effect handlers* introduced by Plotkin and Power
+\cite{Plotkin}.  The language is statically typed and supports parametric
+polymorphism and type inference. In addition to the usual types, Eff also has
+effect types and handler types. An effect type denotes a collection of related
+operations, a handler type describes that handlers work on computations of one
+type and produce computations of some other type. There are several specific
+language constructs in Eff, namely *instantiation* of an effect instance ($new\
+ref$ or $new\ channel$, for example), *operation*, which can be applied when
+bundled with an effect instance, and *handler*, which is somewhat reminiscent
+to the pattern matching constructs found in functional languages.  It defines
+which computation to perform depending on the evaluation of another
+computation, which can result in a value or an effect operation. This is the
+place where the semantics of different effects is defined. A handler can be
+applied to a computation using the $with-handle$ construct, which reminds the
+$try-catch$ construct in many languages. The last of these specific constructs
+is a *resource*, which allows to create an effect instance that is associated
+with the resource.  In this case resource describes how to handle different
+operations for this effect instance by default as well as defining an initial
+state. The language constructs, its type system and denotation semantics is
+layed out in the paper. The authors also provide many interesting examples,
+ranging from stateful computations to transactions, backtracking and
+cooperative multithreading. Unfortunately, the Eff's type system does not
+capture effects in the types and it is highlighted in the paper that the
+language would benefit from a system that provides a static analysis of
+effects.
+
+### Algebraic effects and dependent types
+
+Another example of programming with effects based on algebraic effects and
+inspired by the Eff programming language is described in \cite{Brady}, which
+introduces $Effects$ -- a domain-specific language (DSL) for Idris programming
+language \cite{Idris}. In the general case, there is a type $EffM$ that
+describes a program using some *computation context* (which can be a monad, for
+example, but it does not have to be), lists of input and output effects as well
+as the program's return type.  Programming using $Effects$ from a user point of
+view is quite alike monadic programming in Haskell, since, for example, monadic
+do-notation is used. Each effect is associated with a *resource*, which can
+denote storage for stateful computations, for example. To run an effectful
+computation one must specify an initial value of the resource.  To solve the
+problem similar to the one solved by lifting in monad transformers, $Effects$
+uses *labelled* effects to resolve the ambiguity.  An effect is usually
+implemented as an algebraic data type (ADT) as well as an implementation of the
+handler for this effect. Handlers can be implemented for specific contexts as
+well as for the general case. The author highlights that monads and monad
+transformers can express more concepts, but $Effects$ capture many useful use
+cases. Implementation of common effects and examples of their usage as well as
+DSL implementation in Idris is described in details in the paper.
+
+### Extensible effects
+
+The last in this chapter is an example of a library-based approach. Extensible
+effects \cite{ExtensibleEffects} is a library for the Haskell programming
+language. It is positioned as an alternative to monad transformers. The central
+concept of this library is a monad $Eff\ r$, where $r$ is a type parameter that
+represents an *open union* of individual effects, that are combined ($r$ stands
+for "requests"). One of the main ideas behind the library is that effects come
+from communication between a client and an effect handler (authority), which is
+quite similar to the algebraic effect handlers approach. The implementation is
+described in detail in the paper together with the examples of implementation
+of different effects as a user code (meaning, it can be done outside of the
+library). The authors provide a detailed analysis of monad transformers and
+problems with their expressiveness. One of the highlights of differences from
+monad transformers is that effects of the same type can be combined and as
+opposed to monad transformers, no explicit lifting is needed, appropriate
+operations are found by types. Another difference is that the order of effects
+is chosen only when running a computation, not when defining the computation
+and in addition to that handled effects are subtracted from the type. The
+authors claim that their framework subsumes the Monad Transformers Library
+(MTL) in Haskell and allows to express computations, that are not possible with
+MTL.
+
+It is worth mentioning that algebraic effect handlers while having a good story
+of modularity suffer from performance problems (compared to monad
+transformers). As Wu and Schrijvers point out in \cite{FusionForFree},
+modularity comes from the fact that syntax and semantics of effects are
+separated and so different handlers implementing different semantics can be
+provided for the same syntax tree. At the same time, "the construction and
+traversal of intermediate trees is rather costly". The work described in
+\cite{FusionForFree} attempts to address this problem by trying to fuse several
+handlers into a single one and thus improving the performance.
+
+There is also a follow up work on "Extensible effects" aimed at improving the
+algorithmic efficiency of the library and its simplification
+\cite{FreerMonads}.
 
