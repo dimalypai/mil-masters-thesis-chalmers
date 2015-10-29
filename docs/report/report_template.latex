@@ -130,6 +130,7 @@ $if(lang)$
 \fi
 $endif$
 
+\usepackage{bcprules}
 \usepackage[nottoc]{tocbibind}
 
 $if(title)$

@@ -99,14 +99,13 @@ covered in separate sections.
 
 The bread and butter of MIL is monadic $bind$ and $return$. The following
 example uses $bind$ (`let ... in` expression) to bind the result of `read_char`
-built-in function to the variable `c` and then return it in the `IO` monad:
+built-in function to the variable `c` and then return it in the `IO` monad
+($return$ needs to be annotated with a monad):
 
 ~~~
 let (c : Char) <- read_char
 in return [IO] c
 ~~~
-
-$return$ needs to be annotated with a monad.
 
 ### Lifting
 
@@ -341,13 +340,212 @@ languages. $\varepsilon$ denotes an empty grammar production.
 
 ## Type system
 
-Most of the type rules.
-\cite{TAPL}
+This section is devoted to the details of the MIL type system and the effect
+representation. We will not provide a formal definition of the full type
+system, but rather focus on the crucial parts. For example, data types and
+functions will be omitted, since they are pretty straight-forward and similar
+to the typing in many other functional languages.
 
-## Effects
+Variables get their types from the type environment $\Gamma$:
 
-* Special section devoted to combining monads with :::
-* Monad transformers
+\infrule[T-Var]{x : T \in \Gamma}{\Gamma \vdash x : T}
+
+Lambda abstraction is what is found in most functional languages, but note that
+it does not allow variable shadowing:
+
+\infrule[T-Abs]{x \notin \Gamma \andalso \Gamma, x : T_1 \vdash e : T_2}{\Gamma \vdash \lambda (x : T_1) \to e : T_1 \to T_2}
+
+Function application also has a classical shape, but the argument and parameter
+types do not have to be the same, rather they need to satisfy the
+$isCompatible$ relation, which we will define after all the rules together
+with other relations that are used:
+
+\infrule[T-App]{\Gamma \vdash e_1 : T_1 \to T_2 \andalso \Gamma \vdash e_2 : T_1' \andalso isCompatible(T_1', T_1)}{\Gamma \vdash e_1\ e_2 : T_2}
+
+Type abstraction and type application have typical System F rules, but again,
+type variable shadowing is not allowed:
+
+\infrule[T-TAbs]{X \notin \Gamma \andalso \Gamma, X \vdash e : T}{\Gamma \vdash \Lambda X\ .\ e : forall\ X\ .\ T}
+
+\infrule[T-TApp]{\Gamma \vdash e_1 : forall\ X\ .\ T_{1}}{\Gamma \vdash e_1\ [T_2] : [X \mapsto T_2]T_{1}}
+
+The next four rules specify how data constructors get their types:
+
+\infrule[T-ConstrNil]{\Gamma \vdash C \in T}{\Gamma \vdash C : T}
+
+\infrule[T-Constr]{\Gamma \vdash C\ T_1 ... T_n \in T}{\Gamma \vdash C : T_1 \to ... \to T_n \to T}
+
+\infrule[T-ConstrNilTypeVars]{\Gamma \vdash C \in T\ X_1 ... X_n}{\Gamma \vdash C : T\ X_1 ... X_n}
+
+\infrule[T-ConstrTypeVars]{\Gamma \vdash C\ T_1 ... T_n \in T\ X_1 ... X_n}{\Gamma \vdash C : forall\ X_1 .\ ...\ . forall\ X_n . T_1 \to ... \to T_n \to T\ X_1 ... X_n}
+
+Typing of tuples is specified with the following two rules:
+
+\infax[T-EmptyTuple]{\Gamma \vdash \{ \} : \{ \}}
+
+\infrule[T-Tuple]{for\ each\ i \andalso \Gamma \vdash e_i : T_i}{\Gamma \vdash \{ e_{i = 1..n} \} : \{ T_{i = 1..n} \}}
+
+Probably the most important typing rule is the one for monadic $bind$:
+
+\infrule[T-Let]{x \notin \Gamma \andalso \Gamma \vdash e_1 : M_1\ T_1' \andalso \Gamma, x : T_1 \vdash e_2 : M_2\ T_2 \andalso T_1 \equiv_\alpha T_1' \\ isMonad(M_1) \andalso isMonad(M_2) \andalso isCompatibleMonad(M_2, M_1)}{\Gamma \vdash let\ (x : T_1) \gets e_1\ in\ e_2 : highestEffectMonad(M_1, M_2)\ T_2}
+
+The crucial parts are that both $e_1$ and $e_2$ should have monadic types.
+These two monads have to satisfy the $isCompatibleMonad$ relation. The type
+specified in the variable binder ($T_1$) and the result type of $e_1$ ($T_1'$)
+must be alpha-equivalent (equivalent modulo renaming of type variables). $e_2$
+gets the bound variable in scope. The monad for the type of the whole bind
+expression is chosen using the $highestEffectMonad$ function. The rule also
+specifies that $bind$ does not allow variable shadowing.
+
+Monadic $return$ typing rule is quite minimal. Its type is the monadic type
+$return$ is annotated with applied to the type of the expression that is being
+returned:
+
+\infrule[T-Return]{isMonad(M) \andalso \Gamma \vdash e : T}{\Gamma \vdash return\ [M]\ e : M\ T}
+
+The next rule specifies the $lift$ operation. $lift$ is annotated with two
+monads, we lift a computation in monad $M_1$ to monad $M_2$. $M_1$ has to be a
+*suffix* of $M_2$. The monad of the expression $e$ that we are lifting ($M_1'$)
+and monad $M_1$ should satisfy the non-commutative version of the
+$isCompatibleMonad$ relation:
+
+\infrule[T-Lift]{\Gamma \vdash e : M_1'\ T \andalso isMonad(M_1') \andalso isMonad(M_1) \andalso isMonad(M_2) \\ isCompatibleMonadNotCommut(M_1', M_1) \andalso M_1\ isMonadSuffixOf\ M_2}{\Gamma \vdash lift\ [M_1 \Rightarrow M_2]\ e : M_2\ T}
+
+The last rule describes `let rec` expression:
+
+\infrule[T-LetRec]{for\ each\ i \andalso x_i \notin \Gamma \andalso \Gamma, (x_j : T_j)_{j = 1..n} \vdash e_i : T_i' \andalso \Gamma, (x_j : T_j)_{j = 1..n} \vdash e : T \\ T_i \equiv_\alpha T_i'}{\Gamma \vdash let\ rec\ (x_i : T_i) \gets e_i;_{i = 1..n}\ in\ e : T}
+
+Similarly to other expressions which introduce variables, `let rec` does not
+allow variable shadowing. All binding expressions ($e_i$) are checked with all
+the variable binders in scope, so that they can be mutually recursive. The type
+of a binding expression should be alpha-equivalent to the type specified in the
+corresponding variable binder.
+
+Typing of `case` expressions is quite involved when written using judgement
+rules, so we will omit it here. It can be informally described as the
+following: pattern types should match the type of a scrutinee, every case
+alternative is checked separately, variables bound in patterns are in scope for
+the corresponding alternative. The types of expressions in alternatives should
+satisfy the $isCompatible$ relation. The effect of the case expression is
+chosen using the $highestEffectMonad$ function among all the alternatives.
+
+Next, we will look at the relations and helper functions used in the typing
+rules above and define what are the possible monads and how they are combined
+in MIL.
+
+The first one is the $isCompatible$ relation. TODO
+
+\infrule{isCompatibleMonadNotCommut(M_1, M_2)}{isCompatible(M_1, M_2)}
+TODO
+\infrule{T_1 <: T_2}{isCompatible(T_1, T_2)}
+~~~
+isCompatibleWith (TyMonad mt1) (TyMonad mt2) =
+  mt1 `isCompatibleMonadWithNotCommut` mt2
+isCompatibleWith (TyApp mt1@(TyMonad _) t1@(TyMonad {})) (TyApp mt2@(TyMonad _) t2@(TyMonad {})) =
+  (mt1 `isCompatibleWith` mt2) && (t1 `alphaEq` t2)
+isCompatibleWith (TyApp mt1@(TyMonad _) t1) (TyApp mt2@(TyMonad _) t2) =
+  (mt1 `isCompatibleWith` mt2) && (t1 `isCompatibleWith` t2)
+isCompatibleWith (TyArrow t11 t12) (TyArrow t21 t22) =
+  (t21 `isCompatibleWith` t11) && (t12 `isCompatibleWith` t22)
+isCompatibleWith (TyForAll tv1 t1) (TyForAll tv2 t2) =
+  t1 `isCompatibleWith` ((tv2, TyVar tv1) `substTypeIn` t2)
+isCompatibleWith t1 t2 = t1 `isSubTypeOf` t2
+~~~
+
+There are four built-in monads in MIL: $Id$ (identity), $State$, $IO$ (for
+input/output) and $Error$. They all satisfy the $isSingleMonad$ relation. Note
+that the $Error$ type has an additional type parameter for the type of error
+values.
+
+\infax{isSingleMonad(Id)}
+\infax{isSingleMonad(State)}
+\infax{isSingleMonad(IO)}
+\infax{isSingleMonad(Error\ T)}
+
+$isMonad$ unary predicate defines what is considered a monad in MIL. Single
+monad is one such case:
+
+\infrule{isSingleMonad(M)}{isMonad(M)}
+
+There is also an infix type constructor $:::$ that combines two monads.  We
+call $:::$ a *monad cons* operator, similarly to list cons cells. This is the
+way to combine monads in MIL. One can look at it as a type-level list of monads
+(hence the naming). What it represents is a monad transformer stack. In MIL
+there is no distinction between the `State` monad and the `StateT` monad
+transformer.  It is the context that determines the meaning. When a monad is to
+the left of monad cons, it is considered a transformer, when it is to the right
+or is used as a type constructor elsewhere, it is a monad. When talking about
+MIL these terms can be used interchangeably. The monad cons operator should be
+thought of as right-associative. The following rule defines that $M_1 ::: M_2$
+is a monad, if $M_1$ is a single monad and $M_2$ is a monad (so it can be a
+monad cons as well):
+
+\infrule{isSingleMonad(M_1) \andalso isMonad(M_2)}{isMonad(M_1 ::: M_2)}
+
+The following example gives an intuition with relation to monad transformers in
+Haskell (`State` in MIL does not have a type of storage as opposed to `StateT`
+in Haskell, so it is substituted with `()`):
+
+`Error Int ::: (State ::: IO)` $\Rightarrow$ `ErrorT Int (StateT () IO)`
+
+For the sake of the definitions below, we also define $isMonadCons(M)$ to hold
+if $M$ is a combination of two monads with $:::$. We also use $monadConsLeft$
+and $monadConsRight$ functions to get the left-hand side and the right-hand
+side of a monad cons respectively.
+
+The core of determining whether two monads are compatible is the following
+non-commutative operation:
+
+\infrule{isSingleMonad(M_1) \andalso isSingleMonad(M_2) \andalso M_1 \equiv_\alpha M_2}{isCompatibleMonadNotCommut(M_1, M_2)}
+\infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \andalso monadConsLeft(M_1) \equiv_\alpha monadConsLeft(M_2) \\ isCompatibleMonadNotCommut(monadConsRight(M_1), monadConsRight(M_2))}{isCompatibleMonadNotCommut(M_1, M_2)}
+\infrule{isSingleMonad(M_1) \andalso isMonadCons(M_2) \andalso M_1 \equiv_\alpha monadConsLeft(M_2)}{isCompatibleMonadNotCommut(M_1, M_2)}
+
+It specifies that two single monads are compatible if they are
+alpha-equivalent. Alpha-equivalence for MIL monads is pretty straight-forward:
+every monad is alpha-equivalent to itself. In the case of two $Error\ T$, their
+type arguments denoting the error types also must be alpha-equivalent. Another
+case is for two monad conses: their left-hand sides must be alpha-equivalent
+and then the recursive case on the right-hand sides must hold as well. Finally,
+a single monad is compatible with a monad cons if it is alpha-equivalent to the
+left-hand side of the monad cons. TODO: prefix intuition.
+
+$isCompatibleMonad$ is just a disjunction of two
+$isCompatibleMonadNotCommut$ with arguments swapped:
+
+\infrule{isCompatibleMonadNotCommut(M_1, M_2) \andalso \vee \andalso isCompatibleMonadNotCommut(M_2, M_1)}{isCompatibleMonad(M_1, M_2)}
+
+TODO
+
+~~~
+isMonadSuffixOf :: MonadType -> MonadType -> Bool
+isMonadSuffixOf (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
+isMonadSuffixOf t1@(MTyMonadCons {}) t2@(MTyMonadCons _ mt2) =
+  t1 `alphaEq` t2 || t1 `isMonadSuffixOf` mt2
+isMonadSuffixOf t1@(MTyMonad {}) (MTyMonadCons _ mt2) = t1 `isMonadSuffixOf` mt2
+isMonadSuffixOf (MTyMonadCons {}) (MTyMonad {}) = False
+~~~
+
+$highestEffectMonad$ is a function that takes two monads and return the one,
+which encodes more effects. We define that monads combined with monad cons have
+a higher effect than a monad:
+
+\infrule{isMonadCons(M_1) \andalso isSingleMonad(M_2)}{highestEffectMonad(M_1, M_2) = M_1}
+\infrule{isSingleMonad(M_1) \andalso isMonadCons(M_2)}{highestEffectMonad(M_1, M_2) = M_2}
+
+For two monads, $highestEffectMonad$ returns the first one, so we do not have
+any ordering between the MIL monads:
+
+\infrule{isSingleMonad(M_1) \andalso isSingleMonad(M_2)}{highestEffectMonad(M_1, M_2) = M_1}
+
+The most interesting case is when both arguments are monad conses. In this case
+we recurse into the right hand-sides of monad conses, since that is where they
+might differ:
+
+\infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \\ highestEffectMonad(monadConsRight(M_1), monadConsRight(M_2)) = monadConsRight(M_1)}{highestEffectMonad(M_1, M_2) = M_1}
+\infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \\ highestEffectMonad(monadConsRight(M_1), monadConsRight(M_2)) = monadConsRight(M_2)}{highestEffectMonad(M_1, M_2) = M_2}
+
+One can say that the intuition behind $highestEffectMonad$ is that the longer
+chain of monad conses has a higher effect.
 
 ## Haskell implementation
 

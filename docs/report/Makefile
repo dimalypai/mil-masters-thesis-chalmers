@@ -8,6 +8,7 @@ all:
 			--variable classoption=oneside \
 			--variable mainfont=Palatino \
 			--variable monofont=Monaco \
+			--variable mathfont=Monaco \
 			--variable fontsize=12pt \
 			--variable geometry:margin=1in \
 			--latex-engine=xelatex \
