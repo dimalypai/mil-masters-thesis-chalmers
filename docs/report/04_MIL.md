@@ -779,4 +779,29 @@ TODO: LICENSE.
 Implementation details specific to optimisations are presented in a separate
 chapter.
 
+## Discussion
+
+Currently, effects in MIL are quite coarse-grained, for example compared to
+MIL-lite by Benton and Kennedy \cite{Benton}, for example there is only one big
+$State$ and no distinction between reading/writing is made. Input and output
+are not separated either. Non-termination is not captured in MIL, we will live
+this discussion for later chapters.
+
+None of the monadic ILs described in "Related work" had the flexibility of
+combining effects that is achieved in MIL with the help of monad transformers
+(which is, of course, partly due to that it wasn't a goal for those IRs to be
+able to express different semantics).  In \cite{Tolmach} the hierarchy of
+monads was fixed. In MIL-lite, effects are combined in sets, but there is no
+way to choose an interpretation of State and Error combination, for example.
+
+When it comes to programming with effects, as it was mentioned several times in
+"Related work", a neccessity to do lifting when using monad transformers to
+combine monads is widely considered to be one of their biggest problems. While
+we agree, that it is a problem when it comes to everyday programming using
+effects, we think it is not such a big issue for an intermediate language. It
+is very useful for an IR to be human-readable, but it is usually not the main
+goal, since it is not a user facing language. Moreover, as it will be seen in
+the next two chapters, we didn't see lifting as the biggest mental overhead
+when generating or reading MIL code for the source languages that were designed
+as part of this work.
 
