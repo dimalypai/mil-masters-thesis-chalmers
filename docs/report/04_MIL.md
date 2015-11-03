@@ -3,8 +3,9 @@
 > *In this chapter we present the main part of this thesis -- Monadic
 > Intermediate Language. First, its overview and some examples are given. Then
 > we specify its grammar, the type system and describe representation of
-> effects in detail.  Finally, some parts of the Haskell implementation are
-> described.*
+> effects in detail. After this, some parts of the Haskell implementation are
+> described. We conclude with a discussion and some comparison to the related
+> work.*
 
 ## Overview
 
@@ -340,7 +341,7 @@ languages. $\varepsilon$ denotes an empty grammar production.
 
 ## Type system
 
-This section is devoted to the details of the MIL type system and the effect
+This section is devoted to the details of the MIL type system and the effects
 representation. We will not provide a formal definition of the full type
 system, but rather focus on the crucial parts. For example, data types and
 functions will be omitted, since they are pretty straight-forward and similar
@@ -403,13 +404,13 @@ returned:
 
 \infrule[T-Return]{isMonad(M) \andalso \Gamma \vdash e : T}{\Gamma \vdash return\ [M]\ e : M\ T}
 
-The next rule specifies the $lift$ operation. $lift$ is annotated with two
-monads, we lift a computation in monad $M_1$ to monad $M_2$. $M_1$ has to be a
-*suffix* of $M_2$. The monad of the expression $e$ that we are lifting ($M_1'$)
-and monad $M_1$ should satisfy the non-commutative version of the
-$isCompatibleMonad$ relation:
+The next rule specifies the typing of the $lift$ operation. $lift$ is annotated
+with two monads, we lift a computation in monad $M_1$ to monad $M_2$. The monad
+of the expression $e$ that we are lifting ($M_1'$) and monad $M_1$ should
+satisfy the non-commutative version of the $isCompatibleMonad$ relation. $M_1$
+also has to be a *monad suffix* of $M_2$.
 
-\infrule[T-Lift]{\Gamma \vdash e : M_1'\ T \andalso isMonad(M_1') \andalso isMonad(M_1) \andalso isMonad(M_2) \\ isCompatibleMonadNotCommut(M_1', M_1) \andalso M_1\ isMonadSuffixOf\ M_2}{\Gamma \vdash lift\ [M_1 \Rightarrow M_2]\ e : M_2\ T}
+\infrule[T-Lift]{\Gamma \vdash e : M_1'\ T \andalso isMonad(M_1') \andalso isMonad(M_1) \andalso isMonad(M_2) \\ isCompatibleMonadNotCommut(M_1', M_1) \andalso isMonadSuffix(M_1, M_2)}{\Gamma \vdash lift\ [M_1 \Rightarrow M_2]\ e : M_2\ T}
 
 The last rule describes `let rec` expression:
 
@@ -429,28 +430,9 @@ the corresponding alternative. The types of expressions in alternatives should
 satisfy the $isCompatible$ relation. The effect of the case expression is
 chosen using the $highestEffectMonad$ function among all the alternatives.
 
-Next, we will look at the relations and helper functions used in the typing
-rules above and define what are the possible monads and how they are combined
-in MIL.
-
-The first one is the $isCompatible$ relation. TODO
-
-\infrule{isCompatibleMonadNotCommut(M_1, M_2)}{isCompatible(M_1, M_2)}
-TODO
-\infrule{T_1 <: T_2}{isCompatible(T_1, T_2)}
-~~~
-isCompatibleWith (TyMonad mt1) (TyMonad mt2) =
-  mt1 `isCompatibleMonadWithNotCommut` mt2
-isCompatibleWith (TyApp mt1@(TyMonad _) t1@(TyMonad {})) (TyApp mt2@(TyMonad _) t2@(TyMonad {})) =
-  (mt1 `isCompatibleWith` mt2) && (t1 `alphaEq` t2)
-isCompatibleWith (TyApp mt1@(TyMonad _) t1) (TyApp mt2@(TyMonad _) t2) =
-  (mt1 `isCompatibleWith` mt2) && (t1 `isCompatibleWith` t2)
-isCompatibleWith (TyArrow t11 t12) (TyArrow t21 t22) =
-  (t21 `isCompatibleWith` t11) && (t12 `isCompatibleWith` t22)
-isCompatibleWith (TyForAll tv1 t1) (TyForAll tv2 t2) =
-  t1 `isCompatibleWith` ((tv2, TyVar tv1) `substTypeIn` t2)
-isCompatibleWith t1 t2 = t1 `isSubTypeOf` t2
-~~~
+Next, we will define what are the possible monads and how they can be combined
+in MIL as well as the relations and helper functions used in the typing rules
+above.
 
 There are four built-in monads in MIL: $Id$ (identity), $State$, $IO$ (for
 input/output) and $Error$. They all satisfy the $isSingleMonad$ relation. Note
@@ -470,9 +452,9 @@ monad is one such case:
 There is also an infix type constructor $:::$ that combines two monads.  We
 call $:::$ a *monad cons* operator, similarly to list cons cells. This is the
 way to combine monads in MIL. One can look at it as a type-level list of monads
-(hence the naming). What it represents is a monad transformer stack. In MIL
-there is no distinction between the `State` monad and the `StateT` monad
-transformer.  It is the context that determines the meaning. When a monad is to
+(hence the naming). What it represents is a monad transformer stack. Note, that
+in MIL there is no distinction between the `State` monad and the `StateT` monad
+transformer. It is the context that determines the meaning. When a monad is to
 the left of monad cons, it is considered a transformer, when it is to the right
 or is used as a type constructor elsewhere, it is a monad. When talking about
 MIL these terms can be used interchangeably. The monad cons operator should be
@@ -493,6 +475,50 @@ if $M$ is a combination of two monads with $:::$. We also use $monadConsLeft$
 and $monadConsRight$ functions to get the left-hand side and the right-hand
 side of a monad cons respectively.
 
+One of the most important high-level relations is the $isCompatible$ relation,
+which is used in typing of function applications and function bodies, for
+example.
+
+If both of the types are monadic, then a separate (non-commutative) relation
+for monads is used:
+
+\infrule{isMonad(M_1) \andalso isMonad(M_2) \andalso isCompatibleMonadNotCommut(M_1, M_2)}{isCompatible(M_1, M_2)}
+
+For type applications involving monads, if the result type is a monad, we
+choose to use alpha-equivalence instead of recursing with $isCompatible$ mainly
+for the sake of simplicity:
+
+\infrule{isMonad(T_{11}) \andalso isMonad(T_{12}) \andalso isMonad(T_{21}) \andalso isMonad(T_{22}) \\ isCompatible(T_{11}, T_{21}) \andalso T_{12} \equiv_\alpha T_{22}}{isCompatible(T_{11}\ T_{12}, T_{21}\ T_{22})}
+
+On the other hand, when the result type is not a monad, we use $isCompatible$
+for them as well:
+
+\infrule{isMonad(M_1) \andalso isMonad(M_2) \andalso isCompatible(M_1, M_2) \andalso isCompatible(T_1, T_2)}{isCompatible(M_1\ T_1, M_2\ T_2)}
+
+For function types, using the terminology from subtyping, we can say that they
+are covariant in the result types and contravariant in the argument types:
+
+\infrule{isCompatible(T_{21}, T_{11}) \andalso isCompatible(T_{12}, T_{22})}{isCompatible(T_{11} \to T_{12}, T_{21} \to T_{22})}
+
+For universally quantified types we recurse down the types under $forall$:
+
+\infrule{isCompatible(T_1, [Y \mapsto X]T_2)}{isCompatible(forall\ X\ .\ T_1, forall\ Y\ .\ T_2)}
+
+Note that we need to substitute the type variable $Y$ with the type variable
+$X$, because we remove the quantification, which would make the check for
+alpha-equivalence not succeed when comparing free type variables $X$ and $Y$.
+
+For all the other cases type compatibility is subtyping:
+
+\infrule{T_1 <: T_2}{isCompatible(T_1, T_2)}
+
+Subtyping in MIL is defined as just alpha-equivalence for all the types except
+the tuple types. Tuple types in MIL have *width* and *depth subtyping*. We will
+not present these rules here, they can be found, for example, in \cite{TAPL}.
+
+In general, we can view the $isCompatible$ relation in MIL as a subtyping
+relation extended to monads and their combinations with monad cons.
+
 The core of determining whether two monads are compatible is the following
 non-commutative operation:
 
@@ -505,29 +531,71 @@ alpha-equivalent. Alpha-equivalence for MIL monads is pretty straight-forward:
 every monad is alpha-equivalent to itself. In the case of two $Error\ T$, their
 type arguments denoting the error types also must be alpha-equivalent. Another
 case is for two monad conses: their left-hand sides must be alpha-equivalent
-and then the recursive case on the right-hand sides must hold as well. Finally,
-a single monad is compatible with a monad cons if it is alpha-equivalent to the
-left-hand side of the monad cons. TODO: prefix intuition.
+and then the recursive cases on the right-hand sides must hold as well.
+Finally, a single monad is compatible with a monad cons if it is
+alpha-equivalent to the left-hand side of the monad cons. One can think about
+this relation as the one that checks whether the first argument is a proper
+*prefix* of the second one. As an example, $State ::: Error\ Unit$ is
+compatible with $State ::: (Error\ Unit ::: IO)$.  It is also possible to think
+of every monad cons sequence as having an implicit monad variable $M$ at the
+end, similarly to monad transformer stacks parameterised over the underlying
+monad in Haskell. An example of incompatible monads is $State ::: Error\ Int$
+and $Error\ Int ::: State$, because the order of $State$ and $Error$ is
+different.  Another example is $State ::: IO$ is incompatible with just
+$State$, because the first one has more effects than the second one and thus
+cannot be passed as an argument instead of a just stateful computation and
+cannot be a body of a function that declares only $State$ as its effect.
 
-$isCompatibleMonad$ is just a disjunction of two
-$isCompatibleMonadNotCommut$ with arguments swapped:
+The commutative version of the previous relation is $isCompatibleMonad$, which
+is just a disjunction of two $isCompatibleMonadNotCommut$ with arguments
+swapped:
 
 \infrule{isCompatibleMonadNotCommut(M_1, M_2) \andalso \vee \andalso isCompatibleMonadNotCommut(M_2, M_1)}{isCompatibleMonad(M_1, M_2)}
 
-TODO
+Having defined the monad compatibility, it is worth looking back at the
+compatibility of function types. Intuitively, if $isCompatible(T_1, T_2)$,
+$T_1$ has at most the effects of $T_2$, potentially less, but not more. Since
+function types are "covariant" in the result types, we can pass as an argument
+a function which returns a computation with less effects than the specified
+argument type. Also, since function types are "contravariant" in the argument
+types, we can pass a function, which has a parameter with a more effectful
+type. For example, a function of type $(State ::: IO) Int \to State Int$ can be
+passed as an argument to a function which has a parameter of type $State Int
+\to (State ::: IO) Int$.
 
-~~~
-isMonadSuffixOf :: MonadType -> MonadType -> Bool
-isMonadSuffixOf (MTyMonad m1) (MTyMonad m2) = m1 `alphaEq` m2
-isMonadSuffixOf t1@(MTyMonadCons {}) t2@(MTyMonadCons _ mt2) =
-  t1 `alphaEq` t2 || t1 `isMonadSuffixOf` mt2
-isMonadSuffixOf t1@(MTyMonad {}) (MTyMonadCons _ mt2) = t1 `isMonadSuffixOf` mt2
-isMonadSuffixOf (MTyMonadCons {}) (MTyMonad {}) = False
-~~~
+In the typing rule for the $lift$ operation above, the relation $isMonadSuffix$
+was used. The intuition behind it is that it specifies whether it is possible
+to properly put a combination of monads on top of another monad transformer
+stack. Single monad $M_1$ is a suffix of a single monad $M_2$ if they are
+alpha-equivalent. In this case lifting is a no-op and the monad of a
+computation is not changed:
 
-$highestEffectMonad$ is a function that takes two monads and return the one,
-which encodes more effects. We define that monads combined with monad cons have
-a higher effect than a monad:
+\infrule{isSingleMonad(M_1) \andalso isSingleMonad(M_2) \andalso M_1 \equiv_\alpha M_2}{isMonadSuffix(M_1, M_2)}
+
+Next, if both arguments are monad conses, to satisfy $isMonadSuffix$ they can
+be either alpha-equivalent or the first monad cons is a suffix of the
+right-hand side of the second monad cons:
+
+\infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \andalso (M_1 \equiv_\alpha M_2 \vee isMonadSuffix(M_1, monadConsRight(M_2)))}{isMonadSuffix(M_1, M_2)}
+
+Given the above it is possible to $lift$ a $State ::: IO$ computation into a
+$Error\ Unit ::: (State ::: IO)$ computation. It is basically putting $Error\
+Unit$ on the top of the stack.
+
+The third case is when the first argument is a single monad and the second
+argument is a monad cons. In this case we just shift and check if the single
+monad is a suffix of the right-hand side of the monad cons:
+
+\infrule{isSingleMonad(M_1) \andalso isMonadCons(M_2) \andalso isMonadSuffix(M_1, monadConsRight(M_2))}{isMonadSuffix(M_1, M_2)}
+
+An example here is lifting from $IO$ to $State ::: IO$.
+
+This was the last rule, which implies that monad cons is never a suffix of a
+single monad.
+
+Finally, $highestEffectMonad$ is a function that takes two monads and returns
+the one, which encodes more effects. We define that monads combined with monad
+cons have a higher effect than a single monad:
 
 \infrule{isMonadCons(M_1) \andalso isSingleMonad(M_2)}{highestEffectMonad(M_1, M_2) = M_1}
 \infrule{isSingleMonad(M_1) \andalso isMonadCons(M_2)}{highestEffectMonad(M_1, M_2) = M_2}
@@ -536,6 +604,9 @@ For two monads, $highestEffectMonad$ returns the first one, so we do not have
 any ordering between the MIL monads:
 
 \infrule{isSingleMonad(M_1) \andalso isSingleMonad(M_2)}{highestEffectMonad(M_1, M_2) = M_1}
+
+An important internal assumption in MIL is that the $highestEffectMonad$ is
+used only on compatible monads (see $isCompatibleMonad$).
 
 The most interesting case is when both arguments are monad conses. In this case
 we recurse into the right hand-sides of monad conses, since that is where they
@@ -546,6 +617,12 @@ might differ:
 
 One can say that the intuition behind $highestEffectMonad$ is that the longer
 chain of monad conses has a higher effect.
+
+Looking back at the T-Let typing rule again: it does not matter if it is a
+binding expression or a body which has a higher effect, they must be compatible
+(using the $isCompatibleMonad$ relation) and the type with the highest effect
+is chosen as the type of the whole expression. The same applies to `case`
+expressions.
 
 ## Haskell implementation
 
