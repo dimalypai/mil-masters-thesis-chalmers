@@ -628,11 +628,155 @@ expressions.
 
 Since one of the aims of this thesis was to produce a programming framework for
 working with the designed monadic intermediate representation, here we will
-outline some of the implementation details. MIL is implemented in Haskell.
+outline some of the implementation details, namely, several core data types.
 
-* AST
-* Type checker?
-* API
+MIL is implemented in Haskell. There is a parser which given a program text
+produces a source version of the abstract-syntax tree (AST) and a type checker
+which given a source of version of the AST produces a typed (type annotated)
+version of it. There is also a lint checker, which given an already typed AST
+verifies that it is well-typed. This is really useful as a tool to check that
+subsequent program transformations maintain its type correctness.
 
-Implementation details specific to optimisations are presented in Chapter\ \ref{chap:opt}.
+As it was mentioned above, we draw a distinction between the source AST and the
+typed AST. The source version looks more like what a user (or rather, a
+compiler generated) entered as a program. The typed version contains more
+information, meaning some syntax nodes are more refined and are annotated with
+types.
+
+The biggest different between the two is in representations of types. The
+source representation produced a the parser is captured in the `SrcType` data
+type:
+
+~~~
+data SrcType
+  = SrcTyTypeCon TypeName
+  | SrcTyArrow SrcType SrcType
+  | SrcTyForAll TypeVar SrcType
+  | SrcTyApp SrcType SrcType
+  | SrcTyTuple [SrcType]
+  | SrcTyMonadCons SrcType SrcType
+~~~
+
+It has data constructors for type constructors represented just as their names
+(`TypeName` is wrapper for `String`), function types (`SrcTyArrow`),
+universally-quantified types, type application, tuple types and monad cons,
+which has `SrcType`s as its operands.
+
+The internal representation of types is expressed as the `Type` ADT, which is
+slightly more involved. Types are converted from the source representation
+during the type checking phase. At the same type a number of checks are
+performed, for example, that all the types are properly kinded, that they use
+types which are in scope, that there is no type variable shadowing etc.
+
+~~~
+data Type
+  = TyTypeCon TypeName
+  | TyVar TypeVar
+  | TyArrow Type Type
+  | TyForAll TypeVar Type
+  | TyApp Type Type
+  | TyTuple [Type]
+  | TyMonad MonadType
+~~~
+
+It has separate constructors for type constructors and for type variables.
+Function types, universally-quantified types, type applications and tuple types
+are essentially the same. Monadic types are expressed with the `TyMonad` data
+constructor, which has one field of type `MonadType`.
+
+Built-in monads are captured in the `MilMonad` data type:
+
+~~~
+data MilMonad
+  = Id
+  | State
+  | Error
+  | IO
+~~~
+
+A monadic type in MIL is either a single monad or a single monad combined with
+another monadic type using monad cons. This is captured in the `MonadType` ADT,
+mentioned above:
+
+~~~
+data MonadType
+  = MTyMonad SingleMonad
+  | MTyMonadCons SingleMonad MonadType
+~~~
+
+This data type is essentially a non-empty list of `SingleMonad`s.
+
+Single monads are represented using the `SingleMonad` data type:
+
+~~~
+data SingleMonad
+  = SinMonad MilMonad
+  | SinMonadApp SingleMonad Type
+~~~
+
+It has two data constructors: one for just a built-in monad and another one for
+application of a single monad to a type. This is done to capture monads that
+might have additional type parameters. In the current state of MIL one such
+example is the `Error` monad. To get a monad the `Error` type constructor needs
+to be applied to a type representing error values.
+
+Expressions in MIL are represented using the parameterised data type
+`Expr v ct mt t`. It has four type parameters:
+
+* `v` for variable occurences
+* `ct` for data constructor types
+* `mt` for monads
+* `t` for general type occurences
+
+As opposed to types, expressions have only one data type for both source and
+typed representations, hence all the type parameters.
+
+We will provide the definition of the `Expr` data type below to get a general
+feeling on how different MIL expressions are represented, but we will skip
+describing it in full detail:
+
+~~~
+data Expr v ct mt t
+  = LitE Literal
+  | VarE v
+  | LambdaE (VarBinder t) (Expr v ct mt t)
+  | AppE (Expr v ct mt t) (Expr v ct mt t)
+  | TypeLambdaE TypeVar (Expr v ct mt t)
+  | TypeAppE (Expr v ct mt t) t
+  | ConNameE ConName ct
+  | LetE (VarBinder t) (Expr v ct mt t) (Expr v ct mt t)
+  | ReturnE mt (Expr v ct mt t)
+  | LiftE (Expr v ct mt t) mt mt
+  | LetRecE [(VarBinder t, Expr v ct mt t)] (Expr v ct mt t)
+  | CaseE (Expr v ct mt t) [CaseAlt v ct mt t]
+  | TupleE [Expr v ct mt t]
+~~~
+
+There are two type synonyms: one for the source representation of expressions
+and one for typed expressions. This is a general pattern used in the MIL
+implementation for many other data types, like type definitions, constructors
+definitions, function definitions etc.
+
+~~~
+type SrcExpr = Expr Var () SrcType SrcType
+type TyExpr  = Expr TyVarBinder Type MonadType Type
+~~~
+
+In the `Src` case variable occurences are just their names as strings, but in
+the typed case, they are names together with the variable type. `TyVarBinder`
+is used for this. Data constructor occurences just have `()` as their type in
+the `SrcExpr`, but an actual type in `TyExpr`. Both of these annotations can be
+useful when working with an instance of the AST, since it allows to get the
+types without asking the type environment. For monads and general type
+occurences, source representation of types (`SrcType`) is replaced with
+`MonadType` and the internal type representation respectively.
+
+All the source code is publicly available at
+<https://bitbucket.org/dmytrolypai/mil-masters-thesis-chalmers> and
+<https://github.com/dmytrolypai/mil-masters-thesis-chalmers> under `code/mil`.
+TODO: LICENSE.
+
+Implementation details specific to optimisations are presented in a separate
+chapter.
+
 
