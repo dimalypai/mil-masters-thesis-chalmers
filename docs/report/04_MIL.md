@@ -1,15 +1,17 @@
 # Monadic Intermediate Language (MIL)
 
 > *In this chapter we present the main part of this thesis -- Monadic
-> Intermediate Language. First, its overview and some examples are given. Then
+> Intermediate Language. First, {{ its overview }}{>> strange wording <<} and some examples are given. Then
 > we specify its grammar, the type system and describe representation of
 > effects in detail. After this, some parts of the Haskell implementation are
 > described. We conclude with a discussion and some comparison to the related
 > work.*
 
+{>> I really like that you start with an overview. It makes the thesis very readable. Good job! <<}
+
 ## Overview
 
-As it was described in the Introduction, the main goal of this thesis was to
+As {-- it --} was described in the Introduction, the main goal of this thesis {~~ was ~> is ~~} to
 design a compiler IR powerful enough to be used in compilers for modern
 programming languages and support reasoning about programs with effects and
 their transformation for the purpose of optimisations. Monadic Intermediate
@@ -17,7 +19,7 @@ Language (MIL) is the result of this effort.
 
 MIL is a rather small strict functional language. Its type system is based on
 System F (or polymorphic lambda calculus) \cite{SystemF}. Effects are modelled
-with monads and monad transformers are used to combine them. MIL also has a
+with monads and monad transformers are used to combine {~~ them ~> the monads ~~}{>> "them" could be understood as either the effects or the monads <<}. MIL also has a
 number of additional features allowing to more easily express many features
 found in modern programming languages.
 
@@ -53,6 +55,8 @@ is just a value of type `Bool`), `Cons` has type `forall A . A -> List A ->
 List A`, meaning that for any type `A` (`A` has kind `*`) it can be applied to
 a value of type `A` and a value of type `List A` producing `List A`. Data
 constructors can also be partially applied.
+
+{>> The intermediate langauges I know of do not allow partial application of data constructors. Partial application is handled by wrapping a function around the constructor instead. Would such a design have been better for you or are you happy with the choice you made? <<}
 
 ### Functions and expressions
 
@@ -95,6 +99,8 @@ and also integer, floating point and character literals as well as tuples (with
 *width and depth subtyping*, see "Type system" section in this chapter and
 \cite{TAPL}). These are not all kinds of expressions, some of them will be
 covered in separate sections.
+
+{>> What is the syntax of tuples? I think it'd be good to show an example of that. <<}
 
 ### Bind and Return
 
@@ -155,6 +161,8 @@ let rec
 in isEven 4
 ~~~
 
+{>> What is the relationship between bind and recursive bindings? They both use a very similar syntax. <<}
+
 ### Built-in data types and functions
 
 MIL has several built-in types: `Unit` (which has only one value, which is the
@@ -190,6 +198,8 @@ used: *upper* for an upper case letter, *lower* for a lower case letter,
 underscore. The details of integer, floating point and character literals are
 omitted. They are more or less what is found in most modern programming
 languages. $\varepsilon$ denotes an empty grammar production.
+
+{>> This grammar is a little on the long side. I think you could benefir from using some EBNF tricks such as curly braces for repetition and brackets for options. It will cut down on the grammar substantially and make it much easier to comprehend. <<}
 
 --------------  -------  --------------------------------------------------  -------------------------------
      *program*   $\to$   *typedefs fundefs*                                  top-level definitions
@@ -347,6 +357,10 @@ system, but rather focus on the crucial parts. For example, data types and
 functions will be omitted, since they are pretty straight-forward and similar
 to the typing in many other functional languages.
 
+{>> But data types and functions are not emitted! Though if you were to emit them, it'd be good if you could give a reference to where the reader could go and learn about such standard typing rules. <<}
+
+{>> It is a good idea to start by explaining the form of the judgment: the environment, the expression, and the type, and how it should be read. <<}
+
 Variables get their types from the type environment $\Gamma$:
 
 \infrule[T-Var]{x : T \in \Gamma}{\Gamma \vdash x : T}
@@ -358,8 +372,8 @@ it does not allow variable shadowing:
 
 Function application also has a classical shape, but the argument and parameter
 types do not have to be the same, rather they need to satisfy the
-$isCompatible$ relation, which we will define after all the rules together
-with other relations that are used:
+$isCompatible$ relation, which we will define {{after all the rules together
+with other relations that are used}}{>> Can you give a more specific reference? It's rather hard to know where to look with this description. <<}:
 
 \infrule[T-App]{\Gamma \vdash e_1 : T_1 \to T_2 \andalso \Gamma \vdash e_2 : T_1' \andalso isCompatible(T_1', T_1)}{\Gamma \vdash e_1\ e_2 : T_2}
 
@@ -369,6 +383,8 @@ type variable shadowing is not allowed:
 \infrule[T-TAbs]{X \notin \Gamma \andalso \Gamma, X \vdash e : T}{\Gamma \vdash \Lambda X\ .\ e : forall\ X\ .\ T}
 
 \infrule[T-TApp]{\Gamma \vdash e_1 : forall\ X\ .\ T_{1}}{\Gamma \vdash e_1\ [T_2] : [X \mapsto T_2]T_{1}}
+
+{>> It'd be good if you explained your syntax for substitution. <<}
 
 The next four rules specify how data constructors get their types:
 
@@ -452,9 +468,7 @@ monad is one such case:
 There is also an infix type constructor $:::$ that combines two monads.  We
 call $:::$ a *monad cons* operator, similarly to list cons cells. This is the
 way to combine monads in MIL. One can look at it as a type-level list of monads
-(hence the naming). What it represents is a monad transformer stack. Note, that
-in MIL there is no distinction between the `State` monad and the `StateT` monad
-transformer. It is the context that determines the meaning. When a monad is to
+(hence the naming). What it represents is a monad transformer stack. {{ Note, that in MIL there is no distinction between the `State` monad and the `StateT` monad transformer. }}{>> I think it's important to point out that you're actually dealing with monad transformers and not monads. Monads cannot be composed so it doesn't make sense to put them in a list and then compose them. It makes sense for monad transformers though. I think it's fine if you still want to talk about composing monads but you have to state up-front that such a statement is informal and what you really mean is composing monad transformers. <<} It is the context that determines the meaning. When a monad is to
 the left of monad cons, it is considered a transformer, when it is to the right
 or is used as a type constructor elsewhere, it is a monad. When talking about
 MIL these terms can be used interchangeably. The monad cons operator should be
@@ -479,6 +493,8 @@ One of the most important high-level relations is the $isCompatible$ relation,
 which is used in typing of function applications and function bodies, for
 example.
 
+{>> What is, intuitively, the property that you want to capture with the isCompatible predicate? What is it good for? <<}
+
 If both of the types are monadic, then a separate (non-commutative) relation
 for monads is used:
 
@@ -489,6 +505,8 @@ choose to use alpha-equivalence instead of recursing with $isCompatible$ mainly
 for the sake of simplicity:
 
 \infrule{isMonad(T_{11}) \andalso isMonad(T_{12}) \andalso isMonad(T_{21}) \andalso isMonad(T_{22}) \\ isCompatible(T_{11}, T_{21}) \andalso T_{12} \equiv_\alpha T_{22}}{isCompatible(T_{11}\ T_{12}, T_{21}\ T_{22})}
+
+{>> Are the types in the above rule well-kinded? How can you apply a monad to a monad? A monad expects a type parameter of kind * but here the argument is of kind * -> *. What gives? <<}
 
 On the other hand, when the result type is not a monad, we use $isCompatible$
 for them as well:
@@ -515,6 +533,8 @@ For all the other cases type compatibility is subtyping:
 Subtyping in MIL is defined as just alpha-equivalence for all the types except
 the tuple types. Tuple types in MIL have *width* and *depth subtyping*. We will
 not present these rules here, they can be found, for example, in \cite{TAPL}.
+
+{>> I can't help but feel that tuples are given a rather step motherly treatment :-) <<}
 
 In general, we can view the $isCompatible$ relation in MIL as a subtyping
 relation extended to monads and their combinations with monad cons.
@@ -552,6 +572,8 @@ swapped:
 
 \infrule{isCompatibleMonadNotCommut(M_1, M_2) \andalso \vee \andalso isCompatibleMonadNotCommut(M_2, M_1)}{isCompatibleMonad(M_1, M_2)}
 
+{>> This is a rather non-standard way of specifying rules. The conventional way is to have two rules, one for each case. <<}
+
 Having defined the monad compatibility, it is worth looking back at the
 compatibility of function types. Intuitively, if $isCompatible(T_1, T_2)$,
 $T_1$ has at most the effects of $T_2$, potentially less, but not more. Since
@@ -577,6 +599,8 @@ be either alpha-equivalent or the first monad cons is a suffix of the
 right-hand side of the second monad cons:
 
 \infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \andalso (M_1 \equiv_\alpha M_2 \vee isMonadSuffix(M_1, monadConsRight(M_2)))}{isMonadSuffix(M_1, M_2)}
+
+{>> Again, this should be two rules, not one with a disjunction. <<}
 
 Given the above it is possible to $lift$ a $State ::: IO$ computation into a
 $Error\ Unit ::: (State ::: IO)$ computation. It is basically putting $Error\
@@ -606,7 +630,7 @@ any ordering between the MIL monads:
 \infrule{isSingleMonad(M_1) \andalso isSingleMonad(M_2)}{highestEffectMonad(M_1, M_2) = M_1}
 
 An important internal assumption in MIL is that the $highestEffectMonad$ is
-used only on compatible monads (see $isCompatibleMonad$).
+used only on compatible monads (see $isCompatibleMonad$). {>> It'd be good if you stated this earlier. It tripped me up when reading the rules. <<}
 
 The most interesting case is when both arguments are monad conses. In this case
 we recurse into the right hand-sides of monad conses, since that is where they
@@ -643,6 +667,8 @@ compiler generated) entered as a program. The typed version contains more
 information, meaning some syntax nodes are more refined and are annotated with
 types.
 
+{>> Why do you call it the typed AST? The source AST is also typed, right? Perhaps there is a better name. <<}
+
 The biggest different between the two is in representations of types. The
 source representation produced a the parser is captured in the `SrcType` data
 type:
@@ -656,6 +682,8 @@ data SrcType
   | SrcTyTuple [SrcType]
   | SrcTyMonadCons SrcType SrcType
 ~~~
+
+{>> Are there no type variables in the source AST? Also, I don't see a constructor for a built in monad. Is that captured by `SrcTyTypeCon`? <<}
 
 It has data constructors for type constructors represented just as their names
 (`TypeName` is wrapper for `String`), function types (`SrcTyArrow`),
@@ -713,6 +741,8 @@ data SingleMonad
   = SinMonad MilMonad
   | SinMonadApp SingleMonad Type
 ~~~
+
+{>> Couldn't you rely on type application in `Type` so that you don't need to have the second constructor? <<}
 
 It has two data constructors: one for just a built-in monad and another one for
 application of a single monad to a type. This is done to capture monads that
@@ -782,7 +812,7 @@ chapter.
 ## Discussion
 
 Currently, effects in MIL are quite coarse-grained, for example compared to
-MIL-lite by Benton and Kennedy \cite{Benton}, for example there is only one big
+MIL-lite by Benton and Kennedy \cite{Benton}, {{for example}}{>> second "for example" in this sentence<<} there is only one big
 $State$ and no distinction between reading/writing is made. Input and output
 are not separated either. Non-termination is not captured in MIL, we will live
 this discussion for later chapters.
