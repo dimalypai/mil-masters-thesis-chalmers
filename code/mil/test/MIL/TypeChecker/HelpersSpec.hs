@@ -251,11 +251,6 @@ spec = do
           t2 = TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State)
       in not $ t1 `isCompatibleWith` t2
 
-    it "returns False when monad application is incompatible in the result type" $
-      let t1 = TyApp (TyMonad $ MTyMonad (SinMonad IO)) (TyMonad $ MTyMonad (SinMonad State))
-          t2 = TyApp (TyMonad $ MTyMonad (SinMonad IO)) (TyMonad $ MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad IO))
-      in not $ t1 `isCompatibleWith` t2
-
     it "handles alpha equivalence" $
       let t1 = TyApp (TyMonad $ MTyMonad (SinMonadApp (SinMonad Error) (TyForAll (TypeVar "A") (mkTypeVar "A")))) intType
           t2 = TyApp (TyMonad $ MTyMonad (SinMonadApp (SinMonad Error) (TyForAll (TypeVar "B") (mkTypeVar "B")))) intType

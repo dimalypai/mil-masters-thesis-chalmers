@@ -218,7 +218,7 @@ isCompatibleWith :: Type -> Type -> Bool
 isCompatibleWith (TyMonad mt1) (TyMonad mt2) =
   mt1 `isCompatibleMonadWithNotCommut` mt2
 isCompatibleWith (TyApp mt1@(TyMonad _) t1@(TyMonad {})) (TyApp mt2@(TyMonad _) t2@(TyMonad {})) =
-  (mt1 `isCompatibleWith` mt2) && (t1 `alphaEq` t2)
+  error "isCompatibleWith: monad is applied to a monad. Kind checking must have gone wrong."
 isCompatibleWith (TyApp mt1@(TyMonad _) t1) (TyApp mt2@(TyMonad _) t2) =
   (mt1 `isCompatibleWith` mt2) && (t1 `isCompatibleWith` t2)
 isCompatibleWith (TyArrow t11 t12) (TyArrow t21 t22) =
