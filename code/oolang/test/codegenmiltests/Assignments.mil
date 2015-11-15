@@ -6,23 +6,23 @@ type String
   = Empty_Str
   | Cons_Str Char String;
 
-printString : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+printString : String -> (Error Unit ::: (State ::: IO)) Unit =
   \(s_ : String) ->
     case s_ of
-      | Empty_Str => return [Error Unit ::: (NonTerm ::: (State ::: IO))] unit
+      | Empty_Str => return [Error Unit ::: (State ::: IO)] unit
       | Cons_Str (c_ : Char) (cs_ : String) =>
-          let (unit_0 : Unit) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] print_char c_
+          let (unit_0 : Unit) <- lift [IO => Error Unit ::: (State ::: IO)] print_char c_
           in printString cs_
     end;
 
-readString : (Error Unit ::: (NonTerm ::: (State ::: IO))) String =
+readString : (Error Unit ::: (State ::: IO)) String =
   readString_ Empty_Str;
 
-readString_ : String -> (Error Unit ::: (NonTerm ::: (State ::: IO))) String =
+readString_ : String -> (Error Unit ::: (State ::: IO)) String =
   \(acc_ : String) ->
-    let (c_ : Char) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+    let (c_ : Char) <- lift [IO => Error Unit ::: (State ::: IO)] read_char
     in case c_ of
-         | ' ' => return [Error Unit ::: (NonTerm ::: (State ::: IO))] reverseString_ acc_ Empty_Str
+         | ' ' => return [Error Unit ::: (State ::: IO)] reverseString_ acc_ Empty_Str
          | _ => readString_ (Cons_Str c_ acc_)
        end;
 
@@ -35,143 +35,143 @@ reverseString_ : String -> String -> String =
             reverseString_ cs_ (Cons_Str c_ acc_)
       end;
 
-printBool : Bool -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+printBool : Bool -> (Error Unit ::: (State ::: IO)) Unit =
   \(b_ : Bool) ->
     case b_ of
       | True => printString (Cons_Str 't' (Cons_Str 'r' (Cons_Str 'u' (Cons_Str 'e' Empty_Str))))
       | False => printString (Cons_Str 'f' (Cons_Str 'a' (Cons_Str 'l' (Cons_Str 's' (Cons_Str 'e' Empty_Str)))))
     end;
 
-readBool : (Error Unit ::: (NonTerm ::: (State ::: IO))) Bool =
-  let (c_1 : Char) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+readBool : (Error Unit ::: (State ::: IO)) Bool =
+  let (c_1 : Char) <- lift [IO => Error Unit ::: (State ::: IO)] read_char
   in case c_1 of
        | 't' =>
-           let (c_2 : Char) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+           let (c_2 : Char) <- lift [IO => Error Unit ::: (State ::: IO)] read_char
            in case c_2 of
              | 'r' =>
-                 let (c_3 : Char) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                 let (c_3 : Char) <- lift [IO => Error Unit ::: (State ::: IO)] read_char
                  in case c_3 of
                    | 'u' =>
-                       let (c_4 : Char) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                       let (c_4 : Char) <- lift [IO => Error Unit ::: (State ::: IO)] read_char
                        in case c_4 of
                          | 'e' =>
-                             let (c_5 : Char) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                             let (c_5 : Char) <- lift [IO => Error Unit ::: (State ::: IO)] read_char
                              in case c_5 of
-                               | ' ' => return [Error Unit ::: (NonTerm ::: (State ::: IO))] True
+                               | ' ' => return [Error Unit ::: (State ::: IO)] True
                                | _ => let (errRes_ : Bool) <- throw_error [Unit] [Bool] unit
-                                      in return [Error Unit ::: (NonTerm ::: (State ::: IO))] errRes_
+                                      in return [Error Unit ::: (State ::: IO)] errRes_
                              end
                          | _ => let (errRes_ : Bool) <- throw_error [Unit] [Bool] unit
-                                in return [Error Unit ::: (NonTerm ::: (State ::: IO))] errRes_
+                                in return [Error Unit ::: (State ::: IO)] errRes_
                        end
                    | _ => let (errRes_ : Bool) <- throw_error [Unit] [Bool] unit
-                          in return [Error Unit ::: (NonTerm ::: (State ::: IO))] errRes_
+                          in return [Error Unit ::: (State ::: IO)] errRes_
                  end
              | _ => let (errRes_ : Bool) <- throw_error [Unit] [Bool] unit
-                    in return [Error Unit ::: (NonTerm ::: (State ::: IO))] errRes_
+                    in return [Error Unit ::: (State ::: IO)] errRes_
            end
        | 'f' =>
-           let (c_2 : Char) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+           let (c_2 : Char) <- lift [IO => Error Unit ::: (State ::: IO)] read_char
            in case c_2 of
              | 'a' =>
-                 let (c_3 : Char) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                 let (c_3 : Char) <- lift [IO => Error Unit ::: (State ::: IO)] read_char
                  in case c_3 of
                    | 'l' =>
-                       let (c_4 : Char) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                       let (c_4 : Char) <- lift [IO => Error Unit ::: (State ::: IO)] read_char
                        in case c_4 of
                          | 's' =>
-                             let (c_5 : Char) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                             let (c_5 : Char) <- lift [IO => Error Unit ::: (State ::: IO)] read_char
                              in case c_5 of
                                | 'e' =>
-                                   let (c_6 : Char) <- lift [IO => Error Unit ::: (NonTerm ::: (State ::: IO))] read_char
+                                   let (c_6 : Char) <- lift [IO => Error Unit ::: (State ::: IO)] read_char
                                    in case c_6 of
-                                        | ' ' => return [Error Unit ::: (NonTerm ::: (State ::: IO))] False
+                                        | ' ' => return [Error Unit ::: (State ::: IO)] False
                                         | _ => let (errRes_ : Bool) <- throw_error [Unit] [Bool] unit
-                                               in return [Error Unit ::: (NonTerm ::: (State ::: IO))] errRes_
+                                               in return [Error Unit ::: (State ::: IO)] errRes_
                                    end
                                | _ => let (errRes_ : Bool) <- throw_error [Unit] [Bool] unit
-                                      in return [Error Unit ::: (NonTerm ::: (State ::: IO))] errRes_
+                                      in return [Error Unit ::: (State ::: IO)] errRes_
                              end
                          | _ => let (errRes_ : Bool) <- throw_error [Unit] [Bool] unit
-                                in return [Error Unit ::: (NonTerm ::: (State ::: IO))] errRes_
+                                in return [Error Unit ::: (State ::: IO)] errRes_
                        end
                    | _ => let (errRes_ : Bool) <- throw_error [Unit] [Bool] unit
-                          in return [Error Unit ::: (NonTerm ::: (State ::: IO))] errRes_
+                          in return [Error Unit ::: (State ::: IO)] errRes_
                  end
              | _ => let (errRes_ : Bool) <- throw_error [Unit] [Bool] unit
-                    in return [Error Unit ::: (NonTerm ::: (State ::: IO))] errRes_
+                    in return [Error Unit ::: (State ::: IO)] errRes_
            end
        | _ => let (errRes_ : Bool) <- throw_error [Unit] [Bool] unit
-              in return [Error Unit ::: (NonTerm ::: (State ::: IO))] errRes_
+              in return [Error Unit ::: (State ::: IO)] errRes_
      end;
 
-printInt : Int -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+printInt : Int -> (Error Unit ::: (State ::: IO)) Unit =
   \(i_ : Int) ->
-    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    return [Error Unit ::: (State ::: IO)]
       unit;
 
-readInt : (Error Unit ::: (NonTerm ::: (State ::: IO))) Int =
-  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+readInt : (Error Unit ::: (State ::: IO)) Int =
+  return [Error Unit ::: (State ::: IO)]
     1;
 
-printFloat : Float -> (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+printFloat : Float -> (Error Unit ::: (State ::: IO)) Unit =
   \(f_ : Float) ->
-    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    return [Error Unit ::: (State ::: IO)]
       unit;
 
-readFloat : (Error Unit ::: (NonTerm ::: (State ::: IO))) Float =
-  return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+readFloat : (Error Unit ::: (State ::: IO)) Float =
+  return [Error Unit ::: (State ::: IO)]
     1.0;
 
-main : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+main : (Error Unit ::: (State ::: IO)) Unit =
   let (a : Int) <-
-    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    return [Error Unit ::: (State ::: IO)]
       0
   in let (a_1 : Int) <-
-       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+       return [Error Unit ::: (State ::: IO)]
          1
   in let (var_0 : Int) <-
-       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+       return [Error Unit ::: (State ::: IO)]
          a_1
   in let (a_2 : Int) <-
-       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+       return [Error Unit ::: (State ::: IO)]
          2
   in let (var_1 : Int) <-
-       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+       return [Error Unit ::: (State ::: IO)]
          a_2
   in let (r : Ref Int) <-
        let (var_4 : Int) <-
-         return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+         return [Error Unit ::: (State ::: IO)]
            0
-       in lift [State => Error Unit ::: (NonTerm ::: State)] new_ref [Int] var_4
+       in lift [State => Error Unit ::: State] new_ref [Int] var_4
   in let (var_3 : Unit) <-
        let (var_2 : Int) <-
-         return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+         return [Error Unit ::: (State ::: IO)]
            1
-       in lift [State => Error Unit ::: (NonTerm ::: State)] write_ref [Int] r var_2
-  in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+       in lift [State => Error Unit ::: State] write_ref [Int] r var_2
+  in return [Error Unit ::: (State ::: IO)]
        unit;
 
-f : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+f : (Error Unit ::: (State ::: IO)) Unit =
   let (a : Int) <-
-    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    return [Error Unit ::: (State ::: IO)]
       2
   in let (a_1 : Int) <-
-       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+       return [Error Unit ::: (State ::: IO)]
          3
-     in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+     in return [Error Unit ::: (State ::: IO)]
           unit;
 
-g : (Error Unit ::: (NonTerm ::: (State ::: IO))) Unit =
+g : (Error Unit ::: (State ::: IO)) Unit =
   let (a : Int) <-
-    return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+    return [Error Unit ::: (State ::: IO)]
       4
   in let (a_1 : Int) <-
-       return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+       return [Error Unit ::: (State ::: IO)]
          5
      in let (var_5 : Int) <-
-          return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+          return [Error Unit ::: (State ::: IO)]
             a_1
-        in return [Error Unit ::: (NonTerm ::: (State ::: IO))]
+        in return [Error Unit ::: (State ::: IO)]
              unit;
 
