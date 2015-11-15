@@ -6,53 +6,53 @@ type S
   = MkS;
 
 type T
-  = MkT (Int -> (State ::: (Error Unit ::: NonTerm)) Unit)
+  = MkT (Int -> (State ::: Error Unit) Unit)
   | MkTT;
 
 type Pair A B
   = MkPair A B;
 
 type IoWrapper A
-  = MkIO ((State ::: (Error Unit ::: (NonTerm ::: IO))) A);
+  = MkIO ((State ::: (Error Unit ::: IO)) A);
 
 type StateWrapper St A
-  = MkState ((State ::: (Error Unit ::: NonTerm)) (Ref St -> (State ::: (Error Unit ::: NonTerm)) A));
+  = MkState ((State ::: Error Unit) (Ref St -> (State ::: Error Unit) A));
 
 type BuiltInMonadFunWrapper
-  = IoFun (Unit -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit)
-  | StateFun (Int -> (State ::: (Error Unit ::: NonTerm)) (Ref Int -> (State ::: (Error Unit ::: NonTerm)) Unit));
+  = IoFun (Unit -> (State ::: (Error Unit ::: IO)) Unit)
+  | StateFun (Int -> (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit));
 
 type BuiltInMonadForAllWrapper
-  = IoForAll (forall A . (State ::: (Error Unit ::: (NonTerm ::: IO))) A)
-  | StateForAll (forall A . (State ::: (Error Unit ::: NonTerm)) (Ref Int -> (State ::: (Error Unit ::: NonTerm)) A));
+  = IoForAll (forall A . (State ::: (Error Unit ::: IO)) A)
+  | StateForAll (forall A . (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) A));
 
-con_True : (State ::: (Error Unit ::: NonTerm)) Bool =
-  return [State ::: (Error Unit ::: NonTerm)]
+con_True : (State ::: Error Unit) Bool =
+  return [State ::: Error Unit]
     True;
 
-con_False : (State ::: (Error Unit ::: NonTerm)) Bool =
-  return [State ::: (Error Unit ::: NonTerm)]
+con_False : (State ::: Error Unit) Bool =
+  return [State ::: Error Unit]
     False;
 
-printString : (State ::: (Error Unit ::: NonTerm)) (String -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) =
-  return [State ::: (Error Unit ::: NonTerm)]
+printString : (State ::: Error Unit) (String -> (State ::: (Error Unit ::: IO)) Unit) =
+  return [State ::: Error Unit]
     \(s_ : String) ->
       case s_ of
-        | Empty_Str => return [State ::: (Error Unit ::: (NonTerm ::: IO))] unit
+        | Empty_Str => return [State ::: (Error Unit ::: IO)] unit
         | Cons_Str (c_ : Char) (cs_ : String) =>
-            let (unit_0 : Unit) <- lift [IO => State ::: (Error Unit ::: (NonTerm ::: IO))] print_char c_
-            in let (printString_ : String -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) <- printString
+            let (unit_0 : Unit) <- lift [IO => State ::: (Error Unit ::: IO)] print_char c_
+            in let (printString_ : String -> (State ::: (Error Unit ::: IO)) Unit) <- printString
                in printString_ cs_
       end;
 
-readString : (State ::: (Error Unit ::: (NonTerm ::: IO))) String =
+readString : (State ::: (Error Unit ::: IO)) String =
   readString_ Empty_Str;
 
-readString_ : String -> (State ::: (Error Unit ::: (NonTerm ::: IO))) String =
+readString_ : String -> (State ::: (Error Unit ::: IO)) String =
   \(acc_ : String) ->
-    let (c_ : Char) <- lift [IO => State ::: (Error Unit ::: (NonTerm ::: IO))] read_char
+    let (c_ : Char) <- lift [IO => State ::: (Error Unit ::: IO)] read_char
     in case c_ of
-         | ' ' => return [State ::: (Error Unit ::: (NonTerm ::: IO))] reverseString_ acc_ Empty_Str
+         | ' ' => return [State ::: (Error Unit ::: IO)] reverseString_ acc_ Empty_Str
          | _ => readString_ (Cons_Str c_ acc_)
        end;
 
@@ -65,86 +65,86 @@ reverseString_ : String -> String -> String =
             reverseString_ cs_ (Cons_Str c_ acc_)
       end;
 
-printInt : (State ::: (Error Unit ::: NonTerm)) (Int -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) =
-  return [State ::: (Error Unit ::: NonTerm)]
+printInt : (State ::: Error Unit) (Int -> (State ::: (Error Unit ::: IO)) Unit) =
+  return [State ::: Error Unit]
     \(i_ : Int) ->
-      return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+      return [State ::: (Error Unit ::: IO)]
         unit;
 
-readInt : (State ::: (Error Unit ::: (NonTerm ::: IO))) Int =
-  return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+readInt : (State ::: (Error Unit ::: IO)) Int =
+  return [State ::: (Error Unit ::: IO)]
     1;
 
-printFloat : (State ::: (Error Unit ::: NonTerm)) (Float -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) =
-  return [State ::: (Error Unit ::: NonTerm)]
+printFloat : (State ::: Error Unit) (Float -> (State ::: (Error Unit ::: IO)) Unit) =
+  return [State ::: Error Unit]
     \(f_ : Float) ->
-      return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+      return [State ::: (Error Unit ::: IO)]
         unit;
 
-readFloat : (State ::: (Error Unit ::: (NonTerm ::: IO))) Float =
-  return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+readFloat : (State ::: (Error Unit ::: IO)) Float =
+  return [State ::: (Error Unit ::: IO)]
     1.0;
 
-evalState : (State ::: (Error Unit ::: NonTerm)) (forall S_ . (State ::: (Error Unit ::: NonTerm)) (forall A_ . (State ::: (Error Unit ::: NonTerm)) ((State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_) -> (State ::: (Error Unit ::: NonTerm)) (S_ -> (State ::: (Error Unit ::: NonTerm)) A_)))) =
-  return [State ::: (Error Unit ::: NonTerm)]
+evalState : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (forall A_ . (State ::: Error Unit) ((State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) A_) -> (State ::: Error Unit) (S_ -> (State ::: Error Unit) A_)))) =
+  return [State ::: Error Unit]
     /\S_ .
-      return [State ::: (Error Unit ::: NonTerm)]
+      return [State ::: Error Unit]
         /\A_ .
-          return [State ::: (Error Unit ::: NonTerm)]
-            \(sa : (State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_)) ->
-              return [State ::: (Error Unit ::: NonTerm)]
+          return [State ::: Error Unit]
+            \(sa : (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) A_)) ->
+              return [State ::: Error Unit]
                 \(s : S_) ->
                   let (state_ : Ref S_) <-
                     new_ref [S_] s
-                  in let (sa_f : Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_) <-
+                  in let (sa_f : Ref S_ -> (State ::: Error Unit) A_) <-
                        sa
                      in sa_f state_;
 
-execState : (State ::: (Error Unit ::: NonTerm)) (forall S_ . (State ::: (Error Unit ::: NonTerm)) (forall A_ . (State ::: (Error Unit ::: NonTerm)) ((State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_) -> (State ::: (Error Unit ::: NonTerm)) (S_ -> (State ::: (Error Unit ::: NonTerm)) S_)))) =
-  return [State ::: (Error Unit ::: NonTerm)]
+execState : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (forall A_ . (State ::: Error Unit) ((State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) A_) -> (State ::: Error Unit) (S_ -> (State ::: Error Unit) S_)))) =
+  return [State ::: Error Unit]
     /\S_ .
-      return [State ::: (Error Unit ::: NonTerm)]
+      return [State ::: Error Unit]
         /\A_ .
-          return [State ::: (Error Unit ::: NonTerm)]
-            \(sa : (State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_)) ->
-              return [State ::: (Error Unit ::: NonTerm)]
+          return [State ::: Error Unit]
+            \(sa : (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) A_)) ->
+              return [State ::: Error Unit]
                 \(s : S_) ->
                   let (state_ : Ref S_) <-
                     new_ref [S_] s
                   in let (res : A_) <-
-                       let (sa_f : Ref S_ -> (State ::: (Error Unit ::: NonTerm)) A_) <-
+                       let (sa_f : Ref S_ -> (State ::: Error Unit) A_) <-
                          sa
                        in sa_f state_
                      in read_ref [S_] state_;
 
-get : (State ::: (Error Unit ::: NonTerm)) (forall S_ . (State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) S_)) =
-  return [State ::: (Error Unit ::: NonTerm)]
+get : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) S_)) =
+  return [State ::: Error Unit]
     /\S_ .
-      return [State ::: (Error Unit ::: NonTerm)]
+      return [State ::: Error Unit]
         \(state_ : Ref S_) ->
           let (state_value : S_) <-
             read_ref [S_] state_
-          in return [State ::: (Error Unit ::: NonTerm)]
+          in return [State ::: Error Unit]
                state_value;
 
-put : (State ::: (Error Unit ::: NonTerm)) (forall S_ . (State ::: (Error Unit ::: NonTerm)) (S_ -> (State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) Unit))) =
-  return [State ::: (Error Unit ::: NonTerm)]
+put : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (S_ -> (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) Unit))) =
+  return [State ::: Error Unit]
     /\S_ .
-      return [State ::: (Error Unit ::: NonTerm)]
+      return [State ::: Error Unit]
         \(state_value : S_) ->
-          return [State ::: (Error Unit ::: NonTerm)]
+          return [State ::: Error Unit]
             \(state_ : Ref S_) ->
               let (unit_var : Unit) <-
                 write_ref [S_] state_ state_value
-              in return [State ::: (Error Unit ::: NonTerm)]
+              in return [State ::: Error Unit]
                    unit;
 
-modify : (State ::: (Error Unit ::: NonTerm)) (forall S_ . (State ::: (Error Unit ::: NonTerm)) ((S_ -> (State ::: (Error Unit ::: NonTerm)) S_) -> (State ::: (Error Unit ::: NonTerm)) (Ref S_ -> (State ::: (Error Unit ::: NonTerm)) Unit))) =
-  return [State ::: (Error Unit ::: NonTerm)]
+modify : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) ((S_ -> (State ::: Error Unit) S_) -> (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) Unit))) =
+  return [State ::: Error Unit]
     /\S_ .
-      return [State ::: (Error Unit ::: NonTerm)]
-        \(state_function : S_ -> (State ::: (Error Unit ::: NonTerm)) S_) ->
-          return [State ::: (Error Unit ::: NonTerm)]
+      return [State ::: Error Unit]
+        \(state_function : S_ -> (State ::: Error Unit) S_) ->
+          return [State ::: Error Unit]
             \(state_ : Ref S_) ->
               let (state_value : S_) <-
                 read_ref [S_] state_
@@ -152,93 +152,93 @@ modify : (State ::: (Error Unit ::: NonTerm)) (forall S_ . (State ::: (Error Uni
                    state_function state_value
                  in write_ref [S_] state_ state_value;
 
-con_MkS : (State ::: (Error Unit ::: NonTerm)) S =
-  return [State ::: (Error Unit ::: NonTerm)]
+con_MkS : (State ::: Error Unit) S =
+  return [State ::: Error Unit]
     MkS;
 
-con_MkT : (State ::: (Error Unit ::: NonTerm)) ((Int -> (State ::: (Error Unit ::: NonTerm)) Unit) -> (State ::: (Error Unit ::: NonTerm)) T) =
-  return [State ::: (Error Unit ::: NonTerm)]
-    \(var_0 : Int -> (State ::: (Error Unit ::: NonTerm)) Unit) ->
-      return [State ::: (Error Unit ::: NonTerm)]
+con_MkT : (State ::: Error Unit) ((Int -> (State ::: Error Unit) Unit) -> (State ::: Error Unit) T) =
+  return [State ::: Error Unit]
+    \(var_0 : Int -> (State ::: Error Unit) Unit) ->
+      return [State ::: Error Unit]
         MkT var_0;
 
-con_MkTT : (State ::: (Error Unit ::: NonTerm)) T =
-  return [State ::: (Error Unit ::: NonTerm)]
+con_MkTT : (State ::: Error Unit) T =
+  return [State ::: Error Unit]
     MkTT;
 
-con_MkPair : (State ::: (Error Unit ::: NonTerm)) (forall A . (State ::: (Error Unit ::: NonTerm)) (forall B . (State ::: (Error Unit ::: NonTerm)) (A -> (State ::: (Error Unit ::: NonTerm)) (B -> (State ::: (Error Unit ::: NonTerm)) (Pair A B))))) =
-  return [State ::: (Error Unit ::: NonTerm)]
+con_MkPair : (State ::: Error Unit) (forall A . (State ::: Error Unit) (forall B . (State ::: Error Unit) (A -> (State ::: Error Unit) (B -> (State ::: Error Unit) (Pair A B))))) =
+  return [State ::: Error Unit]
     /\A .
-      return [State ::: (Error Unit ::: NonTerm)]
+      return [State ::: Error Unit]
         /\B .
-          return [State ::: (Error Unit ::: NonTerm)]
+          return [State ::: Error Unit]
             \(var_1 : A) ->
-              return [State ::: (Error Unit ::: NonTerm)]
+              return [State ::: Error Unit]
                 \(var_2 : B) ->
-                  return [State ::: (Error Unit ::: NonTerm)]
+                  return [State ::: Error Unit]
                     MkPair [A] [B] var_1 var_2;
 
-con_MkIO : (State ::: (Error Unit ::: NonTerm)) (forall A . (State ::: (Error Unit ::: NonTerm)) ((State ::: (Error Unit ::: (NonTerm ::: IO))) A -> (State ::: (Error Unit ::: NonTerm)) (IoWrapper A))) =
-  return [State ::: (Error Unit ::: NonTerm)]
+con_MkIO : (State ::: Error Unit) (forall A . (State ::: Error Unit) ((State ::: (Error Unit ::: IO)) A -> (State ::: Error Unit) (IoWrapper A))) =
+  return [State ::: Error Unit]
     /\A .
-      return [State ::: (Error Unit ::: NonTerm)]
-        \(var_3 : (State ::: (Error Unit ::: (NonTerm ::: IO))) A) ->
-          return [State ::: (Error Unit ::: NonTerm)]
+      return [State ::: Error Unit]
+        \(var_3 : (State ::: (Error Unit ::: IO)) A) ->
+          return [State ::: Error Unit]
             MkIO [A] var_3;
 
-con_MkState : (State ::: (Error Unit ::: NonTerm)) (forall St . (State ::: (Error Unit ::: NonTerm)) (forall A . (State ::: (Error Unit ::: NonTerm)) ((State ::: (Error Unit ::: NonTerm)) (Ref St -> (State ::: (Error Unit ::: NonTerm)) A) -> (State ::: (Error Unit ::: NonTerm)) (StateWrapper St A)))) =
-  return [State ::: (Error Unit ::: NonTerm)]
+con_MkState : (State ::: Error Unit) (forall St . (State ::: Error Unit) (forall A . (State ::: Error Unit) ((State ::: Error Unit) (Ref St -> (State ::: Error Unit) A) -> (State ::: Error Unit) (StateWrapper St A)))) =
+  return [State ::: Error Unit]
     /\St .
-      return [State ::: (Error Unit ::: NonTerm)]
+      return [State ::: Error Unit]
         /\A .
-          return [State ::: (Error Unit ::: NonTerm)]
-            \(var_4 : (State ::: (Error Unit ::: NonTerm)) (Ref St -> (State ::: (Error Unit ::: NonTerm)) A)) ->
-              return [State ::: (Error Unit ::: NonTerm)]
+          return [State ::: Error Unit]
+            \(var_4 : (State ::: Error Unit) (Ref St -> (State ::: Error Unit) A)) ->
+              return [State ::: Error Unit]
                 MkState [St] [A] var_4;
 
-con_IoFun : (State ::: (Error Unit ::: NonTerm)) ((Unit -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) -> (State ::: (Error Unit ::: NonTerm)) BuiltInMonadFunWrapper) =
-  return [State ::: (Error Unit ::: NonTerm)]
-    \(var_5 : Unit -> (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit) ->
-      return [State ::: (Error Unit ::: NonTerm)]
+con_IoFun : (State ::: Error Unit) ((Unit -> (State ::: (Error Unit ::: IO)) Unit) -> (State ::: Error Unit) BuiltInMonadFunWrapper) =
+  return [State ::: Error Unit]
+    \(var_5 : Unit -> (State ::: (Error Unit ::: IO)) Unit) ->
+      return [State ::: Error Unit]
         IoFun var_5;
 
-con_StateFun : (State ::: (Error Unit ::: NonTerm)) ((Int -> (State ::: (Error Unit ::: NonTerm)) (Ref Int -> (State ::: (Error Unit ::: NonTerm)) Unit)) -> (State ::: (Error Unit ::: NonTerm)) BuiltInMonadFunWrapper) =
-  return [State ::: (Error Unit ::: NonTerm)]
-    \(var_6 : Int -> (State ::: (Error Unit ::: NonTerm)) (Ref Int -> (State ::: (Error Unit ::: NonTerm)) Unit)) ->
-      return [State ::: (Error Unit ::: NonTerm)]
+con_StateFun : (State ::: Error Unit) ((Int -> (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit)) -> (State ::: Error Unit) BuiltInMonadFunWrapper) =
+  return [State ::: Error Unit]
+    \(var_6 : Int -> (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit)) ->
+      return [State ::: Error Unit]
         StateFun var_6;
 
-con_IoForAll : (State ::: (Error Unit ::: NonTerm)) ((forall A . (State ::: (Error Unit ::: (NonTerm ::: IO))) A) -> (State ::: (Error Unit ::: NonTerm)) BuiltInMonadForAllWrapper) =
-  return [State ::: (Error Unit ::: NonTerm)]
-    \(var_7 : forall A . (State ::: (Error Unit ::: (NonTerm ::: IO))) A) ->
-      return [State ::: (Error Unit ::: NonTerm)]
+con_IoForAll : (State ::: Error Unit) ((forall A . (State ::: (Error Unit ::: IO)) A) -> (State ::: Error Unit) BuiltInMonadForAllWrapper) =
+  return [State ::: Error Unit]
+    \(var_7 : forall A . (State ::: (Error Unit ::: IO)) A) ->
+      return [State ::: Error Unit]
         IoForAll var_7;
 
-con_StateForAll : (State ::: (Error Unit ::: NonTerm)) ((forall A . (State ::: (Error Unit ::: NonTerm)) (Ref Int -> (State ::: (Error Unit ::: NonTerm)) A)) -> (State ::: (Error Unit ::: NonTerm)) BuiltInMonadForAllWrapper) =
-  return [State ::: (Error Unit ::: NonTerm)]
-    \(var_8 : forall A . (State ::: (Error Unit ::: NonTerm)) (Ref Int -> (State ::: (Error Unit ::: NonTerm)) A)) ->
-      return [State ::: (Error Unit ::: NonTerm)]
+con_StateForAll : (State ::: Error Unit) ((forall A . (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) A)) -> (State ::: Error Unit) BuiltInMonadForAllWrapper) =
+  return [State ::: Error Unit]
+    \(var_8 : forall A . (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) A)) ->
+      return [State ::: Error Unit]
         StateForAll var_8;
 
-main : (State ::: (Error Unit ::: (NonTerm ::: IO))) Unit =
+main : (State ::: (Error Unit ::: IO)) Unit =
   let (var_9 : Unit) <-
-    return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+    return [State ::: (Error Unit ::: IO)]
       unit
-  in return [State ::: (Error Unit ::: (NonTerm ::: IO))]
+  in return [State ::: (Error Unit ::: IO)]
        var_9;
 
-mkS : (State ::: (Error Unit ::: NonTerm)) S =
+mkS : (State ::: Error Unit) S =
   con_MkS;
 
-mkT : (State ::: (Error Unit ::: NonTerm)) ((Int -> (State ::: (Error Unit ::: NonTerm)) Unit) -> (State ::: (Error Unit ::: NonTerm)) T) =
+mkT : (State ::: Error Unit) ((Int -> (State ::: Error Unit) Unit) -> (State ::: Error Unit) T) =
   con_MkT;
 
-mkPair : (State ::: (Error Unit ::: NonTerm)) (forall A . (State ::: (Error Unit ::: NonTerm)) (forall B . (State ::: (Error Unit ::: NonTerm)) (A -> (State ::: (Error Unit ::: NonTerm)) (B -> (State ::: (Error Unit ::: NonTerm)) (Pair A B))))) =
+mkPair : (State ::: Error Unit) (forall A . (State ::: Error Unit) (forall B . (State ::: Error Unit) (A -> (State ::: Error Unit) (B -> (State ::: Error Unit) (Pair A B))))) =
   con_MkPair;
 
-mkIo : (State ::: (Error Unit ::: NonTerm)) (forall A . (State ::: (Error Unit ::: NonTerm)) ((State ::: (Error Unit ::: (NonTerm ::: IO))) A -> (State ::: (Error Unit ::: NonTerm)) (IoWrapper A))) =
+mkIo : (State ::: Error Unit) (forall A . (State ::: Error Unit) ((State ::: (Error Unit ::: IO)) A -> (State ::: Error Unit) (IoWrapper A))) =
   con_MkIO;
 
-mkState : (State ::: (Error Unit ::: NonTerm)) (forall St . (State ::: (Error Unit ::: NonTerm)) (forall A . (State ::: (Error Unit ::: NonTerm)) ((State ::: (Error Unit ::: NonTerm)) (Ref St -> (State ::: (Error Unit ::: NonTerm)) A) -> (State ::: (Error Unit ::: NonTerm)) (StateWrapper St A)))) =
+mkState : (State ::: Error Unit) (forall St . (State ::: Error Unit) (forall A . (State ::: Error Unit) ((State ::: Error Unit) (Ref St -> (State ::: Error Unit) A) -> (State ::: Error Unit) (StateWrapper St A)))) =
   con_MkState;
 

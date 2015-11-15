@@ -344,7 +344,7 @@ codeGenBinOp funMonad binOp tyExpr1 tyExpr2 resultType = do
       return ( MIL.mkSrcLet var1 (MIL.getSrcResultType milExpr1Type) milExpr1 $
                  MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2 $
                    MIL.LiftE (MIL.AppE (MIL.AppE (MIL.VarE $ MIL.Var arithFunName) (MIL.VarE var1)) (MIL.VarE var2))
-                     (MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") (MIL.mkSimpleSrcType "Unit")) (MIL.mkSimpleSrcType "NonTerm")) funMonad
+                     (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") (MIL.mkSimpleSrcType "Unit")) funMonad
              , milResultType)
 
 codeGenArith :: MIL.SrcType -> TyExpr -> TyExpr -> Type -> String -> CodeGenM (MIL.SrcExpr, MIL.SrcType)
@@ -560,27 +560,23 @@ pureSrcMonadMil = stateSrcMonadMil
 stateSrcMonadMil :: MIL.SrcType
 stateSrcMonadMil =
   MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "State") $
-    MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
-      (MIL.mkSimpleSrcType "NonTerm")
+    (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType)
 
 ioSrcMonadMil :: MIL.SrcType
 ioSrcMonadMil =
   MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "State") $
     MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
-      MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "NonTerm") $
-        (MIL.mkSimpleSrcType "IO")
+      (MIL.mkSimpleSrcType "IO")
 
 monadErrorTypeCons :: [MIL.Type -> MIL.MonadType]
 monadErrorTypeCons =
   [ \et ->
     MIL.MTyMonadCons (MIL.SinMonad MIL.State) $
-      MIL.MTyMonadCons (MIL.SinMonadApp (MIL.SinMonad MIL.Error) et) $
-        MIL.MTyMonad (MIL.SinMonad MIL.NonTerm)
+      MIL.MTyMonad (MIL.SinMonadApp (MIL.SinMonad MIL.Error) et)
   , \et ->
     MIL.MTyMonadCons (MIL.SinMonad MIL.State) $
       MIL.MTyMonadCons (MIL.SinMonadApp (MIL.SinMonad MIL.Error) et) $
-        MIL.MTyMonadCons (MIL.SinMonad MIL.NonTerm) $
-          MIL.MTyMonad (MIL.SinMonad MIL.IO)
+        MIL.MTyMonad (MIL.SinMonad MIL.IO)
   ]
 
 exceptionSrcType :: MIL.SrcType
