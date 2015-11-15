@@ -170,7 +170,6 @@ instance Pretty MilMonad where
   prPrn Id      = text "Id"
   prPrn State   = text "State"
   prPrn Error   = text "Error"
-  prPrn NonTerm = text "NonTerm"
   prPrn IO      = text "IO"
 
 -- | Indentation level for code.

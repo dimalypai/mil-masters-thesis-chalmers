@@ -81,7 +81,6 @@ lcConDef typeName typeVars (ConDef conName conFields) = do
 
 -- | Checks that the type of the body is consistent with the specified function
 -- type.
--- TODO: dependency analysis, NonTerm
 lcFunDef :: TyFunDef -> TypeCheckM ()
 lcFunDef (FunDef funName funType bodyExpr) = do
   lcExpr bodyExpr

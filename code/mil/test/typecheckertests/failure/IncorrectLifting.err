@@ -1,1 +1,1 @@
-MIL type checking error: Incorrect lifting. Can not lift from 'State ::: IO' to 'NonTerm ::: (Error Int ::: IO)'
+MIL type checking error: Incorrect lifting. Can not lift from 'State ::: IO' to 'Id ::: (Error Int ::: IO)'

@@ -179,10 +179,10 @@ spec = do
       in failureCase srcType tcError
 
     it "transforms a nested monad cons correctly" $
-      let srcType = SrcTyApp (SrcTyMonadCons (SrcTyTypeCon $ TypeName "NonTerm")
+      let srcType = SrcTyApp (SrcTyMonadCons (SrcTyTypeCon $ TypeName "IO")
                                              (SrcTyMonadCons  (SrcTyTypeCon $ TypeName "State") (SrcTyTypeCon $ TypeName "Id")))
                              (SrcTyTypeCon $ TypeName "Unit")
-          expT = TyApp (TyMonad $ MTyMonadCons (SinMonad NonTerm)
+          expT = TyApp (TyMonad $ MTyMonadCons (SinMonad IO)
                                                (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id)))
                        unitType
       in successCase srcType expT
@@ -195,7 +195,7 @@ spec = do
 
     it "does not allow monad cons to contain another monad cons on the left" $
       let srcType = SrcTyApp mt (SrcTyTypeCon $ TypeName "Unit")
-          mt = SrcTyMonadCons (SrcTyMonadCons (SrcTyTypeCon $ TypeName "NonTerm") (SrcTyTypeCon $ TypeName "State"))
+          mt = SrcTyMonadCons (SrcTyMonadCons (SrcTyTypeCon $ TypeName "IO") (SrcTyTypeCon $ TypeName "State"))
                               (SrcTyTypeCon $ TypeName "Id")
           tcError = MonadConsOnTheLeft mt
       in failureCase srcType tcError

@@ -31,7 +31,6 @@ builtInMonads = Map.fromList
   [ (TypeName "Id",      StarK :=>: StarK)
   , (TypeName "State",   StarK :=>: StarK)
   , (TypeName "Error",   StarK :=>: (StarK :=>: StarK))
-  , (TypeName "NonTerm", StarK :=>: StarK)
   , (TypeName "IO",      StarK :=>: StarK)
   ]
 

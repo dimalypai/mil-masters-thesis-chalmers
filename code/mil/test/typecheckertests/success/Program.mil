@@ -2,7 +2,7 @@ type T = MkT | MkU;
 
 type Pair A B = MkPair A B;
 
-type Impure A = MkImpure ((IO ::: NonTerm) A);
+type Impure A = MkImpure ((IO ::: State) A);
 
 type TypeWithTuple = MkTuple {Int, Bool};
 
@@ -83,8 +83,8 @@ caseAltEffects : (Error Unit ::: (IO ::: State)) Unit =
 ioFun : IO Unit =
   return [IO] unit;
 
-ioNonTermFun : (IO ::: NonTerm) Unit =
-  return [IO ::: NonTerm] unit;
+ioStateFun : (IO ::: State) Unit =
+  return [IO ::: State] unit;
 
 simpleBind : IO Unit =
   let (x : Unit) <- return [IO] unit in
@@ -97,8 +97,8 @@ simpleBindMonadCons : (State ::: IO) Unit =
 simpleLift : (State ::: IO) Int =
   lift [IO => State ::: IO] return [IO] 1;
 
-consLift : (NonTerm ::: (State ::: IO)) Int =
-  lift [State ::: IO => NonTerm ::: (State ::: IO)] simpleLift;
+consLift : (Id ::: (State ::: IO)) Int =
+  lift [State ::: IO => Id ::: (State ::: IO)] simpleLift;
 
 implicitMonadQuantification : (State ::: IO) Int =
   return [State] 1;
@@ -117,8 +117,8 @@ takesMonadicComp : (IO ::: State) Int -> (IO ::: State) Int =
 
 passIOComp : (IO ::: State) Int = takesMonadicComp (return [IO] 1);
 
-relaxedLift : (NonTerm ::: (IO ::: State)) Int =
-  lift [IO ::: State => NonTerm ::: (IO ::: State)] return [IO] 1;
+relaxedLift : (Id ::: (IO ::: State)) Int =
+  lift [IO ::: State => Id ::: (IO ::: State)] return [IO] 1;
 
 letRec : Int =
   let rec (x : Int) <- x

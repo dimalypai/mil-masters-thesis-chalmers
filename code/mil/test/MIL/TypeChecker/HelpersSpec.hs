@@ -147,7 +147,7 @@ spec = do
       in failureCase t tcError
 
     it "checks a nested monad cons" $
-      let t = TyApp (TyMonad $ MTyMonadCons (SinMonad NonTerm)
+      let t = TyApp (TyMonad $ MTyMonadCons (SinMonad IO)
                                  (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id)))
                     unitType
       in successCase t
@@ -183,7 +183,7 @@ spec = do
 
     it "returns False for two different monads" $
       let m1 = MTyMonad (SinMonad Id)
-          m2 = MTyMonad (SinMonad NonTerm)
+          m2 = MTyMonad (SinMonad State)
       in not $ m1 `isMonadSuffixOf` m2
 
     it "handles alpha equivalence" $
@@ -197,28 +197,28 @@ spec = do
       in (m1 `isMonadSuffixOf` m2) `shouldBe` not (m2 `isMonadSuffixOf` m1)
 
     it "handles two monad conses" $
-      let m1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
+      let m1 = MTyMonadCons (SinMonad Id) (MTyMonad $ SinMonad IO)
           m2 = MTyMonadCons (SinMonad State) m1
       in m1 `isMonadSuffixOf` m2
 
     it "returns False for non-matching ending" $
-      let m1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
-          m2 = MTyMonadCons (SinMonad State) (MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad Id))
+      let m1 = MTyMonadCons (SinMonad Id) (MTyMonad $ SinMonad IO)
+          m2 = MTyMonadCons (SinMonad State) (MTyMonadCons (SinMonad Id) (MTyMonad $ SinMonad Id))
       in not $ m1 `isMonadSuffixOf` m2
 
     it "returns False for a suffix with injected monad (bug)" $
-      let m1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad Id)
-          m2 = MTyMonadCons (SinMonad NonTerm) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id))
+      let m1 = MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad Id)
+          m2 = MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id))
       in not $ m1 `isMonadSuffixOf` m2
 
   describe "isCompatibleMonadWith" $ do
     it "is reflexive" $
-      let m = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad Id)
+      let m = MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad Id)
       in m `isCompatibleMonadWith` m
 
     it "returns False for incompatible monads" $
-      let m1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad Id)
-          m2 = MTyMonadCons (SinMonad NonTerm) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id))
+      let m1 = MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad Id)
+          m2 = MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id))
       in not $ m1 `isCompatibleMonadWith` m2
 
     it "handles alpha equivalence" $
@@ -227,7 +227,7 @@ spec = do
       in m1 `isCompatibleMonadWith` m2
 
     it "is commutative" $
-      let m1 = MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad NonTerm))
+      let m1 = MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id))
           m2 = MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State)
       in (m1 `isCompatibleMonadWith` m2) `shouldBe` (m2 `isCompatibleMonadWith` m1)
 
@@ -238,7 +238,7 @@ spec = do
 
     it "returns True for compatible types" $
       let t1 = TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State)
-          t2 = TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad NonTerm))
+          t2 = TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id))
       in t1 `isCompatibleWith` t2
 
     it "returns False for incompatible types" $
@@ -258,7 +258,7 @@ spec = do
 
     it "is not commutative" $
       let t1 = TyApp (TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State)) boolType
-          t2 = TyApp (TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad NonTerm))) boolType
+          t2 = TyApp (TyMonad $ MTyMonadCons (SinMonad IO) (MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad Id))) boolType
       in (t1 `isCompatibleWith` t2) `shouldBe` not (t2 `isCompatibleWith` t1)
 
     it "is covariant in the monad application result type (when it is not a monad itself)" $
@@ -303,18 +303,18 @@ spec = do
 
   describe "highestEffectMonadType" $ do
     it "returns the one which has more effects in the stack (both cons)" $
-      let mt1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
-          mt2 = MTyMonadCons (SinMonad NonTerm) (MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State))
+      let mt1 = MTyMonadCons (SinMonad Id) (MTyMonad $ SinMonad IO)
+          mt2 = MTyMonadCons (SinMonad Id) (MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State))
       in highestEffectMonadType mt1 mt2 `shouldBe` mt2
 
     it "returns the one which has more effects in the stack (one without cons)" $
-      let mt1 = MTyMonad (SinMonad NonTerm)
-          mt2 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad State)
+      let mt1 = MTyMonad (SinMonad IO)
+          mt2 = MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State)
       in highestEffectMonadType mt1 mt2 `shouldBe` mt2
 
     it "returns the first one if monad types are alpha-equivalent (both cons)" $
-      let mt1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
-          mt2 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
+      let mt1 = MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad IO)
+          mt2 = MTyMonadCons (SinMonad State) (MTyMonad $ SinMonad IO)
       in highestEffectMonadType mt1 mt2 `shouldBe` mt1
 
     it "returns the first one if monad types are alpha-equivalent (both without cons)" $
@@ -323,8 +323,8 @@ spec = do
       in highestEffectMonadType mt1 mt2 `shouldBe` mt1
 
     it "is commutative" $
-      let mt1 = MTyMonadCons (SinMonad NonTerm) (MTyMonad $ SinMonad IO)
-          mt2 = MTyMonadCons (SinMonad NonTerm) (MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State))
+      let mt1 = MTyMonadCons (SinMonad Id) (MTyMonad $ SinMonad IO)
+          mt2 = MTyMonadCons (SinMonad Id) (MTyMonadCons (SinMonad IO) (MTyMonad $ SinMonad State))
       in highestEffectMonadType mt1 mt2 `shouldBe` highestEffectMonadType mt2 mt1
 
 -- * Infrastructure
