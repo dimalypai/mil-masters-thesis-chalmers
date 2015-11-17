@@ -52,7 +52,9 @@ type `Bool` (because it does not have any other data associated with it, so it
 is just a value of type `Bool`), `Cons` has type `forall A . A -> List A ->
 List A`, meaning that for any type `A` (`A` has kind `*`) it can be applied to
 a value of type `A` and a value of type `List A` producing `List A`. Data
-constructors can also be partially applied.
+constructors can also be partially applied. There is some simplicity to the
+fact, that data constructors are treated pretty much in the same way as
+variables and functions, both for MIL users and for the MIL implementation.
 
 ### Functions and expressions
 
@@ -318,9 +320,9 @@ for one or more repetitions and *[pat]* -- for an optional *pat*.
 
 This section is devoted to the details of the MIL type system and the effects
 representation. We will not provide a formal definition of the full type
-system, but rather focus on the crucial parts. For example, data types and
-functions will be omitted, since they are pretty straight-forward and similar
-to the typing in many other functional languages.
+system, but rather focus on the crucial parts. For example, data type and
+function definitions will be omitted, since they are pretty straight-forward
+and similar to the typing in many other functional languages.
 
 We use a common way of presenting typing rules using two-dimensional *inference
 rules* \cite{TAPL}. We use this term for both *axioms*, which do not have a
@@ -509,8 +511,8 @@ For all the other cases type compatibility is subtyping:
 Subtyping in MIL is defined as just alpha-equivalence for all the types except
 the tuple types. Tuple types in MIL have *width* and *depth subtyping*. We will
 not present these rules here, they can be found, for example, in \cite{TAPL}.
-
-{>> I can't help but feel that tuples are given a rather step motherly treatment :-) <<}
+Tuples with subtyping are introduced into MIL to provide a good support for
+implementing subtyping in source languages.
 
 The core of determining whether two monads are compatible is the following
 non-commutative operation:
