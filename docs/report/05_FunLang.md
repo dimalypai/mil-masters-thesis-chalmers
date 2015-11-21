@@ -10,10 +10,19 @@
 
 FunLang is a rather small functional programming language. Its design is mostly
 inspired by Haskell. It is statically and explicitly typed. The type system of
-FunLang is based on System F. One can say that FunLang is quite similar to MIL
-in many cases. In addition to the pure polymorphic lambda calculus FunLang
-incorporates `do`-notation similar to the one found in Haskell and has a couple
-of built-in monads. It also adds a minimal exception handling.
+FunLang is based on System F. In addition to the pure polymorphic lambda
+calculus FunLang incorporates `do`-notation similar to the one found in Haskell
+and has a couple of built-in monads. It also adds a minimal exception handling.
+
+One can say that FunLang is quite similar to MIL in many ways. The main
+motivation behind designing FunLang as one of the languages for MIL evaluation
+is to be able to explore a compilation of a modern statically typed functional
+language. Despite the many similarities to MIL, as we will see, the MIL code
+produced for FunLang programs looks rather different from the programs' source
+code. In addition to the semantics similar to the one of MIL, FunLang offers
+cleaner syntax, since it is a user facing language, rather than an intermediate
+representation. One of the main semantic differences is implicit effects which
+are present in FunLang programs, as we will see in this chapter.
 
 ## FunLang by example
 
@@ -135,17 +144,22 @@ modify : forall S . (S -> S) -> State S Unit
 
 The first six functions are for reading values of several built-in types from
 the standard input and printing them to the standard output. They work in the
-`IO` monad. `evalState` and `execState` are for running computations in the
-`State` monad. They both take one such computation and an initial state value.
-`evalState` returns the value of the computation as the result and `execState`
-returns the value of the state itself. Note, there is no `runState` similar to
-the one in Haskell, since it would require support for tuples in FunLang, which
-was omitted for simplicity. The last three functions are for working with state
-inside a stateful computation. They allow to read the state value, overwrite it
-and modify it with a function.
+`IO` monad. The functions `evalState` and `execState` are for running
+computations in the `State` monad. They both take one such computation and an
+initial state value. The difference is that `evalState` returns the value of
+the computation as the result and `execState` returns the value of the state
+itself. Note, there is no `runState` similar to the one in Haskell, since it
+would require support for tuples in FunLang, which was omitted for simplicity.
+The last three functions are for working with state inside a stateful
+computation. They allow to read the state value, overwrite it and modify it
+with a function.
 
 It is worth highlighting, that unfortunately, FunLang does not support
-combining monads in any way.
+combining monads in any way. In spite of this property of FunLang, combining
+monads in MIL is used extensively, as we will describe in the "Code generation"
+section. Moreover, some features of FunLang, like the ability to run stateful
+computations with `evalState` and `execState` inside of any computation
+influences the representation of effects in MIL code quite significantly.
 
 ### Exceptions
 
@@ -171,27 +185,28 @@ In order to generate FunLang code we needed to decide in which monads different
 kinds of computations should be expressed. Looking at FunLang, there are three
 different kinds of code: "pure" code (outside of monads), code inside `IO` and
 code inside `State`. Pure code is not completely pure, though. First, functions
-can be non-terminating. MIL does not have a monad for non-termination, so we
-skip that. Second, FunLang exceptions have non-monadic types, but we need to
-express potential failure in MIL. This means that the `Error` monad should be
-part of all computations. For stateful computations we need to add `State` and
-for input/output -- IO. The problem here is that FunLang allows to "escape"
-`State` by using `evalState` and `execState` and therefore running stateful
-computations inside pure or `IO` computations. Escaping `State` is not possible
-in MIL, so we need to add `State` to all stacks. Given all this, we have two
-effect stacks: `State ::: Error Unit` for pure computations and computations in
-the `State` monad and `State ::: (Error Unit ::: IO)` for computations in the
-`IO` monad. If we do an exercise of expanding types as we did in one of the
-previous chapters for the `IO` monad stack, we will get `s -> IO (Either Unit
-(a, s))`. This can be read as "a function that given a state value can perform
-IO and either results in an error or produces a value and a new state".  `Unit`
-is chosen as a type for error values, because FunLang's `throw` does not work
-with values.  We choose to have `State` on top of `Error`, but for FunLang
-different orderings of `Error` and `State` cannot be observed, since `catch`
-can at most have a stateful computation which has been run with `evalState` or
-`execState` and therefore state cannot escape outside of that computation. One
-could extend FunLang with the `Error` monad that can be combined with `State`
-somehow in order to be able to interrupt stateful computations with errors.
+can be non-terminating. MIL does not have a monad for non-termination, so we do
+not worry about this particular effect. Second, FunLang exceptions have
+non-monadic types, but we need to express potential failure in MIL. This means
+that the `Error` monad should be part of all computations. For stateful
+computations we need to add `State` and for input/output -- IO. The problem
+here is that FunLang allows to "escape" `State` by using `evalState` and
+`execState` and therefore running stateful computations inside pure or `IO`
+computations. Escaping `State` is not possible in MIL, so we need to add
+`State` to all stacks. Given all this, we have two effect stacks: `State :::
+Error Unit` for pure computations and computations in the `State` monad and
+`State ::: (Error Unit ::: IO)` for computations in the `IO` monad. If we do an
+exercise of expanding types as we did in one of the previous chapters for the
+`IO` monad stack, we will get `s -> IO (Either Unit (a, s))`. This can be read
+as "a function that given a state value can perform IO and either results in an
+error or produces a value and a new state".  `Unit` is chosen as a type for
+error values, because exceptions in FunLang do not carry any value. We choose
+to have `State` on top of `Error`, but for FunLang different orderings of
+`Error` and `State` cannot be observed, since `catch` can at most have a
+stateful computation which has been run with `evalState` or `execState` and
+therefore state cannot escape outside of that computation. One could extend
+FunLang with the `Error` monad that can be combined with `State` somehow in
+order to be able to interrupt stateful computations with errors.
 
 Note, that there is an important relation between the pure and the `IO` monad
 stacks above. They satisfy the $isCompatible$ relation in MIL (the former is a
@@ -266,13 +281,13 @@ Given the similarity between FunLang and MIL, there is basically almost no
 translation of data type definitions. There exists one problem with data
 constructors and their application as functions, though. Every MIL data
 constructor is introduced as a function in the global scope and therefore, it
-can be used as a function, for example, be partially applied. Application of
-data constructors in MIL does not have any effect, which makes them different
-from all the other function definitions generated from FunLang, which have a
-monad attached to every argument position. In order to avoid having this
-special case which can complicate the code generation slightly, we generate a
-wrapper function for every data constructor. This wrapper function is then used
-instead of the data constructor occurence itself.
+can be used as a function. Application of data constructors in MIL does not
+have any effect, which makes them different from all the other function
+definitions generated from FunLang, which have a monad attached to every
+argument position. In order to avoid having this special case which can
+complicate the code generation slightly, we generate a wrapper function for
+every data constructor. This wrapper function is then used instead of the data
+constructor occurence itself.
 
 The following example contains a definition of `Pair` data type and the
 corresponding wrapper function for its only data constructor:
@@ -294,10 +309,10 @@ con_MkPair :
             MkPair [A] [B] var_1 var_2;
 ~~~
 
-What the code generator did in this case was to generate an MIL expression,
-given the type of the data constructor. In general, this kind of problem can be
-really hard, but in the case of data constructors the shape of possible types
-is quite restricted.
+What the code generator did in this case was generating an MIL expression from
+the type of the data constructor. The problem of generating an expression which
+has a particular type can be really hard for arbitrary types, but in the case
+of data constructors the shape of possible types is quite restricted.
 
 ### Built-in types and functions
 
@@ -420,14 +435,14 @@ stateFun : (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit) =
 
 Built-in `State` functions such as `evalState`, `execState`, `get`, `put` and
 `modify` are implemented in MIL and this code is emitted at the beginning of
-every program together with other built-in functions and data types.
-`evalState` creates a reference with the initial state value that it is given
-and runs a given `State` computation with this reference as an argument.
-`execState` does the same, but in addition it reads the reference to get the
-final state value out and returns it. `get` and `put` are wrappers around
-`read_ref` and `write_ref` respectively. `modify` is a more high-level
-combination of these two with a given state transformation function applied in
-between.
+every program together with other built-in functions and data types.  The
+function `evalState` creates a reference with the initial state value that it
+is given and runs a given `State` computation with this reference as an
+argument.  The same happends in `execState`, but in addition it reads the
+reference to get the final state value out and returns it. `get` and `put` are
+wrappers around `read_ref` and `write_ref` respectively. `modify` is a more
+high-level combination of these two with a given state transformation function
+applied in between.
 
 ### Exceptions
 
@@ -441,16 +456,29 @@ The $lift$ operation to put `State` on top also needs to be generated, since
 
 Dealing with `catch` turned out to be a much bigger problem. When presenting
 MIL built-in functions in the previous chapter, we omitted the `catch_error`
-function, which one would definitely expect to see there. `catch_error` type
-could be `forall E . forall A . Error E A -> (E -> Error E A) -> Error E A`,
-where the first parameter (after the two type parameters) corresponds to the
-left-hand side of FunLang `catch` and the second parameter corresponds to the
-right-hand side wrapped in a lambda, which takes a `Unit` placeholder. The
-problem with this type and the design of FunLang is that in FunLang exceptions
-can be thrown and handled both inside pure computations and inside `IO`
-computations, which corresponds to two monads stacks. So there are two possible
-types of computations that we need to pass to `catch_error` and none of those
-match its type, they have more effects declared than `catch_error` expects.
+function, which one would definitely expect to see there. One possible type of
+`catch_error` could be `forall E . forall A . Error E A -> (E -> Error E A) ->
+Error E A`, where the first parameter (after the two type parameters)
+corresponds to the left-hand side of FunLang `catch` and the second parameter
+corresponds to the right-hand side wrapped in a lambda, which takes a `Unit`
+placeholder. The problem with this type and the design of FunLang is that in
+FunLang exceptions can be thrown and handled both inside pure computations and
+inside `IO` computations, which corresponds to two different monads stacks. So
+there are two possible types of computations that we need to pass to
+`catch_error` and none of those match the type above. As was presented in the
+previous chapter, a type of the argument to a function must satisfy the
+$isCompatible$ relation with the corresponding parameter type. If we say that
+instead of `Error E A` the first parameter of `catch_error` could be `State :::
+(Error E ::: IO) A` (as well as all the other occurences of `Error E A`), then
+we could pass a pure/stateful FunLang computation of type `(State ::: Error E)
+A` as an argument (it has less effects than `catch_error` expects). But if we
+were to apply `catch_error` with IO in its type inside a function of type
+`(State ::: Error E) A`, the MIL type/lint checker would give an error, since
+the result would have had more effects than specified by the function type. If
+we instead say that `catch_error` should have `(State ::: Error E) A` instead
+of `Error E A` in its type, then we cannot pass an IO computation as the first
+argument, since its type is not compatible (it has more effects than
+`catch_error` expects).
 
 For this reason, MIL provides two functions: `catch_error_1` and
 `catch_error_2` as a workaround. The types of these functions are not fully
@@ -463,9 +491,10 @@ can support up to two possible monad stacks in a similar case, when exceptions
 can be thrown in all the contexts in the source language.
 
 What one would really want to capture in the type of `catch_error` here is the
-fact that it expects a computation that *has* `Error` as one of its effects
-instead of having *just* `Error`. Unfortunately, MIL does not offer an ability
-to express this at the moment.
+fact that it expects a computation that *has* `Error` as one of its effects.
+But what `Error E A` means in MIL is that a computation has *just* the `Error`
+effect, not less and not more. Unfortunately, MIL does not offer an ability to
+express the fact that a computation "has at least this effect, but maybe more".
 
 ## Conclusions
 
