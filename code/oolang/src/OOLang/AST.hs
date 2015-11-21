@@ -149,7 +149,6 @@ data Expr t s = LitE (Literal t s)
                 -- type Ref A.
               | DerefE s t (Expr t s)
               | BinOpE s t (BinOpS s) (Expr t s) (Expr t s) Bool
-              | IfThenElseE s t (Expr t s) (Expr t s) (Expr t s)
               | JustE s t (Expr t s)
               | ParenE s (Expr t s)
   deriving Show
