@@ -26,7 +26,7 @@ This section will introduce most of the OOLang features using example programs.
 
 OOLang allows to define functions consisting of several statements. Functions
 can be pure or impure, which is captured in the return type. By default all
-functions are impure. Impurity in OOLang comes mainly from input/output and
+functions are impure. Impurity in OOLang comes from input/output and
 assignments to references. Function definitions can contain parameters in curly
 braces with a function arrow (`->`) separating several parameters, which means
 that functions are curried. Function application is expressed using
@@ -85,8 +85,9 @@ end;
 Exception handling is performed using `try-catch-finally`.  Exceptions can be
 thrown with the `throw` statement, which is annotated with a type, since as it
 was mentioned earlier, every statement in OOLang must have a type. The types of
-`try` and `catch` block must have the same type. The type of `finally` does not
-matter, since its value is not returned.
+`try` and `catch` block must be the same (or rather satisfy the subtyping
+relation, which we will present later in this chapter). The type of `finally`
+does not matter, since its value is not returned.
 
 ~~~
 try
@@ -323,7 +324,7 @@ inside impure ones.
 
 ### General scheme and type conversions
 
-The general approach to code generation and type conversions for OOLang are
+The general approach to code generation and type conversions for OOLang is
 rather similar to what was described in the FunLang chapter. Every function
 type needs to be converted to the corresponding MIL type. There is one
 significant difference in OOLang, though.  We know that no effects can happen
@@ -491,7 +492,7 @@ main : (Error Unit ::: (State ::: IO)) Unit =
   in return [Error Unit ::: (State ::: IO)] unit;
 ~~~
 
-It is worth mentioning that the code generator needs to do some not as
+It is worth mentioning that the code generator needs to do some not so
 straight-forward things to get the variable names supply for `Mutable`
 variables right. This is needed because of the order in which statements are
 generated. As was mentioned in the context of declaration statements, the code
@@ -511,8 +512,8 @@ bound with the monadic $bind$. But, the code generation for the following
 statements will also have incremented the counter! That is why the post step
 needs to be performed every time, namely, restoring the counter back to the
 value it had at the beginning of the current call. One can think of this
-process as maintaining a stack of variable names, when going depth-first into
-the list of statements.
+process as maintaining a stack of variable names, when going down the list of
+statements.
 
 ### Exceptions
 
@@ -556,21 +557,21 @@ case, therefore the type checker specifies the appropriate monad stacks for
 
 ### Classes
 
-In order to represent OOLang classes in MIL, MIL tuples are used. Every class
-maps to a type, which is a tuple with two elements (which are tuples
-themselves) representing data fields and methods. Since MIL tuples have both
-width and depth subtyping, new data fields and/or methods can be added in
-subclasses and it will still be possible to work with a tuple representing a
-subclass object as if it were a tuple for a superclass object, for example,
-pass as function arguments, pattern match with the `case` expressions etc. Note
-that tuples for subclasses contain all of the superclass fields and methods
-before their own, if any.  The inspiration for the representation of OOLang
-classes comes from \cite{TAPL}.
+In order to represent OOLang classes, MIL tuples are used. Every class maps to
+a type, which is a tuple with two elements (which are tuples themselves)
+representing data fields and methods. Since MIL tuples have both width and
+depth subtyping, new data fields and/or methods can be added in subclasses and
+it will still be possible to work with a tuple representing a subclass object
+as if it were a tuple for a superclass object, for example, pass as function
+arguments, pattern match with the `case` expressions etc. Note that tuples for
+subclasses contain all of the superclass fields and methods before their own,
+if any.  The inspiration for the representation of OOLang classes comes from
+\cite{TAPL}.
 
 For every class definition three MIL functions are generated:
 
 * `new_ClassName_Data` function, which we call a *class data constructor
-  function*. This is a function that creates a data part of the object tuple.
+  function*. This is a function that creates the data part of an object tuple.
   It contains generated code for field initialisation. The following example
   contains two class definitions in OOLang and two class data constructor
   function definitions in MIL:
@@ -598,7 +599,9 @@ For every class definition three MIL functions are generated:
     ~~~
 
     Note that the subclass just duplicates the superclass field
-    initialisations.
+    initialisations. It is also worth highlighting that right now the code
+    generator does not support referencing superclass fields in field initialisers.
+    We think that adding this should not cause any problems.
 
 * `class_ClassName` function, which we call a *class definition function*. This
   function is where the code for class methods is contained. It takes a class
@@ -611,8 +614,8 @@ For every class definition three MIL functions are generated:
   definitions need to be able to access `self` and if a class has a superclass,
   then `super` has to be available as well. The `super` variable is just bound to
   a constructed instance of the super class. The `self` case is a bit more
-  interesting, since when we are defining methods, we really are in the process
-  of defining `self`. This is where the `let rec` expression is used to have a
+  interesting, since when we are defining methods, we are in the process of
+  defining `self`. This is where the `let rec` expression is used to have a
   recursive binding for `self`.
 
     The following example contains a simple class definition function:
@@ -669,18 +672,18 @@ For every class definition three MIL functions are generated:
     ~~~
 
     Note that in the example above the `method` from superclass is overriden in
-    the subclass, so a new definition is put in its place. In the case, when the
+    the subclass, so a new definition is put in its place. In the case, when a
     subclass does not override a method, a reference to the corresponding
     superclass method will be used as a method tuple element. The superclass
     instance is decomposed with a sequence of `case` expressions and all its data
     fields and methods are available.
 
-    One of the most interesting observations to make here is that the subclass
-    polymorphism is taken care of by storing methods' lambda expressions in a
-    tuple. The ability to capture a reference to a superclass method (to be called
-    from a subclass method override) is powered by *closures* (data structures for
-    storing a function together with its environment, which are heavily used in
-    implementaion of functional programming languages).
+    One of the most interesting observations to make here is that the
+    subclassing polymorphism is taken care of by storing methods' lambda
+    expressions in a tuple. The ability to capture a reference to a superclass
+    method is powered by *closures* (data structures for storing a function
+    together with its environment, which are heavily used in implementaion of
+    functional programming languages).
 
 * `new_ClassName` function, which corresponds to the `ClassName.new` construct
   in OOLang. It basically puts together `new_ClassName_Data` and
@@ -760,27 +763,27 @@ is rather close to what one would think about computations of type `Error Unit
 error or a result. If we extend this stack to model impure OOLang computations,
 while still maintaining the property that the pure stack is a prefix of the
 impure one, we will get `Error Unit ::: (NonTerm ::: (State ::: IO))`.
-Unrolling this type produces `s -> IO (Maybe (Either e a), s)` does not really
-make sense, because what it captures is that a computation always returns a
-state value even if it does not terminate. We can try to fix this by switching
-the order of `NonTerm` and `State`: `Error Unit ::: (State ::: (NonTerm :::
-IO))`. This stack gives us `s -> IO (Maybe (Either e a, s))` which is better,
-since now the state value is under `Maybe`, but we cannot combine this with
-pure computations of type `Error Unit ::: NonTerm` because of the `State` monad
-transformer in between. One way of working around this is to have `State :::
-(Error Unit ::: (NonTerm ::: IO))` as the impure stack. Then the pure stack
-with the help of the monad transformer $lift$ operation starts to satisfy the
-$isCompatible$ relation. But in this case the intermediate language forces the
-source language to have a particular semantics (the ordering of `State` and
-`Error`).
+Unrolling this type produces `s -> IO (Maybe (Either e a), s)`, which does not
+really make sense, because what it captures is that a computation always
+returns a state value even if it does not terminate. We can try to fix this by
+switching the order of `NonTerm` and `State`: `Error Unit ::: (State :::
+(NonTerm ::: IO))`. This stack gives us `s -> IO (Maybe (Either e a, s))` which
+is better, since now the state value is under `Maybe`, but we cannot combine
+this with pure computations of type `Error Unit ::: NonTerm` because of the
+`State` monad transformer in between. One way of working around this is to have
+`State ::: (Error Unit ::: (NonTerm ::: IO))` as the impure stack. Then the
+pure stack with the help of the monad transformer $lift$ operation starts to
+satisfy the $isCompatible$ relation. But in this case the intermediate language
+forces the source language to have a particular semantics (the ordering of
+`State` and `Error`).
 
 The question of how to incorporate non-termination into MIL remains open. One
-can relate this partly to the problem with the `catch_error` type raised in
+can partly relate this to the problem with the `catch_error` type raised in
 this and the previous chapter in the sense that MIL stacks are rather fixed and
 also order-dependent. This, of course, gives us benefits of expressing
-different semantics, but at the same time it cuts the flexibility that might be
-available with a more set-based representation of effect combinations. Maybe,
-some sort of polymorphism in MIL stacks and an ability to have *monad
+different semantics, but at the same time it cuts off the flexibility that
+might be available with a more set-based representation of effect combinations.
+Maybe, some sort of polymorphism in MIL stacks and an ability to have *monad
 variables* like, e.g. `Error Unit ::: (m ::: NonTerm)` would help in solving
 this problem, but we did not explore the solution space further in this
 project.
