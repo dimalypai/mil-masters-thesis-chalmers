@@ -1,8 +1,8 @@
 main : Error Unit Int =
-  (\(e : Unit) -> return [Error Unit] 1) unit;
+  return [Error Unit] 1;
 
 fun : Error Unit Int =
-  (\(e : Unit) -> return [Error Unit] 1) unit;
+  return [Error Unit] 1;
 
 fun2 : Error Int Int =
   catch_error_1 [Int] [Int] (throw_error [Int] [Int] 1) (\(e : Int) -> return [Error Int] e);

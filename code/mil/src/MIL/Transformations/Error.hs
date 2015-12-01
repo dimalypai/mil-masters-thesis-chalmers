@@ -21,7 +21,8 @@ eliminateThrowCatchExpr expr =
         AppE (TypeAppE (TypeAppE (VarE (VarBinder (Var catchName, _))) (TyTypeCon (TypeName "Unit"))) _)
              (AppE (TypeAppE (TypeAppE (VarE (VarBinder (Var "throw_error", _))) _) _) _) |
              catchName == "catch_error_1" || catchName == "catch_error_2" ->
-          AppE (eliminateThrowCatchExpr e2) (LitE UnitLit)
+          let (LambdaE _ handlerBody) = e2
+          in eliminateThrowCatchExpr handlerBody
         _ -> AppE (eliminateThrowCatchExpr e1) (eliminateThrowCatchExpr e2)
 
     TypeLambdaE typeVar e -> TypeLambdaE typeVar (eliminateThrowCatchExpr e)
