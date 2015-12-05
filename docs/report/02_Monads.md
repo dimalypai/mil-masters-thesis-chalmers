@@ -58,7 +58,7 @@ In this section we are going to look at examples of several monads.
   computations with any effect or information. It is basically just a function
   application. We provide a definition of $Identity$ in Haskell below:
 
-    ~~~
+    ~~~{.haskell}
     newtype Identity a = Identity a
 
     instance Monad Identity where
@@ -78,7 +78,7 @@ In this section we are going to look at examples of several monads.
   arguments. One of the possible $State$ monad implementations pretty much makes
   this technique implicit. Here is such an implementation in Haskell:
 
-    ~~~
+    ~~~{.haskell}
     newtype State s a = State (s -> (a, s))
 
     instance Monad (State s) where
@@ -97,7 +97,7 @@ In this section we are going to look at examples of several monads.
 * Another ubiquitous effect is error (exception) handling. There are several
   different monads that can be used. One of them is the $Either$ monad.
 
-    ~~~
+    ~~~{.haskell}
     data Either e a = Left e | Right a
 
     instance Monad (Either e) where
@@ -188,7 +188,7 @@ examples of them:
 * $StateT\ s\ m$ is a transformer that adds an effect of stateful computation
   to monad $m$. An implementation in Haskell could be the following:
 
-    ~~~
+    ~~~{.haskell}
     newtype StateT s m a = StateT (s -> m (a, s))
     ~~~
 
@@ -202,7 +202,7 @@ examples of them:
     To make $StateT$ a monad transformer in Haskell, we need to make it an
     instance of `MonadTrans`, which contains a $lift$ operation:
 
-    ~~~
+    ~~~{.haskell}
     instance MonadTrans (StateT s) where
       lift m = StateT (\s -> do
                  a <- m
@@ -215,7 +215,7 @@ examples of them:
 * $ErrorT\ e\ m$ adds a notion of failure to monad $m$. One way to represent it
   is using the $Either$ data type:
 
-    ~~~
+    ~~~{.haskell}
     newtype ErrorT e m a = ErrorT (m (Either e a))
 
     instance MonadTrans (ErrorT e) where
@@ -230,7 +230,7 @@ examples of them:
 * $ReaderT\ r\ m$ adds a layer of interaction with a read-only environment of
   type $r$:
 
-    ~~~
+    ~~~{.haskell}
     newtype ReaderT r m a = ReaderT (r -> m a)
     ~~~
 
@@ -240,7 +240,7 @@ examples of them:
     disregards the given environment and gives back the computation in the
     underlying monad:
 
-    ~~~
+    ~~~{.haskell}
     instance MonadTrans (ReaderT r) where
       lift m = ReaderT (\r -> m)
     ~~~

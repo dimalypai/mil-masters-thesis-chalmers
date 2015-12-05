@@ -642,7 +642,7 @@ The biggest different between the two is in representations of types. The
 source representation produced a the parser is captured in the `SrcType` data
 type:
 
-~~~
+~~~{.haskell}
 data SrcType
   = SrcTyTypeCon TypeName
   | SrcTyArrow SrcType SrcType
@@ -667,7 +667,7 @@ during the type checking phase. At the same type a number of checks are
 performed, for example, that all the types are properly kinded, that they use
 types which are in scope, that there is no type variable shadowing etc.
 
-~~~
+~~~{.haskell}
 data Type
   = TyTypeCon TypeName
   | TyVar TypeVar
@@ -685,7 +685,7 @@ constructor, which has one field of type `MonadType`.
 
 Built-in monads are captured in the `MilMonad` data type:
 
-~~~
+~~~{.haskell}
 data MilMonad
   = Id
   | State
@@ -697,7 +697,7 @@ A monadic type in MIL is either a single monad or a single monad combined with
 another monadic type using monad cons. This is captured in the `MonadType` ADT,
 mentioned above:
 
-~~~
+~~~{.haskell}
 data MonadType
   = MTyMonad SingleMonad
   | MTyMonadCons SingleMonad MonadType
@@ -707,7 +707,7 @@ This data type is essentially a non-empty list of `SingleMonad`s.
 
 Single monads are represented using the `SingleMonad` data type:
 
-~~~
+~~~{.haskell}
 data SingleMonad
   = SinMonad MilMonad
   | SinMonadApp SingleMonad Type
@@ -734,7 +734,7 @@ We will provide the definition of the `Expr` data type below to get a general
 feeling on how different MIL expressions are represented, but we will skip
 describing it in full detail:
 
-~~~
+~~~{.haskell}
 data Expr v ct mt t
   = LitE Literal
   | VarE v
@@ -756,7 +756,7 @@ and one for type annotated expressions. This is a general pattern used in the
 MIL implementation for many other data types, like type definitions,
 constructors definitions, function definitions etc.
 
-~~~
+~~~{.haskell}
 type SrcExpr = Expr Var () SrcType SrcType
 type TyExpr  = Expr TyVarBinder Type MonadType Type
 ~~~
@@ -769,11 +769,6 @@ annotations can be useful when working with an instance of the AST, since it
 allows to get the types without asking the type environment. For monads and
 general type occurences, source representation of types (`SrcType`) is replaced
 with `MonadType` and the internal type representation respectively.
-
-All the source code is publicly available at
-<https://bitbucket.org/dmytrolypai/mil-masters-thesis-chalmers> and
-<https://github.com/dmytrolypai/mil-masters-thesis-chalmers> under `code/mil`.
-TODO: LICENSE.
 
 Implementation details specific to optimisations are presented in a separate
 chapter.
