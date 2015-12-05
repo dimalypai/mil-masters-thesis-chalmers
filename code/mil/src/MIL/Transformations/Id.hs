@@ -17,14 +17,16 @@ exchangeFun (FunDef funName funType funBody) =
   FunDef funName funType (exchangeExpr funBody)
 
 exchangeExpr :: TyExpr -> TyExpr
-exchangeExpr = transform f
-  where f expr@(LetE varBinder e1 e2) =
-            case e2 of
-              LetE varBinder' e1' e2' | getBinderVar varBinder `isNotUsedIn` e1' ->
-                case getTypeOf expr of
-                  TyApp (TyMonad (MTyMonad (SinMonad Id))) _ ->
-                    LetE varBinder' (exchangeExpr e1') (LetE varBinder (exchangeExpr e1) (exchangeExpr e2'))
-                  _ -> LetE varBinder (exchangeExpr e1) (exchangeExpr e2)
-              _ -> LetE varBinder (exchangeExpr e1) (exchangeExpr e2)
-        f x = x
+exchangeExpr = descendBi f
+  where
+    f expr@(LetE varBinder e1 e2) =
+      case e2 of
+        LetE varBinder' e1' e2' | getBinderVar varBinder `isNotUsedIn` e1' ->
+          case getTypeOf expr of
+            TyApp (TyMonad (MTyMonad (SinMonad Id))) _ ->
+              LetE varBinder' (exchangeExpr e1')
+                (LetE varBinder (exchangeExpr e1) (exchangeExpr e2'))
+            _ -> LetE varBinder (exchangeExpr e1) (exchangeExpr e2)
+        _ -> LetE varBinder (exchangeExpr e1) (exchangeExpr e2)
+    f expr = descend f expr
 
