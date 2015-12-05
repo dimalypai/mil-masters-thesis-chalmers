@@ -55,8 +55,30 @@ The following code snippet is a Haskell implementation of the left identity
 transformation for MIL:
 
 ~~~{.haskell}
-TODO
+leftIdentityExpr :: TyExpr -> TyExpr
+leftIdentityExpr = descendBi f
+  where
+    f (LetE varBinder e1 e2) =
+      case e1 of
+        ReturnE _tm e ->
+          (VarE varBinder, leftIdentityExpr e) `replaceExprIn` (leftIdentityExpr e2)
+        _ -> LetE varBinder (leftIdentityExpr e1) (leftIdentityExpr e2)
+    f expr = descend f expr
 ~~~
+
+This and all the other transformations are implemented using the same pattern
+to perform a top-down traversal of the AST, namely using Uniplate's `descendBi`
+on the top level with a function that has a case where the optimisation can be
+applied and a general case, which uses `descend` with the function itself to
+continue the recursion. Using `descendBi` allows to apply the optimisation the
+top level instead of skipping the top level and recursing down directly. We
+direct the reader to the Uniplate documentation for some related details.
+
+In the implementation above we look for a $bind$ expression which has $return$
+as a binder expression and substitute all of the occurences of the bound
+variable in the $bind$ body with the expression under $return$ (applying the
+transformation recursively to the subexpressions) using a helper function
+`replaceExprIn`.
 
 The following is an MIL example containing the original code and then the
 resulting code after applying the transformation:
@@ -78,8 +100,19 @@ $$bind\ m\ return = m$$
 An implementation of this transformation looks like follows:
 
 ~~~{.haskell}
-TODO
+rightIdentityExpr :: TyExpr -> TyExpr
+rightIdentityExpr = descendBi f
+  where
+    f (LetE varBinder e1 e2) =
+      case e2 of
+        ReturnE _tm (VarE vb) | vb == varBinder -> rightIdentityExpr e1
+        _ -> LetE varBinder (rightIdentityExpr e1) (rightIdentityExpr e2)
+    f expr = descend f expr
 ~~~
+
+Here we look for a $bind$ containing $return$ of the bound variable as a body.
+If such an expression is found, it is replaced with the binder expression (with
+the transformation applied on top).
 
 An example for this transformations looks pretty much the same as for the left
 identity, but what is really happening is that it is only the whole binder
@@ -102,7 +135,16 @@ $$bind\ (bind\ m\ f)\ g = bind\ m\ (\lambda x \to bind\ (f\ x)\ g)$$
 Th associativity transformation is implemented as in the snippet below:
 
 ~~~{.haskell}
-TODO
+associativityExpr :: TyExpr -> TyExpr
+associativityExpr = descendBi f
+  where
+    f (LetE varBinder e1 e2) =
+      case e1 of
+        LetE varBinder' e1' e2' ->
+          LetE varBinder' (associativityExpr e1')
+            (LetE varBinder (associativityExpr e2') (associativityExpr e2))
+        _ -> LetE varBinder (associativityExpr e1) (associativityExpr e2)
+    f expr = descend f expr
 ~~~
 
 The following example shows a simple MIL code snippet and its transformed
@@ -136,8 +178,20 @@ the target monads are the same.
 This transformation is implemented as follows:
 
 ~~~{.haskell}
-TODO
+liftIdentityExpr :: TyExpr -> TyExpr
+liftIdentityExpr = descendBi f
+  where
+    f (LiftE e tm1 tm2) =
+      if tm1 `alphaEq` tm2
+        then e
+        else LiftE (liftIdentityExpr e) tm1 tm2
+    f expr = descend f expr
 ~~~
+
+We look for a $lift$ operation and if its source and target monads are
+alpha-equivalent, we drop the $lift$ operation and leave only the expression
+being lifted. Otherwise, we recurse down into this expression, leaving the
+$lift$ in place.
 
 The next example is probably the simplest case of applying this transformation:
 
@@ -157,7 +211,14 @@ the outer (first) one, which is guaranteed by the type/lint checking.
 An implementation of this transformation is below:
 
 ~~~{.haskell}
-TODO
+composeLiftExpr :: TyExpr -> TyExpr
+composeLiftExpr = descendBi f
+  where
+    f (LiftE e tm1 tm2) =
+      case e of
+        LiftE e' tm1' _ -> LiftE e' tm1' tm2
+        _ -> LiftE (composeLiftExpr e) tm1 tm2
+    f expr = descend f expr
 ~~~
 
 The next example demonstrates a composition of two $lift$ operations:
@@ -191,19 +252,26 @@ parallelisation.
 Here is an implementation of this transformation:
 
 ~~~{.haskell}
-exchangeExpr = transform f
+exchangeExpr :: TyExpr -> TyExpr
+exchangeExpr = descendBi f
   where
     f expr@(LetE varBinder e1 e2) =
-        case e2 of
-          LetE varBinder' e1' e2' | getBinderVar varBinder `isNotUsedIn` e1' ->
-            case getTypeOf expr of
-              TyApp (TyMonad (MTyMonad (SinMonad Id))) _ ->
-                LetE varBinder' (exchangeExpr e1')
-                  (LetE varBinder (exchangeExpr e1) (exchangeExpr e2'))
-              _ -> LetE varBinder (exchangeExpr e1) (exchangeExpr e2)
-          _ -> LetE varBinder (exchangeExpr e1) (exchangeExpr e2)
-    f x = x
+      case e2 of
+        LetE varBinder' e1' e2' | getBinderVar varBinder `isNotUsedIn` e1' ->
+          case getTypeOf expr of
+            TyApp (TyMonad (MTyMonad (SinMonad Id))) _ ->
+              LetE varBinder' (exchangeExpr e1')
+                (LetE varBinder (exchangeExpr e1) (exchangeExpr e2'))
+            _ -> LetE varBinder (exchangeExpr e1) (exchangeExpr e2)
+        _ -> LetE varBinder (exchangeExpr e1) (exchangeExpr e2)
+    f expr = descend f expr
 ~~~
+
+What it does is looking for a sequence of $bind$ expressions such that the
+variable bound with the first one is not used in the binder expression of the
+second one (using a helper function `isNotUsedIn`), which would make this
+transformation invalid, since the variable would be not in scope for its use.
+There is also a check of the type to make sure that it is an `Id` computation.
 
 We will skip giving an example in this case, since it would not be particularly
 interesting.
@@ -218,23 +286,83 @@ above. We refer to it as "exchange new". It allows to reorder creation of two
 references. It is implemented as the following:
 
 ~~~{.haskell}
-TODO
+exchangeNewExpr :: TyExpr -> TyExpr
+exchangeNewExpr = descendBi f
+  where
+    f (LetE varBinder e1 e2) =
+      case e2 of
+        LetE varBinder' e1' e2' | getBinderVar varBinder `isNotUsedIn` e1' ->
+          case (e1, e1') of
+            (AppE (TypeAppE (VarE (VarBinder (Var "new_ref", _))) _) _,
+             AppE (TypeAppE (VarE (VarBinder (Var "new_ref", _))) _) _) ->
+              LetE varBinder' (exchangeNewExpr e1')
+                (LetE varBinder (exchangeNewExpr e1) (exchangeNewExpr e2'))
+            _ -> LetE varBinder (exchangeNewExpr e1) (exchangeNewExpr e2)
+        _ -> LetE varBinder (exchangeNewExpr e1) (exchangeNewExpr e2)
+    f expr = descend f expr
 ~~~
+
+In this transformation we are looking for a sequence of $bind$ operations with
+`new_ref` as their binder expressions. It does a check for usage of the
+variable that holds the reference created with the first `new_ref`. This is
+done to avoid applying this transformation in the case, when the first
+reference is used to create the second reference.
 
 Another special case of the reordering transformation is "exchange read", which
 can reorder reading of two references. Below is an implementation of it:
 
 ~~~{.haskell}
-TODO
+exchangeReadExpr :: TyExpr -> TyExpr
+exchangeReadExpr = descendBi f
+  where
+    f (LetE varBinder e1 e2) =
+      case e2 of
+        LetE varBinder' e1' e2' | getBinderVar varBinder `isNotUsedIn` e1' ->
+          case (e1, e1') of
+            (AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _) _,
+             AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _) _) ->
+              LetE varBinder' (exchangeReadExpr e1')
+                (LetE varBinder (exchangeReadExpr e1) (exchangeReadExpr e2'))
+            _ -> LetE varBinder (exchangeReadExpr e1) (exchangeReadExpr e2)
+        _ -> LetE varBinder (exchangeReadExpr e1) (exchangeReadExpr e2)
+    f expr = descend f expr
 ~~~
+
+It is very similar to the "exchange new" transformation. It also does a check
+for usage of the variable that holds the value read from the first reference.
+This is done to avoid applying this transformation in the case, when the first
+reference contains another reference that is read in the second `read_ref`.
 
 The third transformation for `State` computations allows to eliminate a
 reference reading in the case when this reference has already been read and
 bound to a variable. It is implemented as follows:
 
 ~~~{.haskell}
-TODO
+useReadExpr :: TyExpr -> TyExpr
+useReadExpr = descendBi f
+  where
+    f (LetE varBinder e1 e2) =
+      case e2 of
+        LetE varBinder' e1' e2' ->
+          case (e1, e1') of
+            (AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _)
+                  (VarE (VarBinder (refVar1, _))),
+             AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _)
+                  (VarE (VarBinder (refVar2, _)))) | refVar1 == refVar2 ->
+              LetE varBinder (useReadExpr e1)
+                (LetE varBinder' (ReturnE (MTyMonad (SinMonad State))
+                                    (VarE varBinder))
+                   (useReadExpr e2'))
+            _ -> LetE varBinder (useReadExpr e1) (useReadExpr e2)
+        _ -> LetE varBinder (useReadExpr e1) (useReadExpr e2)
+    f expr = descend f expr
 ~~~
+
+Again, we look for a sequence of two `read_ref`s as in the previous
+transformation, but here we also check that the same reference is read (it
+works only when the reference is bound to a variable). In this case, `read_ref`
+is replaced with $return$ of the variable that is bound to the result of the
+first `read_ref`.
 
 Below is a small example that instead of reading the reference `x` again,
 reuses the value of the variable `a`, which already contains the value of `x`:
@@ -256,8 +384,30 @@ this case the information from a reference writing operation is used. Its
 implementation is shown in the next code snippet:
 
 ~~~{.haskell}
-TODO
+useWriteExpr :: TyExpr -> TyExpr
+useWriteExpr = descendBi f
+  where
+    f (LetE varBinder e1 e2) =
+      case e2 of
+        LetE varBinder' e1' e2' ->
+          case (e1, e1') of
+            (AppE (AppE (TypeAppE (VarE (VarBinder (Var "write_ref", _))) _)
+                        (VarE (VarBinder (refVar1, _)))) refContentExpr,
+             AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _)
+                  (VarE (VarBinder (refVar2, _)))) | refVar1 == refVar2 ->
+              LetE varBinder (useWriteExpr e1)
+                (LetE varBinder' (ReturnE (MTyMonad (SinMonad State))
+                                    refContentExpr)
+                   (useWriteExpr e2'))
+            _ -> LetE varBinder (useWriteExpr e1) (useWriteExpr e2)
+        _ -> LetE varBinder (useWriteExpr e1) (useWriteExpr e2)
+    f expr = descend f expr
 ~~~
+
+This implementation is very similar to the previous one, except for that the
+first operation must be `write_ref` in this case. The correponding pattern also
+captures the expression being written to the reference as `refContentExpr` to
+be used with $return$ at the end.
 
 The following is an example of reusing an expression that was written to a
 reference instead of reading the reference:
@@ -285,8 +435,28 @@ the handler part will definitely be executed.
 It is implemented in Haskell as the following:
 
 ~~~{.haskell}
-TODO
+eliminateThrowCatchExpr :: TyExpr -> TyExpr
+eliminateThrowCatchExpr = descendBi f
+  where
+    f (AppE e1 e2) =
+      case e1 of
+        AppE (TypeAppE (TypeAppE (VarE (VarBinder (Var catchName, _)))
+                                 (TyTypeCon (TypeName "Unit"))) _)
+             (AppE (TypeAppE (TypeAppE (VarE (VarBinder (Var "throw_error", _)))
+                              _) _) _) |
+             catchName == "catch_error_1" || catchName == "catch_error_2" ->
+          let (LambdaE _ handlerBody) = e2
+          in eliminateThrowCatchExpr handlerBody
+        _ -> AppE (eliminateThrowCatchExpr e1) (eliminateThrowCatchExpr e2)
+    f expr = descend f expr
 ~~~
+
+The pattern matching above tries to find an application of `catch_error_1` or
+`catch_error_2` with `throw_error` as the first non-type argument. If this
+succeeds, the handler body is extracted and returned as the result (with the
+transformation applied recursively to it). This transformation is simplified by
+the fact that it looks only for the case when the type of error values is
+`Unit`.
 
 This optimisation is shown in the following code snippet:
 
@@ -311,8 +481,45 @@ which has a known outcome (because of literal patterns and a literal
 scrutinee). It is implemented for MIL as below:
 
 ~~~{.haskell}
-TODO
+eliminateConstantCaseExpr :: TyExpr -> TyExpr
+eliminateConstantCaseExpr = descendBi f
+  where
+    f (CaseE e caseAlts) =
+      case e of
+        LitE lit ->
+          case find (\(CaseAlt (p, _)) -> case p of
+                 LitP lit' -> lit' == lit
+                 _ -> False) caseAlts of
+            Just (CaseAlt (_, caseAltBody)) ->
+              eliminateConstantCaseExpr caseAltBody
+            Nothing ->
+              CaseE (eliminateConstantCaseExpr e)
+                (map (\(CaseAlt (p, ae)) ->
+                        CaseAlt (p, eliminateConstantCaseExpr ae))
+                   caseAlts)
+        ConNameE conName _ ->
+          case find (\(CaseAlt (p, _)) -> case p of
+                 ConP conName' [] -> conName' == conName
+                 _ -> False) caseAlts of
+            Just (CaseAlt (_, caseAltBody)) ->
+                    eliminateConstantCaseExpr caseAltBody
+            Nothing ->
+              CaseE (eliminateConstantCaseExpr e)
+                (map (\(CaseAlt (p, ae)) ->
+                        CaseAlt (p, eliminateConstantCaseExpr ae))
+                   caseAlts)
+        _ -> CaseE (eliminateConstantCaseExpr e)
+               (map (\(CaseAlt (p, ae)) ->
+                       CaseAlt (p, eliminateConstantCaseExpr ae))
+                  caseAlts)
+    f expr = descend f expr
 ~~~
+
+It tries to find literal or data constructor scrutinee expressions, which are,
+basically, constant values and then to find a case alternative with a pattern
+corresponding to such a value.  Most of the code above are branches, when it
+was not possible to apply this transformation and we need to continue with the
+recursion.
 
 An example of applying this transformation is presented below:
 
@@ -334,11 +541,9 @@ in OOLang, when it is known that a condition evaluates to `true` or `false`.
 
 The common bind extraction is a transformation that can *hoist* a $bind$ to the
 same variable out of `case` alternatives, given that the $bind$s have the same
-body expression. Here is an implementation of this transformation:
-
-~~~{.haskell}
-TODO
-~~~
+body expression. The implementation of this transformation is quite involved
+and would require some detailed explanation, so we chose to skip providing it
+here.
 
 The following is an example of applying the common bind extraction:
 
@@ -369,8 +574,29 @@ require a more detailed analysis. An implementation of constant folding for MIL
 looks like the following:
 
 ~~~{.haskell}
-TODO
+foldConstantsExpr :: TyExpr -> TyExpr
+foldConstantsExpr = descendBi f
+  where
+    f expr@(AppE e1 e2) =
+      case (e1, e2) of
+        (AppE (VarE (VarBinder (Var funName, _))) (LitE lit1), LitE lit2) ->
+          case funName of
+            "add_int" ->
+              case (lit1, lit2) of
+                (IntLit i1, IntLit i2) -> LitE $ IntLit (i1 + i2)
+                _ -> error "foldConstantsExpr: Incorrect literals for add_int"
+            ...
+            _ -> expr
+        _ -> AppE (foldConstantsExpr e1) (foldConstantsExpr e2)
+    f expr = descend f expr
 ~~~
+
+We did not present the full implementation of the transformation in this case,
+since it does very similar things for a number of arithmetic operations (for
+different types). The code above looks for a function application to two
+literal values and then checks if it is a function, which can be evaluated at
+compile-time, for example, `add_int`. In the case of success, it performs the
+operation and returns the result as a literal expression.
 
 This time we will not have an example with only one transformation applied to a
 small piece of MIL code, but rather an extended example with a piece of OOLang
