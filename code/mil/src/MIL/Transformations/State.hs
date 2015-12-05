@@ -20,10 +20,10 @@ exchangeNewExpr = descendBi f
   where
     f (LetE varBinder e1 e2) =
       case e2 of
-        LetE varBinder' e1' e2' ->
+        LetE varBinder' e1' e2' | getBinderVar varBinder `isNotUsedIn` e1' ->
           case (e1, e1') of
-            (AppE (TypeAppE (VarE (VarBinder (Var "new_ref", _))) _)
-                  (LitE {}), AppE (TypeAppE (VarE (VarBinder (Var "new_ref", _))) _) (LitE {})) ->
+            (AppE (TypeAppE (VarE (VarBinder (Var "new_ref", _))) _) _,
+             AppE (TypeAppE (VarE (VarBinder (Var "new_ref", _))) _) _) ->
               LetE varBinder' (exchangeNewExpr e1')
                 (LetE varBinder (exchangeNewExpr e1) (exchangeNewExpr e2'))
             _ -> LetE varBinder (exchangeNewExpr e1) (exchangeNewExpr e2)

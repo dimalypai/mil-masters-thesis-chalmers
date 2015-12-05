@@ -8,8 +8,8 @@ isNotUsedIn :: Var -> TyExpr -> Bool
 v `isNotUsedIn` e =
   case e of
     VarE v' -> v /= getBinderVar v'
-    LitE {} -> False
-    ConNameE {} -> False
+    LitE {} -> True
+    ConNameE {} -> True
     LambdaE _varBinder e' -> v `isNotUsedIn` e'
     AppE e1 e2 -> (v `isNotUsedIn` e1) && (v `isNotUsedIn` e2)
     TypeLambdaE _typeVar e' -> v `isNotUsedIn` e'
