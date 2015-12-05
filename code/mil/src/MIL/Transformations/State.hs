@@ -70,10 +70,14 @@ useReadExpr = descendBi f
       case e2 of
         LetE varBinder' e1' e2' ->
           case (e1, e1') of
-            (AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _) (VarE (VarBinder (refVar1, _))),
-             AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _) (VarE (VarBinder (refVar2, _)))) | refVar1 == refVar2 ->
+            (AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _)
+                  (VarE (VarBinder (refVar1, _))),
+             AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _)
+                  (VarE (VarBinder (refVar2, _)))) | refVar1 == refVar2 ->
               LetE varBinder (useReadExpr e1)
-                (LetE varBinder' (ReturnE (MTyMonad (SinMonad State)) (VarE varBinder)) (useReadExpr e2'))
+                (LetE varBinder' (ReturnE (MTyMonad (SinMonad State))
+                                    (VarE varBinder))
+                   (useReadExpr e2'))
             _ -> LetE varBinder (useReadExpr e1) (useReadExpr e2)
         _ -> LetE varBinder (useReadExpr e1) (useReadExpr e2)
     f expr = descend f expr
@@ -94,10 +98,14 @@ useWriteExpr = descendBi f
       case e2 of
         LetE varBinder' e1' e2' ->
           case (e1, e1') of
-            (AppE (AppE (TypeAppE (VarE (VarBinder (Var "write_ref", _))) _) (VarE (VarBinder (refVar1, _)))) refContentExpr,
-             AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _) (VarE (VarBinder (refVar2, _)))) | refVar1 == refVar2 ->
+            (AppE (AppE (TypeAppE (VarE (VarBinder (Var "write_ref", _))) _)
+                        (VarE (VarBinder (refVar1, _)))) refContentExpr,
+             AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _)
+                  (VarE (VarBinder (refVar2, _)))) | refVar1 == refVar2 ->
               LetE varBinder (useWriteExpr e1)
-                (LetE varBinder' (ReturnE (MTyMonad (SinMonad State)) refContentExpr) (useWriteExpr e2'))
+                (LetE varBinder' (ReturnE (MTyMonad (SinMonad State))
+                                    refContentExpr)
+                   (useWriteExpr e2'))
             _ -> LetE varBinder (useWriteExpr e1) (useWriteExpr e2)
         _ -> LetE varBinder (useWriteExpr e1) (useWriteExpr e2)
     f expr = descend f expr

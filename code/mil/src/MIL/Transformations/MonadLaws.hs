@@ -36,7 +36,7 @@ rightIdentityExpr = descendBi f
   where
     f (LetE varBinder e1 e2) =
       case e2 of
-        ReturnE _tm (VarE vb) | vb == varBinder -> (rightIdentityExpr e1)
+        ReturnE _tm (VarE vb) | vb == varBinder -> rightIdentityExpr e1
         _ -> LetE varBinder (rightIdentityExpr e1) (rightIdentityExpr e2)
     f expr = descend f expr
 

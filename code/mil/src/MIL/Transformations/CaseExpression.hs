@@ -19,26 +19,33 @@ eliminateConstantCaseExpr :: TyExpr -> TyExpr
 eliminateConstantCaseExpr = descendBi f
   where
     f (CaseE e caseAlts) =
-      -- Relies on the fact that patterns are non-overlapping
       case e of
         LitE lit ->
           case find (\(CaseAlt (p, _)) -> case p of
-            LitP lit' -> lit' == lit
-            _ -> False) caseAlts of
-            Just (CaseAlt (_, caseAltBody)) -> eliminateConstantCaseExpr caseAltBody
+                 LitP lit' -> lit' == lit
+                 _ -> False) caseAlts of
+            Just (CaseAlt (_, caseAltBody)) ->
+              eliminateConstantCaseExpr caseAltBody
             Nothing ->
               CaseE (eliminateConstantCaseExpr e)
-               (map (\(CaseAlt (p, ae)) -> CaseAlt (p, eliminateConstantCaseExpr ae)) caseAlts)
+                (map (\(CaseAlt (p, ae)) ->
+                        CaseAlt (p, eliminateConstantCaseExpr ae))
+                   caseAlts)
         ConNameE conName _ ->
           case find (\(CaseAlt (p, _)) -> case p of
-            ConP conName' [] -> conName' == conName
-            _ -> False) caseAlts of
-            Just (CaseAlt (_, caseAltBody)) -> eliminateConstantCaseExpr caseAltBody
+                 ConP conName' [] -> conName' == conName
+                 _ -> False) caseAlts of
+            Just (CaseAlt (_, caseAltBody)) ->
+                    eliminateConstantCaseExpr caseAltBody
             Nothing ->
               CaseE (eliminateConstantCaseExpr e)
-              (map (\(CaseAlt (p, ae)) -> CaseAlt (p, eliminateConstantCaseExpr ae)) caseAlts)
+                (map (\(CaseAlt (p, ae)) ->
+                        CaseAlt (p, eliminateConstantCaseExpr ae))
+                   caseAlts)
         _ -> CaseE (eliminateConstantCaseExpr e)
-               (map (\(CaseAlt (p, ae)) -> CaseAlt (p, eliminateConstantCaseExpr ae)) caseAlts)
+               (map (\(CaseAlt (p, ae)) ->
+                       CaseAlt (p, eliminateConstantCaseExpr ae))
+                  caseAlts)
     f expr = descend f expr
 
 extractCommonBind :: TyProgram -> TyProgram

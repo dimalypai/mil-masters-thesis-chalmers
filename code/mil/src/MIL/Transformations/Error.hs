@@ -18,8 +18,10 @@ eliminateThrowCatchExpr = descendBi f
   where
     f (AppE e1 e2) =
       case e1 of
-        AppE (TypeAppE (TypeAppE (VarE (VarBinder (Var catchName, _))) (TyTypeCon (TypeName "Unit"))) _)
-             (AppE (TypeAppE (TypeAppE (VarE (VarBinder (Var "throw_error", _))) _) _) _) |
+        AppE (TypeAppE (TypeAppE (VarE (VarBinder (Var catchName, _)))
+                                 (TyTypeCon (TypeName "Unit"))) _)
+             (AppE (TypeAppE (TypeAppE (VarE (VarBinder (Var "throw_error", _)))
+                              _) _) _) |
              catchName == "catch_error_1" || catchName == "catch_error_2" ->
           let (LambdaE _ handlerBody) = e2
           in eliminateThrowCatchExpr handlerBody
