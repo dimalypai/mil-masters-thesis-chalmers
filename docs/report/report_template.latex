@@ -129,6 +129,8 @@ $if(lang)$
   \usepackage[$lang$]{babel}
 \fi
 $endif$
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 
 \usepackage{bcprules}
 \usepackage[nottoc]{tocbibind}
