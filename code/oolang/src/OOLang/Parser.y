@@ -394,7 +394,7 @@ seplist1rev(p, s) : p                     { [$1] }
 -- Uses 'ErrorT' for error reporting and 'Reader' for having file name in the
 -- environment (to file names in spans after lexing).
 newtype ParseM a = ParseM { runParse :: ErrorT ParseError (Reader FileName) a }
-  deriving (Monad, MonadError ParseError, MonadReader FileName)
+  deriving (Functor, Applicative, Monad, MonadError ParseError, MonadReader FileName)
 
 type FileName = String
 
