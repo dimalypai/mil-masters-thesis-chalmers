@@ -118,7 +118,7 @@ the most notable are:
 There are several specific examples of IRs used in industrial compilers that
 are worth mentioning here, namely:
 
-* Core (also referred to as System FC), STG and C-- (Cmm) in GHC (The Glasgow
+* Core (also referred to as System FC), STG and C-\- (Cmm) in GHC (The Glasgow
   Haskell Compiler). Core is a simple functional language (much smaller than
   Haskell) that is used for optimisations and further code generation
   \cite{GHCCore} TODO: fix cite. STG is an intermediate representation produced
