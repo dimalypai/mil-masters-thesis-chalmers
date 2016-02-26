@@ -29,9 +29,9 @@ can be pure or impure, which is captured in the return type. By default all
 functions are impure. Impurity in OOLang comes from input/output and
 assignments to references. Function definitions can contain parameters in curly
 braces with a function arrow (`->`) separating several parameters, which means
-that functions are curried. Function application is expressed using
+that functions are curried. {>> Is it possible to write uncurried functions which take several arguments at once? <<} Function application is expressed using
 juxtaposition. If a function definition has parameters, its return type is
-separated from them with `=>`.  Unlike many other programming languages with
+separated from them with `=>`.  {>> Why do you have two form of function arrows? It doesn't make sense to me. <<} Unlike many other programming languages with
 statements, there is no `return` statement in OOLang.  Instead, every statement
 has a value (and a type) and so the value of the last statement is what is
 returned from a function.
@@ -67,6 +67,8 @@ def idInt : {x : Int} => Pure Int
 end
 ~~~
 
+{>> The function arrow in the first argument of `applyInt` is a single arrow while it is instantiated with `idInt` which has a fat function arrow. This confuses me. What is the difference between `->` and `=>`? <<}
+
 At the moment, there are no lambda expressions in OOLang, but given that the
 target for the language is MIL, it should be rather straight-forward to add
 them.
@@ -98,6 +100,8 @@ catch
 finally
 end;
 ~~~
+
+{>> I think the following paragraphs should go earlier in this section to get this information out of the way. You have already referred to Int, Float and Unit so you might as well introduce them before mentioning them. <<}
 
 OOLang has `Unit` (the type of the `unit` literal), `Bool` (which has literals
 `true` and `false` as possible values), `Int`, `Float`, `Char` and `String` as
@@ -141,6 +145,9 @@ later in this section.
 in, therefore assignments to `Mutable` variables are considered pure, since
 they cannot change any global state outside of the function.
 
+{>> What is the point of mutable variables? If they don't leave their
+scope then a block which contains mutable variables can always be rewritten rather straightforwardly to a block which doesn't use mutable variables. <<}
+
 ### References
 
 OOLang also supports references, which are similar to ordinary variables in C#
@@ -174,7 +181,7 @@ y : Maybe Int;
 z : Maybe Int = nothing [Int];
 ~~~
 
-There is a binary nothing coalesce operator (similar to the null coalesce
+There is a {== binary nothing coalesce ==}{>> I don't understand this combination of words. Can you simplify your explanation a bit? <<}operator (similar to the null coalesce
 operator in C#), which allows in one expression to check whether the left
 operand is `nothing` and if it is, the value of the right operand is returned,
 otherwise the value under `just` in the left operand itself is returned:
@@ -183,10 +190,15 @@ otherwise the value under `just` in the left operand itself is returned:
 nothing [Int] ?? 0
 ~~~
 
+{>> I'm not sure what the above example demonstrates. You need to explain the example. Supposedly, the result of the above expression is `just 0`. <<}
+
 As was mentioned above, variables of type `Maybe` can be left uninitialised.
 In this case they will get the value `nothing`. This makes sense only with
 `Mutable` and `Ref` variables, since for immutable variables there will be no
 chance to change the value later on:
+
+{>> Sure it makes sense to have an immutable variable contain the
+value `nothing`. It happens all the time in Haskell! You need to rephrase the above paragraph. <<}
 
 ~~~
 def assignmentsMaybe : Pure Unit
@@ -237,6 +249,9 @@ class Child < Super
 end
 ~~~
 
+{>> You're mixing idioms here. Either you go with parent-child or super-sub. But using super-child doesn't sound right. <<}
+{>> The example seems to be wrong. Shouldn't the call to `super.method` be given `x` as an argument? <<}
+
 All class members have to be accessed through a special variable `self` inside
 the class. Class fields cannot be accessed from the outside of the class. Super
 class members can be accessed through the `super` variable.
@@ -253,6 +268,8 @@ superObj.method 1;
 mChild : Maybe Child = just Child.new;
 mSuper : Maybe Super = mChild ? getSuper;
 ~~~
+
+{>> Is `getSuper` a method or a built-in function? It's not defined as a method in `Child`, but if it was built-in it would almost break abstraction, wouldn't it? <<}
 
 Object are created using a special construct `ClassName.new`, which does not
 have any parameters in the current state of OOLang, meaning that OOLang classes
@@ -306,6 +323,9 @@ References are covariant:
 
 \infrule{A <: B}{Maybe\ A <: Maybe\ B}
 
+{>> NOOOOOOOOOOOO! Mutable types should always be *invariant*.
+https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)#Arrays <<}
+
 ## Code generation
 
 In this section we will describe the code generation from OOLang to MIL.
@@ -318,7 +338,7 @@ the pure stack for OOLang is `Error Unit`. Similarly to FunLang, OOLang
 exceptions do not carry values. Impure computations add `State` and `IO`. We
 decided to order `Error` and `State` differently from FunLang and get the state
 rollback semantics, so we get `Error Unit ::: (State ::: IO)` for impure OOLang
-computations. Again, the pure stack is a prefix of the impure stack (they
+computations. {>> This is a highly unorthodox semantics and is really inefficient to implement. What is your motivation for having rollback? <<} Again, the pure stack is a prefix of the impure stack (they
 satisfy the $isCompatible$ relation) to be able to easily run pure computations
 inside impure ones.
 
@@ -407,6 +427,8 @@ type Maybe A
   = Nothing
   | Just A;
 ~~~
+
+{>> One would expect that Maybe references containing nothing maps to null pointers in the implementation. Can you say something about that? <<}
 
 A difference from FunLang is that `Bool` is a built-in data type with literals,
 rather than an ADT, so there are built-in function for printing and reading
@@ -514,6 +536,8 @@ needs to be performed every time, namely, restoring the counter back to the
 value it had at the beginning of the current call. One can think of this
 process as maintaining a stack of variable names, when going down the list of
 statements.
+
+{>> The explanation above is quite subtle. Can you give an example of some sort to make it clearer? <<}
 
 ### Exceptions
 
@@ -635,6 +659,8 @@ For every class definition three MIL functions are generated:
                        \(x : Int) -> return [Error Unit] 0}}
         in return [Error Unit] self;
     ~~~
+
+{>> This is a rather unorthodox compilation of classes compared to conventional oo-languages. And it's only correct if the data in the object is immutable. A more conventional way is to pass the object as an extra argument to every method; the `self` parameter. If you used this compilation scheme then you wouldn't have to add the extra `Unit` argument to every method. You would also not have to use a recursive definition. <<}
 
     The next example demonstrates how a class definition for a subclass looks:
 
