@@ -140,15 +140,20 @@ main : (Error Unit ::: (State ::: IO)) Unit =
        return [Error Unit ::: (State ::: IO)]
          a_2
   in let (r : Ref Int) <-
-       let (var_4 : Int) <-
+       let (var_6 : Int) <-
          return [Error Unit ::: (State ::: IO)]
            0
-       in lift [State => Error Unit ::: State] new_ref [Int] var_4
-  in let (var_3 : Unit) <-
-       let (var_2 : Int) <-
-         return [Error Unit ::: (State ::: IO)]
-           1
-       in lift [State => Error Unit ::: State] write_ref [Int] r var_2
+       in lift [State => Error Unit ::: State] new_ref [Int] var_6
+  in let (var_5 : Unit) <-
+    let (var_4 : Int) <-
+      return [Error Unit ::: (State ::: IO)]
+        1
+    in lift [State => Error Unit ::: State] write_ref [Int] r var_4
+  in let (var_3 : Int) <-
+    let (var_2 : Ref Int) <-
+      return [Error Unit ::: (State ::: IO)]
+        r
+    in lift [State => Error Unit ::: State] read_ref [Int] var_2
   in return [Error Unit ::: (State ::: IO)]
        unit;
 
@@ -169,7 +174,7 @@ g : (Error Unit ::: (State ::: IO)) Unit =
   in let (a_1 : Int) <-
        return [Error Unit ::: (State ::: IO)]
          5
-     in let (var_5 : Int) <-
+     in let (var_7 : Int) <-
           return [Error Unit ::: (State ::: IO)]
             a_1
         in return [Error Unit ::: (State ::: IO)]

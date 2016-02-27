@@ -6,6 +6,7 @@ def main : Unit
   a;
   r : Ref Int = ref 0;
   r := 1;
+  !r;
   unit;
 end
 
