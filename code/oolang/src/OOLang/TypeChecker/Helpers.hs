@@ -178,9 +178,11 @@ isSelfOrSuper (VarE _ _ (Var varName) _) =
 isSelfOrSuper _ = False
 
 isArithType :: Type -> Bool
-isArithType TyInt   = True
-isArithType TyFloat = True
-isArithType       _ = False
+isArithType TyInt         = True
+isArithType TyFloat       = True
+isArithType (TyPure t)    = isArithType t
+isArithType (TyMutable t) = isArithType t
+isArithType             _ = False
 
 isComparableType :: Type -> Bool
 isComparableType TyUnit        = True

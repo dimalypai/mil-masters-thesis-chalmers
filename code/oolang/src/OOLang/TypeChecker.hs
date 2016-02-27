@@ -461,7 +461,9 @@ tcStmt mClassName srcStmt =
 
       let thenBlockType = if null tyThenStmts then TyUnit else getTypeOf $ last tyThenStmts
       let otherwiseBlockType = if null tyOtherwiseStmts then TyUnit else getTypeOf $ last tyOtherwiseStmts
-      when (thenBlockType /= otherwiseBlockType) $
+      -- This is not the most general way of doing it. One could figure out the most generic type instead.
+      -- But right now it is probably not worth it.
+      unlessM (otherwiseBlockType `isSubTypeOf` thenBlockType) $
         throwError $ OtherwiseIncorrectType thenBlockType otherwiseBlockType (getSrcSpan $ last tyOtherwiseStmts)
 
       return $ WhenS s tyCondExpr tyThenStmts tyOtherwiseStmts
@@ -480,7 +482,10 @@ tcStmt mClassName srcStmt =
         then when (tryBlockType /= TyUnit) $
                throwError $ EmptyCatchBlockNonUnit tryBlockType s
         else do let catchBlockType = getTypeOf (last tyCatchStmts)
-                when (tryBlockType /= catchBlockType) $
+                -- This is not the most general way of doing it. One could
+                -- figure out the most generic type instead.  But right now it
+                -- is probably not worth it.
+                unlessM (catchBlockType `isSubTypeOf` tryBlockType) $
                   throwError $ CatchIncorrectType tryBlockType catchBlockType (getSrcSpan $ last tyCatchStmts)
 
       return $ TryS s tyTryStmts tyCatchStmts tyFinallyStmts
@@ -776,15 +781,20 @@ tcNothingCoalesce tyExpr1 tyExpr2 =
        _ -> throwError $ NothingCoalesceNonMaybe expr1Type (getSrcSpan tyExpr2)
 
 tcArith :: BinOpTc
-tcArith tyExpr1 tyExpr2 =
+tcArith tyExpr1 tyExpr2 = do
   let expr1Type = getTypeOf tyExpr1
-      expr2Type = getTypeOf tyExpr2 in
-  case (isArithType expr1Type, isArithType expr2Type, expr2Type == expr1Type) of
+      expr2Type = getTypeOf tyExpr2
+  -- Given which types support arithmetic, it does not matter if we check that
+  -- expr2 type is a sub type of expr1 type or the other way around.
+  isSubType <- expr2Type `isSubTypeOf` expr1Type
+  case (isArithType expr1Type, isArithType expr2Type, isSubType) of
     (False, _, _) -> throwError $ NotArithType expr1Type (getSrcSpan tyExpr1)
     (True, False, _) -> throwError $ NotArithType expr2Type (getSrcSpan tyExpr2)
     (True, True, False) -> throwError $ IncorrectExprType expr1Type expr2Type (getSrcSpan tyExpr2)
     (True, True, True) -> return (expr1Type, getPurityOf tyExpr1 && getPurityOf tyExpr2)
 
+-- Comparisons are not supported in the CodeGen, so they may not be entirely correct.
+-- As an example, right now the TypeChecker accepts < and > operators for objects.
 tcCompare :: BinOpTc
 tcCompare tyExpr1 tyExpr2 =
   let expr1Type = getTypeOf tyExpr1
