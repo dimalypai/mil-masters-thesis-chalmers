@@ -93,10 +93,10 @@ end
 
 class Child < Super
   # Super reference
-  super2 : Super = super;
+  super2 : Super = super; # Not supported in CodeGen
 
   # Super class method call
-  superMethod : Unit = super.fun;
+  superMethod : Unit = super.fun; # Not supported in CodeGen
 
   # Method override, super class field
   def fun : Pure Unit
