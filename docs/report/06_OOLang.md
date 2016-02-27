@@ -29,15 +29,22 @@ can be pure or impure, which is captured in the return type. By default all
 functions are impure. Impurity in OOLang comes from input/output and
 assignments to references. Function definitions can contain parameters in curly
 braces with a function arrow (`->`) separating several parameters, which means
-that functions are curried. {>> Is it possible to write uncurried functions which take several arguments at once? <<} Function application is expressed using
-juxtaposition. If a function definition has parameters, its return type is
-separated from them with `=>`.  {>> Why do you have two form of function arrows? It doesn't make sense to me. <<} Unlike many other programming languages with
-statements, there is no `return` statement in OOLang.  Instead, every statement
-has a value (and a type) and so the value of the last statement is what is
-returned from a function.
+that functions are curried. Note, that OOLang does not have built-in support
+for tuples, therefore it is not possible to define a function, which would take
+several arguments at once (as a tuple).  Function application is expressed
+using juxtaposition. If a function definition has parameters, its return type
+is separated from them with `=>`. This somewhat corresponds to how C-like
+languages specify return type separately (but before a function name). Unlike
+many other programming languages with statements, there is no `return`
+statement in OOLang.  Instead, every statement has a value (and a type) and so
+the value of the last statement is what is returned from a function.
 
-The following example demonstrates what was described in the previous
-paragraph:
+OOLang has `Unit` (the type of the `unit` literal), `Bool` (which has literals
+`true` and `false` as possible values), `Int`, `Float`, `Char` and `String` as
+built-in types. It supports the usual infix arithmetic operations: `+`, `-`,
+`*` and `/`.
+
+The following example demonstrates some of the features described above:
 
 ~~~
 def main : Unit
@@ -66,8 +73,6 @@ def idInt : {x : Int} => Pure Int
   x;
 end
 ~~~
-
-{>> The function arrow in the first argument of `applyInt` is a single arrow while it is instantiated with `idInt` which has a fat function arrow. This confuses me. What is the difference between `->` and `=>`? <<}
 
 At the moment, there are no lambda expressions in OOLang, but given that the
 target for the language is MIL, it should be rather straight-forward to add
@@ -100,13 +105,6 @@ catch
 finally
 end;
 ~~~
-
-{>> I think the following paragraphs should go earlier in this section to get this information out of the way. You have already referred to Int, Float and Unit so you might as well introduce them before mentioning them. <<}
-
-OOLang has `Unit` (the type of the `unit` literal), `Bool` (which has literals
-`true` and `false` as possible values), `Int`, `Float`, `Char` and `String` as
-built-in types. It supports the usual infix arithmetic operations: `+`, `-`,
-`*` and `/`.
 
 OOLang provides a number of built-in functions for reading and printing values
 of built-in data types:
@@ -145,9 +143,6 @@ later in this section.
 in, therefore assignments to `Mutable` variables are considered pure, since
 they cannot change any global state outside of the function.
 
-{>> What is the point of mutable variables? If they don't leave their
-scope then a block which contains mutable variables can always be rewritten rather straightforwardly to a block which doesn't use mutable variables. <<}
-
 ### References
 
 OOLang also supports references, which are similar to ordinary variables in C#
@@ -181,24 +176,19 @@ y : Maybe Int;
 z : Maybe Int = nothing [Int];
 ~~~
 
-There is a {== binary nothing coalesce ==}{>> I don't understand this combination of words. Can you simplify your explanation a bit? <<}operator (similar to the null coalesce
-operator in C#), which allows in one expression to check whether the left
-operand is `nothing` and if it is, the value of the right operand is returned,
-otherwise the value under `just` in the left operand itself is returned:
+There is a binary operator which we call "nothing coalesce" (similar to the
+"null coalesce" operator in C#). It allows in one expression to check whether
+the left operand is `nothing` and if it is, the value of the right operand is
+returned, otherwise the value under `just` in the left operand itself is
+returned:
 
 ~~~
-nothing [Int] ?? 0
+nothing [Int] ?? 0  # Evaluates to 0
 ~~~
-
-{>> I'm not sure what the above example demonstrates. You need to explain the example. Supposedly, the result of the above expression is `just 0`. <<}
 
 As was mentioned above, variables of type `Maybe` can be left uninitialised.
-In this case they will get the value `nothing`. This makes sense only with
-`Mutable` and `Ref` variables, since for immutable variables there will be no
-chance to change the value later on:
-
-{>> Sure it makes sense to have an immutable variable contain the
-value `nothing`. It happens all the time in Haskell! You need to rephrase the above paragraph. <<}
+In this case they will get the value `nothing` (which will be possible to
+change later on, but only for `Mutable` and `Ref` variables):
 
 ~~~
 def assignmentsMaybe : Pure Unit
@@ -226,31 +216,30 @@ The following example contains a simple class hierarchy consisting of two
 classes with fields and a method, which is overriden in the subclass:
 
 ~~~
-class Super
-  superField : Int = 1;
+class Parent
+  parentField : Int = 1;
 
   def method : {x : Int} => Pure Int
-    self.superField;
+    self.parentField;
   end
 end
-~~~
 
-~~~
-class Child < Super
+class Child < Parent
   childField : Bool = true;
 
   def method : {x : Int} => Pure Int
     when self.childField do
       x;
     otherwise
-      super.method;
+      super.method x;
     end;
+  end
+
+  def getParent : Pure Parent
+    super;
   end
 end
 ~~~
-
-{>> You're mixing idioms here. Either you go with parent-child or super-sub. But using super-child doesn't sound right. <<}
-{>> The example seems to be wrong. Shouldn't the call to `super.method` be given `x` as an argument? <<}
 
 All class members have to be accessed through a special variable `self` inside
 the class. Class fields cannot be accessed from the outside of the class. Super
@@ -262,14 +251,12 @@ generator. We will describe this issue in the "Code generation" section.
 The next example demonstrates constructing objects and working with them:
 
 ~~~
-superObj = Super.new;
-superObj.method 1;
+parentObj = Parent.new;
+parentObj.method 1;
 
 mChild : Maybe Child = just Child.new;
-mSuper : Maybe Super = mChild ? getSuper;
+mParent : Maybe Parent = mChild ? getParent;
 ~~~
-
-{>> Is `getSuper` a method or a built-in function? It's not defined as a method in `Child`, but if it was built-in it would almost break abstraction, wouldn't it? <<}
 
 Object are created using a special construct `ClassName.new`, which does not
 have any parameters in the current state of OOLang, meaning that OOLang classes
@@ -313,11 +300,11 @@ usage. And this gives us rules similar to the ones for `Pure`:
 
 \infrule{A <: B}{Mutable\ A <: B}
 \infrule{A <: B}{A <: Mutable\ B}
-\infrule{A <: B}{Mutable\ A <: Mutable\ B}
+\infrule{A <: B}{Mutable\ A <: Mutable\ B}  TODO: remove
 
 References are covariant:
 
-\infrule{A <: B}{Ref\ A <: Ref\ B}
+\infrule{A <: B}{Ref\ A <: Ref\ B}  TODO: remove
 
 `Maybe` type is covariant as well:
 
@@ -338,7 +325,8 @@ the pure stack for OOLang is `Error Unit`. Similarly to FunLang, OOLang
 exceptions do not carry values. Impure computations add `State` and `IO`. We
 decided to order `Error` and `State` differently from FunLang and get the state
 rollback semantics, so we get `Error Unit ::: (State ::: IO)` for impure OOLang
-computations. {>> This is a highly unorthodox semantics and is really inefficient to implement. What is your motivation for having rollback? <<} Again, the pure stack is a prefix of the impure stack (they
+computations. {>> This is a highly unorthodox semantics and is really inefficient to implement. What is your motivation for having rollback? <<}
+Again, the pure stack is a prefix of the impure stack (they
 satisfy the $isCompatible$ relation) to be able to easily run pure computations
 inside impure ones.
 
@@ -428,7 +416,8 @@ type Maybe A
   | Just A;
 ~~~
 
-{>> One would expect that Maybe references containing nothing maps to null pointers in the implementation. Can you say something about that? <<}
+{>> One would expect that Maybe references containing nothing maps to null
+pointers in the implementation. Can you say something about that? <<}
 
 A difference from FunLang is that `Bool` is a built-in data type with literals,
 rather than an ADT, so there are built-in function for printing and reading
@@ -601,25 +590,25 @@ For every class definition three MIL functions are generated:
   function definitions in MIL:
 
     ~~~
-    class Super
-      superField : Int = 1;
-      superField2 : Bool = true;
+    class Parent
+      parentField : Int = 1;
+      parentField2 : Bool = true;
     end
 
-    class Child < Super
+    class Child < Parent
       childField : Float = 0.01;
     end
 
-    new_Super_Data : Error Unit {Int, Bool} =
-      let (self_superField : Int) <- return [Error Unit] 1
-      in let (self_superField2 : Bool) <- return [Error Unit] True
-      in return [Error Unit] {self_superField, self_superField2};
+    new_Parent_Data : Error Unit {Int, Bool} =
+      let (self_parentField : Int) <- return [Error Unit] 1
+      in let (self_parentField2 : Bool) <- return [Error Unit] True
+      in return [Error Unit] {self_parentField, self_parentField2};
 
     new_Child_Data : Error Unit {Int, Bool, Float} =
-      let (self_superField : Int) <- return [Error Unit] 1
-      in let (self_superField2 : Bool) <- return [Error Unit] True
+      let (self_parentField : Int) <- return [Error Unit] 1
+      in let (self_parentField2 : Bool) <- return [Error Unit] True
       in let (self_childField : Float) <- return [Error Unit] 1.0e-2
-      in return [Error Unit] {self_superField, self_superField2, self_childField};
+      in return [Error Unit] {self_parentField, self_parentField2, self_childField};
     ~~~
 
     Note that the subclass just duplicates the superclass field
@@ -645,13 +634,13 @@ For every class definition three MIL functions are generated:
     The following example contains a simple class definition function:
 
     ~~~
-    class Super
+    class Parent
       def method : {x : Int} => Pure Int
         0;
       end
     end
 
-    class_Super : {} -> Error Unit {{}, {Unit -> Int -> Error Unit Int}} =
+    class_Parent : {} -> Error Unit {{}, {Unit -> Int -> Error Unit Int}} =
       \(self_data : {}) ->
         let rec (self : {{}, {Unit -> Int -> Error Unit Int}}) <-
                   { self_data
@@ -660,12 +649,17 @@ For every class definition three MIL functions are generated:
         in return [Error Unit] self;
     ~~~
 
-{>> This is a rather unorthodox compilation of classes compared to conventional oo-languages. And it's only correct if the data in the object is immutable. A more conventional way is to pass the object as an extra argument to every method; the `self` parameter. If you used this compilation scheme then you wouldn't have to add the extra `Unit` argument to every method. You would also not have to use a recursive definition. <<}
+{>> This is a rather unorthodox compilation of classes compared to conventional
+oo-languages. And it's only correct if the data in the object is immutable. A
+more conventional way is to pass the object as an extra argument to every
+method; the `self` parameter. If you used this compilation scheme then you
+wouldn't have to add the extra `Unit` argument to every method. You would also
+not have to use a recursive definition. <<}
 
     The next example demonstrates how a class definition for a subclass looks:
 
     ~~~
-    class Child < Super
+    class Child < Parent
       def method : {x : Int} => Pure Int
         x;
       end
@@ -679,7 +673,7 @@ For every class definition three MIL functions are generated:
       {{}, { Unit -> Int -> Error Unit Int
            , Unit -> Error Unit Bool}} =
       \(self_data : {}) ->
-        let (super : {{}, {Unit -> Int -> Error Unit Int}}) <- new_Super
+        let (super : {{}, {Unit -> Int -> Error Unit Int}}) <- new_Parent
         in let rec (self : {{}, { Unit -> Int -> Error Unit Int
                                 , Unit -> Error Unit Bool}}) <-
              case super of
@@ -716,11 +710,11 @@ For every class definition three MIL functions are generated:
   `class_ClassName`:
 
     ~~~
-    new_Super : Error Unit
+    new_Parent : Error Unit
         { {Int, Bool}
         , { Unit -> Int -> Error Unit Int}} =
-      let (self_data : {Int, Bool}) <- new_Super_Data
-      in class_Super self_data;
+      let (self_data : {Int, Bool}) <- new_Parent_Data
+      in class_Parent self_data;
     ~~~
 
 An interesting caveat of the code generation for class definitions is that it
@@ -736,7 +730,7 @@ introduces data fields into the scope (as variable binders in a tuple pattern)
 and the third one does the same for methods:
 
 ~~~
-def fun : {obj : Super} => Pure Int
+def fun : {obj : Parent} => Pure Int
   obj.method 1;
 end
 
