@@ -1,10 +1,14 @@
 # Optimisations
 
+{>> This chapter needs a bit of work. I think you should remove most examples of how the transformations are implemented and instead focus on presenting the optimization as a rewrite rule written using math notation, with possible side conditions. You can leave one or two code examples in to demonstrate the general principle but there is no point in having them all there as you have it now.
+Another thing that I'm lacking, and this is a rather big thing, is comparisons to how optimizations is done in other compilers. You need to explain what is new with what you're doing, and what is different and interesting compared to conventional optimization techniques. Can you save code in your compiler, can you implement things more easily, can you make more general optimizations? And you're among the first people to write an optimizer targeted for both FP and OO. What conclusions can you draw from that experience? Are there any optimizations in the respective fields that are subsumed by the monadic approach? Etc.
+All of this doesn't necessarily have to go into this chapter.<<}
+
 > *The majority of modern compilers implement sophisticated optimisations to
-> produce as good code as possible. This can mean quite different things, for
+> produce as good code as possible. {== This can mean quite different things, for
 > example, low memory consumption, speed (low CPU consumption) or low energy
-> consumption. In this chapter we will present several code transformations
-> implemented in MIL.*
+> consumption. ==}{>> This is the wrong place to go into an explanation of what optimization is. Remove. <<} In this chapter we will present several code transformations
+> implemented in MIL.* {>> I would have expected a few more words on the result and effectiveness of the optimizations. <<}
 
 As was mentioned in the "Introduction" chapter one of the goals of designing a
 monadic intermediate representation is to be able to express and use optimising
@@ -21,12 +25,14 @@ estimate the impact of transformations by the code size. Depending on how MIL
 is implemented, an intuition about the usefulness of certain optimisations
 might be incorrect.
 
+{>> Is there no semantics in the paper you cite which you can allude to and say that you basically assume a similar semantics with respect to performance? That would at least be something, even though it's not much. <<}
+
 We will try to provide as many code snippets with real implementation of
 transformations as possible, but to be able to do this in a reasonable amount
 of space we will focus at the expression level of granularity, since this is
 where the transformations happen. More high level cases (e.g. function
 definition) are merely recursing down to get to expressions. The MIL AST has
-support for Uniplate (<http://community.haskell.org/~ndm/uniplate/>) -- a
+support for {== Uniplate (<http://community.haskell.org/~ndm/uniplate/>) ==}{>> Use a proper reference <<} -- a
 Haskell library for generic traversals of algebraic data types and so code
 transformations are implemented using these traversals. We want to highlight
 that many of the transformation implementations are relatively naive and serve
@@ -48,7 +54,7 @@ $$bind\ (return\ x)\ f = f\ x$$
 
 From the compiler optimisation point of view, one can look at this law as at
 some kind of *inlining*, which is one of the frequently used optimisations in
-modern compilers. The left identity monad law allows us to avoid a redundant
+modern compilers. {>> I don't understand how this is inlining. It uses an algebraic identity between two functions, not the definition of one function. <<} The left identity monad law allows us to avoid a redundant
 $bind$ and use `x` directly.
 
 The following code snippet is a Haskell implementation of the left identity
@@ -89,6 +95,8 @@ in return [Id] x;
 
 return [Id] unit;
 ~~~
+
+{>> It would be nice with some visual clue to distinguish between the expression before and after the optimization. For instance, you can have a fat arrow indicating that the former is translated to the latter. This holds for all examples. <<}
 
 ### Right identity
 
@@ -132,7 +140,7 @@ the following:
 
 $$bind\ (bind\ m\ f)\ g = bind\ m\ (\lambda x \to bind\ (f\ x)\ g)$$
 
-Th associativity transformation is implemented as in the snippet below:
+{~~ Th ~> The ~~}  associativity transformation is implemented as in the snippet below:
 
 ~~~{.haskell}
 associativityExpr :: TyExpr -> TyExpr
@@ -165,12 +173,19 @@ Associativity transformations opens up opportunities for other transformations,
 by restructuring the code and making it more linear. For example, identity laws
 usually can be applied more times after the associativity has been applied.
 
+{>> It unclear whether this law gives any improvements. Does it? Or does it not? Be explicit about that. <<}
+
 ## Lift transformations
 
 The next couple of transformations are related to the monad transformer $lift$
 operation. Both of them are trying to eliminate redundant $lift$ operations.
 
 ### Identity
+
+{>> Is this an optimization? Is the generated code more efficient after the
+application of this transformation? It really boild down to what `lift` would
+be compiled into, and that might be worth saying a few words about even though
+you don't have a compiler. <<}
 
 The first one, which we call identity, can remove a $lift$ where the source and
 the target monads are the same.
@@ -275,6 +290,8 @@ There is also a check of the type to make sure that it is an `Id` computation.
 
 We will skip giving an example in this case, since it would not be particularly
 interesting.
+
+{>> I would have expected there to be an optimization involving `Id` that allowed for removing dead code. If I have `let x <- e in e'` and `x` is not used anywhere then I should be able to remove `e` in the case that it is in the `Id` monad. <<}
 
 ### State
 
@@ -540,7 +557,7 @@ in OOLang, when it is known that a condition evaluates to `true` or `false`.
 ### Common bind extraction
 
 The common bind extraction is a transformation that can *hoist* a $bind$ to the
-same variable out of `case` alternatives, given that the $bind$s have the same
+{== same variable ==}{>> What do you mean by same variable here? Clearly, they are different variables. Do you mean that they have to have the same name? I hope not, since that is not a requirement for this transformation to be valid. You just have to rename one of the cases.<<} out of `case` alternatives, given that the $bind$s have the same
 body expression. The implementation of this transformation is quite involved
 and would require some detailed explanation, so we chose to skip providing it
 here.

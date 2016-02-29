@@ -84,9 +84,10 @@ to mind as the most relevant to MIL are Backtracking and Par monad
 \cite{ParMonad}. The first one could be used to express, for example, logic
 programming languages and the second one could provide a way to support
 parallelism in the IR.
+{>> This paragraph is a result of some confusion. MIL is not a programming language in the sense that people are meant to program in it. It has a bunch of fixed monads to define its semantics. If someone wants to have other monads they have to *extend the language*. But that is never done from within the language itself. Therefore, it is unreasonable to ask for a way to extend MIL with new monads, from within MIL itself. <<}
 
 Another related track can be to try bringing laziness into MIL. One of the ways
-of doing it might be to incorporate ideas from \cite{BridgingTheGulf}.
+of doing it might be to incorporate ideas from \cite{BridgingTheGulf}. {>> Explain a little what it is in the reference you point to. Don't assume the reader knows exactly what's in the paper. <<}
 
 Finally, one could look into a broader area of compiler modularity, in addition
 to what MIL already provides in terms of combining effects and pure composable
