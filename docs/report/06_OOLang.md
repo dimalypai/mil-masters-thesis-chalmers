@@ -28,16 +28,14 @@ OOLang allows to define functions consisting of several statements. Functions
 can be pure or impure, which is captured in the return type. By default all
 functions are impure. Impurity in OOLang comes from input/output and
 assignments to references. Function definitions can contain parameters in curly
-braces with a function arrow (`->`) separating several parameters, which means
-that functions are curried. Note, that OOLang does not have built-in support
-for tuples, therefore it is not possible to define a function, which would take
-several arguments at once (as a tuple).  Function application is expressed
-using juxtaposition. If a function definition has parameters, its return type
-is separated from them with `=>`. This somewhat corresponds to how C-like
-languages specify return type separately (but before a function name). Unlike
-many other programming languages with statements, there is no `return`
-statement in OOLang.  Instead, every statement has a value (and a type) and so
-the value of the last statement is what is returned from a function.
+braces with a function arrow (`->`) separating several parameters (and a return
+type), which means that functions are curried. Note, that OOLang does not have
+built-in support for tuples, therefore it is not possible to define a function,
+which would take several arguments at once (as a tuple).  Function application
+is expressed using juxtaposition. Unlike many other programming languages with
+statements, there is no `return` statement in OOLang.  Instead, every statement
+has a value (and a type) and so the value of the last statement is what is
+returned from a function.
 
 OOLang has `Unit` (the type of the `unit` literal), `Bool` (which has literals
 `true` and `false` as possible values), `Int`, `Float`, `Char` and `String` as
@@ -52,7 +50,7 @@ def main : Unit
   unit;
 end
 
-def fun : {a : Int} -> {b : Float} => Pure Int
+def fun : {a : Int} -> {b : Float} -> Pure Int
   a;
 end
 ~~~
@@ -65,11 +63,11 @@ def main : Unit
   unit;
 end
 
-def applyInt : {f : Int -> Pure Int} -> {x : Int} => Pure Int
+def applyInt : {f : Int -> Pure Int} -> {x : Int} -> Pure Int
   f x;
 end
 
-def idInt : {x : Int} => Pure Int
+def idInt : {x : Int} -> Pure Int
   x;
 end
 ~~~
@@ -219,7 +217,7 @@ classes with fields and a method, which is overriden in the subclass:
 class Parent
   parentField : Int = 1;
 
-  def method : {x : Int} => Pure Int
+  def method : {x : Int} -> Pure Int
     self.parentField;
   end
 end
@@ -227,7 +225,7 @@ end
 class Child < Parent
   childField : Bool = true;
 
-  def method : {x : Int} => Pure Int
+  def method : {x : Int} -> Pure Int
     when self.childField do
       x;
     otherwise
@@ -356,7 +354,7 @@ variable. The following example tries to capture most of what has been
 described about functions and statements so far:
 
 ~~~
-def fun : {a : Int} -> {b : Bool} => Unit
+def fun : {a : Int} -> {b : Bool} -> Unit
   when false do
     1;
     2;
@@ -635,7 +633,7 @@ For every class definition three MIL functions are generated:
 
     ~~~
     class Parent
-      def method : {x : Int} => Pure Int
+      def method : {x : Int} -> Pure Int
         0;
       end
     end
@@ -660,7 +658,7 @@ not have to use a recursive definition. <<}
 
     ~~~
     class Child < Parent
-      def method : {x : Int} => Pure Int
+      def method : {x : Int} -> Pure Int
         x;
       end
 
@@ -730,7 +728,7 @@ introduces data fields into the scope (as variable binders in a tuple pattern)
 and the third one does the same for methods:
 
 ~~~
-def fun : {obj : Parent} => Pure Int
+def fun : {obj : Parent} -> Pure Int
   obj.method 1;
 end
 
