@@ -32,11 +32,11 @@ transformations as possible, but to be able to do this in a reasonable amount
 of space we will focus at the expression level of granularity, since this is
 where the transformations happen. More high level cases (e.g. function
 definition) are merely recursing down to get to expressions. The MIL AST has
-support for {== Uniplate (<http://community.haskell.org/~ndm/uniplate/>) ==}{>> Use a proper reference <<} -- a
-Haskell library for generic traversals of algebraic data types and so code
-transformations are implemented using these traversals. We want to highlight
-that many of the transformation implementations are relatively naive and serve
-the purpose of demonstrating the concept.
+support for \cite{Uniplate} -- a Haskell library for generic traversals of
+algebraic data types and so code transformations are implemented using these
+traversals. We want to highlight that many of the transformation
+implementations are relatively naive and serve the purpose of demonstrating the
+concept.
 
 ## Monad laws
 
@@ -93,10 +93,10 @@ resulting code after applying the transformation:
 let (x : Unit) <- return [Id] unit
 in return [Id] x;
 
+==>
+
 return [Id] unit;
 ~~~
-
-{>> It would be nice with some visual clue to distinguish between the expression before and after the optimization. For instance, you can have a fat arrow indicating that the former is translated to the latter. This holds for all examples. <<}
 
 ### Right identity
 
@@ -130,6 +130,8 @@ expression which is left (instead of subtituting `x` with `1` in the body):
 let (x : Int) <- return [Id] 1
 in return [Id] x;
 
+==>
+
 return [Id] 1;
 ~~~
 
@@ -140,7 +142,7 @@ the following:
 
 $$bind\ (bind\ m\ f)\ g = bind\ m\ (\lambda x \to bind\ (f\ x)\ g)$$
 
-{~~ Th ~> The ~~}  associativity transformation is implemented as in the snippet below:
+The associativity transformation is implemented as in the snippet below:
 
 ~~~{.haskell}
 associativityExpr :: TyExpr -> TyExpr
@@ -163,6 +165,8 @@ let (y : Unit) <-
   let (x : Unit) <- return [Id] unit
   in return [Id] x
 in return [Id] y;
+
+==>
 
 let (x : Unit) <- return [Id] unit
 in let (y : Unit) <- return [Id] x
@@ -213,6 +217,8 @@ The next example is probably the simplest case of applying this transformation:
 ~~~
 lift [Id => Id] return [Id] unit;
 
+==>
+
 return [Id] unit;
 ~~~
 
@@ -241,6 +247,8 @@ The next example demonstrates a composition of two $lift$ operations:
 ~~~
 lift [IO ::: State => Error Unit ::: (IO ::: State)]
   lift [State => IO ::: State] return [State] unit;
+
+==>
 
 lift [State => Error Unit ::: (IO ::: State)] return [State] unit;
 ~~~
@@ -390,6 +398,8 @@ in let (a : Int) <- read_ref [Int] x
 in let (b : Int) <- read_ref [Int] x
 in return [State] unit;
 
+==>
+
 let (x : Ref Int) <- new_ref [Int] 1
 in let (a : Int) <- read_ref [Int] x
 in let (b : Int) <- return [State] a
@@ -434,6 +444,8 @@ let (x : Ref Int) <- new_ref [Int] 1
 in let (z : Unit) <- write_ref [Int] x 2
 in let (a : Int) <- read_ref [Int] x
 in return [State] unit;
+
+==>
 
 let (x : Ref Int) <- new_ref [Int] 1
 in let (z : Unit) <- write_ref [Int] x 2
@@ -481,6 +493,8 @@ This optimisation is shown in the following code snippet:
 catch_error_1 [Unit] [Int]
   (throw_error [Unit] [Int] unit)
   (\(e : Unit) -> return [Error Unit] 1);
+
+==>
 
 return [Error Unit] 1;
 ~~~
@@ -548,6 +562,8 @@ fun : State Int =
     | _ => return [State] 2
   end;
 
+==>
+
 fun : State Int = return [State] 1;
 ~~~
 
@@ -569,6 +585,8 @@ case 1 of
   | 0 => let (x : Int) <- return [IO] 0 in return [IO] unit
   | 1 => let (x : Int) <- return [IO] 1 in return [IO] unit
 end;
+
+==>
 
 let (x : Int) <-
   case 1 of
@@ -641,6 +659,8 @@ def main : Unit
   j : Float = 6.0 / 2.0;
 end
 
+==>
+
 main : (Error Unit ::: (State ::: IO)) Unit =
   let (a : Int) <-
     let (var_30 : Int) <- return [Error Unit ::: (State ::: IO)] 2
@@ -657,6 +677,8 @@ main : (Error Unit ::: (State ::: IO)) Unit =
             return [Error Unit ::: (State ::: IO)] b
        in var_0 var_1
   ...
+
+==>
 
 main : (Error Unit ::: (State ::: IO)) Unit =
   let (var_2 : Unit) <- printInt 1
