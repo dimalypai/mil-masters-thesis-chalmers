@@ -72,22 +72,18 @@ effects, similar to \cite{Benton}, for example, splitting `IO` into `Input` and
 `Output` and `State` into `Allocation`, `Reading` and `Writing`.
 
 MIL has a number of built-in monads and it does not provide a way to define new
-custom effects. Although the latter could be a subject for further exploration,
-we believe that it might be an unnecessary complication for MIL. The absence of
-user-defined effects is not a big limitation, given that MIL is an intermediate
-language and its goal is to have a reasonable set of built-in monads that allow
-to express most of the useful effects in potential source languages. But what
-we think might be beneficial is to explore which other monads can MIL be
-extended with to be able to more easily cover a wider range of use cases. As
-was mentioned in Chapter 2 there exists a lot of interesting monads. What comes
-to mind as the most relevant to MIL are Backtracking and Par monad
-\cite{ParMonad}. The first one could be used to express, for example, logic
-programming languages and the second one could provide a way to support
-parallelism in the IR.
-{>> This paragraph is a result of some confusion. MIL is not a programming language in the sense that people are meant to program in it. It has a bunch of fixed monads to define its semantics. If someone wants to have other monads they have to *extend the language*. But that is never done from within the language itself. Therefore, it is unreasonable to ask for a way to extend MIL with new monads, from within MIL itself. <<}
-
-Another related track can be to try bringing laziness into MIL. One of the ways
-of doing it might be to incorporate ideas from \cite{BridgingTheGulf}. {>> Explain a little what it is in the reference you point to. Don't assume the reader knows exactly what's in the paper. <<}
+custom monads and therefore effects. Although the latter could be a subject for
+further exploration, we believe that it might be an unnecessary complication
+for MIL. The absence of user-defined effects is not a big limitation, given
+that MIL is an intermediate language and its goal is to have a reasonable set
+of built-in monads that allow to express most of the useful effects in
+potential source languages. But what we think might be beneficial is to explore
+which other monads can be added to MIL as built-in to be able to more easily
+cover a wider range of use cases. As was mentioned in Chapter 2 there exists a
+lot of interesting monads. What comes to mind as the most relevant to MIL are
+Backtracking and Par monad \cite{ParMonad}. The first one could be used to
+express, for example, logic programming languages and the second one could
+provide a way to support parallelism in the IR.
 
 Finally, one could look into a broader area of compiler modularity, in addition
 to what MIL already provides in terms of combining effects and pure composable
