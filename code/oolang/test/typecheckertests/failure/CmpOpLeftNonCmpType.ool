@@ -6,7 +6,7 @@ def f : Bool
   g < g;
 end
 
-def g : {a : Int} => Int
+def g : {a : Int} -> Int
   1;
 end
 

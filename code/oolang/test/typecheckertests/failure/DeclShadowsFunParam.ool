@@ -1,6 +1,6 @@
 def main : Unit unit; end
 
-def fun : {a : Int} => Unit
+def fun : {a : Int} -> Unit
   a : Float;
 end
 

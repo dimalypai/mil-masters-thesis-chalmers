@@ -341,12 +341,12 @@ funtype
                               $1 $2 }
 
 funargs :: { [SrcVarBinder] }
-funargs : {- empty -}                 { [] }
-        | seplist1(funarg, '->') '=>' { $1 }
+funargs : {- empty -}   { [] }
+        | list1(funarg) { $1 }
 
 funarg :: { SrcVarBinder }
 funarg
-  : '{' varbinder '}'
+  : '{' varbinder '}' '->'
       {% withFileName $ \fileName ->
            setVarBinderAnn $2 (combineSrcSpans [getTokSrcSpan $1, getTokSrcSpan $3] fileName) }
 

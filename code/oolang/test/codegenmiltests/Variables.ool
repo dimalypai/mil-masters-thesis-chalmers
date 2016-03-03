@@ -18,20 +18,20 @@ def globalImpureFun : Int
   2;
 end
 
-def globalPureFunWithParams : {a : Int} => Pure Int
+def globalPureFunWithParams : {a : Int} -> Pure Int
   a;
 end
 
-def globalImpureFunWithParams : {a : Int} => Int
+def globalImpureFunWithParams : {a : Int} -> Int
   a;
 end
 
-def withLocalPureFun : {f : Int -> Pure Int} => Pure Int
+def withLocalPureFun : {f : Int -> Pure Int} -> Pure Int
   f;
   f 1;
 end
 
-def withLocalImpureFun : {f : Int -> Int} => Int
+def withLocalImpureFun : {f : Int -> Int} -> Int
   f;
   f 2;
 end

@@ -2,11 +2,11 @@ def main : Unit
   unit;
 end
 
-def pureFun : {a : Int} => Pure Int
+def pureFun : {a : Int} -> Pure Int
   a;
 end
 
-def pureFunParam : {f : Int -> Pure Int} => Int -> Pure Int
+def pureFunParam : {f : Int -> Pure Int} -> Int -> Pure Int
   f;
 end
 

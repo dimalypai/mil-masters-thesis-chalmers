@@ -1,6 +1,6 @@
 def main : Unit unit; end
 
-def f : {a : Maybe (Pure Int)} => Unit
+def f : {a : Maybe (Pure Int)} -> Unit
   unit;
 end
 

@@ -1,6 +1,6 @@
 def main : Unit unit; end
 
-def f : {a : (Ref (Ref Int))} => Unit
+def f : {a : (Ref (Ref Int))} -> Unit
   unit;
 end
 

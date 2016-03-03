@@ -5,7 +5,7 @@ def fun : Pure (Float -> Pure Int)
   fun2 1;
 end
 
-def fun2 : {a : Int} -> {b : Float} => Pure Int
+def fun2 : {a : Int} -> {b : Float} -> Pure Int
   1;
 end
 

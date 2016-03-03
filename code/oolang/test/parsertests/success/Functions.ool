@@ -1,4 +1,4 @@
-def f : {x : Int} -> {y : Bool} -> {z : Float} => (Int -> Bool) -> Unit
+def f : {x : Int} -> {y : Bool} -> {z : Float} -> (Int -> Bool) -> Unit
   unit;
 end
 

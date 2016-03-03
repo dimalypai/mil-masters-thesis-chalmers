@@ -1,6 +1,6 @@
 class Super end
 
-def fun : {f : Int -> Int} => Unit
+def fun : {f : Int -> Int} -> Unit
   unit;
 end
 

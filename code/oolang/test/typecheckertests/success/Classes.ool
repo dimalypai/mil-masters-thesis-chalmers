@@ -62,7 +62,7 @@ class C
   # Impure method with parameter
   # Calling impure method without parameters
   # Mutual recursion
-  def impureParamMethod : {a : Int} -> {b : Float} => Unit
+  def impureParamMethod : {a : Int} -> {b : Float} -> Unit
     self.impureMethod;
   end
 

@@ -17,12 +17,12 @@ class A end
 class B < A end
 
 # Class params, pure, int literal, parens
-def fun : {a : A} -> {b : A -> B} => Pure Int
+def fun : {a : A} -> {b : A -> B} -> Pure Int
   ((1));
 end
 
 # Param reference, pure, the same param name as in fun
-def paramRefPure : {a : Int} => Pure Int
+def paramRefPure : {a : Int} -> Pure Int
   a;
 end
 
@@ -32,7 +32,7 @@ def mainCall : Unit
 end
 
 # Function for applications, pure
-def curryFun : {a : Int} -> {b : Float} => Pure Unit
+def curryFun : {a : Int} -> {b : Float} -> Pure Unit
   unit;
 end
 
@@ -53,40 +53,40 @@ def curryFunAtOnce : Unit
 end
 
 # Pure function as parameter, pure
-def pureFunPureParam : {f : Int -> Pure (Float -> Pure Unit)} => Pure Unit
+def pureFunPureParam : {f : Int -> Pure (Float -> Pure Unit)} -> Pure Unit
   f 1 0.01;
 end
 
 # Regression. Impure return type (of Pure function)
-def impurelyReturnPureFun : {f : Int -> Pure Int} => Int -> Pure Int
+def impurelyReturnPureFun : {f : Int -> Pure Int} -> Int -> Pure Int
   main;
   f;
 end
 
 # Pure version of impurelyReturnPureFun.
-def purelyReturnPureFun : {f : Int -> Pure Int} => Pure (Int -> Pure Int)
+def purelyReturnPureFun : {f : Int -> Pure Int} -> Pure (Int -> Pure Int)
   f;
 end
 
 # Impure function as parameter, partial application as return value, impure
-def impureFunPartialAppReturn : {f : Int -> Float -> Unit} => Float -> Unit
+def impureFunPartialAppReturn : {f : Int -> Float -> Unit} -> Float -> Unit
   f 1;
 end
 
 # Partially pure function as parameter, partial application, pure
-def impureFunPartialAppPure : {f : Int -> Pure (Float -> Unit)} => Pure Int
+def impureFunPartialAppPure : {f : Int -> Pure (Float -> Unit)} -> Pure Int
   f 1;
   1;
 end
 
 # Impure function as parameter, full application, impure
-def impureFunParamFullApp : {f : Int -> Float -> Unit} => Int
+def impureFunParamFullApp : {f : Int -> Float -> Unit} -> Int
   f 1 0.01;
   1;
 end
 
 # Impure function to be referenced globally from pure
-def globalImpure : {a : Int} -> {b : Float} => Unit
+def globalImpure : {a : Int} -> {b : Float} -> Unit
   unit;
 end
 
@@ -153,7 +153,7 @@ def nothingLit : Pure (Maybe Unit)
   nothing [Maybe Unit];
 end
 
-def refFun : {r : Ref Int} => Ref Unit
+def refFun : {r : Ref Int} -> Ref Unit
   x : Int = !r;
   ref unit;
 end

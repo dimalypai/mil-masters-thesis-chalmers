@@ -6,7 +6,7 @@ def main : Unit
   unit;
 end
 
-def fun : {obj : Super} => Pure Int
+def fun : {obj : Super} -> Pure Int
   obj.method unit;
   1;
 end
@@ -18,7 +18,7 @@ class Super
   superField : Int = 1;
   superField2 : Bool = true;
 
-  def method : {u : Unit} => Pure Int
+  def method : {u : Unit} -> Pure Int
     1;
     self.superField;
   end
@@ -43,7 +43,7 @@ end
 class Child < Super
   childField : Float = 0.01;
 
-  def method : {u : Unit} => Pure Int
+  def method : {u : Unit} -> Pure Int
     super.method u;
     self.childField;
     2;

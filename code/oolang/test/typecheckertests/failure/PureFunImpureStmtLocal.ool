@@ -1,6 +1,6 @@
 def main : Unit unit; end
 
-def fun : {f : Int -> Float -> Unit} => Pure Int
+def fun : {f : Int -> Float -> Unit} -> Pure Int
   f 1 0.01;
   1;
 end
