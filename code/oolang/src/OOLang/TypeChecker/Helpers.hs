@@ -32,10 +32,6 @@ import OOLang.Utils
 --
 -- * A `isSubTypeOf` B iff class A < B or class A < C and C `isSubTypeOf` B
 --
--- References are covariant:
---
--- * Ref A `isSubTypeOf` Ref B iff A `isSubTypeOf` B
---
 -- Maybe is covariant:
 --
 -- * Maybe A `isSubTypeOf` Maybe B iff A `isSubTypeOf` B
@@ -71,10 +67,6 @@ t1 `isSubTypeOf` t2 = do
             superSubType <- (TyClass superClassName) `isSubTypeOf` t2
             return (superClassName == className2 || superSubType)
       _ -> return False
-  refCovariance <-
-    case (t1, t2) of
-      (TyRef refT1, TyRef refT2) -> refT1 `isSubTypeOf` refT2
-      _ -> return False
   maybeCovariance <-
     case (t1, t2) of
       (TyMaybe maybeT1, TyMaybe maybeT2) -> maybeT1 `isSubTypeOf` maybeT2
@@ -82,7 +74,7 @@ t1 `isSubTypeOf` t2 = do
   return (t1 == t2
        || pureSubType1 || pureSubType2  || pureSubType3
        || mutableSubType1 || mutableSubType2 || mutableSubType3
-       || inheritanceSubType || refCovariance || maybeCovariance)
+       || inheritanceSubType || maybeCovariance)
 
 -- * Type transformations
 

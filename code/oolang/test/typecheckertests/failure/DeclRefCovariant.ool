@@ -1,0 +1,10 @@
+def main : Unit
+  x : Ref Parent = ref Child.new;
+end
+
+class Parent
+end
+
+class Child < Parent
+end
+

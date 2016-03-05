@@ -358,6 +358,12 @@ spec =
       it "given a reference assignment with incorrect type (nested ref)" $
         failureCase "AssignRefIncorrectTypeRef"
 
+      it "given a covariant reference declaration" $
+        failureCase "DeclRefCovariant"
+
+      it "given a covariant reference assignment" $
+        failureCase "AssignRefCovariant"
+
       it "given a usage of not-dereferenced variable (member access)" $
         failureCase "NotDerefVarUsage"
 

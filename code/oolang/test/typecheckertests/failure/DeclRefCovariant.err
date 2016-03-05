@@ -1,0 +1,2 @@
+OOLang type checking error at DeclRefCovariant.ool:2,18-2,32:
+  Incorrect type of initialisation expression. The expected type is 'Ref Parent', but it has type 'Ref Child'

@@ -443,7 +443,7 @@ tcStmt mClassName srcStmt =
         AssignRef ->
           case exprLeftType of
             TyRef exprLeftUnderType ->
-              unlessM (exprRightType `isSubTypeOf` exprLeftUnderType) $
+              unless (exprRightType == exprLeftUnderType) $
                 throwError $ AssignIncorrectType tyExprRight exprLeftUnderType exprRightType
             _ -> throwError $ IncorrectRefOpUsage (getSrcSpan srcStmt)
 

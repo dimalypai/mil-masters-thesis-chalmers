@@ -7,7 +7,7 @@ def main : Unit
   objSuper : Super = GrandChild.new;
 
   # References
-  objSuperRef : Ref Super = ref Child.new;
+  objSuperRef : Ref Super = ref Super.new;
   objSuperRef := Super.new;
   objSuper2 : Super = !objSuperRef;
   !objSuperRef.fun;
