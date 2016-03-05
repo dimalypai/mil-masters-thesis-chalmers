@@ -85,6 +85,11 @@ Backtracking and Par monad \cite{ParMonad}. The first one could be used to
 express, for example, logic programming languages and the second one could
 provide a way to support parallelism in the IR.
 
+Another related track can be to try bringing laziness into MIL. One of the ways
+of doing it might be to incorporate ideas from \cite{BridgingTheGulf}, e.g.
+introducing language constructs for evaluation suspension and forcing. This
+paper was explained in more detail in the "Related work" chapter.
+
 Finally, one could look into a broader area of compiler modularity, in addition
 to what MIL already provides in terms of combining effects and pure composable
 transformations and their reuse. What we did not focus in this work was trying
