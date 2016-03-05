@@ -143,12 +143,15 @@ they cannot change any global state outside of the function.
 
 ### References
 
-OOLang also supports references, which are similar to ordinary variables in C#
-(for reference, not value, types) or Java. There is a `ref` operator for
-creating new references, `:=` for assigning values to references and `!` for
-reading reference values. The following examples demonstrates these operators
-and a declaration of a `Ref` variable (note that `=` is used for
-initialisation):
+OOLang also supports references, which are quite similar to ordinary variables
+in C# (for reference, not value, types) or Java. But there is a slight
+difference, which makes OOLang references remind of C pointers, namely that one
+can put a new value into the same reference cell (which is not possible in Java
+or C#, where one can just mutate the value or make a reference variable point
+to another reference). There is a `ref` operator for creating new references,
+`:=` for assigning values to references and `!` for reading reference values.
+The following examples demonstrates these operators and a declaration of a
+`Ref` variable (note that `=` is used for initialisation):
 
 ~~~
 def references : Unit
@@ -298,18 +301,15 @@ usage. And this gives us rules similar to the ones for `Pure`:
 
 \infrule{A <: B}{Mutable\ A <: B}
 \infrule{A <: B}{A <: Mutable\ B}
-\infrule{A <: B}{Mutable\ A <: Mutable\ B}  TODO: remove
+\infrule{A <: B}{Mutable\ A <: Mutable\ B}
 
-References are covariant:
+`Ref` types are invariant. There is a known problem with generic arrays being
+covariant in several popular programming languages, like Java and C#, which is
+explained, for example, in \cite{Birka}.
 
-\infrule{A <: B}{Ref\ A <: Ref\ B}  TODO: remove
-
-`Maybe` type is covariant as well:
+`Maybe` type is covariant:
 
 \infrule{A <: B}{Maybe\ A <: Maybe\ B}
-
-{>> NOOOOOOOOOOOO! Mutable types should always be *invariant*.
-https://en.wikipedia.org/wiki/Covariance_and_contravariance_(computer_science)#Arrays <<}
 
 ## Code generation
 
