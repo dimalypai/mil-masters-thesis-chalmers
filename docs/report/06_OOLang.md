@@ -139,7 +139,10 @@ later in this section.
 
 `Mutable` variables never escape the scope of the function they are declared
 in, therefore assignments to `Mutable` variables are considered pure, since
-they cannot change any global state outside of the function.
+they cannot change any global state outside of the function. Given this,
+`Mutable` variables are still quite useful, especially if OOLang is extended
+with loop constructs. It is worth highlighting that OOLang `Mutable` variables
+are somewhat similar to the `mutable` variables in F#.
 
 ### References
 
