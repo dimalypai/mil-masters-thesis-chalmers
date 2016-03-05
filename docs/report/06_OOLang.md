@@ -414,9 +414,6 @@ type Maybe A
   | Just A;
 ~~~
 
-{>> One would expect that Maybe references containing nothing maps to null
-pointers in the implementation. Can you say something about that? <<}
-
 A difference from FunLang is that `Bool` is a built-in data type with literals,
 rather than an ADT, so there are built-in function for printing and reading
 boolean values. The `Bool` data type itself maps to the `Bool` ADT in MIL. The
@@ -500,31 +497,6 @@ main : (Error Unit ::: (State ::: IO)) Unit =
        in lift [State => Error Unit ::: State] read_ref [Int] var_2
   in return [Error Unit ::: (State ::: IO)] unit;
 ~~~
-
-It is worth mentioning that the code generator needs to do some not so
-straight-forward things to get the variable names supply for `Mutable`
-variables right. This is needed because of the order in which statements are
-generated. As was mentioned in the context of declaration statements, the code
-generation is happening "inside out" or "backwards". When the code generator is
-generating code for a statement, first, the code for the statements that follow
-is generated. This is done in order to have an expression that will become a
-body of the monadic $bind$. Then, the code for the current statement is
-generated and this expression becomes a binder expression. This is how it works
-for assignment statements too (for `Mutable` variables there is really almost
-no difference between declarations and assignments at the MIL level). In more
-details, when the code for an assignment statement is generated, the first
-thing that is done is incrementing a counter in a variable name supply (for the
-variable being assigned to). Then the following statements will reference the
-correct "version" of the variable. After the code for the following statements
-and for the current statement is generated, this new version of a variable is
-bound with the monadic $bind$. But, the code generation for the following
-statements will also have incremented the counter! That is why the post step
-needs to be performed every time, namely, restoring the counter back to the
-value it had at the beginning of the current call. One can think of this
-process as maintaining a stack of variable names, when going down the list of
-statements.
-
-{>> The explanation above is quite subtle. Can you give an example of some sort to make it clearer? <<}
 
 ### Exceptions
 
