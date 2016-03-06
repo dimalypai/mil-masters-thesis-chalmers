@@ -1,0 +1,9 @@
+main : Id Unit =
+  return [Id] unit;
+
+id1 : Id Int = return [Id] 1;
+
+io : IO Unit =
+  let (c1 : Char) <- read_char
+  in return [IO] unit;
+

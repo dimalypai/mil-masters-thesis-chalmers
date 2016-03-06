@@ -18,3 +18,6 @@ spec = do
     it "reorders two computations" $
       transformationTestCase "IdExchange" exchange
 
+    it "eliminates dead code" $
+      transformationTestCase "IdDeadCodeElimination" deadCodeElimination
+
