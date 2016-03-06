@@ -6,146 +6,135 @@ type String
   = Empty_Str
   | Cons_Str Char String;
 
-printString : String -> (Error Unit ::: (State ::: IO)) Unit =
+printString : String -> (State ::: (Error Unit ::: IO)) Unit =
   \(s_ : String) ->
     case s_ of
-      | Empty_Str => return [Error Unit ::: (State ::: IO)]
-                       unit
-      | Cons_Str (c_ : Char) (cs_ : String) => let (unit_0 : Unit) <-
-                                                 lift [IO => Error Unit ::: (State ::: IO)] print_char c_
-                                               in printString cs_
+      | Empty_Str =>
+          return [State ::: (Error Unit ::: IO)]
+            unit
+      | Cons_Str (c_ : Char) (cs_ : String) =>
+          let (unit_0 : Unit) <-
+            lift [IO => State ::: (Error Unit ::: IO)] print_char c_
+          in printString cs_
     end;
 
-readString : (Error Unit ::: (State ::: IO)) String =
+readString : (State ::: (Error Unit ::: IO)) String =
   readString_ Empty_Str;
 
-readString_ : String -> (Error Unit ::: (State ::: IO)) String =
+readString_ : String -> (State ::: (Error Unit ::: IO)) String =
   \(acc_ : String) ->
     let (c_ : Char) <-
-      lift [IO => Error Unit ::: (State ::: IO)] read_char
+      lift [IO => State ::: (Error Unit ::: IO)] read_char
     in case c_ of
-         | ' ' => return [Error Unit ::: (State ::: IO)]
-                    reverseString_ acc_ Empty_Str
-         | _ => readString_ (Cons_Str c_ acc_)
+         | ' ' =>
+             return [State ::: (Error Unit ::: IO)]
+               reverseString_ acc_ Empty_Str
+         | _ =>
+             readString_ (Cons_Str c_ acc_)
        end;
 
 reverseString_ : String -> String -> String =
   \(s_ : String) ->
     \(acc_ : String) ->
       case s_ of
-        | Empty_Str => acc_
-        | Cons_Str (c_ : Char) (cs_ : String) => reverseString_ cs_ (Cons_Str c_ acc_)
+        | Empty_Str =>
+            acc_
+        | Cons_Str (c_ : Char) (cs_ : String) =>
+            reverseString_ cs_ (Cons_Str c_ acc_)
       end;
 
-printBool : Bool -> (Error Unit ::: (State ::: IO)) Unit =
+printBool : Bool -> (State ::: (Error Unit ::: IO)) Unit =
   \(b_ : Bool) ->
     case b_ of
-      | True => printString (Cons_Str 't' (Cons_Str 'r' (Cons_Str 'u' (Cons_Str 'e' Empty_Str))))
-      | False => printString (Cons_Str 'f' (Cons_Str 'a' (Cons_Str 'l' (Cons_Str 's' (Cons_Str 'e' Empty_Str)))))
+      | True =>
+          printString (Cons_Str 't' (Cons_Str 'r' (Cons_Str 'u' (Cons_Str 'e' Empty_Str))))
+      | False =>
+          printString (Cons_Str 'f' (Cons_Str 'a' (Cons_Str 'l' (Cons_Str 's' (Cons_Str 'e' Empty_Str)))))
     end;
 
-readBool : (Error Unit ::: (State ::: IO)) Bool =
+readBool : (State ::: (Error Unit ::: IO)) Bool =
   let (c_1 : Char) <-
-    lift [IO => Error Unit ::: (State ::: IO)] read_char
+    lift [IO => State ::: (Error Unit ::: IO)] read_char
   in case c_1 of
-       | 't' => let (c_2 : Char) <-
-                  lift [IO => Error Unit ::: (State ::: IO)] read_char
-                in case c_2 of
-                     | 'r' => let (c_3 : Char) <-
-                                lift [IO => Error Unit ::: (State ::: IO)] read_char
-                              in case c_3 of
-                                   | 'u' => let (c_4 : Char) <-
-                                              lift [IO => Error Unit ::: (State ::: IO)] read_char
-                                            in case c_4 of
-                                                 | 'e' => let (c_5 : Char) <-
-                                                            lift [IO => Error Unit ::: (State ::: IO)] read_char
-                                                          in case c_5 of
-                                                               | ' ' => return [Error Unit ::: (State ::: IO)]
-                                                                          True
-                                                               | _ => let (errRes_ : Bool) <-
-                                                                        throw_error [Unit] [Bool] unit
-                                                                      in return [Error Unit ::: (State ::: IO)]
-                                                                           errRes_
-                                                             end
-                                                 | _ => let (errRes_ : Bool) <-
-                                                          throw_error [Unit] [Bool] unit
-                                                        in return [Error Unit ::: (State ::: IO)]
-                                                             errRes_
-                                               end
-                                   | _ => let (errRes_ : Bool) <-
-                                            throw_error [Unit] [Bool] unit
-                                          in return [Error Unit ::: (State ::: IO)]
-                                               errRes_
-                                 end
-                     | _ => let (errRes_ : Bool) <-
-                              throw_error [Unit] [Bool] unit
-                            in return [Error Unit ::: (State ::: IO)]
-                                 errRes_
-                   end
-       | 'f' => let (c_2 : Char) <-
-                  lift [IO => Error Unit ::: (State ::: IO)] read_char
-                in case c_2 of
-                     | 'a' => let (c_3 : Char) <-
-                                lift [IO => Error Unit ::: (State ::: IO)] read_char
-                              in case c_3 of
-                                   | 'l' => let (c_4 : Char) <-
-                                              lift [IO => Error Unit ::: (State ::: IO)] read_char
-                                            in case c_4 of
-                                                 | 's' => let (c_5 : Char) <-
-                                                            lift [IO => Error Unit ::: (State ::: IO)] read_char
-                                                          in case c_5 of
-                                                               | 'e' => let (c_6 : Char) <-
-                                                                          lift [IO => Error Unit ::: (State ::: IO)] read_char
-                                                                        in case c_6 of
-                                                                             | ' ' => return [Error Unit ::: (State ::: IO)]
-                                                                                        False
-                                                                             | _ => let (errRes_ : Bool) <-
-                                                                                      throw_error [Unit] [Bool] unit
-                                                                                    in return [Error Unit ::: (State ::: IO)]
-                                                                                         errRes_
-                                                                           end
-                                                               | _ => let (errRes_ : Bool) <-
-                                                                        throw_error [Unit] [Bool] unit
-                                                                      in return [Error Unit ::: (State ::: IO)]
-                                                                           errRes_
-                                                             end
-                                                 | _ => let (errRes_ : Bool) <-
-                                                          throw_error [Unit] [Bool] unit
-                                                        in return [Error Unit ::: (State ::: IO)]
-                                                             errRes_
-                                               end
-                                   | _ => let (errRes_ : Bool) <-
-                                            throw_error [Unit] [Bool] unit
-                                          in return [Error Unit ::: (State ::: IO)]
-                                               errRes_
-                                 end
-                     | _ => let (errRes_ : Bool) <-
-                              throw_error [Unit] [Bool] unit
-                            in return [Error Unit ::: (State ::: IO)]
-                                 errRes_
-                   end
-       | _ => let (errRes_ : Bool) <-
-                throw_error [Unit] [Bool] unit
-              in return [Error Unit ::: (State ::: IO)]
-                   errRes_
+       | 't' =>
+           let (c_2 : Char) <-
+             lift [IO => State ::: (Error Unit ::: IO)] read_char
+           in case c_2 of
+                | 'r' =>
+                    let (c_3 : Char) <-
+                      lift [IO => State ::: (Error Unit ::: IO)] read_char
+                    in case c_3 of
+                         | 'u' =>
+                             let (c_4 : Char) <-
+                               lift [IO => State ::: (Error Unit ::: IO)] read_char
+                             in case c_4 of
+                                  | 'e' =>
+                                      let (c_5 : Char) <-
+                                        lift [IO => State ::: (Error Unit ::: IO)] read_char
+                                      in case c_5 of
+                                           | ' ' =>
+                                               return [State ::: (Error Unit ::: IO)]
+                                                 True
+                                           | _ => lift [Error Unit => State ::: Error Unit] throw_error [Unit] [Bool] unit
+                                         end
+                                  | _ => lift [Error Unit => State ::: Error Unit] throw_error [Unit] [Bool] unit
+                                end
+                         | _ => lift [Error Unit => State ::: Error Unit] throw_error [Unit] [Bool] unit
+                       end
+                | _ => lift [Error Unit => State ::: Error Unit] throw_error [Unit] [Bool] unit
+              end
+       | 'f' =>
+           let (c_2 : Char) <-
+             lift [IO => State ::: (Error Unit ::: IO)] read_char
+           in case c_2 of
+                | 'a' =>
+                    let (c_3 : Char) <-
+                      lift [IO => State ::: (Error Unit ::: IO)] read_char
+                    in case c_3 of
+                         | 'l' =>
+                             let (c_4 : Char) <-
+                               lift [IO => State ::: (Error Unit ::: IO)] read_char
+                             in case c_4 of
+                                  | 's' =>
+                                      let (c_5 : Char) <-
+                                        lift [IO => State ::: (Error Unit ::: IO)] read_char
+                                      in case c_5 of
+                                           | 'e' =>
+                                               let (c_6 : Char) <-
+                                                 lift [IO => State ::: (Error Unit ::: IO)] read_char
+                                               in case c_6 of
+                                                    | ' ' =>
+                                                        return [State ::: (Error Unit ::: IO)]
+                                                          False
+                                                    | _ => lift [Error Unit => State ::: Error Unit] throw_error [Unit] [Bool] unit
+                                                  end
+                                           | _ => lift [Error Unit => State ::: Error Unit] throw_error [Unit] [Bool] unit
+                                         end
+                                  | _ => lift [Error Unit => State ::: Error Unit] throw_error [Unit] [Bool] unit
+                                end
+                         | _ => lift [Error Unit => State ::: Error Unit] throw_error [Unit] [Bool] unit
+                       end
+                | _ => lift [Error Unit => State ::: Error Unit] throw_error [Unit] [Bool] unit
+              end
+       | _ => lift [Error Unit => State ::: Error Unit] throw_error [Unit] [Bool] unit
      end;
 
-printInt : Int -> (Error Unit ::: (State ::: IO)) Unit =
+printInt : Int -> (State ::: (Error Unit ::: IO)) Unit =
   \(i_ : Int) ->
-    return [Error Unit ::: (State ::: IO)]
+    return [State ::: (Error Unit ::: IO)]
       unit;
 
-readInt : (Error Unit ::: (State ::: IO)) Int =
-  return [Error Unit ::: (State ::: IO)]
+readInt : (State ::: (Error Unit ::: IO)) Int =
+  return [State ::: (Error Unit ::: IO)]
     1;
 
-printFloat : Float -> (Error Unit ::: (State ::: IO)) Unit =
+printFloat : Float -> (State ::: (Error Unit ::: IO)) Unit =
   \(f_ : Float) ->
-    return [Error Unit ::: (State ::: IO)]
+    return [State ::: (Error Unit ::: IO)]
       unit;
 
-readFloat : (Error Unit ::: (State ::: IO)) Float =
-  return [Error Unit ::: (State ::: IO)]
+readFloat : (State ::: (Error Unit ::: IO)) Float =
+  return [State ::: (Error Unit ::: IO)]
     1.0;
 
 new_Empty_Data : Error Unit {} =
@@ -330,24 +319,24 @@ class_Child : {Int, Bool, Float} -> Error Unit {{Int, Bool, Float}, {Unit -> Uni
          end
        in return [Error Unit] self;
 
-main : (Error Unit ::: (State ::: IO)) Unit =
+main : (State ::: (Error Unit ::: IO)) Unit =
   let (objSuper : {{Int, Bool}, {Unit -> Unit -> Error Unit Int, Unit -> Error Unit Unit, Unit -> Error Unit Unit, Unit -> Error Unit Bool}}) <-
-    new_Super
+    lift [Error Unit => State ::: Error Unit] new_Super
   in let (objChild : {{Int, Bool, Float}, {Unit -> Unit -> Error Unit Int, Unit -> Error Unit Unit, Unit -> Error Unit Unit, Unit -> Error Unit Bool, Unit -> Error Unit Float}}) <-
-       new_Child
+       lift [Error Unit => State ::: Error Unit] new_Child
   in let (var_36 : Int) <-
        let (var_34 : {{Int, Bool}, {Unit -> Unit -> Error Unit Int, Unit -> Error Unit Unit, Unit -> Error Unit Unit, Unit -> Error Unit Bool}} -> Error Unit Int) <-
-         return [Error Unit ::: (State ::: IO)] fun
+         return [State ::: (Error Unit ::: IO)] fun
        in let (var_35 : {{Int, Bool}, {Unit -> Unit -> Error Unit Int, Unit -> Error Unit Unit, Unit -> Error Unit Unit, Unit -> Error Unit Bool}}) <-
-            return [Error Unit ::: (State ::: IO)] objSuper
-       in var_34 var_35
+            return [State ::: (Error Unit ::: IO)] objSuper
+       in lift [Error Unit => State ::: Error Unit] var_34 var_35
   in let (var_39 : Int) <-
        let (var_37 : {{Int, Bool}, {Unit -> Unit -> Error Unit Int, Unit -> Error Unit Unit, Unit -> Error Unit Unit, Unit -> Error Unit Bool}} -> Error Unit Int) <-
-         return [Error Unit ::: (State ::: IO)] fun
+         return [State ::: (Error Unit ::: IO)] fun
        in let (var_38 : {{Int, Bool, Float}, {Unit -> Unit -> Error Unit Int, Unit -> Error Unit Unit, Unit -> Error Unit Unit, Unit -> Error Unit Bool, Unit -> Error Unit Float}}) <-
-         return [Error Unit ::: (State ::: IO)] objChild
-       in var_37 var_38
-  in return [Error Unit ::: (State ::: IO)] unit;
+         return [State ::: (Error Unit ::: IO)] objChild
+       in lift [Error Unit => State ::: Error Unit] var_37 var_38
+  in return [State ::: (Error Unit ::: IO)] unit;
 
 fun : {{Int, Bool}, {Unit -> Unit -> Error Unit Int, Unit -> Error Unit Unit, Unit -> Error Unit Unit, Unit -> Error Unit Bool}} -> Error Unit Int =
   \(obj : {{Int, Bool}, {Unit -> Unit -> Error Unit Int, Unit -> Error Unit Unit, Unit -> Error Unit Unit, Unit -> Error Unit Bool}}) ->
