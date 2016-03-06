@@ -58,8 +58,8 @@ testCase baseName = do
           case MIL.typeCheck srcGenMilProgram monadErrorTypeCons of
             Right (tyGenMilProgram, _) ->
               MIL.prPrint (optimiseMil tyGenMilProgram) `shouldBe` MIL.prPrint tyMilProgram
-            Left tcErr -> MIL.prPrint tcErr `shouldBe` ""
-        Left tcErr -> MIL.prPrint tcErr `shouldBe` ""
+            Left tcErr -> ("GENERATED:" ++ MIL.prPrint tcErr) `shouldBe` "GENERATED:"
+        Left tcErr -> ("EXPECTED:" ++ MIL.prPrint tcErr) `shouldBe` "EXPECTED:"
     Left tcErr -> prPrint tcErr `shouldBe` ""
 
 -- | Takes a file base name and reads a source program and expected output
