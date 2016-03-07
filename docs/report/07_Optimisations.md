@@ -661,33 +661,33 @@ end
 
 ==>
 
-main : (Error Unit ::: (State ::: IO)) Unit =
+main : (State ::: (Error Unit ::: IO)) Unit =
   let (a : Int) <-
-    let (var_30 : Int) <- return [Error Unit ::: (State ::: IO)] 2
-    in let (var_31 : Int) <- return [Error Unit ::: (State ::: IO)] 3
-    in return [Error Unit ::: (State ::: IO)] add_int var_30 var_31
+    let (var_30 : Int) <- return [State ::: (Error Unit ::: IO)] 2
+    in let (var_31 : Int) <- return [State ::: (Error Unit ::: IO)] 3
+    in return [State ::: (Error Unit ::: IO)] add_int var_30 var_31
   in let (b : Int) <-
-       let (var_28 : Int) <- return [Error Unit ::: (State ::: IO)] 3
-       in let (var_29 : Int) <- return [Error Unit ::: (State ::: IO)] 2
-       in return [Error Unit ::: (State ::: IO)] sub_int var_28 var_29
+       let (var_28 : Int) <- return [State ::: (Error Unit ::: IO)] 3
+       in let (var_29 : Int) <- return [State ::: (Error Unit ::: IO)] 2
+       in return [State ::: (Error Unit ::: IO)] sub_int var_28 var_29
   in let (var_2 : Unit) <-
-       let (var_0 : Int -> (Error Unit ::: (State ::: IO)) Unit) <-
-          return [Error Unit ::: (State ::: IO)] printInt
+       let (var_0 : Int -> (State ::: (Error Unit ::: IO)) Unit) <-
+          return [State ::: (Error Unit ::: IO)] printInt
        in let (var_1 : Int) <-
-            return [Error Unit ::: (State ::: IO)] b
+            return [State ::: (Error Unit ::: IO)] b
        in var_0 var_1
   ...
 
 ==>
 
-main : (Error Unit ::: (State ::: IO)) Unit =
+main : (State ::: (Error Unit ::: IO)) Unit =
   let (var_2 : Unit) <- printInt 1
   in let (var_5 : Unit) <- printInt 9
   in let (var_8 : Unit) <- printFloat 1.0
   in let (var_11 : Unit) <- printFloat 9.0
-  in let (i : Int) <- div_int 6 2
-  in let (j : Float) <- div_float 6.0 2.0
-  in return [Error Unit ::: (State ::: IO)] unit;
+  in let (i : Int) <- lift [Error Unit => State ::: Error Unit] div_int 6 2
+  in let (j : Float) <- lift [Error Unit => State ::: Error Unit] div_float 6.0 2.0
+  in return [State ::: (Error Unit ::: IO)] unit;
 ~~~
 
 ## Transformations and source languages
