@@ -560,32 +560,7 @@ codeGenExpr tyExpr funMonad =
              , MIL.SrcTyApp funMonad $ MIL.SrcTyApp (MIL.mkSimpleSrcType "Maybe") milSubExprType)
 
     ParenE _ tySubExpr -> codeGenExpr tySubExpr funMonad
-{-
-    VarE _ varType var varPure -> do
-      let funName = varToFunName var
-      if isBuiltInFunction funName
-        then codeGenBuiltInFunction funMonad var
-        else do let varE = MIL.VarE $ MIL.VarBinder (varMil var, typeMil varType)
-                case (isValueType varType, isPureFunType varType, funMonad == pureMonadMil) of
-                  -- It is a function, so to make it monadic value, we need return.
-                  (False, _, _) -> return ( MIL.ReturnE funMonad varE
-                                          , MIL.applyMonadType funMonad (typeMil varType))
-                  -- It is an impure value type inside a pure function, so it is a local
-                  -- variable or parameter and it is pure, we need return.
-                  (True, False, True) -> return ( MIL.ReturnE funMonad varE
-                                                , MIL.applyMonadType funMonad (typeMil varType))
-                  -- Pure_M monad value inside a pure or impure function.
-                  (True, True, _) -> return (varE, typeMil varType)
-                  -- It can be an impure value inside an impure function (must be global
-                  -- impure function), then use 'funTypeMil' for type annotation, or it
-                  -- can be a local variable, look at its purity annotation.
-                  (True, False, False) -> if varPure
-                                            then return ( MIL.ReturnE funMonad varE
-                                                        , MIL.applyMonadType funMonad (typeMil varType))
-                                            else return ( MIL.VarE $ MIL.VarBinder ( varMil var
-                                                                                   , funTypeMil varType)
-                                                        , funTypeMil varType)
--}
+
 literalMil :: TyLiteral -> CodeGenM MIL.SrcExpr
 literalMil UnitLit {} = return $ MIL.LitE MIL.UnitLit
 literalMil (BoolLit _ _ b) =
