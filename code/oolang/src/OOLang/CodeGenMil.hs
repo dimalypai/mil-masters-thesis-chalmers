@@ -352,10 +352,14 @@ codeGenStmt tyStmt funMonad =
 
     ThrowS _ t _ -> do
       t' <- srcTypeMil t
-      return ( MIL.AppE (MIL.TypeAppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "throw_error") (MIL.mkSimpleSrcType "Unit"))
-                                      t')
-                        (MIL.LitE MIL.UnitLit)
-             , MIL.SrcTyApp funMonad t')
+      let throwBaseExpr =
+            MIL.AppE (MIL.TypeAppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "throw_error") (MIL.mkSimpleSrcType "Unit"))
+                                   t')
+                     (MIL.LitE MIL.UnitLit)
+      let throwExpr = if funMonad == pureSrcMonadMil
+                        then throwBaseExpr
+                        else MIL.LiftE throwBaseExpr pureSrcMonadMil impureSrcMonadMilWithErrorBase
+      return (throwExpr, MIL.SrcTyApp funMonad t')
 
     AssignS {} -> error "codeGenStmt: AssignS should have a special treatment."
     DeclS {} -> error "codeGenStmt: DeclS should have a special treatment."
