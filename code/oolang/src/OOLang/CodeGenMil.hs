@@ -433,9 +433,11 @@ codeGenAssignRef tyExprLeft tyExprRight funMonad (milBodyExpr, milBodyExprType) 
       stmtResultVar <- newMilVar
       return ( MIL.mkSrcLet stmtResultVar (MIL.mkSimpleSrcType "Unit")
                  (MIL.mkSrcLet exprRightVar (MIL.getSrcResultType milExprRightType) milExprRight $
-                    (MIL.AppE (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "write_ref") (MIL.getSrcResultType milExprRightType))
-                                        (MIL.VarE $ varMil var))
-                              (MIL.VarE exprRightVar)))
+                    MIL.LiftE (MIL.AppE (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "write_ref") (MIL.getSrcResultType milExprRightType))
+                                                  (MIL.VarE $ varMil var))
+                                        (MIL.VarE exprRightVar))
+                      (MIL.mkSimpleSrcType "State")
+                      impureSrcMonadMilWithStateBase)
                  milBodyExpr
              , milBodyExprType)
 
@@ -532,8 +534,10 @@ codeGenExpr tyExpr funMonad =
       let milRefUnderType = MIL.getSrcResultType milRefUnderExprType
       let milRefType = MIL.SrcTyApp (MIL.mkSimpleSrcType "Ref") milRefUnderType
       return ( MIL.mkSrcLet refUnderExprVar milRefUnderType milRefUnderExpr $
-                 (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "new_ref") milRefUnderType)
-                           (MIL.VarE refUnderExprVar))
+                 (MIL.LiftE (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "new_ref") milRefUnderType)
+                                      (MIL.VarE refUnderExprVar))
+                    (MIL.mkSimpleSrcType "State")
+                    impureSrcMonadMilWithStateBase)
              , MIL.SrcTyApp funMonad milRefType)
 
     DerefE _ refUnderType tyRefExpr -> do
@@ -542,8 +546,10 @@ codeGenExpr tyExpr funMonad =
       milRefUnderType <- srcTypeMil refUnderType
       let milRefType = MIL.SrcTyApp (MIL.mkSimpleSrcType "Ref") milRefUnderType
       return ( MIL.mkSrcLet refExprVar milRefType milRefExpr $
-                 (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "read_ref") milRefUnderType)
-                           (MIL.VarE refExprVar))
+                 MIL.LiftE (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "read_ref") milRefUnderType)
+                                     (MIL.VarE refExprVar))
+                   (MIL.mkSimpleSrcType "State")
+                   impureSrcMonadMilWithStateBase
              , MIL.SrcTyApp funMonad milRefUnderType)
 
     BinOpE _ resultType srcBinOp tyExpr1 tyExpr2 _ ->
@@ -923,8 +929,8 @@ impureSrcMonadMil =
     MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
         (MIL.mkSimpleSrcType "IO")
 
-impureSrcMonadMilWithErrorBase :: MIL.SrcType
-impureSrcMonadMilWithErrorBase =
+impureSrcMonadMilWithStateBase :: MIL.SrcType
+impureSrcMonadMilWithStateBase =
   MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "State") $
     (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType)
 
@@ -1069,9 +1075,10 @@ readBoolCaseAlt (c:cs) conNameStr i =
 readBoolErrorCaseAlt :: MIL.SrcCaseAlt
 readBoolErrorCaseAlt =
   MIL.CaseAlt (MIL.DefaultP,
-    MIL.LiftE (MIL.AppE (MIL.TypeAppE (MIL.TypeAppE (MIL.mkSrcVar "throw_error") (MIL.mkSimpleSrcType "Unit")) (MIL.mkSimpleSrcType "Bool"))
-                        (MIL.LitE MIL.UnitLit))
-              pureSrcMonadMil impureSrcMonadMilWithErrorBase)
+    MIL.mkSrcLet (MIL.Var "errRes_") (MIL.mkSimpleSrcType "Bool")
+      (MIL.AppE (MIL.TypeAppE (MIL.TypeAppE (MIL.mkSrcVar "throw_error") (MIL.mkSimpleSrcType "Unit")) (MIL.mkSimpleSrcType "Bool"))
+                (MIL.LitE MIL.UnitLit))
+      (MIL.ReturnE impureSrcMonadMil (MIL.mkSrcVar "errRes_")))
 
 printIntMilDef :: MIL.SrcFunDef
 printIntMilDef =
