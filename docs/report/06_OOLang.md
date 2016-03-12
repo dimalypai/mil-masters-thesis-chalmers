@@ -323,11 +323,13 @@ different kinds of OOLang computations. As was described above, OOLang has pure
 and impure computations. Pure computations do not perform input/output and do
 not manipulate state (with `Ref`s), but they can throw exceptions. Therefore,
 the pure stack for OOLang is `Error Unit`. Similarly to FunLang, OOLang
-exceptions do not carry values. Impure computations add `State` and `IO`, so we
-get `State ::: (Error Unit ::: IO)` stack for impure OOLang computations, which
-is the same as the one for FunLang's IO. Note, that in the case of OOLang the
-pure stack is not a prefix of the impure one. This does not allow to just apply
-pure functions inside impure ones as it is, but requires additional lifting.
+exceptions do not carry values. Impure computations add `State` and `IO`. We
+decided to order `Error` and `State` differently from FunLang and get the state
+rollback semantics, so we get `Error Unit ::: (State ::: IO)` for impure OOLang
+computations. {>> This is a highly unorthodox semantics and is really inefficient to implement. What is your motivation for having rollback? <<}
+Again, the pure stack is a prefix of the impure stack (they
+satisfy the $isCompatible$ relation) to be able to easily run pure computations
+inside impure ones.
 
 ### General scheme and type conversions
 
@@ -342,18 +344,12 @@ substituted with `throw`, but in OOLang all parameter binders are already there
 (using MIL lambda expressions without any effects) and it is only the return
 type which is determined by the function body and therefore needs to capture
 potential effects. For return types, `Pure A` results in `Error Unit A` and `A`
-results in `(State ::: (Error Unit ::: IO)) A`.
+results in `(Error Unit ::: (State ::: IO)) A`.
 
 Similarly to FunLang, sub-expressions are bound to variables with the monadic
 $bind$. OOLang statement sequences result in sequences of monadic $bind$s.
 Since every statement has a value, that value is what is bound to a variable.
 For some statements it is just a `Unit` variable.
-
-As was mentioned above, with the monad stacks that were chosen for OOLang it is
-not possible to just apply or reference pure functions inside impure ones,
-which would produce ill-typed MIL programs. A usage of `lift` operation is
-required. More specifically, when a pure function is fully applied inside an
-impure one, `lift [Error Unit => State ::: Error Unit]` has to be used.
 
 OOLang `when` statements are expressed using the `case` expression to pattern
 match on the `Bool` condition. The return value of the statement is bound to a
@@ -364,35 +360,27 @@ described about functions and statements so far:
 def fun : {a : Int} -> {b : Bool} -> Unit
   when false do
     1;
-    pureFun;
+    2;
   otherwise
     3;
   end;
   unit;
 end
 
-def pureFun : Pure Int
-  42;
-end
-
-
-fun : Int -> Bool -> (State ::: (Error Unit ::: IO)) Unit =
+fun : Int -> Bool -> (Error Unit ::: (State ::: IO)) Unit =
   \(a : Int) -> \(b : Bool) ->
     let (var_2 : Int) <-
       let (var_0 : Bool) <-
-        return [State ::: (Error Unit ::: IO)] False
+        return [Error Unit ::: (State ::: IO)] False
       in case var_0 of
            | True =>
                let (var_1 : Int) <-
-                 return [State ::: (Error Unit ::: IO)] 1
-               in lift [Error Unit => State ::: Error Unit] pureFun
+                 return [Error Unit ::: (State ::: IO)] 1
+               in return [Error Unit ::: (State ::: IO)] 2
            | False =>
-               return [State ::: (Error Unit ::: IO)] 3
+               return [Error Unit ::: (State ::: IO)] 3
          end
-    in return [State ::: (Error Unit ::: IO)] unit;
-
-pureFun : Error Unit Int =
-  return [Error Unit] 42;
+    in return [Error Unit ::: (State ::: IO)] unit;
 ~~~
 
 Some of the more specific statements (declarations, assignments, exception
@@ -435,7 +423,7 @@ boolean values. The `Bool` data type itself maps to the `Bool` ADT in MIL. The
 following code snippet is an implementation of the `printBool` function:
 
 ~~~
-printBool : Bool -> (State ::: (Error Unit ::: IO)) Unit =
+printBool : Bool -> (Error Unit ::: (State ::: IO)) Unit =
 \(b_ : Bool) ->
   case b_ of
   | True => printString
@@ -487,30 +475,30 @@ def main : Unit
   unit;
 end
 
-main : (State ::: (Error Unit ::: IO)) Unit =
+main : (Error Unit ::: (State ::: IO)) Unit =
   let (a : Int) <-
-    return [State ::: (Error Unit ::: IO)] 0
+    return [Error Unit ::: (State ::: IO)] 0
   in let (a_1 : Int) <-
-    return [State ::: (Error Unit ::: IO)] 1
+    return [Error Unit ::: (State ::: IO)] 1
   in let (var_0 : Int) <-
-    return [State ::: (Error Unit ::: IO)] a_1
+    return [Error Unit ::: (State ::: IO)] a_1
   in let (a_2 : Int) <-
-    return [State ::: (Error Unit ::: IO)] 2
+    return [Error Unit ::: (State ::: IO)] 2
   in let (var_1 : Int) <-
-    return [State ::: (Error Unit ::: IO)] a_2
+    return [Error Unit ::: (State ::: IO)] a_2
   in let (r : Ref Int) <-
        let (var_6 : Int) <-
-         return [State ::: (Error Unit ::: IO)] 0
-       in new_ref [Int] var_6
+         return [Error Unit ::: (State ::: IO)] 0
+       in lift [State => Error Unit ::: State] new_ref [Int] var_6
   in let (var_5 : Unit) <-
        let (var_4 : Int) <-
-         return [State ::: (Error Unit ::: IO)] 1
-       in write_ref [Int] r var_4
+         return [Error Unit ::: (State ::: IO)] 1
+       in lift [State => Error Unit ::: State] write_ref [Int] r var_4
   in let (var_3 : Int) <-
        let (var_2 : Ref Int) <-
-         return [State ::: (Error Unit ::: IO)] r
-       in read_ref [Int] var_2
-  in return [State ::: (Error Unit ::: IO)] unit;
+         return [Error Unit ::: (State ::: IO)] r
+       in lift [State => Error Unit ::: State] read_ref [Int] var_2
+  in return [Error Unit ::: (State ::: IO)] unit;
 ~~~
 
 ### Exceptions
