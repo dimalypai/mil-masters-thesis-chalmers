@@ -466,18 +466,9 @@ codeGenExpr tyExpr funMonad =
         GlobalFunWithParams -> do
           t <- MIL.SrcTyApp funMonad <$> srcTypeMil varType
           return (MIL.ReturnE funMonad (MIL.VarE milVar), t)
-        GlobalFunWithoutParams ->
-          case (varPure, funMonad == pureSrcMonadMil) of
-            (True, True) -> do
-              t <- funSrcTypeMil varType
-              return (MIL.VarE milVar, t)
-            (False, False) -> do
-              t <- funSrcTypeMil varType
-              return (MIL.VarE milVar, t)
-            (True, False) -> do
-              t <- MIL.SrcTyApp impureSrcMonadMil <$> srcTypeMil (stripPureType varType)
-              return (MIL.LiftE (MIL.VarE milVar) pureSrcMonadMil impureSrcMonadMilWithErrorBase, t)
-            (False, True) -> error "codeGenExpr: Purity checking has gone wrong"
+        GlobalFunWithoutParams -> do
+          t <- funSrcTypeMil varType
+          return (MIL.VarE milVar, t)
 
     MemberAccessE _ t tyObjExpr srcMemberName _ -> do
       (objMilExpr, objMilExprType) <- codeGenExpr tyObjExpr funMonad
@@ -633,17 +624,8 @@ codeGenBinOp binOp tyExpr1 tyExpr2 resultType funMonad =
       var2 <- newMilVar
       (appE, milResultType) <- if isValueType resultType
                                  then do
-                                   case (isPureType resultType, funMonad == pureSrcMonadMil) of
-                                     (True, True) -> do
-                                       t <- funSrcTypeMil resultType
-                                       return (MIL.AppE (MIL.VarE var1) (MIL.VarE var2), t)
-                                     (False, False) -> do
-                                       t <- funSrcTypeMil resultType
-                                       return (MIL.AppE (MIL.VarE var1) (MIL.VarE var2), t)
-                                     (True, False) -> do
-                                       t <- MIL.SrcTyApp impureSrcMonadMil <$> srcTypeMil (stripPureType resultType)
-                                       return (MIL.LiftE (MIL.AppE (MIL.VarE var1) (MIL.VarE var2)) pureSrcMonadMil impureSrcMonadMilWithErrorBase, t)
-                                     (False, True) -> error "codeGenBinOp: Purity checking has gone wrong"
+                                   t <- funSrcTypeMil resultType
+                                   return (MIL.AppE (MIL.VarE var1) (MIL.VarE var2), t)
                                  else do
                                    -- TODO: It seems like it doesn't matter if
                                    -- 'srcTypeMil' or 'funSrcTypeMil' is used,
