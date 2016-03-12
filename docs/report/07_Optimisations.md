@@ -245,10 +245,10 @@ $$let\ (x : T_1) \gets e_1\
 $$=$$
 $$let\ (y : T_2) \gets e_2\
   in\ let\ (x : T_1) \gets e_1\ in\ e,$$
-$$x\ is\ not\ used\ in\ e_2\ and\ Monad\ is\ Id$$
+$$where\ x\ is\ not\ used\ in\ e_2\ and\ Monad\ is\ Id$$
 
 Here is an implementation of this transformation:
- 
+
 ~~~{.haskell}
 exchangeExpr :: TyExpr -> TyExpr
 exchangeExpr = descendBi f
@@ -269,7 +269,7 @@ Another transformation, which can be used inside the `Id` monad, but not, for
 example, inside the `IO` monad in the general case is the elimination of
 redundant code:
 
-$$let\ (x : T) \gets e\ in\ e' = e',\ x\ is\ not\ used\ in\ e'\ and\ Monad\ is\ Id$$
+$$let\ (x : T) \gets e\ in\ e' = e',\ where\ x\ is\ not\ used\ in\ e'\ and\ Monad\ is\ Id$$
 
 We skiped giving examples in these cases, since they would not be particularly
 interesting.
@@ -291,7 +291,7 @@ $$let\ (x : Ref\ T_1) \gets new\_ref\ [T_1]\ e_1\
 $$=$$
 $$let\ (y : Ref\ T_2) \gets new\_ref\ [T_2]\ e_2\
   in\ let\ (x : Ref\ T_1) \gets new\_ref\ [T_1]\ e_1\ in\ e,$$
-$$x\ is\ not\ used\ in\ e_2$$
+$$where\ x\ is\ not\ used\ in\ e_2$$
 
 In this transformation we are looking for a sequence of $bind$ operations with
 `new_ref` as their binder expressions. It does a check for usage of the
@@ -307,7 +307,7 @@ $$let\ (x : T_1) \gets read\_ref\ [T_1]\ e_1\
 $$=$$
 $$let\ (y : T_2) \gets read\_ref\ [T_2]\ e_2\
   in\ let\ (x : T_1) \gets read\_ref\ [T_1]\ e_1\ in\ e,$$
-$$x\ is\ not\ used\ in\ e_2$$
+$$where\ x\ is\ not\ used\ in\ e_2$$
 
 It is very similar to the "exchange new" transformation. It also does a check
 for usage of the variable that holds the value read from the first reference.
