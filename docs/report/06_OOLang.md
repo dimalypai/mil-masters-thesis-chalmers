@@ -324,12 +324,11 @@ and impure computations. Pure computations do not perform input/output and do
 not manipulate state (with `Ref`s), but they can throw exceptions. Therefore,
 the pure stack for OOLang is `Error Unit`. Similarly to FunLang, OOLang
 exceptions do not carry values. Impure computations add `State` and `IO`. We
-decided to order `Error` and `State` differently from FunLang and get the state
-rollback semantics, so we get `Error Unit ::: (State ::: IO)` for impure OOLang
-computations. {>> This is a highly unorthodox semantics and is really inefficient to implement. What is your motivation for having rollback? <<}
-Again, the pure stack is a prefix of the impure stack (they
-satisfy the $isCompatible$ relation) to be able to easily run pure computations
-inside impure ones.
+decided to order `Error` and `State` differently from FunLang to *not* get the
+state rollback semantics, so we have `Error Unit ::: (State ::: IO)` for impure
+OOLang computations. Again, the pure stack is a prefix of the impure stack
+(they satisfy the $isCompatible$ relation) to be able to easily run pure
+computations inside impure ones.
 
 ### General scheme and type conversions
 
