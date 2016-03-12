@@ -925,14 +925,14 @@ pureSrcMonadMil =
 
 impureSrcMonadMil :: MIL.SrcType
 impureSrcMonadMil =
-  MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "State") $
-    MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
+  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType) $
+      MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "State")
         (MIL.mkSimpleSrcType "IO")
 
 impureSrcMonadMilWithStateBase :: MIL.SrcType
 impureSrcMonadMilWithStateBase =
-  MIL.SrcTyMonadCons (MIL.mkSimpleSrcType "State") $
-    (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType)
+  MIL.SrcTyMonadCons (MIL.SrcTyApp (MIL.mkSimpleSrcType "Error") exceptionSrcType)
+    (MIL.mkSimpleSrcType "State")
 
 monadErrorTypeCons :: [MIL.Type -> MIL.MonadType]
 monadErrorTypeCons =
@@ -940,9 +940,9 @@ monadErrorTypeCons =
     \et ->
     MIL.MTyMonad (MIL.SinMonadApp (MIL.SinMonad MIL.Error) et)
   , \et ->
-    MIL.MTyMonadCons (MIL.SinMonad MIL.State) $
-      MIL.MTyMonadCons (MIL.SinMonadApp (MIL.SinMonad MIL.Error) et) $
-        MIL.MTyMonad (MIL.SinMonad MIL.IO)
+    MIL.MTyMonadCons (MIL.SinMonadApp (MIL.SinMonad MIL.Error) et) $
+        MIL.MTyMonadCons (MIL.SinMonad MIL.State) $
+          MIL.MTyMonad (MIL.SinMonad MIL.IO)
   ]
 
 exceptionSrcType :: MIL.SrcType
