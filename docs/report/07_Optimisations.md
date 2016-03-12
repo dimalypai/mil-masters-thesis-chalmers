@@ -1,14 +1,9 @@
 # Optimisations
 
-{>> This chapter needs a bit of work. I think you should remove most examples of how the transformations are implemented and instead focus on presenting the optimization as a rewrite rule written using math notation, with possible side conditions. You can leave one or two code examples in to demonstrate the general principle but there is no point in having them all there as you have it now.
-Another thing that I'm lacking, and this is a rather big thing, is comparisons to how optimizations is done in other compilers. You need to explain what is new with what you're doing, and what is different and interesting compared to conventional optimization techniques. Can you save code in your compiler, can you implement things more easily, can you make more general optimizations? And you're among the first people to write an optimizer targeted for both FP and OO. What conclusions can you draw from that experience? Are there any optimizations in the respective fields that are subsumed by the monadic approach? Etc.
-All of this doesn't necessarily have to go into this chapter.<<}
-
 > *The majority of modern compilers implement sophisticated optimisations to
-> produce as good code as possible. {== This can mean quite different things, for
-> example, low memory consumption, speed (low CPU consumption) or low energy
-> consumption. ==}{>> This is the wrong place to go into an explanation of what optimization is. Remove. <<} In this chapter we will present several code transformations
-> implemented in MIL.* {>> I would have expected a few more words on the result and effectiveness of the optimizations. <<}
+> produce as good code as possible. In this chapter we will present several
+> code transformations implemented in MIL. We conclude with a discussion around
+> classical optimisation techniques and their relations to MIL.*
 
 As was mentioned in the "Introduction" chapter one of the goals of designing a
 monadic intermediate representation is to be able to express and use optimising
@@ -27,16 +22,15 @@ might be incorrect.
 
 {>> Is there no semantics in the paper you cite which you can allude to and say that you basically assume a similar semantics with respect to performance? That would at least be something, even though it's not much. <<}
 
-We will try to provide as many code snippets with real implementation of
-transformations as possible, but to be able to do this in a reasonable amount
-of space we will focus at the expression level of granularity, since this is
-where the transformations happen. More high level cases (e.g. function
-definition) are merely recursing down to get to expressions. The MIL AST has
-support for \cite{Uniplate} -- a Haskell library for generic traversals of
-algebraic data types and so code transformations are implemented using these
-traversals. We want to highlight that many of the transformation
-implementations are relatively naive and serve the purpose of demonstrating the
-concept.
+We will provide some code snippets with real implementation of transformations,
+but to be able to do this in a reasonable amount of space we will focus at the
+expression level of granularity, since this is where the transformations
+happen. More high level cases (e.g. function definition) are merely recursing
+down to get to expressions. The MIL AST has support for \cite{Uniplate} -- a
+Haskell library for generic traversals of algebraic data types and so code
+transformations are implemented using these traversals. We want to highlight
+that many of the transformation implementations are relatively naive and serve
+the purpose of demonstrating the concept.
 
 ## Monad laws
 
@@ -52,10 +46,8 @@ definition from Chapter 2:
 
 $$bind\ (return\ x)\ f = f\ x$$
 
-From the compiler optimisation point of view, one can look at this law as at
-some kind of *inlining*, which is one of the frequently used optimisations in
-modern compilers. {>> I don't understand how this is inlining. It uses an algebraic identity between two functions, not the definition of one function. <<} The left identity monad law allows us to avoid a redundant
-$bind$ and use `x` directly.
+The left identity monad law allows us to avoid a redundant $bind$ and use `x`
+directly.
 
 The following code snippet is a Haskell implementation of the left identity
 transformation for MIL:
@@ -173,44 +165,31 @@ in let (y : Unit) <- return [Id] x
 in return [Id] y;
 ~~~
 
-Associativity transformations opens up opportunities for other transformations,
-by restructuring the code and making it more linear. For example, identity laws
-usually can be applied more times after the associativity has been applied.
-
-{>> It unclear whether this law gives any improvements. Does it? Or does it not? Be explicit about that. <<}
+We can categorise the associativity transformation as one that *enables other
+transformations* (using the taxonomy of machine-independent transformations
+from \cite{EngineeringCompiler}). This transformation allows to restructure the
+code and make it more linear, thus enabling other transformations to
+potentially improve the code further. For example, identity laws usually can be
+applied more times after the associativity has been applied.
 
 ## Lift transformations
 
 The next couple of transformations are related to the monad transformer $lift$
 operation. Both of them are trying to eliminate redundant $lift$ operations.
+Whether these transformations can be considered optimisations really depends on
+the code that is generated for $lift$. On one hand, $lift$ clearly has
+implementations for different monad transformers in Haskell, but on the other,
+one can think that $lift$ can be erased after the MIL stage (for example, when
+generating LLVM or machine code). We could accept that a program in LLVM or
+machine code simply allows all the effects all the time, and MIL’s type system
+ensured that everything is well typed.
 
 ### Identity
 
-{>> Is this an optimization? Is the generated code more efficient after the
-application of this transformation? It really boild down to what `lift` would
-be compiled into, and that might be worth saying a few words about even though
-you don't have a compiler. <<}
-
 The first one, which we call identity, can remove a $lift$ where the source and
-the target monads are the same.
+the target monads are the same:
 
-This transformation is implemented as follows:
-
-~~~{.haskell}
-liftIdentityExpr :: TyExpr -> TyExpr
-liftIdentityExpr = descendBi f
-  where
-    f (LiftE e tm1 tm2) =
-      if tm1 `alphaEq` tm2
-        then e
-        else LiftE (liftIdentityExpr e) tm1 tm2
-    f expr = descend f expr
-~~~
-
-We look for a $lift$ operation and if its source and target monads are
-alpha-equivalent, we drop the $lift$ operation and leave only the expression
-being lifted. Otherwise, we recurse down into this expression, leaving the
-$lift$ in place.
+$$lift\ [M_1 \Rightarrow M_2]\ e = e, where\ M_1 \equiv_\alpha M_2$$
 
 The next example is probably the simplest case of applying this transformation:
 
@@ -227,20 +206,9 @@ return [Id] unit;
 The second $lift$ transformation that is implemented for MIL is trying to
 replace a sequence of two $lift$ operations with one. In such a sequence of
 $lift$s the target of the inner (second) one is compatible with the source of
-the outer (first) one, which is guaranteed by the type/lint checking.
+the outer (first) one, which is guaranteed by the type/lint checking:
 
-An implementation of this transformation is below:
-
-~~~{.haskell}
-composeLiftExpr :: TyExpr -> TyExpr
-composeLiftExpr = descendBi f
-  where
-    f (LiftE e tm1 tm2) =
-      case e of
-        LiftE e' tm1' _ -> LiftE e' tm1' tm2
-        _ -> LiftE (composeLiftExpr e) tm1 tm2
-    f expr = descend f expr
-~~~
+$$lift\ [M_2 \Rightarrow M_3]\ lift\ [M_1 \Rightarrow M_2]\ e = lift\ [M_1 \Rightarrow M_3]\ e$$
 
 The next example demonstrates a composition of two $lift$ operations:
 
@@ -267,13 +235,20 @@ We will start with a transformation that is, in general, only applicable to
 pure computations. Computations inside the `Id` monad are one example of such
 computations.
 
-This transformation allows to reorder two computations.  Such transformation is
-not obviously beneficial, but it can be used to enable other transformations or
-when it comes to low level considerations, may improve memory locality or
-parallelisation.
+The first transformation allows to reorder two computations.  Such
+transformation is not obviously beneficial, but it can be used to enable other
+transformations or when it comes to low level considerations, may improve
+memory locality or parallelisation:
+
+$$let\ (x : T_1) \gets e_1\
+  in\ let\ (y : T_2) \gets e_2\ in\ e$$
+$$=$$
+$$let\ (y : T_2) \gets e_2\
+  in\ let\ (x : T_1) \gets e_1\ in\ e,$$
+$$x\ is\ not\ used\ in\ e_2\ and\ Monad\ is\ Id$$
 
 Here is an implementation of this transformation:
-
+ 
 ~~~{.haskell}
 exchangeExpr :: TyExpr -> TyExpr
 exchangeExpr = descendBi f
@@ -290,42 +265,33 @@ exchangeExpr = descendBi f
     f expr = descend f expr
 ~~~
 
-What it does is looking for a sequence of $bind$ expressions such that the
-variable bound with the first one is not used in the binder expression of the
-second one (using a helper function `isNotUsedIn`), which would make this
-transformation invalid, since the variable would be not in scope for its use.
-There is also a check of the type to make sure that it is an `Id` computation.
+Another transformation, which can be used inside the `Id` monad, but not, for
+example, inside the `IO` monad in the general case is the elimination of
+redundant code:
 
-We will skip giving an example in this case, since it would not be particularly
+$$let\ (x : T) \gets e\ in\ e' = e',\ x\ is\ not\ used\ in\ e'\ and\ Monad\ is\ Id$$
+
+We skiped giving examples in these cases, since they would not be particularly
 interesting.
-
-{>> I would have expected there to be an optimization involving `Id` that allowed for removing dead code. If I have `let x <- e in e'` and `x` is not used anywhere then I should be able to remove `e` in the case that it is in the `Id` monad. <<}
 
 ### State
 
 Next, we will describe four transformations applicable to computations inside
-the `State` monad.
+the `State` monad. One thing to note when looking at these transformations is
+that there are no explicit checks for a monad being `State`. This is redundant,
+since the type system of MIL ensures that the state operations are used only
+inside the monad with `State`.
 
-The first one is a special case of the reordering transformation presented
-above. We refer to it as "exchange new". It allows to reorder creation of two
-references. It is implemented as the following:
+The first one is a special case of the reordering transformation presented in
+the previous section. We refer to it as "exchange new". It allows to reorder
+creation of two references:
 
-~~~{.haskell}
-exchangeNewExpr :: TyExpr -> TyExpr
-exchangeNewExpr = descendBi f
-  where
-    f (LetE varBinder e1 e2) =
-      case e2 of
-        LetE varBinder' e1' e2' | getBinderVar varBinder `isNotUsedIn` e1' ->
-          case (e1, e1') of
-            (AppE (TypeAppE (VarE (VarBinder (Var "new_ref", _))) _) _,
-             AppE (TypeAppE (VarE (VarBinder (Var "new_ref", _))) _) _) ->
-              LetE varBinder' (exchangeNewExpr e1')
-                (LetE varBinder (exchangeNewExpr e1) (exchangeNewExpr e2'))
-            _ -> LetE varBinder (exchangeNewExpr e1) (exchangeNewExpr e2)
-        _ -> LetE varBinder (exchangeNewExpr e1) (exchangeNewExpr e2)
-    f expr = descend f expr
-~~~
+$$let\ (x : Ref\ T_1) \gets new\_ref\ [T_1]\ e_1\
+  in\ let\ (y : Ref\ T_2) \gets new\_ref\ [T_2]\ e_2\ in\ e$$
+$$=$$
+$$let\ (y : Ref\ T_2) \gets new\_ref\ [T_2]\ e_2\
+  in\ let\ (x : Ref\ T_1) \gets new\_ref\ [T_1]\ e_1\ in\ e,$$
+$$x\ is\ not\ used\ in\ e_2$$
 
 In this transformation we are looking for a sequence of $bind$ operations with
 `new_ref` as their binder expressions. It does a check for usage of the
@@ -334,24 +300,14 @@ done to avoid applying this transformation in the case, when the first
 reference is used to create the second reference.
 
 Another special case of the reordering transformation is "exchange read", which
-can reorder reading of two references. Below is an implementation of it:
+can reorder reading of two references:
 
-~~~{.haskell}
-exchangeReadExpr :: TyExpr -> TyExpr
-exchangeReadExpr = descendBi f
-  where
-    f (LetE varBinder e1 e2) =
-      case e2 of
-        LetE varBinder' e1' e2' | getBinderVar varBinder `isNotUsedIn` e1' ->
-          case (e1, e1') of
-            (AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _) _,
-             AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _) _) ->
-              LetE varBinder' (exchangeReadExpr e1')
-                (LetE varBinder (exchangeReadExpr e1) (exchangeReadExpr e2'))
-            _ -> LetE varBinder (exchangeReadExpr e1) (exchangeReadExpr e2)
-        _ -> LetE varBinder (exchangeReadExpr e1) (exchangeReadExpr e2)
-    f expr = descend f expr
-~~~
+$$let\ (x : T_1) \gets read\_ref\ [T_1]\ e_1\
+  in\ let\ (y : T_2) \gets read\_ref\ [T_2]\ e_2\ in\ e$$
+$$=$$
+$$let\ (y : T_2) \gets read\_ref\ [T_2]\ e_2\
+  in\ let\ (x : T_1) \gets read\_ref\ [T_1]\ e_1\ in\ e,$$
+$$x\ is\ not\ used\ in\ e_2$$
 
 It is very similar to the "exchange new" transformation. It also does a check
 for usage of the variable that holds the value read from the first reference.
@@ -360,28 +316,13 @@ reference contains another reference that is read in the second `read_ref`.
 
 The third transformation for `State` computations allows to eliminate a
 reference reading in the case when this reference has already been read and
-bound to a variable. It is implemented as follows:
+bound to a variable:
 
-~~~{.haskell}
-useReadExpr :: TyExpr -> TyExpr
-useReadExpr = descendBi f
-  where
-    f (LetE varBinder e1 e2) =
-      case e2 of
-        LetE varBinder' e1' e2' ->
-          case (e1, e1') of
-            (AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _)
-                  (VarE (VarBinder (refVar1, _))),
-             AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _)
-                  (VarE (VarBinder (refVar2, _)))) | refVar1 == refVar2 ->
-              LetE varBinder (useReadExpr e1)
-                (LetE varBinder' (ReturnE (MTyMonad (SinMonad State))
-                                    (VarE varBinder))
-                   (useReadExpr e2'))
-            _ -> LetE varBinder (useReadExpr e1) (useReadExpr e2)
-        _ -> LetE varBinder (useReadExpr e1) (useReadExpr e2)
-    f expr = descend f expr
-~~~
+$$let\ (x : T) \gets read\_ref\ [T]\ r\
+  in\ let\ (y : T) \gets read\_ref\ [T]\ r\ in\ e$$
+$$=$$
+$$let\ (x : T) \gets read\_ref\ [T]\ r\
+  in\ let\ (y : T) \gets return\ [State]\ x\ in\ e$$
 
 Again, we look for a sequence of two `read_ref`s as in the previous
 transformation, but here we also check that the same reference is read (it
@@ -407,34 +348,16 @@ in return [State] unit;
 ~~~
 
 The last `State` transformation also eliminates a reference reading, but in
-this case the information from a reference writing operation is used. Its
-implementation is shown in the next code snippet:
+this case the information from a reference writing operation is used:
 
-~~~{.haskell}
-useWriteExpr :: TyExpr -> TyExpr
-useWriteExpr = descendBi f
-  where
-    f (LetE varBinder e1 e2) =
-      case e2 of
-        LetE varBinder' e1' e2' ->
-          case (e1, e1') of
-            (AppE (AppE (TypeAppE (VarE (VarBinder (Var "write_ref", _))) _)
-                        (VarE (VarBinder (refVar1, _)))) refContentExpr,
-             AppE (TypeAppE (VarE (VarBinder (Var "read_ref", _))) _)
-                  (VarE (VarBinder (refVar2, _)))) | refVar1 == refVar2 ->
-              LetE varBinder (useWriteExpr e1)
-                (LetE varBinder' (ReturnE (MTyMonad (SinMonad State))
-                                    refContentExpr)
-                   (useWriteExpr e2'))
-            _ -> LetE varBinder (useWriteExpr e1) (useWriteExpr e2)
-        _ -> LetE varBinder (useWriteExpr e1) (useWriteExpr e2)
-    f expr = descend f expr
-~~~
+$$let\ (u : Unit) \gets write\_ref\ [T]\ r\ c\
+  in\ let\ (x : T) \gets read\_ref\ [T]\ r\ in\ e$$
+$$=$$
+$$let\ (u : Unit) \gets write\_ref\ [T]\ r\ c\
+  in\ let\ (x : T) \gets return\ [State]\ c\ in\ e$$
 
-This implementation is very similar to the previous one, except for that the
-first operation must be `write_ref` in this case. The correponding pattern also
-captures the expression being written to the reference as `refContentExpr` to
-be used with $return$ at the end.
+This transformation is very similar to the previous one, except for that the
+first operation must be `write_ref` in this case.
 
 The following is an example of reusing an expression that was written to a
 reference instead of reading the reference:
@@ -459,32 +382,16 @@ The last of the effect-specific transformations implemented for MIL is a
 transformation that tries to eliminate unnecessary `catch_error` and
 `throw_error` calls. It (rather naively) looks for a specific case, when the
 first argument of `catch_error` is `throw_error`, which basically means that
-the handler part will definitely be executed.
+the handler part will definitely be executed:
 
-It is implemented in Haskell as the following:
+$$catchName\ [Unit]\ [T]\ (throw\_error\ [Unit]\ [T]\ unit)\ (\lambda (err : Unit) \to e)$$
+$$=$$
+$$e,$$
+$$where\ catchName == catch\_error\_1\ or\ catchName == catch\_error\_2$$
 
-~~~{.haskell}
-eliminateThrowCatchExpr :: TyExpr -> TyExpr
-eliminateThrowCatchExpr = descendBi f
-  where
-    f (AppE e1 e2) =
-      case e1 of
-        AppE (TypeAppE (TypeAppE (VarE (VarBinder (Var catchName, _)))
-                                 (TyTypeCon (TypeName "Unit"))) _)
-             (AppE (TypeAppE (TypeAppE (VarE (VarBinder (Var "throw_error", _)))
-                              _) _) _) |
-             catchName == "catch_error_1" || catchName == "catch_error_2" ->
-          let (LambdaE _ handlerBody) = e2
-          in eliminateThrowCatchExpr handlerBody
-        _ -> AppE (eliminateThrowCatchExpr e1) (eliminateThrowCatchExpr e2)
-    f expr = descend f expr
-~~~
-
-The pattern matching above tries to find an application of `catch_error_1` or
-`catch_error_2` with `throw_error` as the first non-type argument. If this
-succeeds, the handler body is extracted and returned as the result (with the
-transformation applied recursively to it). This transformation is simplified by
-the fact that it looks only for the case when the type of error values is
+It tries to find an application of `catch_error_1` or `catch_error_2` with
+`throw_error` as the first non-type argument. This transformation is simplified
+by the fact that it looks only for the case when the type of error values is
 `Unit`.
 
 This optimisation is shown in the following code snippet:
@@ -509,48 +416,16 @@ constructs in source languages.
 
 Constant case elimination transformation allows to remove a `case` expression,
 which has a known outcome (because of literal patterns and a literal
-scrutinee). It is implemented for MIL as below:
+scrutinee):
 
-~~~{.haskell}
-eliminateConstantCaseExpr :: TyExpr -> TyExpr
-eliminateConstantCaseExpr = descendBi f
-  where
-    f (CaseE e caseAlts) =
-      case e of
-        LitE lit ->
-          case find (\(CaseAlt (p, _)) -> case p of
-                 LitP lit' -> lit' == lit
-                 _ -> False) caseAlts of
-            Just (CaseAlt (_, caseAltBody)) ->
-              eliminateConstantCaseExpr caseAltBody
-            Nothing ->
-              CaseE (eliminateConstantCaseExpr e)
-                (map (\(CaseAlt (p, ae)) ->
-                        CaseAlt (p, eliminateConstantCaseExpr ae))
-                   caseAlts)
-        ConNameE conName _ ->
-          case find (\(CaseAlt (p, _)) -> case p of
-                 ConP conName' [] -> conName' == conName
-                 _ -> False) caseAlts of
-            Just (CaseAlt (_, caseAltBody)) ->
-                    eliminateConstantCaseExpr caseAltBody
-            Nothing ->
-              CaseE (eliminateConstantCaseExpr e)
-                (map (\(CaseAlt (p, ae)) ->
-                        CaseAlt (p, eliminateConstantCaseExpr ae))
-                   caseAlts)
-        _ -> CaseE (eliminateConstantCaseExpr e)
-               (map (\(CaseAlt (p, ae)) ->
-                       CaseAlt (p, eliminateConstantCaseExpr ae))
-                  caseAlts)
-    f expr = descend f expr
-~~~
+$$case\ s_i\ of\ |\ s_j \Rightarrow e_j\ end$$
+$$=$$
+$$e_i,$$
+$$where\ s\ is\ literal\ or\ data\ constructor$$
 
 It tries to find literal or data constructor scrutinee expressions, which are,
 basically, constant values and then to find a case alternative with a pattern
-corresponding to such a value.  Most of the code above are branches, when it
-was not possible to apply this transformation and we need to continue with the
-recursion.
+corresponding to such a value.
 
 An example of applying this transformation is presented below:
 
@@ -573,17 +448,23 @@ in OOLang, when it is known that a condition evaluates to `true` or `false`.
 ### Common bind extraction
 
 The common bind extraction is a transformation that can *hoist* a $bind$ to the
-{== same variable ==}{>> What do you mean by same variable here? Clearly, they are different variables. Do you mean that they have to have the same name? I hope not, since that is not a requirement for this transformation to be valid. You just have to rename one of the cases.<<} out of `case` alternatives, given that the $bind$s have the same
-body expression. The implementation of this transformation is quite involved
-and would require some detailed explanation, so we chose to skip providing it
-here.
+"same variable" out of `case` alternatives, given that the $bind$s have the
+"same body expression". By the word "same" here we mean alpha-equivalence. The
+implementation of this transformation in MIL is more naive and uses simple
+equality both for variables and for body expressions. The transformation is
+presented below:
+
+$$case\ s\ of\ |\ p_i \Rightarrow let\ (v_i : T) \gets e_i\ in\ e\ end$$
+$$=$$
+$$let\ (v : T) \gets case\ s\ of\ |\ p_i \Rightarrow e_i\ end\ in\ e,$$
+$$where\ all\ occurrences\ of\ v_i\ in\ e\ are\ substituted\ with\ v$$
 
 The following is an example of applying the common bind extraction:
 
 ~~~
 case 1 of
   | 0 => let (x : Int) <- return [IO] 0 in return [IO] unit
-  | 1 => let (x : Int) <- return [IO] 1 in return [IO] unit
+  | 1 => let (y : Int) <- return [IO] 1 in return [IO] unit
 end;
 
 ==>
@@ -605,33 +486,16 @@ compile time instead of doing unnecessary computations at runtime.
 In MIL constant folding is implemented for all built-in arithmetic operations,
 except for division. It is not implemented for division, since division is a
 potentially failing operation (for example, when dividing by 0), so it would
-require a more detailed analysis. An implementation of constant folding for MIL
-looks like the following:
+require a more detailed analysis. This transformation is using the following
+identities between the MIL built-in functions and mathematical operations
+($l_i$ are literals):
 
-~~~{.haskell}
-foldConstantsExpr :: TyExpr -> TyExpr
-foldConstantsExpr = descendBi f
-  where
-    f expr@(AppE e1 e2) =
-      case (e1, e2) of
-        (AppE (VarE (VarBinder (Var funName, _))) (LitE lit1), LitE lit2) ->
-          case funName of
-            "add_int" ->
-              case (lit1, lit2) of
-                (IntLit i1, IntLit i2) -> LitE $ IntLit (i1 + i2)
-                _ -> error "foldConstantsExpr: Incorrect literals for add_int"
-            ...
-            _ -> expr
-        _ -> AppE (foldConstantsExpr e1) (foldConstantsExpr e2)
-    f expr = descend f expr
-~~~
-
-We did not present the full implementation of the transformation in this case,
-since it does very similar things for a number of arithmetic operations (for
-different types). The code above looks for a function application to two
-literal values and then checks if it is a function, which can be evaluated at
-compile-time, for example, `add_int`. In the case of success, it performs the
-operation and returns the result as a literal expression.
+$$add\_int\ l_1\ l_2 = l_1 + l_2$$
+$$add\_float\ l_1\ l_2 = l_1 + l_2$$
+$$sub\_int\ l_1\ l_2 = l_1 - l_2$$
+$$sub\_float\ l_1\ l_2 = l_1 - l_2$$
+$$mul\_int\ l_1\ l_2 = l_1 * l_2$$
+$$mul\_float\ l_1\ l_2 = l_1 * l_2$$
 
 This time we will not have an example with only one transformation applied to a
 small piece of MIL code, but rather an extended example with a piece of OOLang
@@ -770,6 +634,6 @@ compilers.
 
 Applicability of some transformations to the code generated for source
 languages can be somewhat limited, but we believe that it can largely be solved
-by implementing some kind of effect inference/elimination process mentiond in
+by implementing some kind of effect inference/elimination process mentioned in
 Chapter 5.
 
