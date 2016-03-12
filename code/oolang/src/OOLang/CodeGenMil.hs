@@ -663,13 +663,9 @@ codeGenBinOp binOp tyExpr1 tyExpr2 resultType funMonad =
       (milExpr2, milExpr2Type) <- codeGenExpr tyExpr2 funMonad
       var2 <- newMilVar
       milResultType <- funSrcTypeMil resultType
-      let arithBaseExpr = MIL.AppE (MIL.AppE (MIL.VarE $ MIL.Var arithFunName) (MIL.VarE var1)) (MIL.VarE var2)
-      let arithExpr = if funMonad == pureSrcMonadMil
-                        then arithBaseExpr
-                        else MIL.LiftE arithBaseExpr pureSrcMonadMil impureSrcMonadMilWithErrorBase
       return ( MIL.mkSrcLet var1 (MIL.getSrcResultType milExpr1Type) milExpr1 $
                  MIL.mkSrcLet var2 (MIL.getSrcResultType milExpr2Type) milExpr2
-                   arithExpr
+                   (MIL.AppE (MIL.AppE (MIL.VarE $ MIL.Var arithFunName) (MIL.VarE var1)) (MIL.VarE var2))
              , milResultType)
 
     NothingCoalesce -> do
