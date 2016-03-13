@@ -621,13 +621,6 @@ For every class definition three MIL functions are generated:
         in return [Error Unit] self;
     ~~~
 
-{>> This is a rather unorthodox compilation of classes compared to conventional
-oo-languages. And it's only correct if the data in the object is immutable. A
-more conventional way is to pass the object as an extra argument to every
-method; the `self` parameter. If you used this compilation scheme then you
-wouldn't have to add the extra `Unit` argument to every method. You would also
-not have to use a recursive definition. <<}
-
     The next example demonstrates how a class definition for a subclass looks:
 
     ~~~
@@ -672,10 +665,27 @@ not have to use a recursive definition. <<}
 
     One of the most interesting observations to make here is that the
     subclassing polymorphism is taken care of by storing methods' lambda
-    expressions in a tuple. The ability to capture a reference to a superclass
-    method is powered by *closures* (data structures for storing a function
-    together with its environment, which are heavily used in implementaion of
-    functional programming languages).
+    expressions in a tuple. This tuple is essentially a classical *dispatch table*
+    \cite{ModernCompilerDesign}. The ability to capture references to the `self`
+    and `super` objects is powered by *closures* (data structures for storing a
+    function together with its environment, which are heavily used in implementaion
+    of functional programming languages).
+
+    One of the main differences of the approach to class and object
+    representation which was taken here compared to the more classical one
+    described, for example, in \cite{ModernCompilerDesign}, is the access to the
+    `self` object. Usually one would have a special parameter to every method,
+    which represents `self` and would be passed as an argument to every method
+    call. This would allow to avoid a recursive definition and a lazy parameter to
+    every method. Given that some representation of methods' types is part of a
+    class type (most likely via the dispatch table), this approach works well in
+    languages and IRs with a type system not as strict as the one in MIL, namely,
+    when having very general pointer or address types to represent method types and
+    being able to cast them.  In MIL, having `self` as a parameter in every method
+    would require its type to be in every method type, which would make the class
+    type recursive. One could think solving this with having an ADT instead of a
+    tuple for every class type, but that would require some kind of subtyping for
+    ADTs.
 
 * `new_ClassName` function, which corresponds to the `ClassName.new` construct
   in OOLang. It basically puts together `new_ClassName_Data` and
@@ -684,7 +694,7 @@ not have to use a recursive definition. <<}
     ~~~
     new_Parent : Error Unit
         { {Int, Bool}
-        , { Unit -> Int -> Error Unit Int}} =
+        , {Unit -> Int -> Error Unit Int}} =
       let (self_data : {Int, Bool}) <- new_Parent_Data
       in class_Parent self_data;
     ~~~
