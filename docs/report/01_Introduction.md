@@ -12,19 +12,11 @@ types etc. Synthesis (often called the *back end* of the compiler) uses
 information produced during the analysis to generate a program in a target
 language, usually performing a lot of program transformations and optimisations
 along the way \cite{DragonBook}. A typical compiler pipeline is pictured in
-Figure ... These phases do not necessarily happen one after another in a
-sequence, some of them might be combined, for example, but it is a convenient
-way of thinking about a compiler structure.
+Figure \ref{compilerpipeline}. These phases do not necessarily happen one after
+another in a sequence, some of them might be combined, for example, but it is a
+convenient way of thinking about a compiler structure.
 
-TODO: Figure 1. Compiler pipeline
-   Source program
--> (character stream) -> Lexing
--> (token stream) -> Parsing
--> (syntax tree) -> Type checking
--> (syntax tree) -> Intermediate code generation
--> (intermediate representation) -> Optimisation
--> (intermediate representation) -> Target code generation
--> Target program
+![Compiler pipeline\label{compilerpipeline}](CompilerPipeline.png)
 
 One of the central parts of many compilers and, in particular, optimising
 compilers is their *intermediate representation(s)* (IR) or *intermediate
