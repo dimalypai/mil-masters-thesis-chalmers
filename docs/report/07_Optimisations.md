@@ -15,12 +15,12 @@ either direct implementations or inspired by the transformations presented in
 
 Unfortunately, since there is no intepreter or code generator implemented for
 MIL at the moment, we cannot execute MIL code and therefore cannot measure its
-runtime characteristics like running time or memory consumption. We can only
+runtime characteristics like running time or memory consumption. We can just
 estimate the impact of transformations by the code size. Depending on how MIL
 is implemented, an intuition about the usefulness of certain optimisations
-might be incorrect.
-
-{>> Is there no semantics in the paper you cite which you can allude to and say that you basically assume a similar semantics with respect to performance? That would at least be something, even though it's not much. <<}
+might be incorrect. Another way to get an idea about the runtime behaviour of
+some of the MIL constructs is to make connections to the semantics of similar
+operations as presented in \cite{Tolmach} and \cite{Benton}.
 
 We will provide some code snippets with real implementation of transformations,
 but to be able to do this in a reasonable amount of space we will focus at the
@@ -617,6 +617,60 @@ they have. For example, `State` transformations cannot be directly applied
 since they work only on computations that have just `State` as their effect,
 but monad stacks in FunLang and OOLang have, for example, `IO` in their impure
 stacks in addition to `State`.
+
+## Discussion
+
+Correctness is often considered "the single most important criterion that a
+compiler must meet" \cite{EngineeringCompiler}. This, of course, includes
+optimisations. Safety is extremely important when designing and applying code
+transformations. We can see that MIL type and effect system is of great help
+here. It plays a role in implementing transformations and being able to quite
+easily find out effect information or make assumptions based on types about a
+piece of code instead of performing additional analysis to derive these facts,
+which are not present in the IR (which is usually the case for most IRs).
+
+In this thesis we tried to work with quite simply looking algebraic identities
+for expressing code transformations. Such identities are usually very minimal
+and very general at the same time, e.g. monad laws. This makes the
+implementation of optimisations based on them only a dozen lines of code in
+size. We also want to highlight that most industrial compilers are *not*
+implemented in a functional language, especially not in such an expressive and
+concise one as Haskell, while MIL, being a Haskell library, certainly benefits
+from this. Classical optimisations often use additional data structures (for
+example, sets) to maintain certain information about the program. It is
+certainly possible to implement more powerful and sophisticated transformations
+for MIL using a more algorithmic approach to the problem.
+
+One example of this is recognising equivalent `case` expressions and hoisting
+them to perform the matching only once. An interesting observation to make here
+is that this kind of optimisation is performed on a functional language
+construct, but it can make consequent method calls on the same object in OOLang
+more efficient, given the way how those are compiled. Optimising method calls
+is one of the most important targets for OO-language compilers
+\cite{ModernCompilerDesign}.
+
+Some of the optimisations presented here try to meet the same goals as the
+*value numbering* method \cite{EngineeringCompiler}, \cite{Muchnick}, namely
+eliminating some redundancy in computations. MIL transformations like "use
+read", "use write" are more specialised and simple, while value numbering is a
+more general and more complex technique. MIL certainly could benefit from using
+value numbering to eliminate more redundancies.
+
+One of the major well-known approaches to compiler optimisations nowadays is
+*data-flow analysis*. Examples of data-flow optimisations are
+*copy-propagation*, *constant-propagation* and *partial-redundancy*
+\cite{Muchnick}, \cite{EngineeringCompiler}. Data-flow analyses mainly focus on
+how values flow through the program and not on what effects can happen (which
+is one of the strongest properties of MIL), although this still needs to be
+handled somehow. Data-flow techniques should be possible to apply to MIL as
+well. One possible way to go would be to incorporate Hoopl -- a Haskell library
+for dataflow analysis and transformation \cite{Hoopl}.  However, an important
+consideration and a potential obstacle with this is that very many common
+optimisations are using the notions of *control-flow graph (CFG)* and *basic
+blocks* \cite{Muchnick}.  MIL, on the other hand, being a functional language,
+is *expression-based*. It could be considered to transform MIL further to
+something more low-level and imperative to benefit from more classical
+optimisations.
 
 ## Conclusions
 
