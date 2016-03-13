@@ -265,7 +265,8 @@ one = id [Int] 1;;
 
 one : (State ::: Error Unit) Int =
   let (var_1 : Int -> (State ::: Error Unit) Int) <-
-    let (var_0 : forall A . (State ::: Error Unit) (A -> (State ::: Error Unit) A)) <- id
+    let (var_0 : forall A . (State ::: Error Unit)
+                   (A -> (State ::: Error Unit) A)) <- id
     in var_0 [Int]
   in let (var_2 : Int) <- return [State ::: Error Unit] 1
   in var_1 var_2;
@@ -341,19 +342,20 @@ to match, since these MIL functions have just `IO` in their types. The
 following code snippet is the implementation of the `printString` function:
 
 ~~~
-printString : (State ::: Error Unit) (String -> (State ::: (Error Unit ::: IO)) Unit) =
-  return [State ::: Error Unit]
-    \(s_ : String) ->
-      case s_ of
-        | Empty_Str =>
-            return [State ::: (Error Unit ::: IO)] unit
-        | Cons_Str (c_ : Char) (cs_ : String) =>
-            let (unit_0 : Unit) <-
-              lift [IO => State ::: (Error Unit ::: IO)] print_char c_
-            in let (printString_ : String -> (State ::: (Error Unit ::: IO)) Unit) <-
-                 printString
-               in printString_ cs_
-      end;
+printString : (State ::: Error Unit)
+                (String -> (State ::: (Error Unit ::: IO)) Unit) =
+return [State ::: Error Unit]
+  \(s_ : String) ->
+  case s_ of
+  | Empty_Str =>
+      return [State ::: (Error Unit ::: IO)] unit
+  | Cons_Str (c_ : Char) (cs_ : String) =>
+      let (unit_0 : Unit) <-
+        lift [IO => State ::: (Error Unit ::: IO)] print_char c_
+      in let (printString_ : String -> (State ::: (Error Unit ::: IO)) Unit) <-
+           printString
+         in printString_ cs_
+  end;
 ~~~
 
 In the actual implementation of FunLang most of the built-in functions, except

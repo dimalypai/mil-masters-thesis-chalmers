@@ -163,7 +163,7 @@ its associated monad transformers. They use partial evaluation of monadic
 expressions to generate code. Harrison's thesis extends this work and includes
 correctness proofs for such compilers \cite{ModularCompilersProofs}.
 
-Another notable work in the area of modular compilers is by Day and Hutton
+Another notable work on modular compilers is by Day and Hutton
 \cite{ModularCompilersForEffects}. To structure the language's syntax in a
 modular way, the authors used an approach know as *"data types á la carte"*
 \cite{AlaCarte}, which is somewhat similar to extensible union types mentioned
@@ -292,25 +292,25 @@ DSL implementation in Idris is described in details in the paper.
 ### Extensible effects
 
 The last in this chapter is an example of a library-based approach. Extensible
-effects \cite{ExtensibleEffects} is a library for the Haskell programming
-language. It is positioned as an alternative to monad transformers. The central
-concept of this library is a monad $Eff\ r$, where $r$ is a type parameter that
-represents an *open union* of individual effects, that are combined ($r$ stands
-for "requests"). One of the main ideas behind the library is that effects come
-from communication between a client and an effect handler (authority), which is
-quite similar to the algebraic effect handlers approach. The implementation is
-described in detail in the paper together with the examples of implementation
-of different effects as a user code (meaning, it can be done outside of the
-library). The authors provide a detailed analysis of monad transformers and
-problems with their expressiveness. One of the highlights of differences from
-monad transformers is that effects of the same type can be combined and as
-opposed to monad transformers, no explicit lifting is needed, appropriate
-operations are found by types. Another difference is that the order of effects
-is chosen only when running a computation, not when defining the computation
-and in addition to that handled effects are subtracted from the type. The
-authors claim that their framework subsumes the Monad Transformers Library
-(MTL) in Haskell and allows to express computations, that are not possible with
-MTL.
+effects is a library for the Haskell programming language
+\cite{ExtensibleEffects}. It is positioned as an alternative to monad
+transformers. The central concept of this library is a monad $Eff\ r$, where
+$r$ is a type parameter that represents an *open union* of individual effects,
+that are combined ($r$ stands for "requests"). One of the main ideas behind the
+library is that effects come from communication between a client and an effect
+handler (authority), which is quite similar to the algebraic effect handlers
+approach. The implementation is described in detail in the paper together with
+the examples of implementation of different effects as a user code (meaning, it
+can be done outside of the library). The authors provide a detailed analysis of
+monad transformers and problems with their expressiveness. One of the
+highlights of differences from monad transformers is that effects of the same
+type can be combined and as opposed to monad transformers, no explicit lifting
+is needed, appropriate operations are found by types. Another difference is
+that the order of effects is chosen only when running a computation, not when
+defining the computation and in addition to that handled effects are subtracted
+from the type. The authors claim that their framework subsumes the Monad
+Transformers Library (MTL) in Haskell and allows to express computations, that
+are not possible with MTL.
 
 It is worth mentioning that algebraic effect handlers while having a good story
 of modularity suffer from performance problems (compared to monad

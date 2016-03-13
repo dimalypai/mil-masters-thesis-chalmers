@@ -423,13 +423,20 @@ following code snippet is an implementation of the `printBool` function:
 
 ~~~
 printBool : Bool -> (Error Unit ::: (State ::: IO)) Unit =
-\(b_ : Bool) ->
-  case b_ of
-  | True => printString
-    (Cons_Str 't' (Cons_Str 'r' (Cons_Str 'u' (Cons_Str 'e' Empty_Str))))
-  | False => printString
-    (Cons_Str 'f' (Cons_Str 'a' (Cons_Str 'l' (Cons_Str 's' (Cons_Str 'e' Empty_Str)))))
-end;
+  \(b_ : Bool) ->
+    case b_ of
+      | True => printString
+          (Cons_Str 't'
+          (Cons_Str 'r'
+          (Cons_Str 'u'
+          (Cons_Str 'e' Empty_Str))))
+      | False => printString
+          (Cons_Str 'f'
+          (Cons_Str 'a'
+          (Cons_Str 'l'
+          (Cons_Str 's'
+          (Cons_Str 'e' Empty_Str)))))
+    end;
 ~~~
 
 It basically just pattern matches on the argument and outputs a corresponding
@@ -580,7 +587,9 @@ For every class definition three MIL functions are generated:
       let (self_parentField : Int) <- return [Error Unit] 1
       in let (self_parentField2 : Bool) <- return [Error Unit] True
       in let (self_childField : Float) <- return [Error Unit] 1.0e-2
-      in return [Error Unit] {self_parentField, self_parentField2, self_childField};
+      in return [Error Unit] { self_parentField
+                             , self_parentField2
+                             , self_childField};
     ~~~
 
     Note that the subclass just duplicates the superclass field
@@ -641,18 +650,19 @@ For every class definition three MIL functions are generated:
         let (super : {{}, {Unit -> Int -> Error Unit Int}}) <- new_Parent
         in let rec (self : {{}, { Unit -> Int -> Error Unit Int
                                 , Unit -> Error Unit Bool}}) <-
-             case super of
-               | {super_data : {}, super_methods : {Unit -> Int -> Error Unit Int}} =>
-                   case super_methods of
-                     | {super_method : Unit -> Int -> Error Unit Int} =>
-                         { self_data
-                         , {\(lazy_ : Unit) ->
-                              \(x : Int) ->
-                                return [Error Unit] x,
-                            \(lazy_ : Unit) ->
-                                return [Error Unit] True}}
-                   end
+           case super of
+           | { super_data : {}
+             , super_methods : {Unit -> Int -> Error Unit Int}} =>
+             case super_methods of
+             | {super_method : Unit -> Int -> Error Unit Int} =>
+                 { self_data
+                 , {\(lazy_ : Unit) ->
+                      \(x : Int) ->
+                        return [Error Unit] x,
+                    \(lazy_ : Unit) ->
+                        return [Error Unit] True}}
              end
+           end
         in return [Error Unit] self;
     ~~~
 
