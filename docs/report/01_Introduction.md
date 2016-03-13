@@ -121,10 +121,10 @@ are worth mentioning here, namely:
 * Core (also referred to as System FC), STG and C-\- (Cmm) in GHC (The Glasgow
   Haskell Compiler). Core is a simple functional language (much smaller than
   Haskell) that is used for optimisations and further code generation
-  \cite{GHCCore} TODO: fix cite. STG is an intermediate representation produced
-  from Core and it's intention is to define how to efficiently implement
-  Haskell on standard hardware \cite{STG}. C-- is a C-like portable assembly
-  language \cite{Cmm} and is an example of the three-address code.
+  \cite{GHCCore}. STG is an intermediate representation produced from Core and
+  it's intention is to define how to efficiently implement Haskell on standard
+  hardware \cite{STG}. C-- is a C-like portable assembly language \cite{Cmm} and
+  is an example of the three-address code.
 * Register transfer language (RTL) in GCC (GNU Compiler Collection) is a
   low-level intermediate representation with a syntax inspired by Lisp lists
   (<https://gcc.gnu.org/onlinedocs/gccint/RTL.html>). It is a language for an
