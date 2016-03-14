@@ -1,0 +1,27 @@
+type Bool = True | False;
+
+type List A = Nil | Cons A (List A);
+
+intId : Int -> Int = \(i : Int) -> i;
+
+id : forall A . A -> A = /\A . \(x : A) -> x;
+
+true : Bool = id [Bool] True;
+
+empty : {} = {}
+
+tuple : {Int, Bool, Float, Char} = {1, True, 1.23, 'c'}
+
+TODO
+let (c : Char) <- read_char
+in return [IO] c
+
+TODO
+lift [IO => State ::: IO] return [IO] unit
+
+TODO
+case x of
+  | True => 0
+  | False => 1
+end
+

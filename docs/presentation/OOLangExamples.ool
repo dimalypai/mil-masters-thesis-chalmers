@@ -1,0 +1,78 @@
+def main : Unit
+  applyInt idInt 1;
+  unit;
+end
+
+def applyInt : {f : Int -> Pure Int} -> {x : Int} -> Pure Int
+  f x;
+end
+
+def idInt : {x : Int} -> Pure Int
+  x;
+end
+
+TODO
+when b do
+  1;
+otherwise
+  2;
+end;
+
+TODO
+try
+  throw [Int];
+  1;
+catch
+  2;
+finally
+end;
+
+def assignments : Pure Unit
+  x : Int = 0;
+  y : Mutable Int <- 0;
+  y <- 1;
+end
+
+def references : Unit
+  x : Ref Int = ref 0;
+  x := 1;
+  y : Int = !x;
+end
+
+TODO
+x : Maybe Int = just 1;
+y : Maybe Int;
+z : Maybe Int = nothing [Int];
+nothing [Int] ?? 0  # Evaluates to 0
+
+class Parent
+  parentField : Int = 1;
+
+  def method : {x : Int} -> Pure Int
+    self.parentField;
+  end
+end
+
+class Child < Parent
+  childField : Bool = true;
+
+  def method : {x : Int} -> Pure Int
+    when self.childField do
+      x;
+    otherwise
+      super.method x;
+    end;
+  end
+
+  def getParent : Pure Parent
+    super;
+  end
+end
+
+TODO
+parentObj = Parent.new;
+parentObj.method 1;
+
+mChild : Maybe Child = just Child.new;
+mParent : Maybe Parent = mChild ? getParent;
+

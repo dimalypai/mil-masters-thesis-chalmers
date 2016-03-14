@@ -1,0 +1,37 @@
+type Bool = True | False
+
+type Tree A
+  = Empty
+  | Node A (Tree A) (Tree A)
+
+constInt : Int -> Int -> Int
+constInt = \(a : Int) (b : Int) -> a;;
+
+id : forall A . A -> A
+id = /\A . \(x : A) -> x;;
+
+compose : forall A . forall B . forall C . (B -> C) -> (A -> B) -> A -> C
+compose = /\A B C . \(f : B -> C) (g : A -> B) (x : A) -> f (g x);;
+
+one : Int
+one = id [Int] 1;;
+
+main : IO Unit
+main = do
+  printInt 1;
+  i : Int <- readInt;
+  printInt i;
+  printInt (execState [Int] [Unit] stateFun 1);
+  return (evalState [Int] [Unit] stateFun 0);
+end;;
+
+stateFun : State Int Unit
+stateFun = do
+  i : Int <- get [Int];
+  put [Int] i;
+  modify [Int] (\(s : Int) -> s);
+end;;
+
+TODO
+throw [Int] catch 1
+
