@@ -292,10 +292,8 @@ codeGenStmts [DeclS _ decl] funMonad =
   codeGenDecl decl id funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
                                , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
 codeGenStmts [stmt@(AssignS {})] funMonad = do
-  preCodeGenAssign stmt
   result <- codeGenAssign stmt funMonad ( MIL.ReturnE funMonad (MIL.LitE MIL.UnitLit)
                                         , MIL.SrcTyApp funMonad (MIL.mkSimpleSrcType "Unit"))
-  postCodeGenAssign stmt
   return result
 codeGenStmts [tyStmt] funMonad = codeGenStmt tyStmt funMonad
 
@@ -305,8 +303,8 @@ codeGenStmts ((DeclS _ decl):tyStmts) funMonad = do
 codeGenStmts (stmt@(AssignS {}):tyStmts) funMonad = do
   preCodeGenAssign stmt
   milBodyExprWithType <- codeGenStmts tyStmts funMonad
-  result <- codeGenAssign stmt funMonad milBodyExprWithType
   postCodeGenAssign stmt
+  result <- codeGenAssign stmt funMonad milBodyExprWithType
   return result
 codeGenStmts (tyStmt:tyStmts) funMonad = do
   (milBindExpr, milBindExprType) <- codeGenStmt tyStmt funMonad
@@ -419,7 +417,9 @@ codeGenAssignMut :: TyExpr -> TyExpr -> MIL.SrcType -> (MIL.SrcExpr, MIL.SrcType
 codeGenAssignMut tyExprLeft tyExprRight funMonad (milBodyExpr, milBodyExprType) =
   case tyExprLeft of
     VarE _ _ var _ -> do
+      preCodeGenAssignMut tyExprLeft
       milVar <- currentVar var
+      postCodeGenAssignMut tyExprLeft
       (milExprRight, milExprRightType) <- codeGenExpr tyExprRight funMonad
       return ( MIL.mkSrcLet milVar (MIL.getSrcResultType milExprRightType) milExprRight milBodyExpr
              , milBodyExprType)
@@ -861,16 +861,20 @@ previousVar :: Var -> CodeGenM MIL.Var
 previousVar var@(Var varStr) = do
   varMap <- getVarMap
   let i' = case Map.lookup var varMap of
-             Just i -> i - 1
+             Just i -> max 0 (i - 1)
              Nothing -> error "Cannot get previousVar"
   modifyVarMap (Map.insert var i')
-  return $ MIL.Var (varStr ++ "_" ++ show i')
+  if i' /= 0
+    then return $ MIL.Var (varStr ++ "_" ++ show i')
+    else return $ varMil var
 
 currentVar :: Var -> CodeGenM MIL.Var
 currentVar var@(Var varStr) = do
   varMap <- getVarMap
   return $ case Map.lookup var varMap of
-             Just i -> MIL.Var (varStr ++ "_" ++ show i)
+             Just i -> if i /= 0
+                         then MIL.Var (varStr ++ "_" ++ show i)
+                         else varMil var
              Nothing -> varMil var
 
 -- * CodeGenM helpers

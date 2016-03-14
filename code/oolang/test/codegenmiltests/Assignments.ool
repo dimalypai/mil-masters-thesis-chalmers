@@ -22,3 +22,13 @@ def g : Unit
   unit;
 end
 
+def bug : Unit
+  b : Mutable Int <- 1;
+  c : Mutable Int <- 2;
+  d : Mutable Int <- 3;
+  a : Mutable Int <- b + c;
+  b <- a - d;
+  c <- b + c;
+  d <- a - d;
+end
+

@@ -180,3 +180,25 @@ g : (Error Unit ::: (State ::: IO)) Unit =
         in return [Error Unit ::: (State ::: IO)]
              unit;
 
+bug : (Error Unit ::: (State ::: IO)) Unit =
+  let (b : Int) <- return [Error Unit ::: (State ::: IO)] 1
+  in let (c : Int) <- return [Error Unit ::: (State ::: IO)] 2
+  in let (d : Int) <- return [Error Unit ::: (State ::: IO)] 3
+  in let (a : Int) <-
+       let (var_14 : Int) <- return [Error Unit ::: (State ::: IO)] b
+       in let (var_15 : Int) <- return [Error Unit ::: (State ::: IO)] c
+       in return [Error Unit ::: (State ::: IO)] add_int var_14 var_15
+  in let (b_1 : Int) <-
+       let (var_12 : Int) <- return [Error Unit ::: (State ::: IO)] a
+       in let (var_13 : Int) <- return [Error Unit ::: (State ::: IO)] d
+       in return [Error Unit ::: (State ::: IO)] sub_int var_12 var_13
+  in let (c_1 : Int) <-
+       let (var_10 : Int) <- return [Error Unit ::: (State ::: IO)] b_1
+       in let (var_11 : Int) <- return [Error Unit ::: (State ::: IO)] c
+       in return [Error Unit ::: (State ::: IO)] add_int var_10 var_11
+  in let (d_1 : Int) <-
+       let (var_8 : Int) <- return [Error Unit ::: (State ::: IO)] a
+       in let (var_9 : Int) <- return [Error Unit ::: (State ::: IO)] d
+       in return [Error Unit ::: (State ::: IO)] sub_int var_8 var_9
+  in return [Error Unit ::: (State ::: IO)] unit;
+
