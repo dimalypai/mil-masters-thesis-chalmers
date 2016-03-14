@@ -639,28 +639,28 @@ codeGenBinOp binOp tyExpr1 tyExpr2 resultType funMonad =
              , milResultType)
 
     Add ->
-      let arithFunName = case getTypeOf tyExpr1 of
+      let arithFunName = case getUnderType $ getTypeOf tyExpr1 of
                            TyFloat -> "add_float"
                            TyInt -> "add_int"
                            _ -> error "codeGenBinOp: unsupported type for Add"
       in codeGenArith tyExpr1 tyExpr2 resultType funMonad arithFunName
 
     Sub ->
-      let arithFunName = case getTypeOf tyExpr1 of
+      let arithFunName = case getUnderType $ getTypeOf tyExpr1 of
                            TyFloat -> "sub_float"
                            TyInt -> "sub_int"
                            _ -> error "codeGenBinOp: unsupported type for Sub"
       in codeGenArith tyExpr1 tyExpr2 resultType funMonad arithFunName
 
     Mul ->
-      let arithFunName = case getTypeOf tyExpr1 of
+      let arithFunName = case getUnderType $ getTypeOf tyExpr1 of
                            TyFloat -> "mul_float"
                            TyInt -> "mul_int"
                            _ -> error "codeGenBinOp: unsupported type for Mul"
       in codeGenArith tyExpr1 tyExpr2 resultType funMonad arithFunName
 
     Div -> do
-      let arithFunName = case getTypeOf tyExpr1 of
+      let arithFunName = case getUnderType $ getTypeOf tyExpr1 of
                            TyFloat -> "div_float"
                            TyInt -> "div_int"
                            _ -> error "codeGenBinOp: unsupported type for Div"

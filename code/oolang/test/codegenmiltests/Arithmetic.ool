@@ -1,5 +1,5 @@
 def main : Unit
-  a : Int = 2 + 3;
+  a : Mutable Int <- 2 + 3;
   b : Int = 3 - 2;
   c : Int = 2 * 2;
   d : Int = a + c;
