@@ -654,7 +654,8 @@ Some of the optimisations presented here try to meet the same goals as the
 eliminating some redundancy in computations. MIL transformations like "use
 read", "use write" are more specialised and simple, while value numbering is a
 more general and more complex technique. MIL certainly could benefit from using
-value numbering to eliminate more redundancies.
+value numbering to eliminate more redundancies (see examples at the end of this
+section).
 
 One of the major well-known approaches to compiler optimisations nowadays is
 *data-flow analysis*. Examples of data-flow optimisations are
@@ -671,6 +672,75 @@ blocks* \cite{Muchnick}.  MIL, on the other hand, being a functional language,
 is *expression-based*. It could be considered to transform MIL further to
 something more low-level and imperative to benefit from more classical
 optimisations.
+
+We will conclude with two examples that show some of the MIL strengths and
+weaknesses and its relation to the classical methods mentioned above. The
+examples are mainly based on the value numbering example from Chapter 8 in
+\cite{EngineeringCompiler}.
+
+First, we will demonstrate a redundancy which MIL cannot eliminate, but value
+numbering can. Below is a fragment of code that reads several integer values
+and then does some arithmetic manipulations and `Mutable` assignments in
+OOLang. One can notice that there is a common subexpression, namely `a - d`,
+which could be computed once.
+
+~~~
+b : Mutable Int <- readInt;
+c : Mutable Int <- readInt;
+d : Mutable Int <- readInt;
+a : Mutable Int <- b + c;
+b <- a - d;
+printInt b;
+c <- b + c;
+d <- a - d;
+printInt d;
+
+==>
+
+let (b : Int) <- readInt
+in let (c : Int) <- readInt
+in let (d : Int) <- readInt
+in let (var_21 : Unit) <- printInt (sub_int (add_int b c) d)
+in printInt (sub_int (add_int b c) d);
+~~~
+
+Looking at the generated (and optimised) MIL code, one can see that `b + c - d`
+is present twice (note that the expression for `a` was propagated to both its
+use sites).  This is something that value numbering would be capable of
+eliminating, effectively rewriting `d <- a - d;` to `d <- b;`.
+
+The second example is very similar to the first one, but there is an important
+difference: the integers are not read, but just have constant values. We
+introduced print statements to make sure that the code is not optimised away
+completely. Another important consideration is that we disabled all
+optimisations, except for monad laws for this example. It is especially
+important that constant folding is disabled, because otherwise almost
+everything would have been computed at compile time.
+
+~~~
+b : Mutable Int <- 1;
+c : Mutable Int <- 2;
+d : Mutable Int <- 3;
+a : Mutable Int <- b + c;
+printInt a;
+b <- a - d;
+printInt b;
+c <- b + c;
+printInt c;
+d <- a - d;
+printInt d;
+
+==>
+
+let (var_2 : Unit) <- printInt (add_int 1 2)
+in let (var_5 : Unit) <- printInt (sub_int (add_int 1 2) 3)
+in let (var_8 : Unit) <- printInt (add_int (sub_int (add_int 1 2) 3) 2)
+in printInt (sub_int (add_int 1 2) 3);
+~~~
+
+Looking at the generated (and optimised) MIL code one can see that monad laws
+in this case did pretty much what constant and copy propagation techniques
+mentioned above are designed to do.
 
 ## Conclusions
 
