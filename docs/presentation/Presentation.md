@@ -7,13 +7,12 @@
 
 ### Intermediate representations
 
-TODO
-
 - Important piece of compiler construction
 - Examples:
     * Core, STG, C-\- (Cmm) in GHC
     * RTL in GCC
     * LLVM IR (SSA-based)
+- Different design considerations
 
 ---
 
@@ -53,8 +52,6 @@ $$bind\ (bind\ m\ f)\ g = bind\ m\ (\lambda x \to bind\ (f\ x)\ g)$$
 
 ## Monads and programming languages
 
-TODO
-
 - Originate from Category Theory
 - Applied to structure denotational semantics of programming languages by Moggi
 - Wadler introduced monads into Haskell
@@ -76,8 +73,6 @@ $$lift\ (bind\ m\ k) = bind\ (lift\ m)\ (lift\ .\ k)$$
 
 ## Related work
 
-TODO
-
 - Common IL for ML and Haskell (Peyton Jones et al.)
     * Focus on evaluation strategy
     * Two different designs: Lift/ST and just ST monad
@@ -92,9 +87,14 @@ TODO
       raising an exception
     * Transformations
 
-## MIL
+## Related work (cont.)
 
-TODO
+- Monad transformers and modular effects
+- Koka programming language
+- Polymonads
+- Algebraic effects and effect handlers
+
+## MIL
 
 - Monadic Intermediate Language
 - System F
@@ -179,6 +179,7 @@ TODO
 - Inspired by C#, Haskell and a bit of Ruby
 - Immutability
 - Controlled impurity
+- Classes with inheritance
 
 # OOLang Examples
 

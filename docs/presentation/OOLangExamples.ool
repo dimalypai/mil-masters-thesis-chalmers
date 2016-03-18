@@ -11,21 +11,24 @@ def idInt : {x : Int} -> Pure Int
   x;
 end
 
-TODO
-when b do
-  1;
-otherwise
-  2;
-end;
+def whenStmt : Int
+  b : Bool = true;
+  when b do
+    1;
+  otherwise
+    2;
+  end;
+end
 
-TODO
-try
-  throw [Int];
-  1;
-catch
-  2;
-finally
-end;
+def tryStmt : Int
+  try
+    throw [Int];
+    1;
+  catch
+    2;
+  finally
+  end;
+end
 
 def assignments : Pure Unit
   x : Int = 0;
@@ -39,11 +42,12 @@ def references : Unit
   y : Int = !x;
 end
 
-TODO
-x : Maybe Int = just 1;
-y : Maybe Int;
-z : Maybe Int = nothing [Int];
-nothing [Int] ?? 0  # Evaluates to 0
+def maybe : Int
+  x : Maybe Int = just 1;
+  y : Maybe Int;
+  z : Maybe Int = nothing [Maybe Int];
+  nothing [Maybe Int] ?? 0;  # Evaluates to 0
+end
 
 class Parent
   parentField : Int = 1;
@@ -69,10 +73,11 @@ class Child < Parent
   end
 end
 
-TODO
-parentObj = Parent.new;
-parentObj.method 1;
+def objects : Unit
+  parentObj : Parent = Parent.new;
+  parentObj.method 1;
 
-mChild : Maybe Child = just Child.new;
-mParent : Maybe Parent = mChild ? getParent;
+  mChild : Maybe Child = just Child.new;
+  # mParent : Maybe Parent = mChild ? getParent;
+end
 

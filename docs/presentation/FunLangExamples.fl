@@ -1,4 +1,4 @@
-type Bool = True | False
+# type Bool = True | False
 
 type Tree A
   = Empty
@@ -32,6 +32,6 @@ stateFun = do
   modify [Int] (\(s : Int) -> s);
 end;;
 
-TODO
-throw [Int] catch 1
+exc : Int
+exc = throw [Int] catch 1;;
 
