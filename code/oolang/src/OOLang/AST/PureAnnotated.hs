@@ -14,6 +14,10 @@ instance PureAnnotated Stmt where
   getPurityOf (DeclS _ decl) = getPurityOf decl
   getPurityOf (ExprS _ e) = getPurityOf e
   getPurityOf (AssignS _ _ _ _ p) = p
+  getPurityOf (WhenS _ e thenStmts otherwiseStmts) =
+    and (getPurityOf e :
+          (map getPurityOf thenStmts ++
+           map getPurityOf otherwiseStmts))
   getPurityOf (TryS _ tryStmts catchStmts finallyStmts) =
     and (map getPurityOf tryStmts ++
          map getPurityOf catchStmts ++
