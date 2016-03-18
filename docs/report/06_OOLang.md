@@ -177,7 +177,7 @@ some value and `nothing` which has to be annotated with a type:
 ~~~
 x : Maybe Int = just 1;
 y : Maybe Int;
-z : Maybe Int = nothing [Int];
+z : Maybe Int = nothing [Maybe Int];
 ~~~
 
 There is a binary operator which we call "nothing coalesce" (similar to the
@@ -187,7 +187,7 @@ returned, otherwise the value under `just` in the left operand itself is
 returned:
 
 ~~~
-nothing [Int] ?? 0  # Evaluates to 0
+nothing [Maybe Int] ?? 0  # Evaluates to 0
 ~~~
 
 As was mentioned above, variables of type `Maybe` can be left uninitialised.
@@ -255,7 +255,7 @@ generator. We will describe this issue in the "Code generation" section.
 The next example demonstrates constructing objects and working with them:
 
 ~~~
-parentObj = Parent.new;
+parentObj : Parent = Parent.new;
 parentObj.method 1;
 
 mChild : Maybe Child = just Child.new;
