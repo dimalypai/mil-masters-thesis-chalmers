@@ -95,9 +95,9 @@ MIL has built-in tuples to be able to group values of different types together.
 Tuples can be empty as well.
 
 ~~~
-empty : {} = {}
+empty : {} = {};
 
-tuple : {Int, Bool, Float, Char} = {1, True, 1.23, 'c'}
+tuple : {Int, Bool, Float, Char} = {1, True, 1.23, 'c'};
 ~~~
 
 The example above also demonstrates integer, floating point and character
