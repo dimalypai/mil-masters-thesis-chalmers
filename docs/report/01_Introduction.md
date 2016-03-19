@@ -1,6 +1,6 @@
 # Introduction
 
-The vast majority of modern compilers follows more or less the same structure
+The vast majority of modern compilers follow more or less the same structure
 known for many years, which is called *compiler pipeline*. Compiler pipeline is
 a chain of phases, which together form the compilation process. They can be
 divided into two big parts: *analysis* and *synthesis*.  Analysis (often
@@ -73,7 +73,7 @@ transformers it is possible to change certain parts of the semantics by just
 changing the order in which monads are combined.
 
 Finally, this work attempts to implement a programming library for working with
-the introduced intermediate language and a set of effects-aware code
+the introduced intermediate language and a set of effect-aware code
 transformations and optimisations, which can be reused by compiler writers
 targeting the designed IL. To evaluate and examplify the usage of the
 intermediate language, two programming languages (object-oriented and
@@ -115,7 +115,7 @@ are worth mentioning here, namely:
   Haskell) that is used for optimisations and further code generation
   \cite{GHCCore}. STG is an intermediate representation produced from Core and
   it's intention is to define how to efficiently implement Haskell on standard
-  hardware \cite{STG}. C-- is a C-like portable assembly language \cite{Cmm} and
+  hardware \cite{STG}. C-\- is a C-like portable assembly language \cite{Cmm} and
   is an example of the three-address code.
 * Register transfer language (RTL) in GCC (GNU Compiler Collection) is a
   low-level intermediate representation with a syntax inspired by Lisp lists
@@ -126,8 +126,8 @@ are worth mentioning here, namely:
   infrastructure (<http://llvm.org>), which aims to provide a language
   independent compiler toolchain with a number of optimisations. LLVM IR is a
   language for an abstract machine with an infinite set of registers, it makes
-  use of SSA form, has a simple type system, abstracts away some low-level
-  details such as calling convention \cite{LLVM}.
+  use of SSA form, has a simple type system, and abstracts away some low-level
+  details such as a calling convention \cite{LLVM}.
 
 The IR designed as a part of this work is quite different from most of the IRs
 described above. None of the mentioned IRs encodes different program effects

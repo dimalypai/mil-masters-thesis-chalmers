@@ -15,44 +15,44 @@
 
 First, we will describe some of the ideas behind an intermediate language
 proposed in "Bridging the gulf" \cite{BridgingTheGulf}. The main intention of
-the work was to design a common intermediate language for compiling ML and
-Haskell programming languages. One of the main differences between these two
-languages is that ML has strict evaluation and Haskell is a lazy language. In
-addition to this, Haskell is a pure language, while ML is not. Therefore, the
-main challenge was to have an IL that will work equally well for both. Note,
-that this setting and the problem are slightly different from what this thesis
-tries to address, but nevertheless it is still very interesting to see one of
-the not so many monadic IRs and the considerations authors had when designing
-it. Certain ground rules for an IL are given, namely: ability to translate both
-core ML and Haskell, explicitly typed with a type system that supports
-polymorphism (a variant of System F \cite{SystemF}), well-defined semantics,
-efficiency of compiled programs comparable to those produced by good ML and
-Haskell compilers. Authors propose two designs of such an IL. Both of them are
-based on monads. The idea behind the first IL is to be explicit about things
-that are usually implicit in the IL, but are explicit in the denotational
-semantics of it. There are two monads in this IL, lifting (for denoting
-possibly-diverging computations) and the combination of lifting with the state
-transformer $ST$ (to distinguish between pure and stateful computations). The
-main reason for using the lifting monad is to express whether a function takes
-an argument, which is evaluated or not. Semantics of the monads is made
-implicit in the language. Unfortunately, the first proposed design turned out
-to be vague about the timing and degree of evaluation and solutions to these in
-the presence of polymorphism are complicated and therefore, authors conclude
-that it is unsuitable as a compiler IL. The second IL design introduces a
-distinction between value types (for variables) and computation types (for
-expressions), let expression becomes eager and new syntactic forms (evaluation
-suspension and forcing) are introduced, thus making the control of evaluation
-explicit. $Lift$ monad becomes implicit (and covered by types distinction and
-new syntactic forms) and so there is only $ST$ monad left. Still having this
-monad explicit allows to express that certain computations are free from
-side-effects and perform useful transformations based on this information,
-which is recorded in the program itself. The second design seems to address the
-problems found in the first one, but as the authors highlight, the ability of
-the first IL design to capture certainly-terminating computations is very
-useful and they would like to incorporate it into the second design. The
-problem of combining monads was not addressed in "Bridging the gulf".  Several
-monad transformation rules are given, but they were not in the main focus of
-this paper.
+the work was to design a common intermediate language for compiling ML
+\cite{ML} and Haskell \cite{HaskellReport} programming languages. One of the
+main differences between these two languages is that ML has strict evaluation
+and Haskell is a lazy language. In addition to this, Haskell is a pure
+language, while ML is not. Therefore, the main challenge was to have an IL that
+will work equally well for both. Note, that this setting and the problem are
+slightly different from what this thesis tries to address, but nevertheless it
+is still very interesting to see one of the not so many monadic IRs and the
+considerations authors had when designing it. Certain ground rules for an IL
+are given, namely: ability to translate both core ML and Haskell, explicitly
+typed with a type system that supports polymorphism (a variant of System F
+\cite{SystemF}), well-defined semantics, efficiency of compiled programs
+comparable to those produced by good ML and Haskell compilers. Authors propose
+two designs of such an IL. Both of them are based on monads. The idea behind
+the first IL is to be explicit about things that are usually implicit in the
+IL, but are explicit in the denotational semantics of it. There are two monads
+in this IL, lifting (for denoting possibly-diverging computations) and the
+combination of lifting with the state transformer $ST$ (to distinguish between
+pure and stateful computations). The main reason for using the lifting monad is
+to express whether a function takes an argument, which is evaluated or not.
+Semantics of the monads is made implicit in the language. Unfortunately, the
+first proposed design turned out to be vague about the timing and degree of
+evaluation and solutions to these in the presence of polymorphism are
+complicated and therefore, authors conclude that it is unsuitable as a compiler
+IL. The second IL design introduces a distinction between value types (for
+variables) and computation types (for expressions), let expression becomes
+eager and new syntactic forms (evaluation suspension and forcing) are
+introduced, thus making the control of evaluation explicit. $Lift$ monad
+becomes implicit (and covered by types distinction and new syntactic forms) and
+so there is only $ST$ monad left. Still having this monad explicit allows to
+express that certain computations are free from side-effects and perform useful
+transformations based on this information, which is recorded in the program
+itself. The second design seems to address the problems found in the first one,
+but as the authors highlight, the ability of the first IL design to capture
+certainly-terminating computations is very useful and they would like to
+incorporate it into the second design. The problem of combining monads was not
+addressed in "Bridging the gulf".  Several monad transformation rules are
+given, but they were not in the main focus of this paper.
 
 ### Optimizing ML using a hierarchy of monadic types
 
@@ -70,7 +70,7 @@ In addition to the classical monad operations ($bind$ and $return$), an
 embedding operation named $up$ is introduced, which corresponds to the $lift$
 operation for monad transformers, introduced in the previous chapter. An
 interesting decision problem about the combination of state and exception
-arises (it is an example of a general problem of monad transformers composition
+arises (it is an example of a general problem of monad transformers' composition
 mentioned in the previous chapter). The author chooses exception handling that
 does not alter the state (as opposed to reverting the state on exception
 handling). There is a number of generalised monad laws and code motion laws for
@@ -79,7 +79,7 @@ Tolmach's work is a monad inference algorithm for computing the minimal monadic
 effect of subexpressions, which allows to perform many more useful
 transformations comparing to assigning the maximal effect. The author makes
 several supporting claims for a monadic intermediate language: its usage in
-organising and justifying a variety of optimizing transformations in the
+organising and justifying a variety of optimising transformations in the
 presence of effects, reflecting the results of the effect inference in the
 program itself as well as keeping them up to date as different optimisations
 progress (as opposed to using some separate data structure for this). At the

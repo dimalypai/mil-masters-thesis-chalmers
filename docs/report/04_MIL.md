@@ -17,7 +17,7 @@ transformation for the purpose of optimisations. Monadic Intermediate Language
 
 MIL is a rather small strict functional language. Its type system is based on
 System F (or polymorphic lambda calculus) \cite{SystemF}. Effects are modelled
-with monads and monad transformers are used to combine the monads. MIL also has
+with monads, and monad transformers are used to combine the monads. MIL also has
 a number of additional features allowing to more easily express many features
 found in modern programming languages.
 
@@ -76,7 +76,7 @@ Polymorphic functions look like this:
 id : forall A . A -> A = /\A . \(x : A) -> x;
 ~~~
 
-This a polymorphic version of the identity function, which works on any type.
+This is a polymorphic version of the identity function, which works on any type.
 It has a *universally-quantified* type (using `forall` keyword). The body of
 the function is the so-called "big lambda" or "type lambda", which introduces a
 *type variable* `A` (and `forall A` in the type) and then a lambda expression,
@@ -163,11 +163,11 @@ in isEven 4
 ~~~
 
 Although `let rec` has a quite similar syntax to the `let` expression, they
-should not be confused. `let` being a monadic $bind$ can have only one variable
-binder and requires its binder and body expressions to have monadic types. `let
-rec` should be used purely for introducing one recursive binding or several
-mutually recursive bindings at once. One use case for it will be described in
-one of the following chapters.
+should not be confused. The `let` expression being a monadic $bind$ can have
+only one variable binder and requires its binder and body expressions to have
+monadic types. The `let rec` expression should be used purely for introducing
+one recursive binding or several mutually recursive bindings at once. One use
+case for it will be described in one of the following chapters.
 
 ### Built-in data types and functions
 
@@ -396,11 +396,11 @@ returned:
 
 \infrule[T-Return]{isMonad(M) \andalso \Gamma \vdash e : T}{\Gamma \vdash return\ [M]\ e : M\ T}
 
-The next rule specifies the typing of the $lift$ operation. $lift$ is annotated
-with two monads, we lift a computation in monad $M_1$ to monad $M_2$. The monad
-of the expression $e$ that we are lifting ($M_1'$) and monad $M_1$ should
-satisfy the non-commutative version of the $isCompatibleMonad$ relation. $M_1$
-also has to be a *monad suffix* of $M_2$.
+The next rule specifies the typing of the $lift$ operation. This operation is
+annotated with two monads: we lift a computation in monad $M_1$ to monad $M_2$.
+The monad of the expression $e$ that we are lifting ($M_1'$) and monad $M_1$
+should satisfy the non-commutative version of the $isCompatibleMonad$ relation.
+$M_1$ also has to be a *monad suffix* of $M_2$.
 
 \infrule[T-Lift]{\Gamma \vdash e : M_1'\ T \andalso isMonad(M_1') \andalso isMonad(M_1) \andalso isMonad(M_2) \\ isCompatibleMonadNotCommut(M_1', M_1) \andalso isMonadSuffix(M_1, M_2)}{\Gamma \vdash lift\ [M_1 \Rightarrow M_2]\ e : M_2\ T}
 
@@ -473,7 +473,7 @@ and $monadConsRight$ functions to get the left-hand side and the right-hand
 side of a monad cons respectively.
 
 One of the most important high-level relations is the $isCompatible$ relation,
-which is used in typing of function applications and function bodies, for
+which is used in typing of function applications and function bodies, as an
 example. In general, we can view the $isCompatible$ relation in MIL as a
 subtyping relation extended to monads and their combinations with monad cons.
 It tries to capture when a value of one type can be used as a value of another
@@ -551,11 +551,11 @@ compatibility of function types. Intuitively, if $isCompatible(T_1, T_2)$,
 $T_1$ has at most the effects of $T_2$, potentially less, but not more. Since
 function types are "covariant" in the result types, we can pass as an argument
 a function which returns a computation with less effects than the specified
-argument type. Also, since function types are "contravariant" in the argument
+parameter type. Also, since function types are "contravariant" in the argument
 types, we can pass a function, which has a parameter with a more effectful
-type. For example, a function of type $(State ::: IO) Int \to State Int$ can be
-passed as an argument to a function which has a parameter of type $State Int
-\to (State ::: IO) Int$.
+type. For example, a function of type $(State ::: IO)\ Int \to State\ Int$ can be
+passed as an argument to a function which has a parameter of type $State\ Int
+\to (State ::: IO)\ Int$.
 
 In the typing rule for the $lift$ operation above, the relation $isMonadSuffix$
 was used. The intuition behind it is that it specifies whether it is possible
@@ -638,8 +638,8 @@ meaning, for example, that functions have type signatures and variable binders
 have types specified. The type annotated version contains more information:
 some syntax nodes are more refined and are annotated with types.
 
-The biggest different between the two is in representations of types. The
-source representation produced a the parser is captured in the `SrcType` data
+The biggest difference between the two is in representations of types. The
+source representation produced by the parser is captured in the `SrcType` data
 type:
 
 ~~~{.haskell}
@@ -653,7 +653,7 @@ data SrcType
 ~~~
 
 It has data constructors for type constructors represented just as their names
-(`TypeName` is wrapper for `String`), function types (`SrcTyArrow`),
+(`TypeName` is a wrapper for `String`), function types (`SrcTyArrow`),
 universally-quantified types, type application, tuple types and monad cons,
 which has `SrcType`s as its operands. It is important to note that type
 variables and monads do not have separate data constructors, but are captured
@@ -663,7 +663,7 @@ identifiers starting with an upper-case letter).
 
 The internal representation of types is expressed as the `Type` ADT, which is
 slightly more involved. Types are converted from the source representation
-during the type checking phase. At the same type a number of checks are
+during the type checking phase. At the same time a number of checks are
 performed, for example, that all the types are properly kinded, that they use
 types which are in scope, that there is no type variable shadowing etc.
 
@@ -752,7 +752,7 @@ data Expr v ct mt t
 ~~~
 
 There are two type synonyms: one for the source representation of expressions
-and one for type annotated expressions. This is a general pattern used in the
+and one for the type annotated expressions. This is a general pattern used in the
 MIL implementation for many other data types, like type definitions,
 constructors definitions, function definitions etc.
 
@@ -775,7 +775,7 @@ chapter.
 
 ## Discussion
 
-Currently, effects in MIL are quite coarse-grained, for example, compared to
+Currently, effects in MIL are quite coarse-grained. For example, compared to
 MIL-lite by Benton and Kennedy \cite{Benton}, there is only one big $State$ and
 no distinction between reading/writing is made. Input and output are not
 separated either. Non-termination is not captured in MIL, we will live this
