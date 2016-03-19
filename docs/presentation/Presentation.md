@@ -224,7 +224,25 @@ In relation to Haskell:
 
 # FunLang Examples
 
-# FunLang code generation TODO
+---
+
+## FunLang Code generation
+
+### Monad transformer stacks
+
+- Pure and State: `State ::: Error Unit`
+- IO: `State ::: (Error Unit ::: IO)`
+
+###
+
+### Demo
+
+## FunLang Conclusions
+
+- Straight-forward code generation (in general)
+- Would benefit from effect inference/elimination
+- Can be quite easily extended with more features
+- Exception handling and MIL limitations
 
 ---
 
@@ -238,7 +256,29 @@ In relation to Haskell:
 
 # OOLang Examples
 
-# OOLang code generation TODO
+---
+
+## OOLang Code generation
+
+### Monad transformer stacks
+
+- Pure: `Error Unit`
+- Impure: `Error Unit ::: (State ::: IO)`
+
+###
+
+### Demo
+
+## OOLang Conclusions
+
+- Non-termination problem:
+    * `Error Unit ::: NonTerm => Maybe (Either e a)`
+    * `Error Unit ::: (NonTerm ::: (State ::: IO)) => s -> IO (Maybe (Either e a), s)`
+    * `Error Unit ::: (State ::: (NonTerm ::: IO)) => s -> IO (Maybe (Either e a, s))`
+    * `State ::: (Error Unit ::: (NonTerm ::: IO))`
+    * `Error Unit ::: (m ::: NonTerm)`
+- MIL is quite a good fit for modern OO-languages
+- Influence to introduce tuples with subtyping in MIL
 
 ---
 
@@ -259,6 +299,12 @@ In relation to Haskell:
 - Constant folding
 
 # Optimisations TODO
+
+[comment1]: # - optimisation pipelines
+
+[comment2]: # - when elimination
+
+[comment3]: # - constant folding
 
 # Conclusions
 

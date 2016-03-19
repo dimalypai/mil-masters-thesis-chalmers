@@ -27,6 +27,7 @@ def tryStmt : Int
   catch
     2;
   finally
+    3;
   end;
 end
 
@@ -34,6 +35,8 @@ def assignments : Pure Unit
   x : Int = 0;
   y : Mutable Int <- 0;
   y <- 1;
+  y;
+  y <- 2;
 end
 
 def references : Unit

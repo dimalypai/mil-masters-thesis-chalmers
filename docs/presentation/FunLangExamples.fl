@@ -16,6 +16,12 @@ compose = /\A B C . \(f : B -> C) (g : A -> B) (x : A) -> f (g x);;
 one : Int
 one = id [Int] 1;;
 
+plus : Int
+plus = 1 + 2;;
+
+division : Int
+division = 1 / 2;;
+
 main : IO Unit
 main = do
   printInt 1;
