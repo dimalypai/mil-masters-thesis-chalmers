@@ -50,6 +50,15 @@ $$bind\ (bind\ m\ f)\ g = bind\ m\ (\lambda x \to bind\ (f\ x)\ g)$$
 
 ---
 
+## Examples of monads
+
+- Identity
+- State
+- Either
+- IO
+
+---
+
 ## Monads and programming languages
 
 - Originate from Category Theory
@@ -71,6 +80,26 @@ Laws:
 $$lift\ .\ return = return$$
 $$lift\ (bind\ m\ k) = bind\ (lift\ m)\ (lift\ .\ k)$$
 
+---
+
+## Examples of monad transformers
+
+- StateT
+- ErrorT
+- ReaderT
+
+###
+
+### Non-commutative effects
+
+* `StateT s (ErrorT e Identity) a` $\Rightarrow$ `s -> ErrorT e Identity (a, s)` $\Rightarrow$\
+  $\Rightarrow$ `s -> Identity (Either e (a, s))` $\Rightarrow$ `s -> Either e (a, s)`
+
+* `ErrorT e (StateT s Identity) a` $\Rightarrow$ `StateT s Identity (Either e a)` $\Rightarrow$\
+  $\Rightarrow$ `s -> Identity (Either e a, s)` $\Rightarrow$ `s -> (Either e a, s)`
+
+---
+
 ## Related work
 
 - Common IL for ML and Haskell (Peyton Jones et al.)
@@ -86,13 +115,17 @@ $$lift\ (bind\ m\ k) = bind\ (lift\ m)\ (lift\ .\ k)$$
     * Fine-grained effects: non-termination, allocation, reading, writing,
       raising an exception
     * Transformations
+- The GRIN project (Boquist and Johnsson)
 
 ## Related work (cont.)
 
 - Monad transformers and modular effects
 - Koka programming language
 - Polymonads
-- Algebraic effects and effect handlers
+- Algebraic effects and effect handlers:
+    * Eff
+    * Idris
+    * Extensible effects
 
 ## MIL
 
@@ -126,6 +159,10 @@ $$lift\ (bind\ m\ k) = bind\ (lift\ m)\ (lift\ .\ k)$$
 \infrule{isSingleMonad(M)}{isMonad(M)}
 \infrule{isSingleMonad(M_1) \andalso isMonad(M_2)}{isMonad(M_1 ::: M_2)}
 
+In relation to Haskell:
+
+`Error Int ::: (State ::: IO)` $\Rightarrow$ `ErrorT Int (StateT () IO)`
+
 ## MIL Type system highlights (cont.)
 
 \infrule{isMonad(M_1) \andalso isMonad(M_2) \andalso isCompatibleMonadNotCommut(M_1, M_2)}{isCompatible(M_1, M_2)}
@@ -144,10 +181,28 @@ $$lift\ (bind\ m\ k) = bind\ (lift\ m)\ (lift\ .\ k)$$
 
 ## MIL Type system highlights (cont.)
 
+### Examples for $isCompatibleMonadNotCommut$
+
+- $State ::: Error\ Unit$ is compatible with $State ::: (Error\ Unit ::: IO)$
+- $State ::: Error\ Int$ is not compatible with $Error\ Int ::: State$
+- $State ::: IO$ is not compatible with just $State$
+
+### Example for $isCompatible$
+
+- a function of type $(State ::: IO)\ Int \to State\ Int$ can be passed as an
+  argument to a function which has a parameter of type $State\ Int \to (State
+  ::: IO)\ Int$
+
+## MIL Type system highlights (cont.)
+
 \infrule{isSingleMonad(M_1) \andalso isSingleMonad(M_2) \andalso M_1 \equiv_\alpha M_2}{isMonadSuffix(M_1, M_2)}
 \infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \andalso M_1 \equiv_\alpha M_2}{isMonadSuffix(M_1, M_2)}
 \infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \andalso isMonadSuffix(M_1, monadConsRight(M_2))}{isMonadSuffix(M_1, M_2)}
 \infrule{isSingleMonad(M_1) \andalso isMonadCons(M_2) \andalso isMonadSuffix(M_1, monadConsRight(M_2))}{isMonadSuffix(M_1, M_2)}
+
+### Example for $isMonadSuffix$
+
+- $State ::: IO$ and $Error\ Unit ::: (State ::: IO)$
 
 ## MIL Type system highlights (cont.)
 
