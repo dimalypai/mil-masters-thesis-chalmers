@@ -151,9 +151,9 @@ in C# (for reference, not value, types) or Java. But there is a slight
 difference, which makes OOLang references remind of C pointers, namely that one
 can put a new value into the same reference cell (which is not possible in Java
 or C#, where one can just mutate the value or make a reference variable point
-to another reference). There is a `ref` operator for creating new references,
+to another value). There is a `ref` operator for creating new references,
 `:=` for assigning values to references and `!` for reading reference values.
-The following examples demonstrates these operators and a declaration of a
+The following example demonstrates these operators and a declaration of a
 `Ref` variable (note that `=` is used for initialisation):
 
 ~~~
@@ -417,7 +417,7 @@ type Maybe A
 ~~~
 
 A difference from FunLang is that `Bool` is a built-in data type with literals,
-rather than an ADT, so there are built-in function for printing and reading
+rather than an ADT, so there are built-in functions for printing and reading
 boolean values. The `Bool` data type itself maps to the `Bool` ADT in MIL. The
 following code snippet is an implementation of the `printBool` function:
 

@@ -31,7 +31,7 @@ the main features of the language.
 
 ### Data types
 
-As most statically typed functional programming languages, FunLang support ADTs
+As most statically typed functional programming languages, FunLang supports ADTs
 which can be parameterised.  One of the simplest data types is `Bool`, which
 represents true and false values:
 
@@ -101,7 +101,7 @@ arithmetic operations: `+`, `-`, `*` and `/`.
 
 ### Monads
 
-FunLang provides built-in `IO` and `State` monads, which are similars to the
+FunLang provides built-in `IO` and `State` monads, which are similar to the
 corresponding monads in Haskell. The notation looks very similar to Haskell,
 except that more things are explicit, like variable bindings, for example, and
 every *statement* in a `do` block is terminated with a semicolon, while the
@@ -164,14 +164,14 @@ influences the representation of effects in MIL code quite significantly.
 ### Exceptions
 
 FunLang provides rather naive support for exception handling. There are two
-language constructs for it: `throw` and `catch`. `throw` is an expression that
-allows to raise an exception. Exceptions in FunLang do not carry additional
-information, so `throw` is used standalone, without any value specified, but in
-order to assign a type to it, it needs to be annotated with a type. `catch` is
-a binary infix operator, that tries to evaluate an expression on the left-hand
-side and if that throws an exception, it returns an expression on the
-right-hand side. The following example will result in `1`, since the expression
-on the right is `throw` and the handler expression is `1`:
+language constructs for it: `throw` and `catch`. The first one is an expression
+that allows to raise an exception. Exceptions in FunLang do not carry
+additional information, so `throw` is used standalone, without any value
+specified, but in order to assign a type to it, it needs to be annotated with a
+type. The `catch` construct is a binary infix operator, that tries to evaluate
+an expression on the left-hand side and if that throws an exception, it returns
+an expression on the right-hand side. The following example will result in `1`,
+since the expression on the right is `throw` and the handler expression is `1`:
 
 ~~~
 throw [Int] catch 1
@@ -288,9 +288,9 @@ definitions generated from FunLang, which have a monad attached to every
 argument position. In order to avoid having this special case which can
 complicate the code generation slightly, we generate a wrapper function for
 every data constructor. This wrapper function is then used instead of the data
-constructor occurence itself.
+constructor occurrence itself.
 
-The following example contains a definition of `Pair` data type and the
+The following example contains a definition of the `Pair` data type and the
 corresponding wrapper function for its only data constructor:
 
 ~~~
@@ -440,11 +440,11 @@ Built-in `State` functions such as `evalState`, `execState`, `get`, `put` and
 every program together with other built-in functions and data types.  The
 function `evalState` creates a reference with the initial state value that it
 is given and runs a given `State` computation with this reference as an
-argument.  The same happends in `execState`, but in addition it reads the
-reference to get the final state value out and returns it. `get` and `put` are
-wrappers around `read_ref` and `write_ref` respectively. `modify` is a more
-high-level combination of these two with a given state transformation function
-applied in between.
+argument.  The same happens in `execState`, but in addition it reads the
+reference to get the final state value out and returns it. The `get` and `put`
+functions are wrappers around `read_ref` and `write_ref` respectively. The
+`modify` operation is a more high-level combination of these two with a given
+state transformation function applied in between.
 
 ### Exceptions
 
@@ -465,7 +465,7 @@ corresponds to the left-hand side of FunLang `catch` and the second parameter
 corresponds to the right-hand side wrapped in a lambda, which takes a `Unit`
 placeholder. The problem with this type and the design of FunLang is that in
 FunLang exceptions can be thrown and handled both inside pure computations and
-inside `IO` computations, which corresponds to two different monads stacks. So
+inside `IO` computations, which corresponds to two different monad stacks. So
 there are two possible types of computations that we need to pass to
 `catch_error` and none of those match the type above. As was presented in the
 previous chapter, a type of the argument to a function must satisfy the
@@ -520,8 +520,7 @@ unnecessary returns, binds and remove monads from the types as well as
 introduce opportunities for more optimisations, one would need to implement
 some kind of *effect inference*. Such a process could analyse the code and
 infer that it does not have the specified effects and then rewrite the code,
-simplifying it. We will explore this a bit more in the chapter on
-optimisations.
+simplifying it.
 
 One could quite easily extend FunLang with more powerful features like `case`
 expressions or combining monads with transformers, for example, because MIL is

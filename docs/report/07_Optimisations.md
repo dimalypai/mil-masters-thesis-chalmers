@@ -26,17 +26,17 @@ We will provide some code snippets with real implementation of transformations,
 but to be able to do this in a reasonable amount of space we will focus at the
 expression level of granularity, since this is where the transformations
 happen. More high level cases (e.g. function definition) are merely recursing
-down to get to expressions. The MIL AST has support for \cite{Uniplate} -- a
-Haskell library for generic traversals of algebraic data types and so code
-transformations are implemented using these traversals. We want to highlight
-that many of the transformation implementations are relatively naive and serve
-the purpose of demonstrating the concept.
+down to get to expressions. The MIL AST has support for Uniplate
+\cite{Uniplate} -- a Haskell library for generic traversals of algebraic data
+types and so code transformations are implemented using these traversals. We
+want to highlight that many of the transformation implementations are
+relatively naive and serve the purpose of demonstrating the concept.
 
 ## Monad laws
 
 As was stated in Chapter 2 all monads must satisfy three monad laws: left
 identity, right identity and associativity. These three laws can be used not
-only to verify that a certain structure is ineed a monad, but also to optimise
+only to verify that a certain structure is indeed a monad, but also to optimise
 monadic code.
 
 ### Left identity
@@ -68,8 +68,8 @@ This and all the other transformations are implemented using the same pattern
 to perform a top-down traversal of the AST, namely using Uniplate's `descendBi`
 on the top level with a function that has a case where the optimisation can be
 applied and a general case, which uses `descend` with the function itself to
-continue the recursion. Using `descendBi` allows to apply the optimisation the
-top level instead of skipping the top level and recursing down directly. We
+continue the recursion. Using `descendBi` allows to apply the optimisation on
+the top level instead of skipping the top level and recursing down directly. We
 direct the reader to the Uniplate documentation for some related details.
 
 In the implementation above we look for a $bind$ expression which has $return$
@@ -628,6 +628,13 @@ here. It plays a role in implementing transformations and being able to quite
 easily find out effect information or make assumptions based on types about a
 piece of code instead of performing additional analysis to derive these facts,
 which are not present in the IR (which is usually the case for most IRs).
+Moreover, MIL allows to run a lint checking potentially after every
+transformation to make sure that none of the transformations made a program
+ill-typed. While many classical IRs are imperative and statement based, meaning
+that most of the operations are assigning values to variables, MIL is a
+functional language and therefore it is *expression-based*, which in general
+makes it more easy to reason about the code, which implies that it should be
+easier to see whether a certain transformation is safe or not.
 
 In this thesis we tried to work with quite simply looking algebraic identities
 for expressing code transformations. Such identities are usually very minimal
@@ -665,13 +672,16 @@ how values flow through the program and not on what effects can happen (which
 is one of the strongest properties of MIL), although this still needs to be
 handled somehow. Data-flow techniques should be possible to apply to MIL as
 well. One possible way to go would be to incorporate Hoopl -- a Haskell library
-for dataflow analysis and transformation \cite{Hoopl}.  However, an important
+for data-flow analysis and transformations \cite{Hoopl}.  However, an important
 consideration and a potential obstacle with this is that very many common
 optimisations are using the notions of *control-flow graph (CFG)* and *basic
-blocks* \cite{Muchnick}.  MIL, on the other hand, being a functional language,
-is *expression-based*. It could be considered to transform MIL further to
-something more low-level and imperative to benefit from more classical
-optimisations.
+blocks* \cite{Muchnick}. MIL, as was mentioned above, is a functional,
+expression-based language, but even more importantly, it is a higher order
+language (meaning, that it supports higher order functions). This introduces
+more complexity to the analysis (compared to simpler and more low-level IRs),
+which many common techniques are not designed to handle. It could be considered
+to transform MIL further to something more low-level and imperative to benefit
+from more classical optimisations.
 
 We will conclude with two examples that show some of the MIL strengths and
 weaknesses and its relation to the classical methods mentioned above. The
@@ -752,7 +762,7 @@ Implementing transformations shown in this chapter does not require a lot of
 work. The structure of MIL AST and its support for Uniplate makes it possible
 to write clear and concise Uniplate-based transformation code.
 
-Generality and composability of most transformations allows to easily reuse
+Generality and composability of most transformations allow to easily reuse
 them and build modular code optimisation pipelines in source language
 compilers.
 

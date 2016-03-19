@@ -21,7 +21,7 @@ to capture different semantics in the ordering of effects. It is possible to
 use MIL as a target for languages that belong to two major programming
 paradigms: object-oriented and functional. An example of this are two source
 programming languages (FunLang and OOLang) that were designed and implemented
-as a part of this project.
+as part of this project.
 
 MIL provides an expressive framework for implementing effect-aware code
 transformations. A number of code transformations has been implemented and are
@@ -81,9 +81,9 @@ potential source languages. But what we think might be beneficial is to explore
 which other monads can be added to MIL as built-in to be able to more easily
 cover a wider range of use cases. As was mentioned in Chapter 2 there exists a
 lot of interesting monads. What comes to mind as the most relevant to MIL are
-Backtracking and Par monad \cite{ParMonad}. The first one could be used to
-express, for example, logic programming languages and the second one could
-provide a way to support parallelism in the IR.
+Backtracking \cite{BacktrackingM} and Par monad \cite{ParMonad}. The first one
+could be used to express, for example, logic programming languages and the
+second one could provide a way to support parallelism in the IR.
 
 Another related track can be to try bringing laziness into MIL. One of the ways
 of doing it might be to incorporate ideas from \cite{BridgingTheGulf}, e.g.
