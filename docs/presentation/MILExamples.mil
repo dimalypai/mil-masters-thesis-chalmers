@@ -17,7 +17,8 @@ main : IO Char =
   in return [IO] c;
 
 stateIO : (State ::: IO) Unit =
-  lift [IO => State ::: IO] return [IO] unit;
+  let (x : Ref Int) <- new_ref [Int] 1
+  in lift [IO => State ::: IO] return [IO] unit;
 
 caseExpr : Id Int =
   let (x : Bool) <- return [Id] True

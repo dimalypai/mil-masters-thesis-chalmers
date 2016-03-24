@@ -123,15 +123,16 @@ them.
 
 ### The GRIN project
 
-The last IR described in this section is the one from "The GRIN project"
-\cite{GRIN}. GRIN (Graph Reduction Intermediate Notation) is a monadic
-intermediate code that is used in a back end of a compiler for lazy functional
-languages. GRIN resembles three-address code mentioned in the Introduction. For
-the monadic part, it has $unit$ operation and $;$ (semicolon) as a monadic
-bind. The monad is a kind of State monad with a heap as an underlying storage.
-There are $store$, $fetch$ and $update$ operations in the monad.  The authors
-highlight that the monadic structure gives GRIN a very "functional flavour" and
-therefore a nice setup for doing analysis and transformations.
+The last intermediate representation described in this section is the one from
+"The GRIN project" \cite{GRIN}. GRIN (Graph Reduction Intermediate Notation) is
+a monadic intermediate code that is used in a back end of a compiler for lazy
+functional languages. GRIN resembles three-address code mentioned in the
+Introduction. For the monadic part, it has $unit$ operation and $;$ (semicolon)
+as a monadic bind. The monad is a kind of State monad with a heap as an
+underlying storage.  There are $store$, $fetch$ and $update$ operations in the
+monad.  The authors highlight that the monadic structure gives GRIN a very
+"functional flavour" and therefore a nice setup for doing analysis and
+transformations.
 
 ## Monad transformers and modular effects
 

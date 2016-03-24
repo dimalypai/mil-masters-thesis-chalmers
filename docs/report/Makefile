@@ -2,7 +2,8 @@ all:
 	pandoc \
 		  --chapters \
 		  --parse-raw -t latex \
-		00_Acknowledgements.md > Acknowledgements.tex
+		Abstract.md \
+		00_Acknowledgements.md > AbstractAcknowledgements.tex
 	pandoc \
 			--variable documentclass=book \
 			--variable classoption=oneside \
@@ -16,7 +17,7 @@ all:
 			--number-sections \
 			--parse-raw -t latex -s \
 			--template=report_template.latex \
-		  --include-before=Acknowledgements.tex \
+		  --include-before=AbstractAcknowledgements.tex \
 		01_Introduction.md \
 		02_Monads.md \
 		03_RelatedWork.md \

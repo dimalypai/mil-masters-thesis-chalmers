@@ -152,19 +152,6 @@ $$lift\ (bind\ m\ k) = bind\ (lift\ m)\ (lift\ .\ k)$$
 
 ## MIL Type system highlights (cont.)
 
-\infax{isSingleMonad(Id)}
-\infax{isSingleMonad(State)}
-\infax{isSingleMonad(IO)}
-\infax{isSingleMonad(Error\ T)}
-\infrule{isSingleMonad(M)}{isMonad(M)}
-\infrule{isSingleMonad(M_1) \andalso isMonad(M_2)}{isMonad(M_1 ::: M_2)}
-
-In relation to Haskell:
-
-`Error Int ::: (State ::: IO)` $\Rightarrow$ `ErrorT Int (StateT () IO)`
-
-## MIL Type system highlights (cont.)
-
 \infrule{isMonad(M_1) \andalso isMonad(M_2) \andalso isCompatibleMonadNotCommut(M_1, M_2)}{isCompatible(M_1, M_2)}
 \infrule{isMonad(M_1) \andalso isMonad(M_2) \andalso isCompatible(M_1, M_2) \andalso isCompatible(T_1, T_2)}{isCompatible(M_1\ T_1, M_2\ T_2)}
 \infrule{isCompatible(T_{21}, T_{11}) \andalso isCompatible(T_{12}, T_{22})}{isCompatible(T_{11} \to T_{12}, T_{21} \to T_{22})}
@@ -173,13 +160,9 @@ In relation to Haskell:
 
 ## MIL Type system highlights (cont.)
 
-\infrule{isSingleMonad(M_1) \andalso isSingleMonad(M_2) \andalso M_1 \equiv_\alpha M_2}{isCompatibleMonadNotCommut(M_1, M_2)}
-\infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \andalso monadConsLeft(M_1) \equiv_\alpha monadConsLeft(M_2) \\ isCompatibleMonadNotCommut(monadConsRight(M_1), monadConsRight(M_2))}{isCompatibleMonadNotCommut(M_1, M_2)}
-\infrule{isSingleMonad(M_1) \andalso isMonadCons(M_2) \andalso M_1 \equiv_\alpha monadConsLeft(M_2)}{isCompatibleMonadNotCommut(M_1, M_2)}
-\infrule{isCompatibleMonadNotCommut(M_1, M_2)}{isCompatibleMonad(M_1, M_2)}
-\infrule{isCompatibleMonadNotCommut(M_2, M_1)}{isCompatibleMonad(M_1, M_2)}
+### Relation to Haskell:
 
-## MIL Type system highlights (cont.)
+- `Error Int ::: (State ::: IO)` $\Rightarrow$ `ErrorT Int (StateT () IO)`
 
 ### Examples for $isCompatibleMonadNotCommut$
 
@@ -193,24 +176,9 @@ In relation to Haskell:
   argument to a function which has a parameter of type $State\ Int \to (State
   ::: IO)\ Int$
 
-## MIL Type system highlights (cont.)
-
-\infrule{isSingleMonad(M_1) \andalso isSingleMonad(M_2) \andalso M_1 \equiv_\alpha M_2}{isMonadSuffix(M_1, M_2)}
-\infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \andalso M_1 \equiv_\alpha M_2}{isMonadSuffix(M_1, M_2)}
-\infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \andalso isMonadSuffix(M_1, monadConsRight(M_2))}{isMonadSuffix(M_1, M_2)}
-\infrule{isSingleMonad(M_1) \andalso isMonadCons(M_2) \andalso isMonadSuffix(M_1, monadConsRight(M_2))}{isMonadSuffix(M_1, M_2)}
-
 ### Example for $isMonadSuffix$
 
 - $State ::: IO$ and $Error\ Unit ::: (State ::: IO)$
-
-## MIL Type system highlights (cont.)
-
-\infrule{isMonadCons(M_1) \andalso isSingleMonad(M_2)}{highestEffectMonad(M_1, M_2) = M_1}
-\infrule{isSingleMonad(M_1) \andalso isMonadCons(M_2)}{highestEffectMonad(M_1, M_2) = M_2}
-\infrule{isSingleMonad(M_1) \andalso isSingleMonad(M_2)}{highestEffectMonad(M_1, M_2) = M_1}
-\infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \\ highestEffectMonad(monadConsRight(M_1), monadConsRight(M_2)) = monadConsRight(M_1)}{highestEffectMonad(M_1, M_2) = M_1}
-\infrule{isMonadCons(M_1) \andalso isMonadCons(M_2) \\ highestEffectMonad(monadConsRight(M_1), monadConsRight(M_2)) = monadConsRight(M_2)}{highestEffectMonad(M_1, M_2) = M_2}
 
 ## FunLang
 
@@ -242,7 +210,9 @@ In relation to Haskell:
 - Straight-forward code generation (in general)
 - Would benefit from effect inference/elimination
 - Can be quite easily extended with more features
-- Exception handling and MIL limitations
+- Exception handling and MIL limitations:
+    * `catch_error` type: `forall E . forall A . Error E A -> (E -> Error E A) -> Error E A`
+    * `catch_error_1` and `catch_error_2` instead
 
 ---
 
@@ -298,7 +268,7 @@ In relation to Haskell:
 - Common bind extraction
 - Constant folding
 
-# Optimisations TODO
+# Optimisations
 
 [comment1]: # - optimisation pipelines
 
