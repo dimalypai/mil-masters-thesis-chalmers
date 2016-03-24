@@ -9,8 +9,6 @@
 > may serve as a source of inspiration for intermediate representations as well
 > as reasoning about program effects in general.*
 
-{>> Three times in this chapter you start a sentence with "Note" and then a comma. This strikes me as very odd punctuation. Remove the comma or put it somewhere where it belongs. <<}
-
 ## Intermediate representations based on monads
 
 ### Common IL for ML and Haskell
@@ -22,7 +20,7 @@ the work was to design a common intermediate language for compiling ML
 main differences between these two languages is that ML has strict evaluation
 and Haskell is a lazy language. In addition to this, Haskell is a pure
 language, while ML is not. Therefore, the main challenge was to have an IL that
-will work equally well for both. Note, that this setting and the problem are
+will work equally well for both. Note that this setting and the problem are
 slightly different from what this thesis tries to address, but nevertheless it
 is still very interesting to see one of the not so many monadic IRs and the
 considerations authors had when designing it. Certain ground rules for an IL
@@ -44,9 +42,9 @@ complicated and therefore, authors conclude that it is unsuitable as a compiler
 IL. The second IL design introduces a distinction between value types (for
 variables) and computation types (for expressions), let expression becomes
 eager and new syntactic forms (evaluation suspension and forcing) are
-introduced, thus making the control of evaluation explicit. {~~ $Lift$ monad ~> The $Lift$ monad ~~}
+introduced, thus making the control of evaluation explicit. The $Lift$ monad
 becomes implicit (and covered by types distinction and new syntactic forms) and
-so there is only {++ the ++} $ST$ monad left. Still having this monad explicit allows to
+so there is only the $ST$ monad left. Still having this monad explicit allows to
 express that certain computations are free from side-effects and perform useful
 transformations based on this information, which is recorded in the program
 itself. The second design seems to address the problems found in the first one,
@@ -114,7 +112,7 @@ covered:
 * writing to a reference
 * raising an exception
 
-Note, how fine-grained the effects for stateful computations are. Effects are
+Note how fine-grained the effects for stateful computations are. Effects are
 combined using sets and inclusion of these sets introduces a subtyping
 relation. All possible exceptions are also included in the set of effects.
 Authors provide a number of effect-independent and effect-dependent
@@ -137,7 +135,7 @@ transformations.
 ## Monad transformers and modular effects
 
 In this section we will look at work that has been done in the area of monad
-transformers and using them to combine different effects. Note, that in these
+transformers and using them to combine different effects. Note that in these
 cases monad transformers are used mainly in the implementation language, rather
 than in an IR, as described below. It is a bit different area of monad
 transformers' application compared to this thesis, but it still serves as a
@@ -233,12 +231,6 @@ context". An example they give is a system where memory is partitioned into
 regions and read and write operations have a region as part of their effect.
 Then a sequence of read operations, for example, can capture which regions were
 read before and after every operation.
-
-{>> I think you should remove the part about session types. It's a distraction. <<}
-Another powerful application of polymonads is encoding of *session types*.
-Session types allow to express a very important nowadays notion of
-communication between different parties by capturing a communication protocol
-in types \cite{SessionTypes}.
 
 ### Eff programming language
 

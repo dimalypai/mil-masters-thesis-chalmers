@@ -21,15 +21,14 @@ operations. Monad operations have the following types:
 $$return :: a \to M\ a$$
 $$bind :: M\ a \to (a \to M\ b) \to M\ b$$
 
-{>> Don't start a sentence with a lowercase function name. One way to fix it is to add "The function" before the function name. <<}
-
-$return$ takes a value of type $a$ and returns a monadic computation that just
-returns that value and does not do anything else. $bind$ takes a monadic
-computation that can produce a value of type $a$ and a function that can
-consume that value and give a computation of type $M\ b$. So, $bind$ gives a
-way to apply such a function to a computation of type $M\ a$ to get a
-computation of type $M\ b$. Since, $bind$ is very often used as an infix
-operator, it's type usually has the argument before the function.
+The $return$ operation takes a value of type $a$ and returns a monadic
+computation that just returns that value and does not do anything else. The
+$bind$ operation takes a monadic computation that can produce a value of type
+$a$ and a function that can consume that value and give a computation of type
+$M\ b$. So, $bind$ gives a way to apply such a function to a computation of
+type $M\ a$ to get a computation of type $M\ b$. Since $bind$ is very often
+used as an infix operator, it's type usually has the argument before the
+function.
 
 Monad operations must satisfy the following three laws:
 
@@ -59,8 +58,9 @@ $$bind\ (bind\ m\ f)\ g = bind\ m\ (\lambda x \to bind\ (f\ x)\ g)$$
 In this section we are going to look at examples of several monads.
 
 * The simplest of all monads is the $Identity$ monad. It does not decorate
-  computations with any effect or information. {== It is basically just a function
-  application. ==}{>> I'm not sure I understand this sentece. It's true that `bind` is simply function application but your "It" seems to refer to the monad and the monad itself is not function application. The monad is just a pure value <<} We provide a definition of $Identity$ in Haskell below:
+  computations with any effect or information. The $bind$ operation for the
+  $Identity$ monad is basically just a function application. We provide a
+  definition of $Identity$ in Haskell below:
 
     ~~~{.haskell}
     newtype Identity a = Identity a
@@ -80,11 +80,11 @@ In this section we are going to look at examples of several monads.
 
 {>> Also, you need to introduce the operations of each monad here. Like "get" and "set" for the state monad. You refer to them in the section on monad transformers. <<}
 
-* The next example is the $State$ monad for stateful computations. Since in most
-  functional languages immutability is encouraged by default, the usual
-  technique to deal with {== mutable state ==}{>> But the state monad doesn't really give us *mutable* state, does it? <<} is to pass the state around as function
-  arguments. One of the possible $State$ monad implementations pretty much makes
-  this technique implicit. Here is such an implementation in Haskell:
+* The next example is the $State$ monad for stateful computations. Since in
+  most functional languages immutability is encouraged by default, the usual
+  technique to deal with state is to pass it around as function arguments. One of
+  the possible $State$ monad implementations pretty much makes this technique
+  implicit. Here is such an implementation in Haskell:
 
     ~~~{.haskell}
     newtype State s a = State (s -> (a, s))
@@ -98,9 +98,22 @@ In this section we are going to look at examples of several monads.
 
     One can think about a stateful computation as taking a state and producing
     a value and the new state. This is what the type definition above captures.
-    $return$ produces a stateful computation that just gives the given value back
-    without modifying the state. The $bind$ operation chains stateful computations
-    together and passes the result and states between them.
+    The $return$ function produces a stateful computation that just gives the given
+    value back without modifying the state. The $bind$ operation chains stateful
+    computations together and passes the result and states between them.
+
+    There are usually some useful operations associated with a monad. For the
+    $State$ monad those are, for example, `get` and `put`, which are used to read
+    and write the state value, respectively.  Below is an example of their
+    implementation in Haskell:
+
+    ~~~{.haskell}
+    get :: State s s
+    get = State (\s -> (s, s))
+
+    put :: s -> State s ()
+    put x = State (\s -> ((), x))
+    ~~~
 
 * Another ubiquitous effect is error (exception) handling. There are several
   different monads that can be used. {== One of them is the $Either$ monad. ==}{>> When you write like this it makes me wonder: why did you pick this particular monad? How is preferable to the other choices? <<}
@@ -120,6 +133,19 @@ In this section we are going to look at examples of several monads.
     $return$ is simply `Right`. The $bind$ operation passes the result of a
     successful computation to the next one, but in the case of an error, it stops
     and just propagates the error further.
+
+    Examples of useful operations for the $Either$ monad are `throwError` and
+    `catchError`. The former is used to produce an error value, and the latter
+    allows to *handle* an error value and potentially produce some other value:
+
+    ~~~{.haskell}
+    throwError :: e -> Either e a
+    throwError = Left
+
+    catchError :: Either e a -> (e -> Either e a) -> Either e a
+    catchError (Left e) h = h e
+    catchError (Right a) _ = Right a
+    ~~~
 
 * Very famous in the Haskell world $IO$ is also an example of a monad. We will
   skip a representation of the $IO$ monad in Haskell, but one can think about
@@ -159,7 +185,8 @@ others.
 ## Monad transformers
 
 *Monad transformer* is a type constructor $T$ which takes a monad $M$ and
-returns a monad, or in other words, if $M$ is a monad, so is $T\ M$. {>> Very good and crisp definition! <<}
+returns a monad, or in other words, if $M$ is a monad, so is $T\ M$
+\cite{MonadTransformers}.
 
 Monad transformers are used to add new operations to a monad without changing
 the computation in that monad, for example state manipulation can be added to
@@ -262,15 +289,17 @@ them, like `get` or `put` for `StateT`, for example, it is not possible to just
 use them directly (unless `StateT` is on top) because the types do not match.
 In this case lifting needs to be used, to add necessary layers on top of a
 computation in one of the monads deeper down in the stack. There are attempts
-to solve the lifting problem, for example by using type classes to
-abstract different types of computations and use these abstractions instead of
-specific monad transformers. This idea is based on \cite{Overloading} and
-incorporated in Haskell packages like `mtl`. It is rather convenient for a
-user, but has quite an overhead for a library writer, because the number of
-instances that needs to be provided is quadratic to the number of monads
+to solve the lifting problem, for example by using type classes to abstract
+different types of computations and use these abstractions instead of specific
+monad transformers. This idea is based on \cite{Overloading} and incorporated
+in Haskell packages like `mtl`. It is rather convenient for a user, but has
+quite an overhead for a library writer, because the number of instances that
+needs to be provided is quadratic to the number of monads
 \cite{MonadTransformers}. Another, more recent idea, is presented in
 \cite{ModularMT}, where "a uniform lifting through any monad transformer" is
-defined. {>> Algebraic effects need to be mentioned here as well <<}
+defined. There is also work on an alternative to monad transformers based on
+*algebraic effects* and *effect handlers* being done. This approach is covered
+in more details in the following chapter.
 
 As it was mentioned earlier, the order in which different monads are combined
 can be significant. If it is the case, then it is said that these two effects
