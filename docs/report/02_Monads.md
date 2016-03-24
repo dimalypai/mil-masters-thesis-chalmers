@@ -21,6 +21,8 @@ operations. Monad operations have the following types:
 $$return :: a \to M\ a$$
 $$bind :: M\ a \to (a \to M\ b) \to M\ b$$
 
+{>> Don't start a sentence with a lowercase function name. One way to fix it is to add "The function" before the function name. <<}
+
 $return$ takes a value of type $a$ and returns a monadic computation that just
 returns that value and does not do anything else. $bind$ takes a monadic
 computation that can produce a value of type $a$ and a function that can
@@ -50,13 +52,15 @@ $$bind\ (bind\ m\ f)\ g = bind\ m\ (\lambda x \to bind\ (f\ x)\ g)$$
     Associativity law has a similar idea to associativity laws in arithmetic,
     namely that the order of parentheses does not matter \cite{WadlerMonadsForFP}.
 
+{>> It's not only the associativity law that is similar to laws in arithmetic. The identity laws are similar to laws for multiplication with 1 or addition with zero. <<}
+
 ## Examples of monads
 
 In this section we are going to look at examples of several monads.
 
 * The simplest of all monads is the $Identity$ monad. It does not decorate
-  computations with any effect or information. It is basically just a function
-  application. We provide a definition of $Identity$ in Haskell below:
+  computations with any effect or information. {== It is basically just a function
+  application. ==}{>> I'm not sure I understand this sentece. It's true that `bind` is simply function application but your "It" seems to refer to the monad and the monad itself is not function application. The monad is just a pure value <<} We provide a definition of $Identity$ in Haskell below:
 
     ~~~{.haskell}
     newtype Identity a = Identity a
@@ -72,9 +76,13 @@ In this section we are going to look at examples of several monads.
     computation does not want to use any specific effects with this computation, so
     she can choose the $Identity$ monad as the monad instance in this case.
 
+{>> I think you should talk about the notion of "running" a monad when you introduce the monads. You use the term further down in the text so it's important that you have defined it properly here. <<}
+
+{>> Also, you need to introduce the operations of each monad here. Like "get" and "set" for the state monad. You refer to them in the section on monad transformers. <<}
+
 * The next example is the $State$ monad for stateful computations. Since in most
   functional languages immutability is encouraged by default, the usual
-  technique to deal with mutable state is to pass the state around as function
+  technique to deal with {== mutable state ==}{>> But the state monad doesn't really give us *mutable* state, does it? <<} is to pass the state around as function
   arguments. One of the possible $State$ monad implementations pretty much makes
   this technique implicit. Here is such an implementation in Haskell:
 
@@ -95,7 +103,7 @@ In this section we are going to look at examples of several monads.
     together and passes the result and states between them.
 
 * Another ubiquitous effect is error (exception) handling. There are several
-  different monads that can be used. One of them is the $Either$ monad.
+  different monads that can be used. {== One of them is the $Either$ monad. ==}{>> When you write like this it makes me wonder: why did you pick this particular monad? How is preferable to the other choices? <<}
 
     ~~~{.haskell}
     data Either e a = Left e | Right a
@@ -151,7 +159,7 @@ others.
 ## Monad transformers
 
 *Monad transformer* is a type constructor $T$ which takes a monad $M$ and
-returns a monad, or in other words, if $M$ is a monad, so is $T\ M$.
+returns a monad, or in other words, if $M$ is a monad, so is $T\ M$. {>> Very good and crisp definition! <<}
 
 Monad transformers are used to add new operations to a monad without changing
 the computation in that monad, for example state manipulation can be added to
@@ -161,10 +169,12 @@ is usually called *monad transformer stack*. There is one caveat, though,
 namely, that effects produced by some of the monad transformer/monad
 combinations depend on the order in which they are combined.
 
-Monad transformer comes with $lift$ operation, which embeds a computation in
+Monad transformer comes with {== $lift$ ==}{>> I think you should do something about the typography of "lift". It doesn't look very good in the text, the letters are too far apart. Whatevery you've done to make "return" look good, do the same to "lift". <<} operation, which embeds a computation in
 monad $M$ into monad $T\ M$. It has the following type:
 
 $$lift :: M\ a \to T\ M\ a$$
+
+{>> "M" needs to be a monad in the type above. The "MonadTrans" instances you give below certainly require "M" to be a monad. <<}
 
 The main intention for $lift$ is to be used to specify on which level a certain
 monadic operation is performed.
@@ -260,7 +270,7 @@ user, but has quite an overhead for a library writer, because the number of
 instances that needs to be provided is quadratic to the number of monads
 \cite{MonadTransformers}. Another, more recent idea, is presented in
 \cite{ModularMT}, where "a uniform lifting through any monad transformer" is
-defined.
+defined. {>> Algebraic effects need to be mentioned here as well <<}
 
 As it was mentioned earlier, the order in which different monads are combined
 can be significant. If it is the case, then it is said that these two effects

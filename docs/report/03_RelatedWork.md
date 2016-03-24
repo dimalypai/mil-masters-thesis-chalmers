@@ -9,6 +9,8 @@
 > may serve as a source of inspiration for intermediate representations as well
 > as reasoning about program effects in general.*
 
+{>> Three times in this chapter you start a sentence with "Note" and then a comma. This strikes me as very odd punctuation. Remove the comma or put it somewhere where it belongs. <<}
+
 ## Intermediate representations based on monads
 
 ### Common IL for ML and Haskell
@@ -42,9 +44,9 @@ complicated and therefore, authors conclude that it is unsuitable as a compiler
 IL. The second IL design introduces a distinction between value types (for
 variables) and computation types (for expressions), let expression becomes
 eager and new syntactic forms (evaluation suspension and forcing) are
-introduced, thus making the control of evaluation explicit. $Lift$ monad
+introduced, thus making the control of evaluation explicit. {~~ $Lift$ monad ~> The $Lift$ monad ~~}
 becomes implicit (and covered by types distinction and new syntactic forms) and
-so there is only $ST$ monad left. Still having this monad explicit allows to
+so there is only {++ the ++} $ST$ monad left. Still having this monad explicit allows to
 express that certain computations are free from side-effects and perform useful
 transformations based on this information, which is recorded in the program
 itself. The second design seems to address the problems found in the first one,
@@ -231,6 +233,7 @@ regions and read and write operations have a region as part of their effect.
 Then a sequence of read operations, for example, can capture which regions were
 read before and after every operation.
 
+{>> I think you should remove the part about session types. It's a distraction. <<}
 Another powerful application of polymonads is encoding of *session types*.
 Session types allow to express a very important nowadays notion of
 communication between different parties by capturing a communication protocol
@@ -269,10 +272,12 @@ effects.
 
 ### Algebraic effects and dependent types
 
+{>> Fix the typography of "Effects" and "EffM" <<}
+
 Another example of programming with effects based on algebraic effects and
 inspired by the Eff programming language is described in \cite{Brady}, which
 introduces $Effects$ -- a domain-specific language (DSL) for Idris programming
-language \cite{Idris}. In the general case, there is a type $EffM$ that
+language \cite{Idris}. {>> I personally don't think that "Effects" qualifies as a DSL <<} In the general case, there is a type $EffM$ that
 describes a program using some *computation context* (which can be a monad, for
 example, but it does not have to be), lists of input and output effects as well
 as the program's return type.  Programming using $Effects$ from a user point of

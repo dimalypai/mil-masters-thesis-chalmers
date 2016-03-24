@@ -24,7 +24,7 @@ language(s)* (IL). Intermediate representation is a data structure that
 represents the program being compiled during the compilation process. Some
 intermediate representations are also called languages, because they have a
 symbolic representation. In this text these two terms will be used
-interchangeably. One of the simplest examples of an IR is a syntax tree, built
+interchangeably. {== Why do you use two terms? If they mean the same thing, why not just use one term. It's certainly less confusing for the reader. ==} One of the simplest examples of {== an IR is a syntax tree ==}{>> All IRs are implemented using syntax trees. I think you mean something more specific here <<}, built
 by parsing a source language. Well-designed intermediate representation should
 allow to abstract away unnecessary details while expressing the necessary ones
 at certain compilation stages. It should be fairly easy to produce as well as
@@ -35,6 +35,8 @@ independent of both the source and the target, which allows them to be used in
 retargetable compilers (compilers which can generate code for several different
 target languages/architectures) by combining different front ends and back ends
 which work with the same IR \cite{DragonBook}.
+
+{== I think you should mention something about desugaring and the fact that some IRs are essentially the surface language but with syntactic sugar eliminated ==}
 
 A major task performed by most modern industrial compilers is code
 optimisation. Compiler writers try to make compiled programs perform as good as
@@ -92,7 +94,7 @@ the most notable are:
 * Representations based on static single assignment form (SSA) \cite{SSA}, the
   main idea of which is that every variable in a program is assigned exactly
   once. One of the main benefits of the SSA form is that many useful and powerful
-  optimisations can be expressed in simple and efficient ways \cite{ComputingSSA}.
+  optimisations can be expressed in simple and efficient ways \cite{ComputingSSA}. {== I think it's worth pointing out that SSA is similar to TAC in that each operation is bound to a result ==}
 * A-normal form (ANF) introduced by Sabry and Felleisen \cite{ReasoningCPS} and
   further developed in \cite{EssenceCPS} is a representation that resembles CPS
   (continuation-passing style), which is a style of programming where functions
@@ -103,14 +105,14 @@ the most notable are:
   result of any non-trivial expression is let-bound or is returned from a
   function. It has been shown that there is a correspondence between CPS-based
   intermediate representations (like ANF) and SSA form \cite{CPSSSA},
-  \cite{SSAFP}.
+  \cite{SSAFP}. {== I think you can be more specific in this paragraph. ANF and SSA is *the same thing* just expressed differently. CPS is *strictly more expressive* than ANF and perhaps requires its own paragraph. ==}
 * Intermediate representations based on monads. These will be described in more
   detail in the later chapters.
 
 There are several specific examples of IRs used in industrial compilers that
 are worth mentioning here, namely:
 
-* Core (also referred to as System FC), STG and C-\- (Cmm) in GHC (The Glasgow
+* Core (also referred to as System FC) {== Core predates System FC. Core has evolved over time and I think it might even supersede System FC at this point==}, STG and C-\- (Cmm) in GHC (The Glasgow
   Haskell Compiler). Core is a simple functional language (much smaller than
   Haskell) that is used for optimisations and further code generation
   \cite{GHCCore}. STG is an intermediate representation produced from Core and
@@ -133,7 +135,7 @@ The IR designed as a part of this work is quite different from most of the IRs
 described above. None of the mentioned IRs encodes different program effects
 and they don't try to allow to express parts of the language semantics on the
 high level either. Probably, the closest IR to the one we present is GHC Core,
-which is also a high level functional language.
+which is also a high level {== Well, it lacks quite a bit of syntactic sugar so calling it high level might be a stretch. Though it is certainly feature complete ==} functional language.
 
 A lot of inspiration and intuition for this work comes from the Haskell
 programming language \cite{HaskellReport}, thus some familiarity with Haskell
