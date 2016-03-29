@@ -56,6 +56,8 @@ constructors can also be partially applied. There is some simplicity to the
 fact, that data constructors are treated pretty much in the same way as
 variables and functions, both for MIL users and for the MIL implementation.
 
+{>> It's a little unorthodox to allow partially applied constructors in an intermediate language. The ILs that I know of require constructors to be fully applied and use lambdas to deal with partial application. I'm not asking that you change this but if you had written a code generator this design choice would have come back to bite you. Also, it might be that some optimizations are more cumbersome because of this design. <<}
+
 ### Functions and expressions
 
 Simple functions in MIL can be definied as follows:
@@ -91,6 +93,8 @@ to `True`:
 true : Bool = id [Bool] True;
 ~~~
 
+{>> I think it'd be good to say explicitly that the square backets `[` and `]` are used for type arguments. It kind of looks like you're instantiating `id` to list of bools which is potentially confusing. It'd be good to be extra clear. <<}
+
 MIL has built-in tuples to be able to group values of different types together.
 Tuples can be empty as well.
 
@@ -124,6 +128,8 @@ combination of `State` and `IO` monads:
 ~~~
 lift [IO => State ::: IO] return [IO] unit
 ~~~
+
+{>> Should there be parentheses around `return [IO] unit` ? Or does `lift` apply only to `return`? Please clarify! <<}
 
 The typing rules and details of monads combination will be covered in the "Type
 system" section.
@@ -169,6 +175,8 @@ monadic types. The `let rec` expression should be used purely for introducing
 one recursive binding or several mutually recursive bindings at once. One use
 case for it will be described in one of the following chapters.
 
+{>> One could argue that you should use "=" instead of "<-" in the syntax for recursive lets given that it is only used for introducing pure values. <<}
+
 ### Built-in data types and functions
 
 MIL has several built-in types: `Unit` (which has only one value, which is the
@@ -204,7 +212,9 @@ used: *upper* for an upper case letter, *lower* for a lower case letter,
 underscore. The details of integer, floating point and character literals are
 omitted. They are more or less what is found in most modern programming
 languages. *{pat}* denotes zero or more repetitions of *pat*, *{pat}+* is used
-for one or more repetitions and *[pat]* -- for an optional *pat*.
+for one or more repetitions and *[pat]* {-- -- --} for an optional *pat*.
+
+{>> Can I ask that you don't use slanted curly braces in the grammar? For instance, change `*{typevar}*` to `{*typevar*}` . Same thing for square brackets. <<}
 
 --------------  -------  --------------------------------------------------  -------------------------------
      *program*   $\to$   *{typedef} {fundef}*                                top-level definitions
@@ -366,21 +376,33 @@ The next four rules specify how data constructors get their types:
 
 \infrule[T-ConstrNil]{\Gamma \vdash C \in T}{\Gamma \vdash C : T}
 
+{>> Why do you need the above rule? Isn't it covered by the rule below? <<}
+
+{>> What does \Gamma \vdash C \in T} even mean? You haven't explained that notation. <<}
+
 \infrule[T-Constr]{\Gamma \vdash C\ T_1 ... T_n \in T}{\Gamma \vdash C : T_1 \to ... \to T_n \to T}
 
 \infrule[T-ConstrNilTypeVars]{\Gamma \vdash C \in T\ X_1 ... X_n}{\Gamma \vdash C : T\ X_1 ... X_n}
 
+{>> Again, isn't the above rule covered by the rule below? <<}
+
 \infrule[T-ConstrTypeVars]{\Gamma \vdash C\ T_1 ... T_n \in T\ X_1 ... X_n}{\Gamma \vdash C : forall\ X_1 .\ ...\ . forall\ X_n . T_1 \to ... \to T_n \to T\ X_1 ... X_n}
+
+{>> I don't understand the above rule. How are the foralls instantiated? <<}
 
 Typing of tuples is specified with the following two rules:
 
 \infax[T-EmptyTuple]{\Gamma \vdash \{ \} : \{ \}}
+
+{>> Why do you need a special case for the empty tuple? <<}
 
 \infrule[T-Tuple]{for\ each\ i \andalso \Gamma \vdash e_i : T_i}{\Gamma \vdash \{ e_{i = 1..n} \} : \{ T_{i = 1..n} \}}
 
 Probably the most important typing rule is the one for monadic $bind$:
 
 \infrule[T-Let]{x \notin \Gamma \andalso \Gamma \vdash e_1 : M_1\ T_1' \andalso \Gamma, x : T_1 \vdash e_2 : M_2\ T_2 \andalso T_1 \equiv_\alpha T_1' \\ isMonad(M_1) \andalso isMonad(M_2) \andalso isCompatibleMonad(M_2, M_1)}{\Gamma \vdash let\ (x : T_1) \gets e_1\ in\ e_2 : highestEffectMonad(M_1, M_2)\ T_2}
+
+{>> Typography of `highestEffectMonad` <<}
 
 The crucial parts are that both $e_1$ and $e_2$ should have monadic types.
 These two monads have to satisfy the $isCompatibleMonad$ relation. The type
@@ -389,6 +411,8 @@ must be alpha-equivalent (equivalent modulo renaming of type variables). $e_2$
 gets the bound variable in scope. The monad for the type of the whole bind
 expression is chosen using the $highestEffectMonad$ function. The rule also
 specifies that $bind$ does not allow variable shadowing.
+
+{>> Can you motivate the need for alpha renaming between T_1 and T_1'? <<}
 
 Monadic $return$ typing rule is quite minimal. Its type is the monadic type
 $return$ is annotated with applied to the type of the expression that is being
@@ -504,6 +528,8 @@ Note that we need to substitute the type variable $Y$ with the type variable
 $X$, because we remove the quantification, which would make the check for
 alpha-equivalence not succeed when comparing free type variables $X$ and $Y$.
 
+{>> You seem to have a fundamental misunderstanding of alpha equivalence. It only applies to bound variables. Changing the name of a free variable changes the meaning. So I suspect your type rules are actually unsound. I'd like to hear more about what you thinking is wrt alpha equivalence because I can't see how it can possibly work. <<}
+
 For all the other cases type compatibility is subtyping:
 
 \infrule{T_1 <: T_2}{isCompatible(T_1, T_2)}
@@ -545,6 +571,8 @@ $isCompatibleMonad$ is a commutative version of the previous relation:
 
 \infrule{isCompatibleMonadNotCommut(M_1, M_2)}{isCompatibleMonad(M_1, M_2)}
 \infrule{isCompatibleMonadNotCommut(M_2, M_1)}{isCompatibleMonad(M_1, M_2)}
+
+{>> When is the above relation used? I can't see when it should ever be useful. <<}
 
 Having defined the monad compatibility, it is worth looking back at the
 compatibility of function types. Intuitively, if $isCompatible(T_1, T_2)$,
@@ -590,7 +618,7 @@ single monad.
 
 Finally, $highestEffectMonad$ is a function that takes two monads and returns
 the one, which encodes more effects.  An important internal assumption in MIL
-is that the $highestEffectMonad$ is used only on compatible monads (see
+is that the $highestEffectMonad$ is {== used only on compatible monads ==}{>> This is somewhat unorthodox. It'd be better to change the rules to ensure that `highestEffectMonad` is only derivable for compatible monads. But I don't require you to make that change. <<} (see
 $isCompatibleMonad$).  We define that monads combined with monad cons have a
 higher effect than a single monad:
 
@@ -778,7 +806,7 @@ chapter.
 Currently, effects in MIL are quite coarse-grained. For example, compared to
 MIL-lite by Benton and Kennedy \cite{Benton}, there is only one big $State$ and
 no distinction between reading/writing is made. Input and output are not
-separated either. Non-termination is not captured in MIL, we will live this
+separated either. Non-termination is not captured in MIL, we will {~~ live ~> leave ~~} this
 discussion for later chapters.
 
 None of the monadic ILs described in "Related work" had the flexibility of
