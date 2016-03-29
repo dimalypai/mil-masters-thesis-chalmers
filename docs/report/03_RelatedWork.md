@@ -265,16 +265,14 @@ effects.
 
 ### Algebraic effects and dependent types
 
-{>> Fix the typography of "Effects" and "EffM" <<}
-
 Another example of programming with effects based on algebraic effects and
 inspired by the Eff programming language is described in \cite{Brady}, which
-introduces $Effects$ -- a domain-specific language (DSL) for Idris programming
-language \cite{Idris}. {>> I personally don't think that "Effects" qualifies as a DSL <<} In the general case, there is a type $EffM$ that
-describes a program using some *computation context* (which can be a monad, for
-example, but it does not have to be), lists of input and output effects as well
-as the program's return type.  Programming using $Effects$ from a user point of
-view is quite alike monadic programming in Haskell, since, for example, monadic
+introduces $Effects$ -- a library for the Idris programming language
+\cite{Idris}.  In the general case, there is a type $EffM$ that describes a
+program using some *computation context* (which can be a monad, for example,
+but it does not have to be), lists of input and output effects as well as the
+program's return type.  Programming using $Effects$ from a user point of view
+is quite alike monadic programming in Haskell, since, for example, monadic
 do-notation is used. Each effect is associated with a *resource*, which can
 denote storage for stateful computations, for example. To run an effectful
 computation one must specify an initial value of the resource.  To solve the
@@ -285,7 +283,7 @@ handler for this effect. Handlers can be implemented for specific contexts as
 well as for the general case. The author highlights that monads and monad
 transformers can express more concepts, but $Effects$ capture many useful use
 cases. Implementation of common effects and examples of their usage as well as
-DSL implementation in Idris is described in details in the paper.
+the library implementation in Idris are described in details in the paper.
 
 ### Extensible effects
 

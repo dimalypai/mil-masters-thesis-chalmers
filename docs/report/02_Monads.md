@@ -45,13 +45,14 @@ $$bind\ m\ return = m$$
     This law means that computing the result of $m$ and then returning that
     result is the same as just computing $m$.
 
+    Both identity laws can be connected to the identity laws for multiplication
+    with 1 and addition with 0.
+
 * *Associativity*:
 $$bind\ (bind\ m\ f)\ g = bind\ m\ (\lambda x \to bind\ (f\ x)\ g)$$
 
     Associativity law has a similar idea to associativity laws in arithmetic,
     namely that the order of parentheses does not matter \cite{WadlerMonadsForFP}.
-
-{>> It's not only the associativity law that is similar to laws in arithmetic. The identity laws are similar to laws for multiplication with 1 or addition with zero. <<}
 
 ## Examples of monads
 
@@ -75,10 +76,6 @@ In this section we are going to look at examples of several monads.
     useful when a computation is abstracted over a monad and a user of the
     computation does not want to use any specific effects with this computation, so
     she can choose the $Identity$ monad as the monad instance in this case.
-
-{>> I think you should talk about the notion of "running" a monad when you introduce the monads. You use the term further down in the text so it's important that you have defined it properly here. <<}
-
-{>> Also, you need to introduce the operations of each monad here. Like "get" and "set" for the state monad. You refer to them in the section on monad transformers. <<}
 
 * The next example is the $State$ monad for stateful computations. Since in
   most functional languages immutability is encouraged by default, the usual
@@ -115,8 +112,8 @@ In this section we are going to look at examples of several monads.
     put x = State (\s -> ((), x))
     ~~~
 
-* Another ubiquitous effect is error (exception) handling. There are several
-  different monads that can be used. {== One of them is the $Either$ monad. ==}{>> When you write like this it makes me wonder: why did you pick this particular monad? How is preferable to the other choices? <<}
+* Another ubiquitous effect is error (exception) handling. A monad which can be
+  used to capture this effect is the $Either$ monad:
 
     ~~~{.haskell}
     data Either e a = Left e | Right a
@@ -196,12 +193,10 @@ is usually called *monad transformer stack*. There is one caveat, though,
 namely, that effects produced by some of the monad transformer/monad
 combinations depend on the order in which they are combined.
 
-Monad transformer comes with {== $lift$ ==}{>> I think you should do something about the typography of "lift". It doesn't look very good in the text, the letters are too far apart. Whatevery you've done to make "return" look good, do the same to "lift". <<} operation, which embeds a computation in
+Monad transformer comes with $lift$ operation, which embeds a computation in
 monad $M$ into monad $T\ M$. It has the following type:
 
 $$lift :: M\ a \to T\ M\ a$$
-
-{>> "M" needs to be a monad in the type above. The "MonadTrans" instances you give below certainly require "M" to be a monad. <<}
 
 The main intention for $lift$ is to be used to specify on which level a certain
 monadic operation is performed.
@@ -237,9 +232,13 @@ examples of them:
     definitions in the "Examples of monads" section above, but a bit more involved.
 
     To make $StateT$ a monad transformer in Haskell, we need to make it an
-    instance of `MonadTrans`, which contains the $lift$ operation:
+    instance of the `MonadTrans` type class, which contains the $lift$ operation
+    (note the `Monad` constraint in the type of $lift$):
 
     ~~~{.haskell}
+    class MonadTrans t where
+      lift :: (Monad m) => m a -> t m a
+
     instance MonadTrans (StateT s) where
       lift m = StateT (\s -> do
                  a <- m
@@ -261,8 +260,9 @@ examples of them:
         return (Right a))
     ~~~
 
-    To make the computation `m` to be an `ErrorT` computation we just run it in
-    the underlying monad and then return the result as success using `Right`.
+    To make the computation `m` to be an `ErrorT` computation we just bind its
+    result in the underlying monad and then return the result as success using
+    `Right`.
 
 * $ReaderT\ r\ m$ adds a layer of interaction with a read-only environment of
   type $r$:
