@@ -6,7 +6,7 @@
 > classical optimisation techniques and their relations to MIL.*
 
 As was mentioned in the "Introduction" chapter one of the goals of designing a
-monadic intermediate representation is to be able to express and use optimising
+monadic intermediate language is to be able to express and use optimising
 code transformations in the presence of effects. MIL provides a dozen of
 implemented transformations available for using from a source language compiler
 which targets MIL. Most of the transformations presented in this chapter are
@@ -226,7 +226,7 @@ lift [State => Error Unit ::: (IO ::: State)] return [State] unit;
 While, for example, monad laws and lift transformations above are applicable to
 all monads and monad transformer stacks, some code optimisations and
 transformations are effect-dependent. One of the strengths of intermediate
-representations based on monads and MIL in particular is the ability to express
+languages based on monads and MIL in particular is the ability to express
 such transformations and correctly apply them only when it is possible.
 
 ### Id
@@ -627,10 +627,10 @@ transformations. We can see that MIL type and effect system is of great help
 here. It plays a role in implementing transformations and being able to quite
 easily find out effect information or make assumptions based on types about a
 piece of code instead of performing additional analysis to derive these facts,
-which are not present in the IR (which is usually the case for most IRs).
+which are not present in the IL (which is usually the case for most ILs).
 Moreover, MIL allows to run a lint checking potentially after every
 transformation to make sure that none of the transformations made a program
-ill-typed. While many classical IRs are imperative and statement based, meaning
+ill-typed. While many classical ILs are imperative and statement based, meaning
 that most of the operations are assigning values to variables, MIL is a
 functional language and therefore it is *expression-based*, which in general
 makes it more easy to reason about the code, which implies that it should be
@@ -678,7 +678,7 @@ optimisations are using the notions of *control-flow graph (CFG)* and *basic
 blocks* \cite{Muchnick}. MIL, as was mentioned above, is a functional,
 expression-based language, but even more importantly, it is a higher order
 language (meaning, that it supports higher order functions). This introduces
-more complexity to the analysis (compared to simpler and more low-level IRs),
+more complexity to the analysis (compared to simpler and more low-level ILs),
 which many common techniques are not designed to handle. It could be considered
 to transform MIL further to something more low-level and imperative to benefit
 from more classical optimisations.

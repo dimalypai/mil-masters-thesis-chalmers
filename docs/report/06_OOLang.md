@@ -689,8 +689,8 @@ For every class definition three MIL functions are generated:
     call. This would allow to avoid a recursive definition and a lazy parameter to
     every method. Given that some representation of methods' types is part of a
     class type (most likely via the dispatch table), this approach works well in
-    languages and IRs with a type system not as strict as the one in MIL, namely,
-    when having very general pointer or address types to represent method types and
+    languages with a type system not as strict as the one in MIL, namely, when
+    having very general pointer or address types to represent method types and
     being able to cast them.  In MIL, having `self` as a parameter in every method
     would require its type to be in every method type, which would make the class
     type recursive. One could think solving this with having an ADT instead of a

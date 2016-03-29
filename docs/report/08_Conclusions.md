@@ -6,14 +6,14 @@
 ## Results
 
 In this thesis we tried to focus on the design and implementation of a compiler
-IR that would allow to capture program effects such as input/output,
+IL that would allow to capture program effects such as input/output,
 exceptions, state manipulation in programs themselves and provide a way to
 express useful optimising code transformations (in the presence of effects)
 that can be composed and reused. In addition to this, the ambition was to
 explore an ability to provide a way of combining different effects to express
 different semantics of source languages.
 
-As the result of this work, we introduced a monadic IR for modern programming
+As the result of this work, we introduced a monadic IL for modern programming
 languages -- MIL, which fulfills the goals that were set for this work (the
 limitations will be mentioned in the next section). It uses monads to represent
 computational effects and monad transformers to combine these effects and allow
@@ -83,7 +83,7 @@ cover a wider range of use cases. As was mentioned in Chapter 2 there exists a
 lot of interesting monads. What comes to mind as the most relevant to MIL are
 Backtracking \cite{BacktrackingM} and Par monad \cite{ParMonad}. The first one
 could be used to express, for example, logic programming languages and the
-second one could provide a way to support parallelism in the IR.
+second one could provide a way to support parallelism in the IL.
 
 Another related track can be to try bringing laziness into MIL. One of the ways
 of doing it might be to incorporate ideas from \cite{BridgingTheGulf}, e.g.
