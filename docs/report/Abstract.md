@@ -19,14 +19,14 @@ programming languages imposes additional challenges on compiler writers.
 
 This thesis starts with a brief introduction to monads and monad transformers
 and their relation to programming languages. A survey of the existing
-intermediate representations based on monads as well as highlights of the
+intermediate languages based on monads as well as highlights of the
 current developments in programming with effects are presented.
 
 It continues with the main contribution of this work: Monadic Intermediate
 Language (MIL), which is a statically and explicitly typed functional language,
 which uses monads and monad transformers to express different computational
 effects and their combinations. To evaluate the designed intermediate
-representation, two source languages representing two major programming
+language, two source languages representing two major programming
 paradigms: object-oriented and functional, have been designed and compilers
 targeting MIL have been implemented. Strengths and weaknesses of MIL uncovered
 during the implementation of the source programming languages are described in
