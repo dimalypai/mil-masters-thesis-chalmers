@@ -12,11 +12,11 @@ FunLang is a rather small functional programming language. Its design is mostly
 inspired by Haskell. It is statically and explicitly typed. The type system of
 FunLang is based on System F. In addition to the pure polymorphic lambda
 calculus FunLang incorporates `do`-notation similar to the one found in Haskell
-and has a couple of built-in monads. It also adds a minimal exception handling.
+and has a couple of built-in monads. It also adds {-- a --} minimal exception handling.
 
 One can say that FunLang is quite similar to MIL in many ways. The main
 motivation behind designing FunLang as one of the languages for MIL evaluation
-is to be able to explore a compilation of a modern statically typed functional
+is to be able to explore {-- a --} compilation of a modern statically typed functional
 language. Despite the many similarities to MIL, as we will see, the MIL code
 produced for FunLang programs looks rather different from the programs' source
 code. In addition to the semantics similar to the one of MIL, FunLang offers
@@ -149,7 +149,7 @@ computations in the `State` monad. They both take one such computation and an
 initial state value. The difference is that `evalState` returns the value of
 the computation as the result and `execState` returns the value of the state
 itself. Note, there is no `runState` similar to the one in Haskell, since it
-would require support for tuples in FunLang, which was omitted for simplicity.
+would require support for tuples in FunLang, which was omitted for simplicity. {>> Arguably, you *do* have support for tuples in FunLang. type Pair A B = Pair A B. <<}
 The last three functions are for working with state inside a stateful
 computation. They allow to read the state value, overwrite it and modify it
 with a function.
@@ -315,6 +315,8 @@ the type of the data constructor. The problem of generating an expression which
 has a particular type can be really hard for arbitrary types, but in the case
 of data constructors the shape of possible types is quite restricted.
 
+{>> Perhaps it would be good to say a few words about the fact that the optimizer will simplify the generated code quite a bit. <<}
+
 ### Built-in types and functions
 
 Most of the FunLang built-in data types map one-to-one to the MIL data types,
@@ -396,8 +398,8 @@ division : (State ::: Error Unit) Int =
 ### State
 
 Code generation for FunLang computations inside the `State` monad makes use of
-MIL references. The main problem to solve was "Where does a function get the
-state to work with?". It was solved by adding an extra parameter of MIL `Ref`
+MIL references. The main problem to solve was {== "Where does a function get the
+state to work with?". ==}{>> I'm afraid I don't understand this question. Can you elaborate? <<} It was solved by adding an extra parameter of MIL `Ref`
 type to every `State` function. The example below shows a type of a stateful
 computation in FunLang and the corresponding MIL type:
 
@@ -520,7 +522,7 @@ unnecessary returns, binds and remove monads from the types as well as
 introduce opportunities for more optimisations, one would need to implement
 some kind of *effect inference*. Such a process could analyse the code and
 infer that it does not have the specified effects and then rewrite the code,
-simplifying it.
+simplifying it. {>> But your transformations go a long way to simplify the code. With effect inference you would certainly get even better results but I don't think you should downplay the effectiveness of what you've already implemented. <<}
 
 One could quite easily extend FunLang with more powerful features like `case`
 expressions or combining monads with transformers, for example, because MIL is
