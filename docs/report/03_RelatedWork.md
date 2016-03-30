@@ -1,15 +1,15 @@
 # Related work
 
-> *Usage of monads in compiler's intermediate representations is quite
+> *Usage of monads in compiler's intermediate languages is quite
 > unexplored. At the same time, nowadays the interest in reasoning about
 > effects of a program and their control is significant. First, we will look at
 > several intermediate languages which use monads. Then we will describe
 > examples of monad transformers' usage to achieve modularity with effects. And
 > finally we will cover some related work in programming with effects, which
-> may serve as a source of inspiration for intermediate representations as well
+> may serve as a source of inspiration for intermediate languages as well
 > as reasoning about program effects in general.*
 
-## Intermediate representations based on monads
+## Intermediate languages based on monads
 
 ### Common IL for ML and Haskell
 
@@ -22,7 +22,7 @@ and Haskell is a lazy language. In addition to this, Haskell is a pure
 language, while ML is not. Therefore, the main challenge was to have an IL that
 will work equally well for both. Note that this setting and the problem are
 slightly different from what this thesis tries to address, but nevertheless it
-is still very interesting to see one of the not so many monadic IRs and the
+is still very interesting to see one of the not so many monadic ILs and the
 considerations authors had when designing it. Certain ground rules for an IL
 are given, namely: ability to translate both core ML and Haskell, explicitly
 typed with a type system that supports polymorphism (a variant of System F
@@ -121,7 +121,7 @@ them.
 
 ### The GRIN project
 
-The last intermediate representation described in this section is the one from
+The last intermediate language described in this section is the one from
 "The GRIN project" \cite{GRIN}. GRIN (Graph Reduction Intermediate Notation) is
 a monadic intermediate code that is used in a back end of a compiler for lazy
 functional languages. GRIN resembles three-address code mentioned in the
@@ -137,7 +137,7 @@ transformations.
 In this section we will look at work that has been done in the area of monad
 transformers and using them to combine different effects. Note that in these
 cases monad transformers are used mainly in the implementation language, rather
-than in an IR, as described below. It is a bit different area of monad
+than in an IL, as described below. It is a bit different area of monad
 transformers' application compared to this thesis, but it still serves as a
 great source of inspiration.
 
@@ -265,16 +265,14 @@ effects.
 
 ### Algebraic effects and dependent types
 
-{>> Fix the typography of "Effects" and "EffM" <<}
-
 Another example of programming with effects based on algebraic effects and
 inspired by the Eff programming language is described in \cite{Brady}, which
-introduces $Effects$ -- a domain-specific language (DSL) for Idris programming
-language \cite{Idris}. {>> I personally don't think that "Effects" qualifies as a DSL <<} In the general case, there is a type $EffM$ that
-describes a program using some *computation context* (which can be a monad, for
-example, but it does not have to be), lists of input and output effects as well
-as the program's return type.  Programming using $Effects$ from a user point of
-view is quite alike monadic programming in Haskell, since, for example, monadic
+introduces $Effects$ -- a library for the Idris programming language
+\cite{Idris}.  In the general case, there is a type $EffM$ that describes a
+program using some *computation context* (which can be a monad, for example,
+but it does not have to be), lists of input and output effects as well as the
+program's return type.  Programming using $Effects$ from a user point of view
+is quite alike monadic programming in Haskell, since, for example, monadic
 do-notation is used. Each effect is associated with a *resource*, which can
 denote storage for stateful computations, for example. To run an effectful
 computation one must specify an initial value of the resource.  To solve the
@@ -285,7 +283,7 @@ handler for this effect. Handlers can be implemented for specific contexts as
 well as for the general case. The author highlights that monads and monad
 transformers can express more concepts, but $Effects$ capture many useful use
 cases. Implementation of common effects and examples of their usage as well as
-DSL implementation in Idris is described in details in the paper.
+the library implementation in Idris are described in details in the paper.
 
 ### Extensible effects
 

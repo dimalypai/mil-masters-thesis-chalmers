@@ -10,7 +10,7 @@
 ## Overview
 
 As was described in the Introduction, the main goal of this thesis is to design
-a compiler IR powerful enough to be used in compilers for modern programming
+a compiler IL powerful enough to be used in compilers for modern programming
 languages and support reasoning about programs with effects and their
 transformation for the purpose of optimisations. Monadic Intermediate Language
 (MIL) is the result of this effort.
@@ -649,8 +649,8 @@ expressions.
 ## Haskell implementation
 
 Since one of the aims of this thesis was to produce a programming framework for
-working with the designed monadic intermediate representation, here we will
-outline some of the implementation details, namely, several core data types.
+working with the designed monadic intermediate language, here we will outline
+some of the implementation details, namely, several core data types.
 
 MIL is implemented in Haskell. There is a parser which given a program text
 produces a source version of the abstract-syntax tree (AST) and a type checker
@@ -811,7 +811,7 @@ discussion for later chapters.
 
 None of the monadic ILs described in "Related work" had the flexibility of
 combining effects that is achieved in MIL with the help of monad transformers
-(which is, of course, partly due to that it wasn't a goal for those IRs to be
+(which is, of course, partly due to that it wasn't a goal for those ILs to be
 able to express different semantics).  In \cite{Tolmach} the hierarchy of
 monads was fixed. In MIL-lite, effects are combined in sets, but there is no
 way to choose an interpretation of State and Error combination, for example.
@@ -821,7 +821,7 @@ When it comes to programming with effects, as it was mentioned several times in
 combine monads is widely considered to be one of their biggest problems. While
 we agree, that it is a problem when it comes to everyday programming using
 effects, we think it is not such a big issue for an intermediate language. It
-is very useful for an IR to be human-readable, but it is usually not the main
+is very useful for an IL to be human-readable, but it is usually not the main
 goal, since it is not a user facing language. Moreover, as it will be seen in
 the next two chapters, we didn't see lifting as the biggest mental overhead
 when generating or reading MIL code for the source languages that were designed
