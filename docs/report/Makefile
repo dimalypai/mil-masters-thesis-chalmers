@@ -8,8 +8,8 @@ all:
 			--variable documentclass=book \
 			--variable classoption=oneside \
 			--variable mainfont=Palatino \
-			--variable monofont=Monaco \
-			--variable mathfont=Monaco \
+			--variable monofont='Source Code Pro' \
+			--variable mathfont='Source Code Pro' \
 			--variable fontsize=12pt \
 			--variable geometry:margin=1in \
 			--latex-engine=xelatex \
