@@ -224,8 +224,8 @@ examples of them:
     newtype StateT s m a = StateT (s -> m (a, s))
     ~~~
 
-    Using the $StateT$ monad transformer, $State\ s$ monad can be expressed as
-    $StateT\ s\ Identity$.
+    Using the $StateT$ monad transformer and the $Identity$ monad, $State\ s$
+    monad can be expressed as $StateT\ s\ Identity$.
 
     Every monad transformer also has to be an instance of `Monad`, but we will
     skip these definitions here. They would be quite similar to the example

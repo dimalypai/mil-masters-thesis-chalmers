@@ -59,7 +59,8 @@ leftIdentityExpr = descendBi f
     f (LetE varBinder e1 e2) =
       case e1 of
         ReturnE _tm e ->
-          (VarE varBinder, leftIdentityExpr e) `replaceExprIn` (leftIdentityExpr e2)
+          (VarE varBinder, leftIdentityExpr e) `replaceExprIn`
+            (leftIdentityExpr e2)
         _ -> LetE varBinder (leftIdentityExpr e1) (leftIdentityExpr e2)
     f expr = descend f expr
 ~~~
