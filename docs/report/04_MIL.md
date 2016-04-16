@@ -360,8 +360,11 @@ type variable shadowing is not allowed:
 
 \infrule[T-TApp]{\Gamma \vdash e_1 : forall\ X\ .\ T_1}{\Gamma \vdash e_1\ [T_2] : [X \mapsto T_2]T_1}
 
-$[X \mapsto T_2]T_1$ above means that all occurences of the type variable $X$ in
-$T_1$ are substituted with $T_2$.
+$[X \mapsto T_2]T_1$ above means that all occurences of the type variable $X$
+in $T_1$ are substituted with $T_2$. Throughout this text we assume that such
+substitutions are *capture-avoiding* \cite{TAPL}.  Unfortunately, the current
+MIL implementation is naive in this respect and cannot correctly handle all the
+cases of substitution.
 
 The next four rules specify how data constructors get their types:
 
@@ -508,12 +511,9 @@ For universally quantified types we recurse down the types under $forall$:
 
 \infrule{isCompatible(T_1, [Y \mapsto X]T_2)}{isCompatible(forall\ X\ .\ T_1, forall\ Y\ .\ T_2)}
 
-Note that we need to substitute the type variable $Y$ with the type variable
-$X$, because otherwise, the check for alpha-equivalence would not succeed when
-comparing free type variables $X$ and $Y$ in the underlying types $T_1$ and
-$T_2$. We assume that the substitution here is *capture-avoiding* \cite{TAPL}.
-Unfortunately, the current MIL implementation is naive in this respect and
-cannot correctly handle all the cases of substitution.
+Note that we need to make sure that the type variables $X$ and $Y$ are
+considered equivalent further down when checking the types $T_1$ and $T_2$ for
+compatibility. We achieve this by using the capture-avoiding substitution.
 
 For all the other cases type compatibility is subtyping:
 
