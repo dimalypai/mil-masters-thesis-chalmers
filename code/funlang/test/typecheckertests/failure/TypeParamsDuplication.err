@@ -1,2 +1,2 @@
-FunLang type checking error at TypeParamsDuplication.fl:1,13-1,13:
+FunLang type checking error at TypeParamsDuplication.fl:1,14-1,14:
   Type parameter 'A' is already defined

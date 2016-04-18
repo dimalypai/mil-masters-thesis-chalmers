@@ -2,6 +2,9 @@ type String
   = Empty_Str
   | Cons_Str Char String;
 
+type Pair A_ B_
+  = MkPair A_ B_;
+
 con_True : (State ::: Error Unit) Bool =
   return [State ::: Error Unit]
     True;
@@ -9,6 +12,18 @@ con_True : (State ::: Error Unit) Bool =
 con_False : (State ::: Error Unit) Bool =
   return [State ::: Error Unit]
     False;
+
+con_MkPair : (State ::: Error Unit) (forall A_ . (State ::: Error Unit) (forall B_ . (State ::: Error Unit) (A_ -> (State ::: Error Unit) (B_ -> (State ::: Error Unit) (Pair A_ B_))))) =
+  return [State ::: Error Unit]
+    /\A_ .
+      return [State ::: Error Unit]
+        /\B_ .
+          return [State ::: Error Unit]
+            \(a_ : A_) ->
+              return [State ::: Error Unit]
+                \(b_ : B_) ->
+                  return [State ::: Error Unit]
+                    MkPair [A_] [B_] a_ b_;
 
 printString : (State ::: Error Unit) (String -> (State ::: (Error Unit ::: IO)) Unit) =
   return [State ::: Error Unit]
@@ -101,6 +116,26 @@ execState : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (forall A
                          sa
                        in sa_f state_
                      in read_ref [S_] state_;
+
+runState : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (forall A_ . (State ::: Error Unit) ((State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) A_) -> (State ::: Error Unit) (S_ -> (State ::: Error Unit) (Pair A_ S_))))) =
+  return [State ::: Error Unit]
+    /\S_ .
+      return [State ::: Error Unit]
+        /\A_ .
+          return [State ::: Error Unit]
+            \(sa : (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) A_)) ->
+              return [State ::: Error Unit]
+                \(s : S_) ->
+                  let (state_ : Ref S_) <-
+                    new_ref [S_] s
+                  in let (res : A_) <-
+                       let (sa_f : Ref S_ -> (State ::: Error Unit) A_) <-
+                         sa
+                       in sa_f state_
+                     in let (new_state : S_) <-
+                          read_ref [S_] state_
+                        in return [State ::: Error Unit]
+                             MkPair [A_] [S_] res new_state;
 
 get : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) S_)) =
   return [State ::: Error Unit]

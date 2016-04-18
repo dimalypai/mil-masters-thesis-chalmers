@@ -12,6 +12,7 @@ builtInDataTypes :: [(TypeName, Kind)]
 builtInDataTypes =
   [ (TypeName "Unit",   StarK)
   , (TypeName "Bool",   StarK)
+  , (TypeName "Pair",   StarK :=>: (StarK :=>: StarK))
   , (TypeName "Int",    StarK)
   , (TypeName "Float",  StarK)
   , (TypeName "String", StarK)
@@ -23,6 +24,11 @@ builtInDataCons :: [(ConName, (Type, TypeName))]
 builtInDataCons =
   [ (ConName "True", (boolType, TypeName "Bool"))
   , (ConName "False", (boolType, TypeName "Bool"))
+  , (ConName "MkPair", (TyForAll (TypeVar "A_") $
+                          TyForAll (TypeVar "B_") $
+                            TyArrow (mkTypeVar "A_")
+                              (TyArrow (mkTypeVar "B_")
+                                 (TyApp (TypeName "Pair") [mkTypeVar "A_", mkTypeVar "B_"])), TypeName "Pair"))
   ]
 
 unitType :: Type
@@ -67,11 +73,9 @@ builtInFunctions =
   , (FunName "printFloat",  TyArrow floatType  (ioType unitType))
   , (FunName "readFloat",   ioType floatType)
   -- Monadic run functions
-  {- Built-in pair/tuple type is needed
   , (FunName "runState",  TyForAll (TypeVar "S_") $ TyForAll (TypeVar "A_") $
                             TyArrow (stateType (mkTypeVar "S_") (mkTypeVar "A_"))
-                                    (TyArrow (mkTypeVar "S_") undefined))
-  -}
+                                    (TyArrow (mkTypeVar "S_") (TyApp (TypeName "Pair") [mkTypeVar "A_", mkTypeVar "S_"])))
   , (FunName "evalState", TyForAll (TypeVar "S_") $ TyForAll (TypeVar "A_") $
                             TyArrow (stateType (mkTypeVar "S_") (mkTypeVar "A_"))
                                     (TyArrow (mkTypeVar "S_") (mkTypeVar "A_")))

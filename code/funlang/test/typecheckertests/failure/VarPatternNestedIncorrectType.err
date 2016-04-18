@@ -1,2 +1,2 @@
-FunLang type checking error at VarPatternNestedIncorrectType.fl:11,25-11,33:
+FunLang type checking error at VarPatternNestedIncorrectType.fl:9,25-9,33:
   The pattern needs to have type 'Int', but it has type 'Float'

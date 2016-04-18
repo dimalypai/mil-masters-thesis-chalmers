@@ -2,6 +2,9 @@ type String
   = Empty_Str
   | Cons_Str Char String;
 
+type Pair A_ B_
+  = MkPair A_ B_;
+
 con_True : (State ::: Error Unit) Bool =
   return [State ::: Error Unit]
     True;
@@ -9,6 +12,18 @@ con_True : (State ::: Error Unit) Bool =
 con_False : (State ::: Error Unit) Bool =
   return [State ::: Error Unit]
     False;
+
+con_MkPair : (State ::: Error Unit) (forall A_ . (State ::: Error Unit) (forall B_ . (State ::: Error Unit) (A_ -> (State ::: Error Unit) (B_ -> (State ::: Error Unit) (Pair A_ B_))))) =
+  return [State ::: Error Unit]
+    /\A_ .
+      return [State ::: Error Unit]
+        /\B_ .
+          return [State ::: Error Unit]
+            \(a_ : A_) ->
+              return [State ::: Error Unit]
+                \(b_ : B_) ->
+                  return [State ::: Error Unit]
+                    MkPair [A_] [B_] a_ b_;
 
 printString : (State ::: Error Unit) (String -> (State ::: (Error Unit ::: IO)) Unit) =
   return [State ::: Error Unit]
@@ -92,6 +107,26 @@ execState : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (forall A
                          sa
                        in sa_f state_
                      in read_ref [S_] state_;
+
+runState : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (forall A_ . (State ::: Error Unit) ((State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) A_) -> (State ::: Error Unit) (S_ -> (State ::: Error Unit) (Pair A_ S_))))) =
+  return [State ::: Error Unit]
+    /\S_ .
+      return [State ::: Error Unit]
+        /\A_ .
+          return [State ::: Error Unit]
+            \(sa : (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) A_)) ->
+              return [State ::: Error Unit]
+                \(s : S_) ->
+                  let (state_ : Ref S_) <-
+                    new_ref [S_] s
+                  in let (res : A_) <-
+                       let (sa_f : Ref S_ -> (State ::: Error Unit) A_) <-
+                         sa
+                       in sa_f state_
+                     in let (new_state : S_) <-
+                          read_ref [S_] state_
+                        in return [State ::: Error Unit]
+                             MkPair [A_] [S_] res new_state;
 
 get : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) S_)) =
   return [State ::: Error Unit]
@@ -195,39 +230,53 @@ main : (State ::: (Error Unit ::: IO)) Unit =
                        in return [State ::: (Error Unit ::: IO)]
                             var_36;
 
+runStateEx : (State ::: Error Unit) (Pair Unit Int) =
+  let (var_44 : Int -> (State ::: Error Unit) (Pair Unit Int)) <-
+    let (var_41 : (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit) -> (State ::: Error Unit) (Int -> (State ::: Error Unit) (Pair Unit Int))) <-
+      let (var_39 : forall A_ . (State ::: Error Unit) ((State ::: Error Unit) (Ref Int -> (State ::: Error Unit) A_) -> (State ::: Error Unit) (Int -> (State ::: Error Unit) (Pair A_ Int)))) <-
+        let (var_37 : forall S_ . (State ::: Error Unit) (forall A_ . (State ::: Error Unit) ((State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) A_) -> (State ::: Error Unit) (S_ -> (State ::: Error Unit) (Pair A_ S_))))) <-
+          runState
+        in var_37 [Int]
+      in var_39 [Unit]
+    in let (var_42 : (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit)) <-
+         return [State ::: Error Unit] stateFun
+       in var_41 var_42
+  in let (var_45 : Int) <- return [State ::: Error Unit] 1
+     in var_44 var_45;
+
 stateFun : (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit) =
   return [State ::: Error Unit]
     \(state_ : Ref Int) ->
       let (i : Int) <-
-        let (var_37 : forall S_ . (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) S_)) <-
+        let (var_47 : forall S_ . (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) S_)) <-
           get
-        in let (var_38 : Ref Int -> (State ::: Error Unit) Int) <-
-             var_37 [Int]
-           in var_38 state_
-      in let (var_39 : Int) <-
+        in let (var_48 : Ref Int -> (State ::: Error Unit) Int) <-
+             var_47 [Int]
+           in var_48 state_
+      in let (var_49 : Int) <-
            return [State ::: Error Unit]
              i
-         in let (var_45 : Unit) <-
-              let (var_42 : Int -> (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit)) <-
-                let (var_40 : forall S_ . (State ::: Error Unit) (S_ -> (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) Unit))) <-
+         in let (var_55 : Unit) <-
+              let (var_52 : Int -> (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit)) <-
+                let (var_50 : forall S_ . (State ::: Error Unit) (S_ -> (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) Unit))) <-
                   put
-                in var_40 [Int]
-              in let (var_43 : Int) <-
+                in var_50 [Int]
+              in let (var_53 : Int) <-
                    return [State ::: Error Unit]
                      i
-                 in let (var_44 : Ref Int -> (State ::: Error Unit) Unit) <-
-                      var_42 var_43
-                    in var_44 state_
-            in let (var_48 : (Int -> (State ::: Error Unit) Int) -> (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit)) <-
-                 let (var_46 : forall S_ . (State ::: Error Unit) ((S_ -> (State ::: Error Unit) S_) -> (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) Unit))) <-
+                 in let (var_54 : Ref Int -> (State ::: Error Unit) Unit) <-
+                      var_52 var_53
+                    in var_54 state_
+            in let (var_58 : (Int -> (State ::: Error Unit) Int) -> (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit)) <-
+                 let (var_56 : forall S_ . (State ::: Error Unit) ((S_ -> (State ::: Error Unit) S_) -> (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) Unit))) <-
                    modify
-                 in var_46 [Int]
-               in let (var_49 : Int -> (State ::: Error Unit) Int) <-
+                 in var_56 [Int]
+               in let (var_59 : Int -> (State ::: Error Unit) Int) <-
                     return [State ::: Error Unit]
                       \(s : Int) ->
                         return [State ::: Error Unit]
                           s
-                  in let (var_50 : Ref Int -> (State ::: Error Unit) Unit) <-
-                       var_48 var_49
-                     in var_50 state_;
+                  in let (var_60 : Ref Int -> (State ::: Error Unit) Unit) <-
+                       var_58 var_59
+                     in var_60 state_;
 

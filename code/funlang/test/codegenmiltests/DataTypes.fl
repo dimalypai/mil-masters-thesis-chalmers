@@ -13,8 +13,6 @@ type T = MkT (Int -> Unit) | MkTT
 mkT : (Int -> Unit) -> T
 mkT = MkT;;
 
-type Pair A B = MkPair A B
-
 mkPair : forall A . forall B . A -> B -> Pair A B
 mkPair = MkPair;;
 

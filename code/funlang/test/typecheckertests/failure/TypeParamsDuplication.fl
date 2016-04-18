@@ -1,2 +1,2 @@
-type Pair A A = P
+type Tuple A A = P
 

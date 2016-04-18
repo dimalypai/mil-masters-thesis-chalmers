@@ -1,5 +1,5 @@
-type Pair A B = P
+type Tuple A B = P
 
-fun : forall A . forall B . Pair A A -> A -> B -> Pair B B B
+fun : forall A . forall B . Tuple A A -> A -> B -> Tuple B B B
 fun = unit;;
 

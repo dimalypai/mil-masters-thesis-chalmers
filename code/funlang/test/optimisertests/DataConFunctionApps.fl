@@ -3,8 +3,6 @@ main = do
   return unit;
 end;;
 
-type Pair A B = MkPair A B
-
 fun : Pair Int Unit
 fun = MkPair [Int] [Unit] 1 (lambdaFun 1 unit);;
 

@@ -1,5 +1,5 @@
-type Pair A B = P
+type Tuple A B = P
 
-fun : Pair Int Int Int
+fun : Tuple Int Int Int
 fun = unit;;
 

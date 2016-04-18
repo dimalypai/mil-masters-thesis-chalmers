@@ -587,12 +587,15 @@ builtInMilTypeDefs =
   [ MIL.TypeDef (MIL.TypeName "String") []
       [ MIL.ConDef (MIL.ConName "Empty_Str") []
       , MIL.ConDef (MIL.ConName "Cons_Str") [MIL.mkSimpleSrcType "Char", MIL.mkSimpleSrcType "String"]]
+  , MIL.TypeDef (MIL.TypeName "Pair") [MIL.TypeVar "A_", MIL.TypeVar "B_"]
+      [ MIL.ConDef (MIL.ConName "MkPair") [MIL.mkSimpleSrcType "A_", MIL.mkSimpleSrcType "B_"]]
   ]
 
 builtInMilFunDefs :: [MIL.SrcFunDef]
 builtInMilFunDefs =
   [ conTrue
   , conFalse
+  , conMkPair
   , printStringMilDef
   ]
   ++ readStringMilDef
@@ -603,6 +606,7 @@ builtInMilFunDefs =
   , readFloatMilDef
   , evalStateMilDef
   , execStateMilDef
+  , runStateMilDef
   , getMilDef
   , putMilDef
   , modifyMilDef
@@ -617,6 +621,30 @@ conFalse :: MIL.SrcFunDef
 conFalse =
   MIL.mkSrcFunDef "con_False" (MIL.SrcTyApp pureSrcMonadMil (MIL.mkSimpleSrcType "Bool")) $
     MIL.ReturnE pureSrcMonadMil (MIL.mkSrcConName "False")
+
+conMkPair :: MIL.SrcFunDef
+conMkPair =
+  MIL.mkSrcFunDef "con_MkPair" (MIL.SrcTyApp pureSrcMonadMil $ MIL.SrcTyForAll (MIL.TypeVar "A_") $
+                                  MIL.SrcTyApp pureSrcMonadMil $ MIL.SrcTyForAll (MIL.TypeVar "B_") $
+                                    MIL.SrcTyApp pureSrcMonadMil $ MIL.SrcTyArrow (MIL.mkSimpleSrcType "A_") $
+                                      MIL.SrcTyApp pureSrcMonadMil $ MIL.SrcTyArrow (MIL.mkSimpleSrcType "B_")
+                                        (MIL.SrcTyApp pureSrcMonadMil
+                                          (MIL.SrcTyApp (MIL.SrcTyApp (MIL.mkSimpleSrcType "Pair")
+                                                                      (MIL.mkSimpleSrcType "A_"))
+                                             (MIL.mkSimpleSrcType "B_")))) $
+    MIL.ReturnE pureSrcMonadMil $
+      MIL.TypeLambdaE (MIL.TypeVar "A_") $
+        MIL.ReturnE pureSrcMonadMil $
+          MIL.TypeLambdaE (MIL.TypeVar "B_") $
+            MIL.ReturnE pureSrcMonadMil $
+              MIL.mkSrcLambda (MIL.Var "a_") (MIL.mkSimpleSrcType "A_") $
+                MIL.ReturnE pureSrcMonadMil $
+                  MIL.mkSrcLambda (MIL.Var "b_") (MIL.mkSimpleSrcType "B_") $
+                    MIL.ReturnE pureSrcMonadMil $
+                      MIL.AppE (MIL.AppE (MIL.TypeAppE (MIL.TypeAppE (MIL.mkSrcConName "MkPair") (MIL.mkSimpleSrcType "A_"))
+                                                       (MIL.mkSimpleSrcType "B_"))
+                                         (MIL.mkSrcVar "a_"))
+                               (MIL.mkSrcVar "b_")
 
 printStringMilDef :: MIL.SrcFunDef
 printStringMilDef =
@@ -722,6 +750,31 @@ execStateMilDef =
                             MIL.AppE (MIL.VarE $ MIL.Var "sa_f") (MIL.VarE $ MIL.Var "state_"))
                          (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "read_ref") (MIL.mkSimpleSrcType "S_"))
                                    (MIL.VarE $ MIL.Var "state_")))
+
+runStateMilDef :: MIL.SrcFunDef
+runStateMilDef =
+  MIL.mkSrcFunDef "runState" (monadTypeMil (getBuiltInFunctionType $ FunName "runState"))
+    (MIL.ReturnE pureSrcMonadMil $
+       MIL.TypeLambdaE (MIL.TypeVar "S_") $
+         MIL.ReturnE pureSrcMonadMil $
+           MIL.TypeLambdaE (MIL.TypeVar "A_") $
+             MIL.ReturnE pureSrcMonadMil $
+               MIL.mkSrcLambda (MIL.Var "sa") (typeMil $ stateType (mkTypeVar "S_") (mkTypeVar "A_")) $
+                 MIL.ReturnE pureSrcMonadMil $
+                   MIL.mkSrcLambda (MIL.Var "s") (MIL.mkSimpleSrcType "S_") $
+                     MIL.mkSrcLet (MIL.Var "state_") (MIL.SrcTyApp (MIL.mkSimpleSrcType "Ref") (MIL.mkSimpleSrcType "S_"))
+                       (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "new_ref") (MIL.mkSimpleSrcType "S_")) (MIL.VarE $ MIL.Var "s")) $
+                       MIL.mkSrcLet (MIL.Var "res") (MIL.mkSimpleSrcType "A_")
+                         (MIL.mkSrcLet (MIL.Var "sa_f") (MIL.getSrcResultType (typeMil $ stateType (mkTypeVar "S_") (mkTypeVar "A_"))) (MIL.VarE $ MIL.Var "sa") $
+                            MIL.AppE (MIL.VarE $ MIL.Var "sa_f") (MIL.VarE $ MIL.Var "state_"))
+                         (MIL.mkSrcLet (MIL.Var "new_state") (MIL.mkSimpleSrcType "S_")
+                            (MIL.AppE (MIL.TypeAppE (MIL.VarE $ MIL.Var "read_ref") (MIL.mkSimpleSrcType "S_"))
+                                      (MIL.VarE $ MIL.Var "state_"))
+                            (MIL.ReturnE pureSrcMonadMil (MIL.AppE (MIL.AppE (MIL.TypeAppE (MIL.TypeAppE (MIL.mkSrcConName "MkPair")
+                                                                                                         (MIL.mkSimpleSrcType "A_"))
+                                                                                           (MIL.mkSimpleSrcType "S_"))
+                                                                             (MIL.VarE $ MIL.Var "res"))
+                                                                   (MIL.VarE $ MIL.Var "new_state")))))
 
 getMilDef :: MIL.SrcFunDef
 getMilDef =

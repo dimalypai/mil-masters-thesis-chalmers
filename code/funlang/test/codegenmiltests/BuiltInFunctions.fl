@@ -10,6 +10,9 @@ main = do
   return (evalState [Int] [Unit] stateFun 0);
 end;;
 
+runStateEx : Pair Unit Int
+runStateEx = runState [Int] [Unit] stateFun 1;;
+
 stateFun : State Int Unit
 stateFun = do
   i : Int <- get [Int];

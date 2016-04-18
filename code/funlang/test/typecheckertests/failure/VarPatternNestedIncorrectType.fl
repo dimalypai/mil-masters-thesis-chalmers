@@ -3,8 +3,6 @@ main = do
   return unit;
 end;;
 
-type Pair A B = MkPair A B
-
 caseExpr : Pair Int Int -> Int
 caseExpr = \(pair : Pair Int Int) ->
   case pair of

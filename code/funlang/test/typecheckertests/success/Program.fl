@@ -9,7 +9,8 @@ main = do
   return (evalState [Int] [Unit] stateManip 0);
 end;;
 
-type Pair A B = MkPair A B
+runStateEx : Pair Unit Int
+runStateEx = runState [Int] [Unit] stateManip 1;;
 
 fun : Unit
 fun = ((unit));;

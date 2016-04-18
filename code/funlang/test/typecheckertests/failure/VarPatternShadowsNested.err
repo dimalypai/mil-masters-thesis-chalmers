@@ -1,2 +1,2 @@
-FunLang type checking error at VarPatternShadowsNested.fl:11,25-11,25:
+FunLang type checking error at VarPatternShadowsNested.fl:9,25-9,25:
   Variable binding for 'x' shadows an existing variable or function

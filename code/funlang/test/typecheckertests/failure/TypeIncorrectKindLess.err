@@ -1,2 +1,2 @@
-FunLang type checking error at TypeIncorrectKindLess.fl:3,7-3,10:
-  Type constructor 'Pair' has kind '* => * => *', but its usage assumes it has kind '* => *'
+FunLang type checking error at TypeIncorrectKindLess.fl:3,7-3,11:
+  Type constructor 'Tuple' has kind '* => * => *', but its usage assumes it has kind '* => *'

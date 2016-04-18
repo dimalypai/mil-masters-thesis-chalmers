@@ -2,15 +2,15 @@ type String
   = Empty_Str
   | Cons_Str Char String;
 
+type Pair A_ B_
+  = MkPair A_ B_;
+
 type S
   = MkS;
 
 type T
   = MkT (Int -> (State ::: Error Unit) Unit)
   | MkTT;
-
-type Pair A B
-  = MkPair A B;
 
 type IoWrapper A
   = MkIO ((State ::: (Error Unit ::: IO)) A);
@@ -33,6 +33,18 @@ con_True : (State ::: Error Unit) Bool =
 con_False : (State ::: Error Unit) Bool =
   return [State ::: Error Unit]
     False;
+
+con_MkPair : (State ::: Error Unit) (forall A_ . (State ::: Error Unit) (forall B_ . (State ::: Error Unit) (A_ -> (State ::: Error Unit) (B_ -> (State ::: Error Unit) (Pair A_ B_))))) =
+  return [State ::: Error Unit]
+    /\A_ .
+      return [State ::: Error Unit]
+        /\B_ .
+          return [State ::: Error Unit]
+            \(a_ : A_) ->
+              return [State ::: Error Unit]
+                \(b_ : B_) ->
+                  return [State ::: Error Unit]
+                    MkPair [A_] [B_] a_ b_;
 
 printString : (State ::: Error Unit) (String -> (State ::: (Error Unit ::: IO)) Unit) =
   return [State ::: Error Unit]
@@ -117,6 +129,26 @@ execState : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (forall A
                        in sa_f state_
                      in read_ref [S_] state_;
 
+runState : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (forall A_ . (State ::: Error Unit) ((State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) A_) -> (State ::: Error Unit) (S_ -> (State ::: Error Unit) (Pair A_ S_))))) =
+  return [State ::: Error Unit]
+    /\S_ .
+      return [State ::: Error Unit]
+        /\A_ .
+          return [State ::: Error Unit]
+            \(sa : (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) A_)) ->
+              return [State ::: Error Unit]
+                \(s : S_) ->
+                  let (state_ : Ref S_) <-
+                    new_ref [S_] s
+                  in let (res : A_) <-
+                       let (sa_f : Ref S_ -> (State ::: Error Unit) A_) <-
+                         sa
+                       in sa_f state_
+                     in let (new_state : S_) <-
+                          read_ref [S_] state_
+                        in return [State ::: Error Unit]
+                             MkPair [A_] [S_] res new_state;
+
 get : (State ::: Error Unit) (forall S_ . (State ::: Error Unit) (Ref S_ -> (State ::: Error Unit) S_)) =
   return [State ::: Error Unit]
     /\S_ .
@@ -166,25 +198,13 @@ con_MkTT : (State ::: Error Unit) T =
   return [State ::: Error Unit]
     MkTT;
 
-con_MkPair : (State ::: Error Unit) (forall A . (State ::: Error Unit) (forall B . (State ::: Error Unit) (A -> (State ::: Error Unit) (B -> (State ::: Error Unit) (Pair A B))))) =
-  return [State ::: Error Unit]
-    /\A .
-      return [State ::: Error Unit]
-        /\B .
-          return [State ::: Error Unit]
-            \(var_1 : A) ->
-              return [State ::: Error Unit]
-                \(var_2 : B) ->
-                  return [State ::: Error Unit]
-                    MkPair [A] [B] var_1 var_2;
-
 con_MkIO : (State ::: Error Unit) (forall A . (State ::: Error Unit) ((State ::: (Error Unit ::: IO)) A -> (State ::: Error Unit) (IoWrapper A))) =
   return [State ::: Error Unit]
     /\A .
       return [State ::: Error Unit]
-        \(var_3 : (State ::: (Error Unit ::: IO)) A) ->
+        \(var_1 : (State ::: (Error Unit ::: IO)) A) ->
           return [State ::: Error Unit]
-            MkIO [A] var_3;
+            MkIO [A] var_1;
 
 con_MkState : (State ::: Error Unit) (forall St . (State ::: Error Unit) (forall A . (State ::: Error Unit) ((State ::: Error Unit) (Ref St -> (State ::: Error Unit) A) -> (State ::: Error Unit) (StateWrapper St A)))) =
   return [State ::: Error Unit]
@@ -192,40 +212,40 @@ con_MkState : (State ::: Error Unit) (forall St . (State ::: Error Unit) (forall
       return [State ::: Error Unit]
         /\A .
           return [State ::: Error Unit]
-            \(var_4 : (State ::: Error Unit) (Ref St -> (State ::: Error Unit) A)) ->
+            \(var_2 : (State ::: Error Unit) (Ref St -> (State ::: Error Unit) A)) ->
               return [State ::: Error Unit]
-                MkState [St] [A] var_4;
+                MkState [St] [A] var_2;
 
 con_IoFun : (State ::: Error Unit) ((Unit -> (State ::: (Error Unit ::: IO)) Unit) -> (State ::: Error Unit) BuiltInMonadFunWrapper) =
   return [State ::: Error Unit]
-    \(var_5 : Unit -> (State ::: (Error Unit ::: IO)) Unit) ->
+    \(var_3 : Unit -> (State ::: (Error Unit ::: IO)) Unit) ->
       return [State ::: Error Unit]
-        IoFun var_5;
+        IoFun var_3;
 
 con_StateFun : (State ::: Error Unit) ((Int -> (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit)) -> (State ::: Error Unit) BuiltInMonadFunWrapper) =
   return [State ::: Error Unit]
-    \(var_6 : Int -> (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit)) ->
+    \(var_4 : Int -> (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit)) ->
       return [State ::: Error Unit]
-        StateFun var_6;
+        StateFun var_4;
 
 con_IoForAll : (State ::: Error Unit) ((forall A . (State ::: (Error Unit ::: IO)) A) -> (State ::: Error Unit) BuiltInMonadForAllWrapper) =
   return [State ::: Error Unit]
-    \(var_7 : forall A . (State ::: (Error Unit ::: IO)) A) ->
+    \(var_5 : forall A . (State ::: (Error Unit ::: IO)) A) ->
       return [State ::: Error Unit]
-        IoForAll var_7;
+        IoForAll var_5;
 
 con_StateForAll : (State ::: Error Unit) ((forall A . (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) A)) -> (State ::: Error Unit) BuiltInMonadForAllWrapper) =
   return [State ::: Error Unit]
-    \(var_8 : forall A . (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) A)) ->
+    \(var_6 : forall A . (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) A)) ->
       return [State ::: Error Unit]
-        StateForAll var_8;
+        StateForAll var_6;
 
 main : (State ::: (Error Unit ::: IO)) Unit =
-  let (var_9 : Unit) <-
+  let (var_7 : Unit) <-
     return [State ::: (Error Unit ::: IO)]
       unit
   in return [State ::: (Error Unit ::: IO)]
-       var_9;
+       var_7;
 
 mkS : (State ::: Error Unit) S =
   con_MkS;
