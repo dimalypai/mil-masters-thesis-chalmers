@@ -31,7 +31,7 @@ assignments to references. Function definitions can contain parameters in curly
 braces with a function arrow (`->`) separating several parameters (and a return
 type), which means that functions are curried. Note, that OOLang does not have
 built-in support for tuples, therefore it is not possible to define a function,
-which would take several arguments at once (as a tuple).  Function application
+which would take several arguments at once (as a tuple). {>> Most OO languages have support for multiple arguments without needing tuples. And so could you. It's just a matter of pushing all the arguments on the stack. Now, MIL doesn't support that kind of calling convention so it'd be difficult for you to support it but from a language design perspective you could very well support multiple arguments. <<} {>> If you allowed for polymorphic classes, that would be enough to support tuples. <<} Function application
 is expressed using juxtaposition. Unlike many other programming languages with
 statements, there is no `return` statement in OOLang.  Instead, every statement
 has a value (and a type) and so the value of the last statement is what is
@@ -186,6 +186,8 @@ the left operand is `nothing` and if it is, the value of the right operand is
 returned, otherwise the value under `just` in the left operand itself is
 returned:
 
+{>> It's not clear in the above paragraph what the operator looks like. Make sure to mention that. Just showing the operator in an example is not enough, because it may not be immediately obvious which symbols constitute the operator. <<}
+
 ~~~
 nothing [Maybe Int] ?? 0  # Evaluates to 0
 ~~~
@@ -206,7 +208,7 @@ end
 ~~~
 
 This is also one case in OOLang, when working with `Ref` is considered pure
-(`Ref` declaration without initialisation).
+(`Ref` declaration without initialisation). {>> This sentence is really awkward. Can you improve it? <<}
 
 ### Classes
 
@@ -296,7 +298,7 @@ For `Pure` types the following holds:
 
 So, basically `Pure` is erased and subtyping is checked for the underlying
 types, meaning that `Pure` types are interchangeable with other types. This is
-why this relation is not used for purity checking (a separate process is used).
+why this relation is not used for purity checking (a separate {~~ process ~> mechanism ~~} is used). {>> Two "this" in once sentence. <<}
 
 Mutables are treated by value, so they can be used in the same places as
 ordinary types, except for special declaration and assignment operators
@@ -308,7 +310,7 @@ usage. And this gives us rules similar to the ones for `Pure`:
 
 `Ref` types are invariant. There is a known problem with generic arrays being
 covariant in several popular programming languages, like Java and C#, which is
-explained, for example, in \cite{Birka}.
+explained, for example, in \cite{Birka}. {>> As we discussed per email, the problem has nothing to do with arrays per se. Mutable references also has this problem. It's important that you explain why you don't have that problem. <<}
 
 `Maybe` type is covariant:
 
@@ -799,6 +801,8 @@ Maybe, some sort of polymorphism in MIL stacks and an ability to have *monad
 variables* like, e.g. `Error Unit ::: (m ::: NonTerm)` would help in solving
 this problem, but we did not explore the solution space further in this
 project.
+
+{>> Maybe is not a good representation of non-termination. Google "non-termination monad" or "partiality monad" to get a better idea of the proper way of handling non-termination using monads. <<} 
 
 ## Conclusions
 
