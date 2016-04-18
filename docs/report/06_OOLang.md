@@ -29,13 +29,13 @@ can be pure or impure, which is captured in the return type. By default all
 functions are impure. Impurity in OOLang comes from input/output and
 assignments to references. Function definitions can contain parameters in curly
 braces with a function arrow (`->`) separating several parameters (and a return
-type), which means that functions are curried. Note, that OOLang does not have
-built-in support for tuples, therefore it is not possible to define a function,
-which would take several arguments at once (as a tuple). {>> Most OO languages have support for multiple arguments without needing tuples. And so could you. It's just a matter of pushing all the arguments on the stack. Now, MIL doesn't support that kind of calling convention so it'd be difficult for you to support it but from a language design perspective you could very well support multiple arguments. <<} {>> If you allowed for polymorphic classes, that would be enough to support tuples. <<} Function application
-is expressed using juxtaposition. Unlike many other programming languages with
-statements, there is no `return` statement in OOLang.  Instead, every statement
-has a value (and a type) and so the value of the last statement is what is
-returned from a function.
+type), which means that functions are curried. Note that in OOLang it is not
+possible to define a function, which would take several arguments at once (one
+way of supporting this could be to have tuples in the language and pass several
+arguments as a tuple). Function application is expressed using juxtaposition.
+Unlike many other programming languages with statements, there is no `return`
+statement in OOLang.  Instead, every statement has a value (and a type) and so
+the value of the last statement is what is returned from a function.
 
 OOLang has `Unit` (the type of the `unit` literal), `Bool` (which has literals
 `true` and `false` as possible values), `Int`, `Float`, `Char` and `String` as
@@ -180,13 +180,11 @@ y : Maybe Int;
 z : Maybe Int = nothing [Maybe Int];
 ~~~
 
-There is a binary operator which we call "nothing coalesce" (similar to the
-"null coalesce" operator in C#). It allows in one expression to check whether
-the left operand is `nothing` and if it is, the value of the right operand is
-returned, otherwise the value under `just` in the left operand itself is
-returned:
-
-{>> It's not clear in the above paragraph what the operator looks like. Make sure to mention that. Just showing the operator in an example is not enough, because it may not be immediately obvious which symbols constitute the operator. <<}
+There is a binary operator `??` (double question mark), which we call "nothing
+coalesce" (similar to the "null coalesce" operator in C#). It allows in one
+expression to check whether the left operand is `nothing` and if it is, the
+value of the right operand is returned, otherwise the value under `just` in the
+left operand itself is returned:
 
 ~~~
 nothing [Maybe Int] ?? 0  # Evaluates to 0
@@ -207,8 +205,8 @@ def referencesMaybe : Pure Unit
 end
 ~~~
 
-This is also one case in OOLang, when working with `Ref` is considered pure
-(`Ref` declaration without initialisation). {>> This sentence is really awkward. Can you improve it? <<}
+`Ref` declaration without initialisation is the only case in OOLang, when
+working with `Ref` variables is considered to be pure.
 
 ### Classes
 
@@ -298,7 +296,8 @@ For `Pure` types the following holds:
 
 So, basically `Pure` is erased and subtyping is checked for the underlying
 types, meaning that `Pure` types are interchangeable with other types. This is
-why this relation is not used for purity checking (a separate {~~ process ~> mechanism ~~} is used). {>> Two "this" in once sentence. <<}
+why the subtyping relation is not used for purity checking (a separate
+mechanism is used).
 
 Mutables are treated by value, so they can be used in the same places as
 ordinary types, except for special declaration and assignment operators
