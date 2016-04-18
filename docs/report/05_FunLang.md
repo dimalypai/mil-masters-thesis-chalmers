@@ -39,7 +39,15 @@ represents true and false values:
 type Bool = True | False
 ~~~
 
-Another canonical example is a recursive data type representing a binary tree:
+An example of a parameterised data type often found in functional programming
+languages is a pair of two values:
+
+~~~
+type Pair A B = MkPair A B
+~~~
+
+Another canonical example of an ADT is a recursive data type representing a
+binary tree:
 
 ~~~
 type Tree A
@@ -95,9 +103,9 @@ one : Int
 one = id [Int] 1;;
 ~~~
 
-FunLang has `Unit`, `Bool` (basically, defined as in the example above), `Int`,
-`Float`, `Char` and `String` as built-in types. It supports the usual infix
-arithmetic operations: `+`, `-`, `*` and `/`.
+FunLang has `Unit`, `Bool`, `Pair`, `Int`, `Float`, `Char` and `String` as
+built-in types. It supports the usual infix arithmetic operations: `+`, `-`,
+`*` and `/`.
 
 ### Monads
 
@@ -137,6 +145,7 @@ printFloat : Float -> IO Unit
 readFloat : IO Float
 evalState : forall S . forall A . State S A -> S -> A
 execState : forall S . forall A . State S A -> S -> S
+runState : forall S . forall A . State S A -> S -> Pair A S
 get : forall S . State S S
 put : forall S . S -> State S Unit
 modify : forall S . (S -> S) -> State S Unit
@@ -144,22 +153,21 @@ modify : forall S . (S -> S) -> State S Unit
 
 The first six functions are for reading values of several built-in types from
 the standard input and printing them to the standard output. They work in the
-`IO` monad. The functions `evalState` and `execState` are for running
-computations in the `State` monad. They both take one such computation and an
-initial state value. The difference is that `evalState` returns the value of
-the computation as the result and `execState` returns the value of the state
-itself. Note that there is no `runState` similar to the one in Haskell, since
-it would require support for tuples in FunLang, which was omitted for
-simplicity. The last three functions are for working with state inside a
-stateful computation. They allow to read the state value, overwrite it and
-modify it with a function.
+`IO` monad. The functions `evalState`, `execState` and `runState` are for
+running computations in the `State` monad. They all take one such computation
+and an initial state value. The difference is that `evalState` returns the
+value of the computation as the result, `execState` returns the value of the
+state itself and `runState` returns both the value and the state as a pair. The
+last three functions are for working with state inside a stateful computation.
+They allow to read the state value, overwrite it and modify it with a function.
 
 It is worth highlighting, that unfortunately, FunLang does not support
 combining monads in any way. In spite of this property of FunLang, combining
 monads in MIL is used extensively, as we will describe in the "Code generation"
 section. Moreover, some features of FunLang, like the ability to run stateful
-computations with `evalState` and `execState` inside of any computation
-influences the representation of effects in MIL code quite significantly.
+computations with `evalState`, `execState` or `runState` inside of any
+computation influences the representation of effects in MIL code quite
+significantly.
 
 ### Exceptions
 
@@ -190,11 +198,11 @@ not worry about this particular effect. Second, FunLang exceptions have
 non-monadic types, but we need to express potential failure in MIL. This means
 that the `Error` monad should be part of all computations. For stateful
 computations we need to add `State` and for input/output -- IO. The problem
-here is that FunLang allows to "escape" `State` by using `evalState` and
-`execState` and therefore running stateful computations inside pure or `IO`
-computations. Escaping `State` is not possible in MIL, so we need to add
-`State` to all stacks. Given all this, we have two effect stacks: `State :::
-Error Unit` for pure computations and computations in the `State` monad and
+here is that FunLang allows to "escape" `State` by using `evalState`,
+`execState` or `runState` and therefore running stateful computations inside
+pure or `IO` computations. Escaping `State` is not possible in MIL, so we need
+to add `State` to all stacks. Given all this, we have two effect stacks: `State
+::: Error Unit` for pure computations and computations in the `State` monad and
 `State ::: (Error Unit ::: IO)` for computations in the `IO` monad. If we do an
 exercise of expanding types as we did in one of the previous chapters for the
 `IO` monad stack, we will get `s -> IO (Either Unit (a, s))`. This can be read
@@ -203,10 +211,10 @@ error or produces a value and a new state".  `Unit` is chosen as a type for
 error values, because exceptions in FunLang do not carry any value. We choose
 to have `State` on top of `Error`, but for FunLang different orderings of
 `Error` and `State` cannot be observed, since `catch` can at most have a
-stateful computation which has been run with `evalState` or `execState` and
-therefore state cannot escape outside of that computation. One could extend
-FunLang with the `Error` monad that can be combined with `State` somehow in
-order to be able to interrupt stateful computations with errors.
+stateful computation which has been run with `evalState`, `execState` or
+`runState` and therefore state cannot escape outside of that computation. One
+could extend FunLang with the `Error` monad that can be combined with `State`
+somehow in order to be able to interrupt stateful computations with errors.
 
 Note, that there is an important relation between the pure and the `IO` monad
 stacks above. They satisfy the $isCompatible$ relation in MIL (the former is a
@@ -396,10 +404,10 @@ division : (State ::: Error Unit) Int =
 ### State
 
 Code generation for FunLang computations inside the `State` monad makes use of
-MIL references. The main problem to solve was "Where does a function get the
-state to work with?". It was solved by adding an extra parameter of MIL `Ref`
-type to every `State` function. The example below shows a type of a stateful
-computation in FunLang and the corresponding MIL type:
+MIL references. The main problem was to provide `State` functions with
+references to work with. It was solved by adding an extra parameter of MIL
+`Ref` type to every `State` function. The example below shows a type of a
+stateful computation in FunLang and the corresponding MIL type:
 
 ~~~
 stateFun : State Int Unit
@@ -435,16 +443,18 @@ stateFun : (State ::: Error Unit) (Ref Int -> (State ::: Error Unit) Unit) =
     in return [State ::: Error Unit] var_2;
 ~~~
 
-Built-in `State` functions such as `evalState`, `execState`, `get`, `put` and
-`modify` are implemented in MIL and this code is emitted at the beginning of
-every program together with other built-in functions and data types.  The
-function `evalState` creates a reference with the initial state value that it
-is given and runs a given `State` computation with this reference as an
-argument.  The same happens in `execState`, but in addition it reads the
-reference to get the final state value out and returns it. The `get` and `put`
-functions are wrappers around `read_ref` and `write_ref` respectively. The
-`modify` operation is a more high-level combination of these two with a given
-state transformation function applied in between.
+Built-in `State` functions such as `evalState`, `execState`, `runState`, `get`,
+`put` and `modify` are implemented in MIL and this code is emitted at the
+beginning of every program together with other built-in functions and data
+types.  The function `evalState` creates a reference with the initial state
+value that it is given and runs a given `State` computation with this reference
+as an argument.  The same happens in `execState`, but in addition it reads the
+reference to get the final state value out and returns it. The `runState`
+function does everything `execState` does, but then also constructs a pair with
+both the result and the final state value and returns this pair. The `get` and
+`put` functions are wrappers around `read_ref` and `write_ref` respectively.
+The `modify` operation is a more high-level combination of these two with a
+given state transformation function applied in between.
 
 ### Exceptions
 
