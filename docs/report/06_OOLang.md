@@ -307,9 +307,10 @@ usage. And this gives us rules similar to the ones for `Pure`:
 \infrule{A <: B}{A <: Mutable\ B}
 \infrule{A <: B}{Mutable\ A <: Mutable\ B}
 
-`Ref` types are invariant. There is a known problem with generic arrays being
-covariant in several popular programming languages, like Java and C#, which is
-explained, for example, in \cite{Birka}. {>> As we discussed per email, the problem has nothing to do with arrays per se. Mutable references also has this problem. It's important that you explain why you don't have that problem. <<}
+`Ref` types are invariant. There is a known problem with mutable references
+being covariant. An example of this is covariant arrays in several popular
+programming languages, like Java and C#, which is explained, for example, in
+\cite{Birka}.
 
 `Maybe` type is covariant:
 
