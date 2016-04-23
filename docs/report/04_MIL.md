@@ -789,8 +789,7 @@ chapter.
 Currently, effects in MIL are quite coarse-grained. For example, compared to
 MIL-lite by Benton and Kennedy \cite{Benton}, there is only one big $State$ and
 no distinction between reading/writing is made. Input and output are not
-separated either. Non-termination is not captured in MIL, we will leave this
-discussion for later chapters.
+separated either. Non-termination effect is not captured in MIL.
 
 None of the monadic ILs described in "Related work" had the flexibility of
 combining effects that is achieved in MIL with the help of monad transformers

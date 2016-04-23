@@ -57,11 +57,15 @@ way that it would be able to record some metrics during the execution, for
 example, a number of function applications, $bind$ operations etc.
 
 Another very important direction of MIL development is to make the MIL
-representation of effects and their combination more expressive. As was
-mentioned in several previous chapters, MIL does not allow to express the
-desirable type of the `catch_error` function. Another problem is incorporating
-non-termination as one of the built-in effects. The area of polymorphic effects
-is worth exploring.
+representation of effects and their combination more expressive. Right now MIL
+stacks are rather fixed and also order-dependent. This, of course, gives us
+benefits of expressing different semantics, but at the same time it cuts off
+the flexibility that might be available with a more set-based representation of
+effect combinations.  As was mentioned in several previous chapters, MIL does
+not allow to express the desirable type of the `catch_error` function.  Maybe,
+some sort of polymorphism in MIL stacks and an ability to have *monad
+variables* like, e.g. `Error Unit ::: (m ::: State)` would help in solving
+this problem.
 
 To be able to use more transformations on a practical program MIL needs some
 kind of effect inference/elimination procedure to infer the real set of effects

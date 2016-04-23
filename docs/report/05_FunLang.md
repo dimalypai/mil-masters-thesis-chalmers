@@ -540,6 +540,5 @@ expressions or combining monads with transformers, for example, because MIL is
 a rather expressive language and has those features available out of the box.
 
 We think that the problem described in the section on code generation for
-exceptions might be the biggest current MIL limitation. We will expand this
-more in the following chapter.
+exceptions might be the biggest current MIL limitation.
 

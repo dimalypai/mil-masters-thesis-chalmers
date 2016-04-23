@@ -756,54 +756,6 @@ mutate. One could think about returning a new tuple for a mutated object, but
 this does not really work, since it would not be possible for other methods to
 see this change and get the new state of the object.
 
-### Non-termination
-
-Looking at most of modern programming languages and the effects programs
-written in them can have, one would really want to express the non-terminating
-nature of computations. The original version of MIL had a built-in `NonTerm`
-monad, but later in the project it was scoped out for several reasons.
-
-Non-termination is a very non-trivial effect to reason about. Usually, *lifted*
-types are used to express the types of non-terminating computations
-\cite{BridgingTheGulf}, \cite{Tolmach}. Very informally, one could use the
-`Maybe` type as an underlying intuition for the *lifted* types, where `Nothing`
-represents non-termination (or *bottom*).
-
-OOLang (as well as FunLang) could have something like `Error Unit ::: NonTerm`
-as its pure stack (in this discussion we will disregard `State` that FunLang
-has in its pure stack). Unrolling this type gives `Maybe (Either e a)`, which
-is rather close to what one would think about computations of type `Error Unit
-::: NonTerm`. They can terminate or not and if they do, they either return an
-error or a result. If we extend this stack to model impure OOLang computations,
-while still maintaining the property that the pure stack is a prefix of the
-impure one, we will get `Error Unit ::: (NonTerm ::: (State ::: IO))`.
-Unrolling this type produces `s -> IO (Maybe (Either e a), s)`, which does not
-really make sense, because what it captures is that a computation always
-returns a state value even if it does not terminate. We can try to fix this by
-switching the order of `NonTerm` and `State`: `Error Unit ::: (State :::
-(NonTerm ::: IO))`. This stack gives us `s -> IO (Maybe (Either e a, s))` which
-is better, since now the state value is under `Maybe`, but we cannot combine
-this with pure computations of type `Error Unit ::: NonTerm` because of the
-`State` monad transformer in between. One way of working around this is to have
-`State ::: (Error Unit ::: (NonTerm ::: IO))` as the impure stack. Then the
-pure stack with the help of the monad transformer $lift$ operation starts to
-satisfy the $isCompatible$ relation. But in this case the intermediate language
-forces the source language to have a particular semantics (the ordering of
-`State` and `Error`).
-
-The question of how to incorporate non-termination into MIL remains open. One
-can partly relate this to the problem with the `catch_error` type raised in
-this and the previous chapter in the sense that MIL stacks are rather fixed and
-also order-dependent. This, of course, gives us benefits of expressing
-different semantics, but at the same time it cuts off the flexibility that
-might be available with a more set-based representation of effect combinations.
-Maybe, some sort of polymorphism in MIL stacks and an ability to have *monad
-variables* like, e.g. `Error Unit ::: (m ::: NonTerm)` would help in solving
-this problem, but we did not explore the solution space further in this
-project.
-
-{>> Maybe is not a good representation of non-termination. Google "non-termination monad" or "partiality monad" to get a better idea of the proper way of handling non-termination using monads. <<} 
-
 ## Conclusions
 
 Modern object-oriented programming languages incorporate many of the ideas
@@ -820,6 +772,6 @@ Unfortunately, there is no good way in MIL to express OOLang `Mutable` class
 fields at the moment.
 
 Many of the observations made in the corresponding section in the previous
-chapter apply here as well. There are problems with capturing a desirable type
-for `catch_error` as well as with the non-termination monad.
+chapter apply here as well, for example, problems with capturing a desirable
+type for `catch_error`.
 
