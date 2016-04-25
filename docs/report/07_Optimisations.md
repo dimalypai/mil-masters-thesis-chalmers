@@ -46,8 +46,6 @@ definition from Chapter 2:
 
 $$bind\ (return\ x)\ f = f\ x$$
 
-{>> Should you really be using `bind` here? What about `let`? <<}
-
 The left identity monad law allows us to avoid a redundant $bind$ and use `x`
 directly.
 
@@ -350,7 +348,7 @@ in let (b : Int) <- return [State] a
 in return [State] unit;
 ~~~
 
-The last `State` transformation also eliminates a reference reading, but in
+The next `State` transformation also eliminates a reference reading, but in
 this case the information from a reference writing operation is used:
 
 $$let\ (u : Unit) \gets write\_ref\ [T]\ r\ c\
@@ -379,15 +377,38 @@ in let (a : Int) <- return [State] 2
 in return [State] unit;
 ~~~
 
-{>> The above example suggest another optimization, where a new_ref immediately followed by a write_ref can be rewritten as just a new_ref. Does this kind of optimization occur in the literature? Have you thought about it? <<}
+The last `State` transformation eliminates an unnecessary reference writing,
+which directly follows a creation of the reference:
+
+$$let\ (x : Ref\ T) \gets new\_ref\ [T]\ c_1\
+  in\ let\ (u : Unit) \gets write\_ref\ [T]\ x\ c_2\ in\ e$$
+$$=$$
+$$let\ (x : Ref\ T) \gets new\_ref\ [T]\ c_2\
+  in\ e$$
+
+This transformation is again quite similar to the ones above. An example
+follows:
+
+~~~
+let (x : Ref Int) <- new_ref [Int] 1
+in let (z : Unit) <- write_ref [Int] x 2
+in return [State] unit;
+
+==>
+
+let (x : Ref Int) <- new_ref [Int] 2
+in return [State] unit;
+~~~
 
 ### Error
 
-The last of the effect-specific transformations implemented for MIL is a
-transformation that tries to eliminate unnecessary `catch_error` and
-`throw_error` calls. It (rather naively) looks for a specific case, when the
-first argument of `catch_error` is `throw_error`, which basically means that
-the handler part will definitely be executed:
+The last couple of the effect-specific transformations implemented for MIL is a
+pair of (rather naive) transformations which try to eliminate unnecessary
+`catch_error` calls.
+
+The first one looks for a specific case, when the first argument of
+`catch_error` is `throw_error`, which basically means that the handler part
+will definitely be executed:
 
 $$catchName\ [Unit]\ [T]\ (throw\_error\ [Unit]\ [T]\ unit)\ (\lambda (err : Unit) \to e)$$
 $$=$$
@@ -411,7 +432,26 @@ catch_error_1 [Unit] [Int]
 return [Error Unit] 1;
 ~~~
 
-{>> Shouldn't there also be an optimization which can remove catch_error when we know that there is not going to be an exception in the first argument? Like when we have a return there? <<}
+The second one looks for another specific case, when the first argument of
+`catch_error` is `return`, which means that no exception can be raised, making
+the `catch_error` call unnecessary:
+
+$$catchName\ [T_1]\ [T_2]\ (return\ [Error\ T_1]\ e)\ h$$
+$$=$$
+$$return\ [Error\ T_1]\ e,$$
+$$where\ catchName == catch\_error\_1\ or\ catchName == catch\_error\_2$$
+
+An example of this transformation is shown below:
+
+~~~
+catch_error_1 [Unit] [Int]
+  (return [Error Unit] 1)
+  (\(e : Unit) -> return [Error Unit] 2);
+
+==>
+
+return [Error Unit] 1;
+~~~
 
 ## Case expression transformations
 
@@ -455,16 +495,19 @@ in OOLang, when it is known that a condition evaluates to `true` or `false`.
 ### Common bind extraction
 
 The common bind extraction is a transformation that can *hoist* a $bind$ out of
-`case` alternatives. The implementation of this transformation in MIL is very
-naive and uses simple equality both for variables and for body expressions. The
-transformation is presented below:
+`case` alternatives. There are two variations of it: the first one deals with a
+common *body* expression, while the second one is about a common *binder*
+expression.  The implementation of these transformations in MIL is very naive
+and uses simple equality both for variables and for body/binder expressions.
+
+The first variant is presented below:
 
 $$case\ s\ of\ |\ p_i \Rightarrow let\ (v_i : T) \gets e_i\ in\ e\ end$$
 $$=$$
 $$let\ (v : T) \gets case\ s\ of\ |\ p_i \Rightarrow e_i\ end\ in\ e,$$
 $$where\ all\ occurrences\ of\ v_i\ in\ e\ are\ substituted\ with\ v$$
 
-The following is an example of applying the common bind extraction:
+The following is an example of applying it:
 
 ~~~
 case 1 of
@@ -482,7 +525,29 @@ let (x : Int) <-
 in return [IO] unit;
 ~~~
 
-{>> Is there a similar optimization for when all the e_i in the case branches are equal? You should be able to push the case through the bind then. <<}
+The second variation looks as the following:
+
+$$case\ s\ of\ |\ p_i \Rightarrow let\ (v_i : T) \gets e\ in\ e_i\ end$$
+$$=$$
+$$let\ (v : T) \gets e\ in\ case\ s\ of\ |\ p_i \Rightarrow e_i\ end,$$
+$$where\ all\ occurrences\ of\ v_i\ in\ e_i\ are\ substituted\ with\ v$$
+
+Below is a corresponding example:
+
+~~~
+case 1 of
+  | 0 => let (x : Unit) <- return [IO] unit in return [IO] 0
+  | 1 => let (y : Unit) <- return [IO] unit in return [IO] 1
+end;
+
+==>
+
+let (x : Unit) <- return [IO] unit
+in case 1 of
+    | 0 => return [IO] 0
+    | 1 => return [IO] 1
+  end;
+~~~
 
 ## Constant folding
 
