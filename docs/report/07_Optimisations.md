@@ -211,9 +211,7 @@ replace a sequence of two $lift$ operations with one. In such a sequence of
 $lift$s the target of the inner (second) one is compatible with the source of
 the outer (first) one, which is guaranteed by the type/lint checking:
 
-$$lift\ [M_2 \Rightarrow M_3]\ lift\ [M_1 \Rightarrow M_2]\ e = lift\ [M_1 \Rightarrow M_3]\ e$$
-
-{>> I would have expected parentheses around the inner `lift e` to disambiguate the expression. <<}
+$$lift\ [M_2 \Rightarrow M_3]\ (lift\ [M_1 \Rightarrow M_2]\ e) = lift\ [M_1 \Rightarrow M_3]\ e$$
 
 The next example demonstrates a composition of two $lift$ operations:
 
@@ -456,13 +454,10 @@ in OOLang, when it is known that a condition evaluates to `true` or `false`.
 
 ### Common bind extraction
 
-The common bind extraction is a transformation that can *hoist* a $bind$ to the
-"same variable" out of `case` alternatives, given that the $bind$s have the
-"same body expression". By the word "same" here we mean alpha-equivalence. {>> These sentences still makes my head hurt. The variables that are bound are different. You should phrase it more like: ".. that can *hoist* a let binding out of case alternatives." Don't talk about the variables being the same, it doesn't make any sense. <<}
-The
-implementation of this transformation in MIL is more naive and uses simple
-equality both for variables and for body expressions. The transformation is
-presented below:
+The common bind extraction is a transformation that can *hoist* a $bind$ out of
+`case` alternatives. The implementation of this transformation in MIL is very
+naive and uses simple equality both for variables and for body expressions. The
+transformation is presented below:
 
 $$case\ s\ of\ |\ p_i \Rightarrow let\ (v_i : T) \gets e_i\ in\ e\ end$$
 $$=$$
@@ -568,9 +563,9 @@ main : (Error Unit ::: (State ::: IO)) Unit =
 
 ## Transformations and source languages
 
-As we saw above, every transformation is {++ implemented as ++} a pure function which takes a typed MIL
-program and returns a typed MIL program. This allows to easily compose
-different transformations in a pipeline.
+As we saw above, every transformation is implemented as a pure function which
+takes a typed MIL program and returns a typed MIL program. This allows to
+easily compose different transformations in a pipeline.
 
 To chain different transformations in the code, we use a *postfix application
 operator* (also known as a very popular *pipeline operator* in the F#
@@ -648,7 +643,7 @@ functional language and therefore it is *expression-based*, which in general
 makes it more easy to reason about the code, which implies that it should be
 easier to see whether a certain transformation is safe or not.
 
-In this thesis we tried to work with quite {~~ simply looking ~> simple-looking ~~} algebraic identities
+In this thesis we tried to work with quite simple-looking algebraic identities
 for expressing code transformations. Such identities are usually very minimal
 and very general at the same time, e.g. monad laws. This makes the
 implementation of optimisations based on them only a dozen lines of code in
