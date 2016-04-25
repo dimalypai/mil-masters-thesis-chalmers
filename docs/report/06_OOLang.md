@@ -299,9 +299,9 @@ types, meaning that `Pure` types are interchangeable with other types. This is
 why the subtyping relation is not used for purity checking (a separate
 mechanism is used).
 
-Mutables are treated by value, so they can be used in the same places as
-ordinary types, except for special declaration and assignment operators
-usage. And this gives us rules similar to the ones for `Pure`:
+Mutables are copied, so they can be used in the same places as ordinary types,
+except for special declaration and assignment operators usage. And this gives
+us rules similar to the ones for `Pure`:
 
 \infrule{A <: B}{Mutable\ A <: B}
 \infrule{A <: B}{A <: Mutable\ B}
