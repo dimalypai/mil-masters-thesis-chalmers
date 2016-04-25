@@ -48,6 +48,7 @@ eliminateConstantCaseExpr = descendBi f
                   caseAlts)
     f expr = descend f expr
 
+
 extractCommonBind :: TyProgram -> TyProgram
 extractCommonBind (Program (typeDefs, funDefs)) =
   Program (typeDefs, map extractCommonBindFun funDefs)
@@ -92,5 +93,52 @@ extractCommonBindExpr = descendBi f
                   (zip caseAlts letBindExprs)
           in LetE commonVarBinder (CaseE e newCaseAlts) commonLetBodyExpr
         _ -> CaseE (extractCommonBindExpr e) (map (\(CaseAlt (p, ae)) -> CaseAlt (p, extractCommonBindExpr ae)) caseAlts)
+    f expr = descend f expr
+
+
+extractCommonBindSameBinder :: TyProgram -> TyProgram
+extractCommonBindSameBinder (Program (typeDefs, funDefs)) =
+  Program (typeDefs, map extractCommonBindSameBinderFun funDefs)
+
+extractCommonBindSameBinderFun :: TyFunDef -> TyFunDef
+extractCommonBindSameBinderFun (FunDef funName funType funBody) =
+  FunDef funName funType (extractCommonBindSameBinderExpr funBody)
+
+extractCommonBindSameBinderExpr :: TyExpr -> TyExpr
+extractCommonBindSameBinderExpr = descendBi f
+  where
+    f (CaseE e caseAlts) =
+      let (varBinders, letBindExprs, letBodyExprs) =
+            unzip3 $
+              map (\(CaseAlt (_, ae)) ->
+                case ae of
+                  LetE vb bindE bodyE -> (Just vb, Just bindE, Just bodyE)
+                  _ -> (Nothing, Nothing, Nothing)) caseAlts
+
+          mCommonVarBinder =
+            foldl1' (\mCommonVb mVb ->
+              case (mCommonVb, mVb) of
+                (Just commonVb, Just vb) ->
+                  if commonVb == vb
+                    then Just commonVb
+                    else Nothing
+                _ -> Nothing) varBinders
+
+          mCommonLetBindExpr =
+            foldl1' (\mCommonLetBindE mLetBindE ->
+              case (mCommonLetBindE, mLetBindE) of
+                (Just commonLetBindE, Just letBindE) ->
+                  if commonLetBindE == letBindE
+                    then Just commonLetBindE
+                    else Nothing
+                _ -> Nothing) letBindExprs
+
+      in case (mCommonVarBinder, mCommonLetBindExpr) of
+        (Just commonVarBinder, Just commonLetBindExpr) ->
+          let newCaseAlts =
+                map (\((CaseAlt (p, _)), mLetBodyE) -> CaseAlt (p, fromJust mLetBodyE))
+                  (zip caseAlts letBodyExprs)
+          in LetE commonVarBinder commonLetBindExpr (CaseE e newCaseAlts)
+        _ -> CaseE (extractCommonBindSameBinderExpr e) (map (\(CaseAlt (p, ae)) -> CaseAlt (p, extractCommonBindSameBinderExpr ae)) caseAlts)
     f expr = descend f expr
 

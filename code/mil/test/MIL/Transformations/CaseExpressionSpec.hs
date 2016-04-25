@@ -19,6 +19,10 @@ spec = do
       transformationTestCase "EliminateConstantCase" eliminateConstantCase
 
   describe "extractCommonBind" $ do
-    it "moves common bind out of the case alternatives" $
+    it "moves common bind out of the case alternatives (same body part)" $
       transformationTestCase "ExtractCommonBind" extractCommonBind
+
+  describe "extractCommonBindSameBinder" $ do
+    it "moves common bind out of the case alternatives (same binder part)" $
+      transformationTestCase "ExtractCommonBindSameBinder" extractCommonBindSameBinder
 
