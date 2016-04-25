@@ -46,6 +46,8 @@ definition from Chapter 2:
 
 $$bind\ (return\ x)\ f = f\ x$$
 
+{>> Should you really be using `bind` here? What about `let`? <<}
+
 The left identity monad law allows us to avoid a redundant $bind$ and use `x`
 directly.
 
@@ -210,6 +212,8 @@ $lift$s the target of the inner (second) one is compatible with the source of
 the outer (first) one, which is guaranteed by the type/lint checking:
 
 $$lift\ [M_2 \Rightarrow M_3]\ lift\ [M_1 \Rightarrow M_2]\ e = lift\ [M_1 \Rightarrow M_3]\ e$$
+
+{>> I would have expected parentheses around the inner `lift e` to disambiguate the expression. <<}
 
 The next example demonstrates a composition of two $lift$ operations:
 
@@ -377,6 +381,8 @@ in let (a : Int) <- return [State] 2
 in return [State] unit;
 ~~~
 
+{>> The above example suggest another optimization, where a new_ref immediately followed by a write_ref can be rewritten as just a new_ref. Does this kind of optimization occur in the literature? Have you thought about it? <<}
+
 ### Error
 
 The last of the effect-specific transformations implemented for MIL is a
@@ -406,6 +412,8 @@ catch_error_1 [Unit] [Int]
 
 return [Error Unit] 1;
 ~~~
+
+{>> Shouldn't there also be an optimization which can remove catch_error when we know that there is not going to be an exception in the first argument? Like when we have a return there? <<}
 
 ## Case expression transformations
 
@@ -450,7 +458,8 @@ in OOLang, when it is known that a condition evaluates to `true` or `false`.
 
 The common bind extraction is a transformation that can *hoist* a $bind$ to the
 "same variable" out of `case` alternatives, given that the $bind$s have the
-"same body expression". By the word "same" here we mean alpha-equivalence. The
+"same body expression". By the word "same" here we mean alpha-equivalence. {>> These sentences still makes my head hurt. The variables that are bound are different. You should phrase it more like: ".. that can *hoist* a let binding out of case alternatives." Don't talk about the variables being the same, it doesn't make any sense. <<}
+The
 implementation of this transformation in MIL is more naive and uses simple
 equality both for variables and for body expressions. The transformation is
 presented below:
@@ -477,6 +486,8 @@ let (x : Int) <-
   end
 in return [IO] unit;
 ~~~
+
+{>> Is there a similar optimization for when all the e_i in the case branches are equal? You should be able to push the case through the bind then. <<}
 
 ## Constant folding
 
@@ -557,7 +568,7 @@ main : (Error Unit ::: (State ::: IO)) Unit =
 
 ## Transformations and source languages
 
-As we saw above, every transformation is a pure function which takes a typed MIL
+As we saw above, every transformation is {++ implemented as ++} a pure function which takes a typed MIL
 program and returns a typed MIL program. This allows to easily compose
 different transformations in a pipeline.
 
@@ -637,7 +648,7 @@ functional language and therefore it is *expression-based*, which in general
 makes it more easy to reason about the code, which implies that it should be
 easier to see whether a certain transformation is safe or not.
 
-In this thesis we tried to work with quite simply looking algebraic identities
+In this thesis we tried to work with quite {~~ simply looking ~> simple-looking ~~} algebraic identities
 for expressing code transformations. Such identities are usually very minimal
 and very general at the same time, e.g. monad laws. This makes the
 implementation of optimisations based on them only a dozen lines of code in
