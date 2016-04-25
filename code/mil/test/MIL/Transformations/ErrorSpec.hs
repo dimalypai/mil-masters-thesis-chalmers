@@ -18,3 +18,7 @@ spec = do
     it "removes redundant throw_error and catch_error" $
       transformationTestCase "EliminateThrowCatch" eliminateThrowCatch
 
+  describe "eliminateThrowCatchNoException" $ do
+    it "removes redundant return and catch_error" $
+      transformationTestCase "EliminateThrowCatchNoException" eliminateThrowCatchNoException
+

@@ -1,0 +1,15 @@
+main : Error Unit Int =
+  return [Error Unit] 1;
+
+fun : Error Unit Int =
+  return [Error Unit] 1;
+
+fun2 : Error Int Int =
+  return [Error Int] 1;
+
+fun3 : Error Unit Int =
+  catch_error_3 [Unit] [Int] (return [Error Unit] 1) (\(e : Unit) -> return [Error Unit] 1);
+
+catch_error_3 : forall E . forall A . Error E A -> (E -> Error E A) -> Error E A =
+  /\E . /\A . \(c : Error E A) -> \(h : E -> Error E A) -> c;
+

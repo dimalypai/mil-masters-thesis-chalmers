@@ -28,3 +28,25 @@ eliminateThrowCatchExpr = descendBi f
         _ -> AppE (eliminateThrowCatchExpr e1) (eliminateThrowCatchExpr e2)
     f expr = descend f expr
 
+
+eliminateThrowCatchNoException :: TyProgram -> TyProgram
+eliminateThrowCatchNoException (Program (typeDefs, funDefs)) =
+  Program (typeDefs, map eliminateThrowCatchNoExceptionFun funDefs)
+
+eliminateThrowCatchNoExceptionFun :: TyFunDef -> TyFunDef
+eliminateThrowCatchNoExceptionFun (FunDef funName funType funBody) =
+  FunDef funName funType (eliminateThrowCatchNoExceptionExpr funBody)
+
+eliminateThrowCatchNoExceptionExpr :: TyExpr -> TyExpr
+eliminateThrowCatchNoExceptionExpr = descendBi f
+  where
+    f (AppE e1 e2) =
+      case e1 of
+        AppE (TypeAppE (TypeAppE (VarE (VarBinder (Var catchName, _)))
+                                 _) _)
+             tryBlock@(ReturnE {}) |
+             catchName == "catch_error_1" || catchName == "catch_error_2" ->
+          eliminateThrowCatchExpr tryBlock
+        _ -> AppE (eliminateThrowCatchExpr e1) (eliminateThrowCatchExpr e2)
+    f expr = descend f expr
+
