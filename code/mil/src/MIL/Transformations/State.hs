@@ -110,3 +110,27 @@ useWriteExpr = descendBi f
         _ -> LetE varBinder (useWriteExpr e1) (useWriteExpr e2)
     f expr = descend f expr
 
+
+collapseNewWrite :: TyProgram -> TyProgram
+collapseNewWrite (Program (typeDefs, funDefs)) =
+  Program (typeDefs, map collapseNewWriteFun funDefs)
+
+collapseNewWriteFun :: TyFunDef -> TyFunDef
+collapseNewWriteFun (FunDef funName funType funBody) =
+  FunDef funName funType (collapseNewWriteExpr funBody)
+
+collapseNewWriteExpr :: TyExpr -> TyExpr
+collapseNewWriteExpr = descendBi f
+  where
+    f (LetE varBinder e1 e2) =
+      case e2 of
+        LetE _ e1' e2' ->
+          case (e1, e1') of
+            (AppE (TypeAppE (VarE (VarBinder (Var "new_ref", newRefType))) refType) _,
+             AppE (AppE (TypeAppE (VarE (VarBinder (Var "write_ref", _))) _)
+                        (VarE (VarBinder (refVar, _)))) refContentExpr) | getBinderVar varBinder == refVar ->
+              LetE varBinder (AppE (TypeAppE (VarE (VarBinder (Var "new_ref", newRefType))) refType) refContentExpr) e2'
+            _ -> LetE varBinder (useWriteExpr e1) (useWriteExpr e2)
+        _ -> LetE varBinder (useWriteExpr e1) (useWriteExpr e2)
+    f expr = descend f expr
+

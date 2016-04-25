@@ -30,3 +30,7 @@ spec = do
     it "eliminates read from just written reference" $
       transformationTestCase "UseWrite" useWrite
 
+  describe "collapseNewWrite" $ do
+    it "uses write after new_ref" $
+      transformationTestCase "CollapseNewWrite" collapseNewWrite
+
