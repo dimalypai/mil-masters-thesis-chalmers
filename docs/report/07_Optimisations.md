@@ -636,14 +636,14 @@ To chain different transformations in the code, we use a *postfix application
 operator* (also known as a very popular *pipeline operator* in the F#
 programming language). We define it in Haskell as follows:
 
-~~~
+~~~{.haskell}
 (|>) :: a -> (a -> b) -> b
 a |> f = f a
 ~~~
 
 Here is how the chain of transformations for FunLang looks like:
 
-~~~
+~~~{.haskell}
 optimiseMil :: MIL.TyProgram -> MIL.TyProgram
 optimiseMil milProgram =
   milProgram
@@ -659,7 +659,7 @@ optimiseMil milProgram =
 
 The one for OOLang looks like the following:
 
-~~~
+~~~{.haskell}
 optimiseMil :: MIL.TyProgram -> MIL.TyProgram
 optimiseMil milProgram =
   milProgram
