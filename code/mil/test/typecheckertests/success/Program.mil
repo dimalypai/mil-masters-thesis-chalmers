@@ -33,6 +33,10 @@ idFun : (forall B . B -> B) -> (forall C . C -> C) =
 # This checks for alpha equivalence
 idFunApp : forall V . V -> V = idFun id;
 
+# Failing test case that shows the limitations of the implemented alpha-eq.
+# alphaEqCapture : (forall B . forall A . B -> A) -> (forall B . forall A . B -> A) =
+#   id [forall A . forall B . A -> B];
+
 conPairFun : forall A . forall B . A -> B -> Pair A B = MkPair;
 
 appCon : Pair Int Bool = MkPair [Int] [Bool] 1 True;
